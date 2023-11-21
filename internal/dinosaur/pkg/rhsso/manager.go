@@ -1,54 +1,38 @@
-package dinosaurmgrs
+package rhsso
 
 import (
 	"context"
 
 	"github.com/golang/glog"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
-	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/stackrox/rox/pkg/ternary"
 )
 
-const centralAuthConfigManagerWorkerType = "central_auth_config"
-
 // CentralAuthConfigManager updates CentralRequests with auth configuration.
 type CentralAuthConfigManager struct {
-	workers.BaseWorker
 	centralService          services.DinosaurService
 	centralConfig           *config.CentralConfig
 	realmConfig             *iam.IAMRealmConfig
 	dynamicClientsAPIClient *api.AcsTenantsApiService
 }
 
-var _ workers.Worker = (*CentralAuthConfigManager)(nil)
-
 // NewCentralAuthConfigManager creates an instance of this worker.
 // In case this function fails, fleet-manager will fail on the startup.
 func NewCentralAuthConfigManager(centralService services.DinosaurService, iamConfig *iam.IAMConfig, centralConfig *config.CentralConfig) (*CentralAuthConfigManager, error) {
 	realmConfig := iamConfig.RedhatSSORealm
 	if !centralConfig.HasStaticAuth() && !realmConfig.IsConfigured() {
-		return nil, errors.Errorf("failed to create %s worker: neither static nor dynamic auth configuration was provided", centralAuthConfigManagerWorkerType)
+		return nil, errors.Errorf("failed to create CentralAuthConfigManager: neither static nor dynamic auth configuration was provided")
 	}
 	dynamicClientsAPI := dynamicclients.NewDynamicClientsAPI(realmConfig)
 
-	metrics.InitReconcilerMetricsForType(centralAuthConfigManagerWorkerType)
-
 	return &CentralAuthConfigManager{
-		BaseWorker: workers.BaseWorker{
-			ID:         uuid.New().String(),
-			WorkerType: centralAuthConfigManagerWorkerType,
-			Reconciler: workers.Reconciler{},
-		},
 		centralService:          centralService,
 		centralConfig:           centralConfig,
 		realmConfig:             realmConfig,
@@ -56,40 +40,30 @@ func NewCentralAuthConfigManager(centralService services.DinosaurService, iamCon
 	}, nil
 }
 
-// Start uses base's Start()
-func (k *CentralAuthConfigManager) Start() {
-	k.StartWorker(k)
-}
-
-// Stop uses base's Stop()
-func (k *CentralAuthConfigManager) Stop() {
-	k.StopWorker(k)
-}
-
 // Reconcile fetches all CentralRequests without auth config from the DB and
 // updates them.
-func (k *CentralAuthConfigManager) Reconcile() []error {
+func (k *CentralAuthConfigManager) Reconcile(centralRequests []*dbapi.CentralRequest) []error {
 	var errs []error
 
-	centralRequests, listErr := k.centralService.ListCentralsWithoutAuthConfig()
-	if listErr != nil {
-		errs = append(errs, errors.Wrap(listErr, "failed to list centrals without auth config"))
-	}
 	if len(centralRequests) > 0 {
 		glog.V(5).Infof("%d central(s) need auth config to be added", len(centralRequests))
 	}
 
 	for _, cr := range centralRequests {
-		err := k.reconcileCentralRequest(cr)
+		err := k.AddAuthConfig(cr)
 		if err != nil {
 			errs = append(errs, err)
+		}
+
+		if err := k.centralService.Update(cr); err != nil {
+			errs = append(errs, errors.Wrapf(err, "failed to update central request %s", cr.ID))
 		}
 	}
 
 	return errs
 }
 
-func (k *CentralAuthConfigManager) reconcileCentralRequest(cr *dbapi.CentralRequest) error {
+func (k *CentralAuthConfigManager) AddAuthConfig(cr *dbapi.CentralRequest) error {
 	glog.V(5).Infof("augmenting Central %q with auth config", cr.Meta.ID)
 	// Auth config can either be:
 	//   1) static, i.e., the same for all Centrals,
@@ -104,7 +78,7 @@ func (k *CentralAuthConfigManager) reconcileCentralRequest(cr *dbapi.CentralRequ
 		err = augmentWithStaticAuthConfig(cr, k.centralConfig)
 	} else {
 		glog.V(7).Infoln("no static config found; attempting to obtain one from the IdP")
-		err = rhsso.AugmentWithDynamicAuthConfig(context.Background(), cr, k.realmConfig, k.dynamicClientsAPIClient)
+		err = AugmentWithDynamicAuthConfig(context.Background(), cr, k.realmConfig, k.dynamicClientsAPIClient)
 	}
 	if err != nil {
 		return errors.Wrap(err, "failed to augment central request with auth config")
@@ -112,10 +86,6 @@ func (k *CentralAuthConfigManager) reconcileCentralRequest(cr *dbapi.CentralRequ
 
 	cr.AuthConfig.ClientOrigin = ternary.String(k.centralConfig.HasStaticAuth(),
 		dbapi.AuthConfigStaticClientOrigin, dbapi.AuthConfigDynamicClientOrigin)
-
-	if err := k.centralService.Update(cr); err != nil {
-		return errors.Wrapf(err, "failed to update central request %s", cr.ID)
-	}
 
 	return nil
 }

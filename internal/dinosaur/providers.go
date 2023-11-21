@@ -10,6 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/migrations"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/routes"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services/quota"
@@ -75,7 +76,7 @@ func ServiceProviders() di.Option {
 		di.Provide(dinosaurmgrs.NewProvisioningDinosaurManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewReadyDinosaurManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewDinosaurCNAMEManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewCentralAuthConfigManager, di.As(new(workers.Worker))),
+		di.Provide(rhsso.NewCentralAuthConfigManager),
 		di.Provide(gitops.NewEmptyReader),
 		di.Provide(gitops.NewProvider),
 		di.Provide(presenters.NewManagedCentralPresenter),
