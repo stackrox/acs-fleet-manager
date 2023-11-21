@@ -17,7 +17,6 @@ delete_tenant_namespaces
 
 log "Clean ACS operator namespace..."
 $KUBECTL delete namespace "$STACKROX_OPERATOR_NAMESPACE" || true
-apply "${GITROOT}/dev/env/manifests/rhacs-operator/00-namespace.yaml"
 
 log "Apply default gitops..."
 apply "${GITROOT}/dev/env/manifests/fleet-manager/04-gitops-config.yaml"
