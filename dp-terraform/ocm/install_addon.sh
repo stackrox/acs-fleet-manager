@@ -129,7 +129,7 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "observabilityGithubTag", "value": "${OBSERVABILITY_GITHUB_TAG}" },
             { "id": "observabilityObservatoriumGateway", "value": "${OBSERVABILITY_OBSERVATORIUM_GATEWAY}" },
             { "id": "observabilityPrometheusResourcesLimitsMemory", "value" : "${PROMETHEUS_MEMORY_LIMIT}" },
-            { "id": "observabilityPrometheusResourcesRequestsMemory", "value": "${PROMETHEUS_MEMORY_REQUEST}" }
+            { "id": "observabilityPrometheusResourcesRequestsMemory", "value": "${PROMETHEUS_MEMORY_REQUEST}" },
             { "id": "observabilityOperatorVersion", "value": "${OBSERVABILITY_OPERATOR_VERSION}" },
             { "id": "securedClusterCentralEndpoint", "value": "${SECURED_CLUSTER_CENTRAL_ENDPOINT}" },
             { "id": "securedClusterEnabled", "value": "${SECURED_CLUSTER_ENABLED}" },
