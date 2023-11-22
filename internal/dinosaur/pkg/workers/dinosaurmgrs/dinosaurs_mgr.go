@@ -82,10 +82,9 @@ func (k *DinosaurManager) Reconcile() []error {
 	}
 
 	// cleaning up expired dinosaurs
-	expiredDinosaursError := k.dinosaurService.DeprovisionExpiredDinosaurs()
-	if expiredDinosaursError != nil {
-		wrappedError := errors.Wrap(expiredDinosaursError, "failed to deprovision expired Central instances")
-		encounteredErrors = append(encounteredErrors, wrappedError)
+	if svcErr := k.dinosaurService.DeprovisionExpiredDinosaurs(); svcErr != nil {
+		encounteredErrors = append(encounteredErrors,
+			errors.Wrap(svcErr, "failed to deprovision expired Central instances"))
 	}
 
 	return encounteredErrors
