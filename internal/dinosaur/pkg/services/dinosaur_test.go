@@ -11,10 +11,13 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
 
@@ -242,4 +245,60 @@ func Test_dinosaurService_RestoreExpiredDinosaurs(t *testing.T) {
 	assert.True(t, selectQuery.Triggered)
 	assert.True(t, updateQuery.Triggered)
 	assert.True(t, expiredChecked)
+}
+
+func Test_dinosaurService_ChangeBillingModel(t *testing.T) {
+	quotaService := &QuotaServiceMock{
+		HasQuotaAllowanceFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+			return true, nil
+		},
+		ReserveQuotaFunc: func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+			return dinosaur.SubscriptionID, nil
+		},
+	}
+	quotaServiceFactory := &QuotaServiceFactoryMock{
+		GetQuotaServiceFunc: func(quotaType api.QuotaType) (QuotaService, *errors.ServiceError) {
+			return quotaService, nil
+		},
+	}
+	k := &dinosaurService{
+		dinosaurConfig:      config.NewCentralConfig(),
+		connectionFactory:   db.NewMockConnectionFactory(nil),
+		quotaServiceFactory: quotaServiceFactory,
+	}
+	central := buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {
+		centralRequest.QuotaType = "standard"
+		centralRequest.OrganisationID = "original org ID"
+		centralRequest.CloudProvider = ""
+		centralRequest.CloudAccountID = ""
+		centralRequest.SubscriptionID = "original subscription ID"
+	})
+
+	catcher := mocket.Catcher.Reset()
+	m0 := catcher.NewMock().WithQuery(`SELECT * FROM "central_requests" ` +
+		`WHERE id = $1 AND "central_requests"."deleted_at" IS NULL ` +
+		`ORDER BY "central_requests"."id" LIMIT 1`).
+		OneTime().WithArgs(testID).
+		WithReply(converters.ConvertDinosaurRequest(central))
+	m1 := catcher.NewMock().WithQuery(`UPDATE "central_requests" ` +
+		`SET "updated_at"=$1,"deleted_at"=$2,"region"=$3,"cluster_id"=$4,` +
+		`"cloud_provider"=$5,"cloud_account_id"=$6,"name"=$7,"subscription_id"=$8,"owner"=$9,"organisation_id"=$10 ` +
+		`WHERE status not IN ($11,$12) AND "central_requests"."deleted_at" IS NULL AND "id" = $13`).
+		OneTime()
+
+	svcErr := k.ChangeBillingModel(context.Background(), central.ID, "new org ID", "aws_account_id", "aws")
+	assert.Nil(t, svcErr)
+
+	assert.True(t, m0.Triggered)
+	assert.True(t, m1.Triggered)
+
+	qsfCalls := quotaServiceFactory.GetQuotaServiceCalls()
+	require.Len(t, qsfCalls, 1)
+
+	reserveQuotaCalls := quotaService.ReserveQuotaCalls()
+	require.Len(t, reserveQuotaCalls, 1)
+	assert.Equal(t, testID, reserveQuotaCalls[0].Dinosaur.ID)
+
+	deleteQuotaCalls := quotaService.DeleteQuotaCalls()
+	require.Len(t, deleteQuotaCalls, 0)
 }

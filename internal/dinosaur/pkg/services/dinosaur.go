@@ -114,6 +114,7 @@ type DinosaurService interface {
 	// This is currently the only way to update secret backups, an automatic approach should be implemented
 	// to accomated for regular processes like central TLS cert rotation.
 	ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
+	ChangeBillingModel(ctx context.Context, centralID string, organizationID string, cloudAccountID string, cloudProvider string) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -1037,4 +1038,23 @@ func convertCentralRequestToString(req *dbapi.CentralRequest) string {
 		"client_origin":           req.ClientOrigin,
 	}
 	return fmt.Sprintf("%+v", requestAsMap)
+}
+
+func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID string, organizationID string, cloudAccountID string, cloudProvider string) *errors.ServiceError {
+	centralRequest, svcErr := k.GetByID(centralID)
+	if svcErr != nil {
+		return svcErr
+	}
+
+	centralRequest.CloudAccountID = cloudAccountID
+	centralRequest.CloudProvider = cloudProvider
+	centralRequest.OrganisationID = organizationID
+
+	newSubscriptionID, svcErr := k.reserveQuota(ctx, centralRequest)
+	if svcErr != nil {
+		return svcErr
+	}
+
+	centralRequest.SubscriptionID = newSubscriptionID
+	return k.Update(centralRequest)
 }
