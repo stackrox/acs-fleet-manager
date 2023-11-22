@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -43,7 +44,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			DeprovisionDinosaurForUsersFunc: func(users []string) *serviceError.ServiceError {
 //				panic("mock out the DeprovisionDinosaurForUsers method")
 //			},
-//			DeprovisionExpiredDinosaursFunc: func(dinosaurAgeInHours int) *serviceError.ServiceError {
+//			DeprovisionExpiredDinosaursFunc: func(lifespan *config.CentralLifespanConfig) *serviceError.ServiceError {
 //				panic("mock out the DeprovisionExpiredDinosaurs method")
 //			},
 //			DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
@@ -126,7 +127,7 @@ type DinosaurServiceMock struct {
 	DeprovisionDinosaurForUsersFunc func(users []string) *serviceError.ServiceError
 
 	// DeprovisionExpiredDinosaursFunc mocks the DeprovisionExpiredDinosaurs method.
-	DeprovisionExpiredDinosaursFunc func(dinosaurAgeInHours int) *serviceError.ServiceError
+	DeprovisionExpiredDinosaursFunc func(lifespan *config.CentralLifespanConfig) *serviceError.ServiceError
 
 	// DetectInstanceTypeFunc mocks the DetectInstanceType method.
 	DetectInstanceTypeFunc func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType
@@ -218,8 +219,8 @@ type DinosaurServiceMock struct {
 		}
 		// DeprovisionExpiredDinosaurs holds details about calls to the DeprovisionExpiredDinosaurs method.
 		DeprovisionExpiredDinosaurs []struct {
-			// DinosaurAgeInHours is the dinosaurAgeInHours argument value.
-			DinosaurAgeInHours int
+			// Lifespan is the lifespan argument value.
+			Lifespan *config.CentralLifespanConfig
 		}
 		// DetectInstanceType holds details about calls to the DetectInstanceType method.
 		DetectInstanceType []struct {
@@ -549,19 +550,19 @@ func (mock *DinosaurServiceMock) DeprovisionDinosaurForUsersCalls() []struct {
 }
 
 // DeprovisionExpiredDinosaurs calls DeprovisionExpiredDinosaursFunc.
-func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *serviceError.ServiceError {
+func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaurs(lifespan *config.CentralLifespanConfig) *serviceError.ServiceError {
 	if mock.DeprovisionExpiredDinosaursFunc == nil {
 		panic("DinosaurServiceMock.DeprovisionExpiredDinosaursFunc: method is nil but DinosaurService.DeprovisionExpiredDinosaurs was just called")
 	}
 	callInfo := struct {
-		DinosaurAgeInHours int
+		Lifespan *config.CentralLifespanConfig
 	}{
-		DinosaurAgeInHours: dinosaurAgeInHours,
+		Lifespan: lifespan,
 	}
 	mock.lockDeprovisionExpiredDinosaurs.Lock()
 	mock.calls.DeprovisionExpiredDinosaurs = append(mock.calls.DeprovisionExpiredDinosaurs, callInfo)
 	mock.lockDeprovisionExpiredDinosaurs.Unlock()
-	return mock.DeprovisionExpiredDinosaursFunc(dinosaurAgeInHours)
+	return mock.DeprovisionExpiredDinosaursFunc(lifespan)
 }
 
 // DeprovisionExpiredDinosaursCalls gets all the calls that were made to DeprovisionExpiredDinosaurs.
@@ -569,10 +570,10 @@ func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaurs(dinosaurAgeInHours 
 //
 //	len(mockedDinosaurService.DeprovisionExpiredDinosaursCalls())
 func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaursCalls() []struct {
-	DinosaurAgeInHours int
+	Lifespan *config.CentralLifespanConfig
 } {
 	var calls []struct {
-		DinosaurAgeInHours int
+		Lifespan *config.CentralLifespanConfig
 	}
 	mock.lockDeprovisionExpiredDinosaurs.RLock()
 	calls = mock.calls.DeprovisionExpiredDinosaurs

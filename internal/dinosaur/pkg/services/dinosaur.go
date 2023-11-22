@@ -99,7 +99,7 @@ type DinosaurService interface {
 	RegisterDinosaurDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionDinosaurForUsers registers all dinosaurs for deprovisioning given the list of owners
 	DeprovisionDinosaurForUsers(users []string) *errors.ServiceError
-	DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *errors.ServiceError
+	DeprovisionExpiredDinosaurs() *errors.ServiceError
 	CountByStatus(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error)
 	CountByRegionAndInstanceType() ([]DinosaurRegionCount, error)
 	ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
@@ -517,16 +517,18 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 }
 
 // DeprovisionExpiredDinosaurs cleaning up expired dinosaurs
-func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *errors.ServiceError {
+func (k *dinosaurService) DeprovisionExpiredDinosaurs() *errors.ServiceError {
 	now := time.Now()
-	dbConn := k.connectionFactory.New().
-		Model(&dbapi.CentralRequest{})
+	dbConn := k.connectionFactory.New().Model(&dbapi.CentralRequest{}).
+		Where("expired_at IS NOT NULL").Where("expired_at < ?", now.Add(-gracePeriod))
 
-	dbConn = dbConn.Where(dbConn.
-		Where("instance_type = ?", types.EVAL.String()).
-		Where("created_at  <=  ?", now.Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
-		Or("expired_at IS NOT NULL").Where("expired_at < ?", now.Add(-gracePeriod))).
-		Where("status NOT IN (?)", dinosaurDeletionStatuses)
+	if lifespan := k.dinosaurConfig.CentralLifespan; lifespan.EnableDeletionOfExpiredCentral {
+		dbConn = dbConn.Where(dbConn.
+			Or("instance_type = ?", types.EVAL.String()).
+			Where("created_at <= ?", now.Add(-1*time.Duration(lifespan.CentralLifespanInHours)*time.Hour)))
+	}
+
+	dbConn = dbConn.Where("status NOT IN (?)", dinosaurDeletionStatuses)
 
 	db := dbConn.Updates(map[string]interface{}{
 		"status":             dinosaurConstants.CentralRequestStatusDeprovision,
@@ -538,7 +540,7 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *e
 	}
 
 	if db.RowsAffected >= 1 {
-		glog.Infof("%v central_request's lifespans are over %d hours and have had their status updated to deprovisioning", db.RowsAffected, dinosaurAgeInHours)
+		glog.Infof("%v central_request's have had their status updated to deprovisioning", db.RowsAffected)
 		var counter int64
 		for ; counter < db.RowsAffected; counter++ {
 			metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
