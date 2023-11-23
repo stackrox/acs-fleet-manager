@@ -1,16 +1,16 @@
 package dbapi
 
-// DataPlaneClusterStatus ...
-type DataPlaneClusterStatus struct {
-	Conditions []DataPlaneClusterStatusCondition
+// FleetshardAddonStatus represents the actual information about the fleetshard addon installed on the cluster
+type FleetshardAddonStatus struct {
+	Version             string
+	SourceImage         string
+	PackageImage        string
+	ParametersSHA256Sum string
 }
 
-// DataPlaneClusterStatusCondition ...
-type DataPlaneClusterStatusCondition struct {
-	Type    string
-	Reason  string
-	Status  string
-	Message string
+// DataPlaneClusterStatus is the actual state reported from the data plane cluster
+type DataPlaneClusterStatus struct {
+	FleetshardAddonStatus FleetshardAddonStatus
 }
 
 // DataPlaneClusterConfigObservability ...

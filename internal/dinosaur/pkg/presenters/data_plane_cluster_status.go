@@ -6,18 +6,15 @@ import (
 )
 
 // ConvertDataPlaneClusterStatus ...
-func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRequest) (*dbapi.DataPlaneClusterStatus, error) {
-	var res dbapi.DataPlaneClusterStatus
-	res.Conditions = make([]dbapi.DataPlaneClusterStatusCondition, len(status.Conditions))
-	for i, cond := range status.Conditions {
-		res.Conditions[i] = dbapi.DataPlaneClusterStatusCondition{
-			Type:    cond.Type,
-			Reason:  cond.Reason,
-			Status:  cond.Status,
-			Message: cond.Message,
-		}
+func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRequest) dbapi.DataPlaneClusterStatus {
+	return dbapi.DataPlaneClusterStatus{
+		FleetshardAddonStatus: dbapi.FleetshardAddonStatus{
+			Version:             status.FleetshardAddonStatus.Version,
+			SourceImage:         status.FleetshardAddonStatus.SourceImage,
+			PackageImage:        status.FleetshardAddonStatus.PackageImage,
+			ParametersSHA256Sum: status.FleetshardAddonStatus.ParametersSHA256Sum,
+		},
 	}
-	return &res, nil
 }
 
 // PresentDataPlaneClusterConfig ...

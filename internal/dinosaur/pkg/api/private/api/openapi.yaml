@@ -345,21 +345,14 @@ components:
     DataPlaneClusterUpdateStatusRequest:
       description: Schema for the request to update a data plane cluster's status
       example:
-        conditions:
-        - reason: reason
-          type: type
-          message: message
-          status: status
-        - reason: reason
-          type: type
-          message: message
-          status: status
+        fleetshardAddonStatus:
+          packageImage: packageImage
+          parametersSHA256Sum: parametersSHA256Sum
+          sourceImage: sourceImage
+          version: version
       properties:
-        conditions:
-          description: The cluster data plane conditions
-          items:
-            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
-          type: array
+        fleetshardAddonStatus:
+          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_fleetshardAddonStatus'
       type: object
     DataPlaneCentralStatus:
       description: Schema of the status object for a Central
@@ -369,7 +362,7 @@ components:
         conditions:
           description: The status conditions of a Central
           items:
-            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
+            $ref: '#/components/schemas/DataPlaneCentralStatus_conditions'
           type: array
         routes:
           description: Routes created for a Central
@@ -514,12 +507,22 @@ components:
           type: array
         rhacs_operators:
           $ref: '#/components/schemas/RHACSOperatorConfigs'
-    DataPlaneClusterUpdateStatusRequest_conditions:
+    DataPlaneClusterUpdateStatusRequest_fleetshardAddonStatus:
       example:
-        reason: reason
-        type: type
-        message: message
-        status: status
+        packageImage: packageImage
+        parametersSHA256Sum: parametersSHA256Sum
+        sourceImage: sourceImage
+        version: version
+      properties:
+        version:
+          type: string
+        sourceImage:
+          type: string
+        packageImage:
+          type: string
+        parametersSHA256Sum:
+          type: string
+    DataPlaneCentralStatus_conditions:
       properties:
         type:
           type: string
