@@ -522,10 +522,11 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs() *errors.ServiceError {
 	dbConn := k.connectionFactory.New().Model(&dbapi.CentralRequest{}).
 		Where("expired_at IS NOT NULL").Where("expired_at < ?", now.Add(-gracePeriod))
 
-	if lifespan := k.dinosaurConfig.CentralLifespan; lifespan.EnableDeletionOfExpiredCentral {
+	if k.dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral {
 		dbConn = dbConn.Where(dbConn.
 			Or("instance_type = ?", types.EVAL.String()).
-			Where("created_at <= ?", now.Add(-1*time.Duration(lifespan.CentralLifespanInHours)*time.Hour)))
+			Where("created_at <= ?", now.Add(
+				-time.Duration(k.dinosaurConfig.CentralLifespan.CentralLifespanInHours)*time.Hour)))
 	}
 
 	dbConn = dbConn.Where("status NOT IN (?)", dinosaurDeletionStatuses)
