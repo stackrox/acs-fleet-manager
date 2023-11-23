@@ -7,14 +7,14 @@ import (
 )
 
 func TestDataPagerMoq(t *testing.T) {
-	pager := NewMoqPager([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
+	pager := NewMoqPager([]testDataType{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
 
 	cases := map[string]struct {
 		pageSize     int
 		pageNumber   int
-		stopOnValue  int
+		stopOnValue  testDataType
 		expectedSize int
-		expectedLast int
+		expectedLast testDataType
 	}{
 		"first page size 3": {
 			pageSize:     3,
@@ -53,8 +53,8 @@ func TestDataPagerMoq(t *testing.T) {
 			response, err := pager.Size(c.pageSize).Page(c.pageNumber).Send()
 			assert.NoError(t, err)
 			assert.Equal(t, c.expectedSize, response.Size())
-			last := 0
-			response.Items().Each(func(value int) bool {
+			var last testDataType = 0
+			response.Items().Each(func(value testDataType) bool {
 				last = value
 				return value != c.stopOnValue
 			})

@@ -7,15 +7,15 @@ import (
 )
 
 func TestFetchPages(t *testing.T) {
-	testPager := NewMoqPager(make([]byte, 21))
+	testPager := NewMoqPager(make([]testDataType, 21))
 	n := 0
 	// TODO: go 1.21 can infer the generic parameters from testPager.
 	testFetcher := fetchPages[
-		*dataPagerMoqImpl[byte],
-		*paginatedResponseMoqImpl[byte],
-		*paginatedResponseMoqImpl[byte],
-		byte]
-	err := testFetcher(&testPager, 5, 30, func(c byte) bool {
+		*paginatedRequestMoqImpl,
+		*paginatedResponseMoqImpl,
+		*paginatedResponseMoqImpl,
+		testDataType]
+	err := testFetcher(testPager, 5, 30, func(c testDataType) bool {
 		n++
 		return true
 	})
@@ -23,7 +23,7 @@ func TestFetchPages(t *testing.T) {
 	assert.Equal(t, 21, n, "Should fetch data from all pages")
 
 	n = 0
-	err = testFetcher(&testPager, 5, 30, func(c byte) bool {
+	err = testFetcher(testPager, 5, 30, func(c testDataType) bool {
 		n++
 		return n < 11
 	})
@@ -31,7 +31,7 @@ func TestFetchPages(t *testing.T) {
 	assert.Equal(t, 11, n, "Should stop if the functor returns false")
 
 	n = 0
-	err = testFetcher(&testPager, 5, 2, func(c byte) bool {
+	err = testFetcher(testPager, 5, 2, func(c testDataType) bool {
 		n++
 		return true
 	})

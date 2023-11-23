@@ -17,8 +17,12 @@ type paginatedRequest[RequestType any, ResponseType any] interface {
 	Send() (ResponseType, error)
 }
 
+// fetchPages calls OCM API with size and page request parameters, allowing for
+// paged access to the data. Example request type: *amsv1.QuotaCostListRequest,
+// with *amsv1.QuotaCost as the data in the response list.
+// Iteration stops when all or maxPages pages are retrieved, or f returns false.
 func fetchPages[RQ paginatedRequest[RQ, RS], RS paginatedResponse[I], I pageItem[Data], Data any](
-	request RQ, pageSize int, maxPages int, f func(Data) bool) error {
+	request paginatedRequest[RQ, RS], pageSize int, maxPages int, f func(Data) bool) error {
 
 	req := request.Size(pageSize)
 	for page := 1; page <= maxPages; page++ {
