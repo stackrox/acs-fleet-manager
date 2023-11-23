@@ -113,6 +113,9 @@ logging:
     - key: node-role.kubernetes.io/acscs-infra
       operator: Exists
       effect: NoSchedule
+    - key: node-role.kubernetes.io/infra
+      operator: Exists
+      effect: NoSchedule
 
 # See available parameters in charts/audit-logs/values.yaml
 # - enabled flag is used to completely enable/disable logging sub-chart
