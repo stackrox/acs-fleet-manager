@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/openshift/addon-operator/apis/addons"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
@@ -95,6 +96,7 @@ func NewScheme(t *testing.T) *runtime.Scheme {
 	require.NoError(t, clientgoscheme.AddToScheme(scheme))
 	require.NoError(t, openshiftRouteV1.Install(scheme))
 	require.NoError(t, openshiftOperatorV1.Install(scheme))
+	require.NoError(t, addons.AddToScheme(scheme))
 
 	return scheme
 }

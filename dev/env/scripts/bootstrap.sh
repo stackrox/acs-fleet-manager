@@ -50,6 +50,7 @@ else
 fi
 
 apply "${MANIFESTS_DIR}/monitoring"
+apply "${MANIFESTS_DIR}/addons"
 
 if is_local_cluster "$CLUSTER_TYPE"; then
     if [[  "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
