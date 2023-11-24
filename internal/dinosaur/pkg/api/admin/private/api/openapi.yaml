@@ -320,6 +320,57 @@ paths:
       security:
       - Bearer: []
       summary: Return the details of Central instance by ID
+  /api/rhacs/v1/admin/centrals/{id}/expired-at:
+    post:
+      operationId: updateCentralExpiredAtById
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - explode: true
+        in: query
+        name: timestamp
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Central'
+          description: Central updated by ID
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Set `expired_at` central property
   /api/rhacs/v1/admin/centrals/{id}/rotate-secrets:
     post:
       parameters:

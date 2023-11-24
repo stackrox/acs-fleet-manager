@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
@@ -35,6 +36,8 @@ type AdminCentralHandler interface {
 	Restore(w http.ResponseWriter, r *http.Request)
 	// RotateSecrets rotates secrets within central
 	RotateSecrets(w http.ResponseWriter, r *http.Request)
+	// SetExpiredAt sets the expired_at central property
+	SetExpiredAt(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -227,6 +230,24 @@ func (h adminCentralHandler) RotateSecrets(w http.ResponseWriter, r *http.Reques
 				}
 			}
 			return nil, nil
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h adminCentralHandler) SetExpiredAt(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			ts := mux.Vars(r)["timestamp"]
+			central := &dbapi.CentralRequest{ClusterID: id}
+			expired_at, err := time.Parse(time.RFC3339, ts)
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Cannot parse timestamp: %s", err.Error())
+			}
+			return nil, h.service.Updates(central, map[string]interface{}{
+				"expired_at": expired_at.UTC().Format(time.RFC3339),
+			})
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
