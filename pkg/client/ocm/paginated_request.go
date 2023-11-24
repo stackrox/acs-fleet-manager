@@ -25,22 +25,21 @@ func fetchPages[RQ paginatedRequest[RQ, RS], RS paginatedResponse[I], I pageItem
 	request paginatedRequest[RQ, RS], pageSize int, maxPages int, f func(Data) bool) error {
 
 	req := request.Size(pageSize)
-	for page := 1; page <= maxPages; page++ {
+	complete := false
+	page := 1
+	for ; !complete && page <= maxPages; page++ {
 		response, err := req.Page(page).Send()
 		if err != nil {
 			return pkgerrors.Wrapf(err, "error retrieving page %d", page)
 		}
-		keepGoing := true
 		response.Items().Each(func(data Data) bool {
-			keepGoing = f(data)
-			return keepGoing
+			complete = !f(data)
+			return !complete
 		})
-		if !keepGoing || response.Size() < pageSize {
-			break
-		}
-		if page == maxPages {
-			return pkgerrors.New("too many pages")
-		}
+		complete = complete || response.Size() < pageSize
+	}
+	if page > maxPages && !complete {
+		return pkgerrors.New("too many pages")
 	}
 	return nil
 }
