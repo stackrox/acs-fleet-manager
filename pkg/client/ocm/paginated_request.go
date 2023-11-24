@@ -17,29 +17,32 @@ type paginatedRequest[RequestType any, ResponseType any] interface {
 	Send() (ResponseType, error)
 }
 
-// fetchPages calls OCM API with size and page request parameters, allowing for
-// paged access to the data. Example request type: *amsv1.QuotaCostListRequest,
-// with *amsv1.QuotaCost as the data in the response list.
-// Iteration stops when all or maxPages pages are retrieved, or f returns false.
+// fetchPages sets the requested size of a page, and fetches pages until all
+// data is fetched, or f, called on every element, returns false, or maxPages
+// pages have been fetched.
+// In the latter case, if the last retrieved page contains pageSize elements, an
+// error is returned, indicating that there could potentially be more pages to
+// fetch.
 func fetchPages[RQ paginatedRequest[RQ, RS], RS paginatedResponse[I], I pageItem[Data], Data any](
 	request paginatedRequest[RQ, RS], pageSize int, maxPages int, f func(Data) bool) error {
 
 	req := request.Size(pageSize)
-	complete := false
-	page := 1
-	for ; !complete && page <= maxPages; page++ {
+	for page := 1; page <= maxPages; page++ {
 		response, err := req.Page(page).Send()
 		if err != nil {
 			return pkgerrors.Wrapf(err, "error retrieving page %d", page)
 		}
+		keepGoing := true
 		response.Items().Each(func(data Data) bool {
-			complete = !f(data)
-			return !complete
+			keepGoing = f(data)
+			return keepGoing
 		})
-		complete = complete || response.Size() < pageSize
-	}
-	if page > maxPages && !complete {
-		return pkgerrors.New("too many pages")
+		if !keepGoing || response.Size() < pageSize {
+			break
+		}
+		if page == maxPages {
+			return pkgerrors.New("too many pages")
+		}
 	}
 	return nil
 }

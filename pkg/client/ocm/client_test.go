@@ -43,7 +43,6 @@ func TestFetchPages(t *testing.T) {
 		n++
 		return true
 	})
-	assert.NoError(t, err, "Should not return error if last allowed page is the last one")
-	assert.Equal(t, 21, n, "Should iterate over all pages until error")
-
+	assert.NoError(t, err, "Should not return error if page[maxPage] has < pageSize elements")
+	assert.Equal(t, 21, n, "Should iterate over all elements")
 }
