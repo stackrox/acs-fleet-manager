@@ -18,7 +18,7 @@ import (
 
 const (
 	issuerURL = "https://sso.redhat.com/auth/realms/redhat-external"
-	orgID     = "11009103"
+	orgID     = "16134752"
 )
 
 func mockedClusterWithMetricsInfo(computeNodes int) (*clustersmgmtv1.Cluster, error) {
