@@ -239,7 +239,7 @@ func (h adminCentralHandler) SetExpiredAt(w http.ResponseWriter, r *http.Request
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
-			ts := mux.Vars(r)["timestamp"]
+			ts := r.PostForm.Get("timestamp")
 			central := &dbapi.CentralRequest{ClusterID: id}
 			expired_at, err := time.Parse(time.RFC3339, ts)
 			if err != nil {
