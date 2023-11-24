@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -14,6 +15,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
@@ -238,16 +240,30 @@ func (h adminCentralHandler) RotateSecrets(w http.ResponseWriter, r *http.Reques
 func (h adminCentralHandler) SetExpiredAt(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			id := mux.Vars(r)["id"]
-			ts := r.PostForm.Get("timestamp")
-			central := &dbapi.CentralRequest{ClusterID: id}
-			expired_at, err := time.Parse(time.RFC3339, ts)
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Cannot parse timestamp: %s", err.Error())
+			reason := r.PostFormValue("reason")
+			if reason == "" {
+				return nil, errors.New(errors.ErrorBadRequest, "No reason provided")
 			}
-			return nil, h.service.Updates(central, map[string]interface{}{
-				"expired_at": expired_at.UTC().Format(time.RFC3339),
+
+			id := mux.Vars(r)["id"]
+			ts := r.PostFormValue("timestamp")
+			expired_at := time.Now()
+			if ts != "" {
+				var err error
+				expired_at, err = time.Parse(time.RFC3339, ts)
+				if err != nil {
+					return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Cannot parse timestamp: %s", err.Error())
+				}
+			}
+			glog.Warningf("Setting expired_at to %q for central %q: %s", ts, id, reason)
+			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
+			svcErr := h.service.Updates(central, map[string]interface{}{
+				"expired_at": &expired_at,
 			})
+			if svcErr != nil {
+				glog.Warningf("error: ", svcErr)
+			}
+			return nil, svcErr
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)

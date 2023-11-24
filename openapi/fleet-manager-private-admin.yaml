@@ -218,6 +218,11 @@ paths:
           schema:
             type: string
           required: false
+        - in: query
+          name: reason
+          schema:
+            type: string
+          required: true
       security:
         - Bearer: [ ]
       operationId: updateCentralExpiredAtById

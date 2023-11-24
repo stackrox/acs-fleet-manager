@@ -879,12 +879,13 @@ type UpdateCentralExpiredAtByIdOpts struct {
 UpdateCentralExpiredAtById Set `expired_at` central property
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
+  - @param reason
   - @param optional nil or *UpdateCentralExpiredAtByIdOpts - Optional Parameters:
   - @param "Timestamp" (optional.String) -
 
 @return Central
 */
-func (a *DefaultApiService) UpdateCentralExpiredAtById(ctx _context.Context, id string, localVarOptionals *UpdateCentralExpiredAtByIdOpts) (Central, *_nethttp.Response, error) {
+func (a *DefaultApiService) UpdateCentralExpiredAtById(ctx _context.Context, id string, reason string, localVarOptionals *UpdateCentralExpiredAtByIdOpts) (Central, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
@@ -905,6 +906,7 @@ func (a *DefaultApiService) UpdateCentralExpiredAtById(ctx _context.Context, id 
 	if localVarOptionals != nil && localVarOptionals.Timestamp.IsSet() {
 		localVarQueryParams.Add("timestamp", parameterToString(localVarOptionals.Timestamp.Value(), ""))
 	}
+	localVarQueryParams.Add("reason", parameterToString(reason, ""))
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
