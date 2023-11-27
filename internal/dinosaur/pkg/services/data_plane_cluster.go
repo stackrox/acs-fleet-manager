@@ -78,11 +78,11 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(clusterID string,
 }
 
 func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status dbapi.DataPlaneClusterStatus) error {
-	fleetshardAddonStatusJSON, err := json.Marshal(status.FleetshardAddonStatus)
+	addonsJSON, err := json.Marshal(status.Addons)
 	if err != nil {
 		return fmt.Errorf("marshal fleetshardAddonStatus to JSON: %w", err)
 	}
-	cluster.FleetshardAddonStatus = fleetshardAddonStatusJSON
+	cluster.Addons = addonsJSON
 	if err := d.ClusterService.Update(*cluster); err != nil {
 		return fmt.Errorf("updating cluster status: %w", err)
 	}

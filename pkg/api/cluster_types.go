@@ -159,8 +159,8 @@ type Cluster struct {
 	SupportedInstanceType string `json:"supported_instance_type"`
 	// The cluster is "schedulable" if tenants can be placed there.
 	Schedulable bool `json:"schedulable"`
-	// stores the actual information about the fleetshard addon installed on the cluster
-	FleetshardAddonStatus JSON `json:"fleetshard_addon_status"`
+	// stores the actual information about addons installed on the cluster
+	Addons JSON `json:"addons"`
 }
 
 // ClusterList ...

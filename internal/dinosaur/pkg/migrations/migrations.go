@@ -51,7 +51,7 @@ func getMigrations() []*gormigrate.Migration {
 		removeCentralAndScannerOverrides(),
 		addExpiredAtFieldToCentralRequests(),
 		addExpirationLeaseType(),
-		addClusterFleetshardAddonStatus(),
+		addClusterAddons(),
 	}
 }
 

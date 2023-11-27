@@ -77,11 +77,14 @@ func TestDataPlaneClusterStatus(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 
 	resp, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, clusterID, private.DataPlaneClusterUpdateStatusRequest{
-		FleetshardAddonStatus: private.DataPlaneClusterUpdateStatusRequestFleetshardAddonStatus{
-			Version:             "0.2.0",
-			SourceImage:         "quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac",
-			PackageImage:        "quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c",
-			ParametersSHA256Sum: "f54d2c5cb370f4f87a31ccd8f72d97a85d89838720bd69278d1d40ee1cea00dc", // pragma: allowlist secret
+		Addons: []private.DataPlaneClusterUpdateStatusRequestAddons{
+			{
+				Name:                "acs-fleetshard",
+				Version:             "0.2.0",
+				SourceImage:         "quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac",
+				PackageImage:        "quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c",
+				ParametersSHA256Sum: "f54d2c5cb370f4f87a31ccd8f72d97a85d89838720bd69278d1d40ee1cea00dc", // pragma: allowlist secret
+			},
 		},
 	})
 	Expect(err).NotTo(HaveOccurred())
@@ -94,14 +97,17 @@ func TestDataPlaneClusterStatus(t *testing.T) {
 	err = db.Where(clusterDetails).First(cluster).Error
 	Expect(err).ToNot(HaveOccurred())
 
-	Expect(cluster.FleetshardAddonStatus).NotTo(BeEmpty())
+	Expect(cluster.Addons).NotTo(BeEmpty())
 
-	var fleetshardAddonStatus dbapi.FleetshardAddonStatus
-	err = json.Unmarshal(cluster.FleetshardAddonStatus, &fleetshardAddonStatus)
+	var addonInstallations []dbapi.AddonInstallation
+	err = json.Unmarshal(cluster.Addons, &addonInstallations)
 	Expect(err).ToNot(HaveOccurred())
+	Expect(addonInstallations).To(HaveLen(1))
 
-	Expect(fleetshardAddonStatus.Version).To(Equal("0.2.0"))
-	Expect(fleetshardAddonStatus.SourceImage).To(Equal("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac"))
-	Expect(fleetshardAddonStatus.PackageImage).To(Equal("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c"))
-	Expect(fleetshardAddonStatus.ParametersSHA256Sum).To(Equal("f54d2c5cb370f4f87a31ccd8f72d97a85d89838720bd69278d1d40ee1cea00dc")) // pragma: allowlist secret
+	fleetshardAddon := addonInstallations[0]
+	Expect(fleetshardAddon.Name).To(Equal("acs-fleetshard"))
+	Expect(fleetshardAddon.Version).To(Equal("0.2.0"))
+	Expect(fleetshardAddon.SourceImage).To(Equal("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac"))
+	Expect(fleetshardAddon.PackageImage).To(Equal("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c"))
+	Expect(fleetshardAddon.ParametersSHA256Sum).To(Equal("f54d2c5cb370f4f87a31ccd8f72d97a85d89838720bd69278d1d40ee1cea00dc")) // pragma: allowlist secret
 }

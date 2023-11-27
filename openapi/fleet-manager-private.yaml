@@ -354,17 +354,21 @@ components:
       description: "Schema for the request to update a data plane cluster's status"
       type: object
       properties:
-        fleetshardAddonStatus:
-          type: object
-          properties:
-            version:
-              type: string
-            sourceImage:
-              type: string
-            packageImage:
-              type: string
-            parametersSHA256Sum:
-              type: string
+        addons:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              version:
+                type: string
+              sourceImage:
+                type: string
+              packageImage:
+                type: string
+              parametersSHA256Sum:
+                type: string
     DataPlaneCentralStatus:
       description: "Schema of the status object for a Central"
       type: object

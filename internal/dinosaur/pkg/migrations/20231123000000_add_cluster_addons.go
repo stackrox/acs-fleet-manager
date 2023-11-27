@@ -8,14 +8,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func addClusterFleetshardAddonStatus() *gormigrate.Migration {
+func addClusterAddons() *gormigrate.Migration {
 	type Cluster struct {
 		db.Model
-		FleetshardAddonStatus api.JSON `json:"fleetshard_addon_status"`
+		Addons api.JSON `json:"addons"`
 	}
 
 	migrationID := "20231123000000"
-	colName := "FleetshardAddonStatus"
+	colName := "Addons"
 
 	return &gormigrate.Migration{
 		ID: migrationID,

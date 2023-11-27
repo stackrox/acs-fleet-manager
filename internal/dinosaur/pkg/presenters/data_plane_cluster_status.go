@@ -7,13 +7,19 @@ import (
 
 // ConvertDataPlaneClusterStatus ...
 func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRequest) dbapi.DataPlaneClusterStatus {
+	var addonInstallations []dbapi.AddonInstallation
+	for _, addon := range status.Addons {
+		addonInstallations = append(addonInstallations, dbapi.AddonInstallation{
+			Name:                addon.Name,
+			Version:             addon.Version,
+			SourceImage:         addon.SourceImage,
+			PackageImage:        addon.PackageImage,
+			ParametersSHA256Sum: addon.ParametersSHA256Sum,
+		})
+	}
+
 	return dbapi.DataPlaneClusterStatus{
-		FleetshardAddonStatus: dbapi.FleetshardAddonStatus{
-			Version:             status.FleetshardAddonStatus.Version,
-			SourceImage:         status.FleetshardAddonStatus.SourceImage,
-			PackageImage:        status.FleetshardAddonStatus.PackageImage,
-			ParametersSHA256Sum: status.FleetshardAddonStatus.ParametersSHA256Sum,
-		},
+		Addons: addonInstallations,
 	}
 }
 
@@ -29,6 +35,5 @@ func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private
 			},
 		},
 	}
-
 	return res
 }

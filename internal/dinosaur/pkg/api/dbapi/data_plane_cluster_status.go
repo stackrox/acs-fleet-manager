@@ -1,7 +1,8 @@
 package dbapi
 
-// FleetshardAddonStatus represents the actual information about the fleetshard addon installed on the cluster
-type FleetshardAddonStatus struct {
+// AddonInstallation represents the actual information about addons installed on the cluster
+type AddonInstallation struct {
+	Name                string
 	Version             string
 	SourceImage         string
 	PackageImage        string
@@ -10,7 +11,7 @@ type FleetshardAddonStatus struct {
 
 // DataPlaneClusterStatus is the actual state reported from the data plane cluster
 type DataPlaneClusterStatus struct {
-	FleetshardAddonStatus FleetshardAddonStatus
+	Addons []AddonInstallation
 }
 
 // DataPlaneClusterConfigObservability ...

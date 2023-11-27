@@ -12,5 +12,5 @@ package private
 
 // DataPlaneClusterUpdateStatusRequest Schema for the request to update a data plane cluster's status
 type DataPlaneClusterUpdateStatusRequest struct {
-	FleetshardAddonStatus DataPlaneClusterUpdateStatusRequestFleetshardAddonStatus `json:"fleetshardAddonStatus,omitempty"`
+	Addons []DataPlaneClusterUpdateStatusRequestAddons `json:"addons,omitempty"`
 }
