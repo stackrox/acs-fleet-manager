@@ -209,8 +209,8 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
   '/api/rhacs/v1/admin/centrals/{id}/expired-at':
-    post:
-      summary: Set `expired_at` central property
+    patch:
+      summary: Update `expired_at` central property
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
         - in: query

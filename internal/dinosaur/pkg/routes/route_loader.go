@@ -255,7 +255,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminCentralsRouter.HandleFunc("/{id}/rotate-secrets", adminCentralHandler.RotateSecrets).
 		Name(logger.NewLogEvent("admin-rotate-central-secrets", "[admin] rotate central secrets by id").ToString()).
 		Methods(http.MethodPost)
-	adminCentralsRouter.HandleFunc("/{id}/expired-at", adminCentralHandler.SetExpiredAt).
+	adminCentralsRouter.HandleFunc("/{id}/expired-at", adminCentralHandler.PatchExpiredAt).
 		Name(logger.NewLogEvent("admin-expired-at", "[admin] set `expired_at` central property").ToString()).
 		Methods(http.MethodPost)
 

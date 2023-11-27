@@ -321,7 +321,7 @@ paths:
       - Bearer: []
       summary: Return the details of Central instance by ID
   /api/rhacs/v1/admin/centrals/{id}/expired-at:
-    post:
+    patch:
       operationId: updateCentralExpiredAtById
       parameters:
       - description: The ID of record
@@ -377,7 +377,7 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Set `expired_at` central property
+      summary: Update `expired_at` central property
   /api/rhacs/v1/admin/centrals/{id}/rotate-secrets:
     post:
       parameters:

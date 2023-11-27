@@ -38,8 +38,8 @@ type AdminCentralHandler interface {
 	Restore(w http.ResponseWriter, r *http.Request)
 	// RotateSecrets rotates secrets within central
 	RotateSecrets(w http.ResponseWriter, r *http.Request)
-	// SetExpiredAt sets the expired_at central property
-	SetExpiredAt(w http.ResponseWriter, r *http.Request)
+	// PatchExpiredAt sets the expired_at central property
+	PatchExpiredAt(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -237,7 +237,7 @@ func (h adminCentralHandler) RotateSecrets(w http.ResponseWriter, r *http.Reques
 	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
-func (h adminCentralHandler) SetExpiredAt(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) PatchExpiredAt(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			reason := r.PostFormValue("reason")
@@ -257,13 +257,9 @@ func (h adminCentralHandler) SetExpiredAt(w http.ResponseWriter, r *http.Request
 			}
 			glog.Warningf("Setting expired_at to %q for central %q: %s", ts, id, reason)
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
-			svcErr := h.service.Updates(central, map[string]interface{}{
+			return nil, h.service.Updates(central, map[string]interface{}{
 				"expired_at": &expired_at,
 			})
-			if svcErr != nil {
-				glog.Warningf("error: ", svcErr)
-			}
-			return nil, svcErr
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
