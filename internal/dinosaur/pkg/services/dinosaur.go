@@ -1040,7 +1040,7 @@ func convertCentralRequestToString(req *dbapi.CentralRequest) string {
 	return fmt.Sprintf("%+v", requestAsMap)
 }
 
-func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID string, organizationID string, cloudAccountID string, cloudProvider string) *errors.ServiceError {
+func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID string, organisationID string, cloudAccountID string, cloudProvider string) *errors.ServiceError {
 	centralRequest, svcErr := k.GetByID(centralID)
 	if svcErr != nil {
 		return svcErr
@@ -1048,7 +1048,7 @@ func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID stri
 
 	centralRequest.CloudAccountID = cloudAccountID
 	centralRequest.CloudProvider = cloudProvider
-	centralRequest.OrganisationID = organizationID
+	centralRequest.OrganisationID = organisationID
 
 	newSubscriptionID, svcErr := k.reserveQuota(ctx, centralRequest)
 	if svcErr != nil {
