@@ -257,7 +257,6 @@ paths:
             application/json:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
-
   '/api/rhacs/v1/admin/centrals/{id}/rotate-secrets':
     post:
       summary: Rotate RHSSO client of a central tenant
@@ -406,6 +405,10 @@ components:
             updated_at:
               format: date-time
               type: string
+            expired_at:
+              format: date-time
+              type: string
+              nullable: true
             failed_reason:
               type: string
             organisation_id:

@@ -625,6 +625,10 @@ components:
         updated_at:
           format: date-time
           type: string
+        expired_at:
+          format: date-time
+          nullable: true
+          type: string
         failed_reason:
           type: string
         organisation_id:
