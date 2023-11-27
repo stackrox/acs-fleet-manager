@@ -521,6 +521,7 @@ paths:
       summary: Restore a central tenant that was already deleted
   /api/rhacs/v1/admin/centrals/{id}/billing-model:
     patch:
+      operationId: changeBillingModel
       parameters:
       - description: The ID of record
         in: path
@@ -551,7 +552,7 @@ paths:
         style: form
       responses:
         "200":
-          description: RHSSO client successfully rotated
+          description: Billing model changed
         "401":
           content:
             application/json:
@@ -577,7 +578,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
-      summary: Rotate RHSSO client of a central tenant
+      summary: Change central billing model
   /api/rhacs/v1/admin/centrals/db/{id}:
     delete:
       operationId: deleteDbCentralById
