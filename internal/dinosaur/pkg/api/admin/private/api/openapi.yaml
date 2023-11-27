@@ -466,6 +466,65 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
       summary: Restore a central tenant that was already deleted
+  /api/rhacs/v1/admin/centrals/{id}/billing-model:
+    patch:
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - explode: true
+        in: query
+        name: organisation_id
+        required: true
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: cloud_account_id
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: cloud_provider
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          description: RHSSO client successfully rotated
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID or dynamic clients are
+            not configured
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Rotate RHSSO client of a central tenant
   /api/rhacs/v1/admin/centrals/db/{id}:
     delete:
       operationId: deleteDbCentralById

@@ -40,6 +40,8 @@ type AdminCentralHandler interface {
 	RotateSecrets(w http.ResponseWriter, r *http.Request)
 	// PatchExpiredAt sets the expired_at central property
 	PatchExpiredAt(w http.ResponseWriter, r *http.Request)
+	// PatchBillingModel changes the billing model of a central
+	PatchBillingModel(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -260,6 +262,19 @@ func (h adminCentralHandler) PatchExpiredAt(w http.ResponseWriter, r *http.Reque
 			return nil, h.service.Updates(central, map[string]interface{}{
 				"expired_at": &expired_at,
 			})
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h adminCentralHandler) PatchBillingModel(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			organisationID := r.PostFormValue("organisation_id")
+			cloudAccountID := r.PostFormValue("cloud_account_id")
+			cloudProvider := r.PostFormValue("cloud_provider")
+			return nil, h.service.ChangeBillingModel(r.Context(), id, organisationID, cloudAccountID, cloudProvider)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
