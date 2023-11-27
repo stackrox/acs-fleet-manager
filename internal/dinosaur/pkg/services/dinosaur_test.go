@@ -7,10 +7,12 @@ import (
 
 	mocket "github.com/selvatico/go-mocket"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
 
@@ -171,4 +173,33 @@ func Test_dinosaurService_Get(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
+	k := &dinosaurService{
+		connectionFactory: db.NewMockConnectionFactory(nil),
+		dinosaurConfig: &config.CentralConfig{
+			CentralLifespan: config.NewCentralLifespanConfig(),
+		},
+	}
+
+	m := mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "central_requests" ` +
+		`SET "deletion_timestamp"=$1,"status"=$2,"updated_at"=$3 WHERE ` +
+		`(expired_at IS NOT NULL AND expired_at < $4 OR instance_type = $5 AND created_at <= $6) ` +
+		`AND status NOT IN ($7,$8) AND "central_requests"."deleted_at" IS NULL`).
+		OneTime()
+
+	svcErr := k.DeprovisionExpiredDinosaurs()
+	assert.Nil(t, svcErr)
+	assert.True(t, m.Triggered)
+
+	m = mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "central_requests" ` +
+		`SET "deletion_timestamp"=$1,"status"=$2,"updated_at"=$3 WHERE ` +
+		`expired_at IS NOT NULL AND expired_at < $4 ` +
+		`AND status NOT IN ($5,$6) AND "central_requests"."deleted_at" IS NULL`).
+		OneTime()
+	k.dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral = false
+	svcErr = k.DeprovisionExpiredDinosaurs()
+	assert.Nil(t, svcErr)
+	assert.True(t, m.Triggered)
 }
