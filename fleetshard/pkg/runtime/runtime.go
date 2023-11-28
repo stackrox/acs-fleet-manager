@@ -219,7 +219,7 @@ func (r *Runtime) Start() error {
 			}
 		}
 
-		if features.FleetshardAddonAutoUpgrade.Enabled() {
+		if features.AddonAutoUpgrade.Enabled() {
 			if err := r.sendClusterStatus(ctx); err != nil {
 				glog.Errorf("Failed to send cluster status update due to an error: %v", err)
 			}
@@ -354,11 +354,14 @@ func (r *Runtime) sendClusterStatus(ctx context.Context) error {
 	}
 
 	_, err = r.client.PrivateAPI().UpdateAgentClusterStatus(ctx, r.clusterID, private.DataPlaneClusterUpdateStatusRequest{
-		FleetshardAddonStatus: private.DataPlaneClusterUpdateStatusRequestFleetshardAddonStatus{
-			Version:             addon.Version,
-			SourceImage:         addon.SourceImage,
-			PackageImage:        addon.PackageImage,
-			ParametersSHA256Sum: addon.Parameters.SHA256Sum(),
+		Addons: []private.DataPlaneClusterUpdateStatusRequestAddons{
+			{
+				Name:                addonName,
+				Version:             addon.Version,
+				SourceImage:         addon.SourceImage,
+				PackageImage:        addon.PackageImage,
+				ParametersSHA256Sum: addon.Parameters.SHA256Sum(),
+			},
 		},
 	})
 
