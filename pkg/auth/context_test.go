@@ -7,36 +7,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestContext_GetAccountIdFromClaims(t *testing.T) {
-	tests := []struct {
-		name   string
-		claims ACSClaims
-		want   string
-	}{
-		{
-			name:   "Should return empty when tenantAccountIdClaim is empty",
-			claims: ACSClaims{},
-			want:   "",
-		},
-		{
-			name: "Should return when tenantAccountIdClaim is not empty",
-			claims: ACSClaims{
-				tenantAccountIDClaim: "Test_account_id",
-			},
-			want: "Test_account_id",
-		},
-	}
-
-	RegisterTestingT(t)
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			accountID, _ := tt.claims.GetAccountID()
-			Expect(accountID).To(Equal(tt.want))
-		})
-	}
-}
-
 func TestContext_GetUserIdFromClaims(t *testing.T) {
 	tests := []struct {
 		name    string

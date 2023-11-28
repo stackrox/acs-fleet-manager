@@ -28,14 +28,6 @@ func (c *ACSClaims) GetUsername() (string, error) {
 		tenantUsernameClaim, alternateTenantUsernameClaim)
 }
 
-// GetAccountID ...
-func (c *ACSClaims) GetAccountID() (string, error) {
-	if accountID, ok := (*c)[tenantAccountIDClaim].(string); ok {
-		return accountID, nil
-	}
-	return "", fmt.Errorf("can't find %q attribute in claims", tenantAccountIDClaim)
-}
-
 // GetUserID returns the user id of the Red Hat account associated to the token.
 func (c *ACSClaims) GetUserID() (string, error) {
 	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil },

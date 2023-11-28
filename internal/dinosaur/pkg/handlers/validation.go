@@ -108,7 +108,6 @@ func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.
 
 		dinosaurRequest.Owner, _ = claims.GetUsername()
 		dinosaurRequest.OrganisationID, _ = claims.GetOrgID()
-		dinosaurRequest.OwnerAccountID, _ = claims.GetAccountID()
 		dinosaurRequest.OwnerUserID, _ = claims.GetSubject()
 
 		return nil
