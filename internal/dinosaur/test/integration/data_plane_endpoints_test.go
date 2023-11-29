@@ -79,7 +79,7 @@ func TestDataPlaneClusterStatus(t *testing.T) {
 	resp, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, clusterID, private.DataPlaneClusterUpdateStatusRequest{
 		Addons: []private.DataPlaneClusterUpdateStatusRequestAddons{
 			{
-				Name:                "acs-fleetshard",
+				Id:                  "acs-fleetshard",
 				Version:             "0.2.0",
 				SourceImage:         "quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac",
 				PackageImage:        "quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c",
@@ -105,7 +105,7 @@ func TestDataPlaneClusterStatus(t *testing.T) {
 	Expect(addonInstallations).To(HaveLen(1))
 
 	fleetshardAddon := addonInstallations[0]
-	Expect(fleetshardAddon.Name).To(Equal("acs-fleetshard"))
+	Expect(fleetshardAddon.ID).To(Equal("acs-fleetshard"))
 	Expect(fleetshardAddon.Version).To(Equal("0.2.0"))
 	Expect(fleetshardAddon.SourceImage).To(Equal("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac"))
 	Expect(fleetshardAddon.PackageImage).To(Equal("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c"))

@@ -10,7 +10,7 @@ func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRe
 	var addonInstallations []dbapi.AddonInstallation
 	for _, addon := range status.Addons {
 		addonInstallations = append(addonInstallations, dbapi.AddonInstallation{
-			Name:                addon.Name,
+			ID:                  addon.Id,
 			Version:             addon.Version,
 			SourceImage:         addon.SourceImage,
 			PackageImage:        addon.PackageImage,

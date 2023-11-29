@@ -347,13 +347,13 @@ components:
       example:
         addons:
         - packageImage: packageImage
-          name: name
           parametersSHA256Sum: parametersSHA256Sum
+          id: id
           sourceImage: sourceImage
           version: version
         - packageImage: packageImage
-          name: name
           parametersSHA256Sum: parametersSHA256Sum
+          id: id
           sourceImage: sourceImage
           version: version
       properties:
@@ -518,12 +518,12 @@ components:
     DataPlaneClusterUpdateStatusRequest_addons:
       example:
         packageImage: packageImage
-        name: name
         parametersSHA256Sum: parametersSHA256Sum
+        id: id
         sourceImage: sourceImage
         version: version
       properties:
-        name:
+        id:
           type: string
         version:
           type: string

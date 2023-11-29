@@ -12,7 +12,7 @@ package private
 
 // DataPlaneClusterUpdateStatusRequestAddons struct for DataPlaneClusterUpdateStatusRequestAddons
 type DataPlaneClusterUpdateStatusRequestAddons struct {
-	Name                string `json:"name,omitempty"`
+	Id                  string `json:"id,omitempty"`
 	Version             string `json:"version,omitempty"`
 	SourceImage         string `json:"sourceImage,omitempty"`
 	PackageImage        string `json:"packageImage,omitempty"`

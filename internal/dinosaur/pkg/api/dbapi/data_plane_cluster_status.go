@@ -2,7 +2,7 @@ package dbapi
 
 // AddonInstallation represents the actual information about addons installed on the cluster
 type AddonInstallation struct {
-	Name                string
+	ID                  string
 	Version             string
 	SourceImage         string
 	PackageImage        string

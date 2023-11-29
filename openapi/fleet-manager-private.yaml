@@ -359,7 +359,7 @@ components:
           items:
             type: object
             properties:
-              name:
+              id:
                 type: string
               version:
                 type: string
