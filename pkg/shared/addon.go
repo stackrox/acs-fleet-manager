@@ -13,7 +13,7 @@ type AddonParameters map[string]string
 
 // Addon contains information about the addons on the cluster
 type Addon struct {
-	Name         string
+	ID           string
 	Version      string
 	SourceImage  string
 	PackageImage string

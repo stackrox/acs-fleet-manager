@@ -22,7 +22,7 @@ func Test_addonService_GetAddon(t *testing.T) {
 		k8sClient ctrlClient.Client
 	}
 	type args struct {
-		name string
+		id string
 	}
 	tests := []struct {
 		name    string
@@ -34,7 +34,7 @@ func Test_addonService_GetAddon(t *testing.T) {
 		{
 			name: "should retrieve the addon when it exists",
 			args: args{
-				name: "acs-fleetshard",
+				id: "acs-fleetshard",
 			},
 			fields: fields{
 				k8sClient: testutils.NewFakeClientBuilder(t,
@@ -48,7 +48,7 @@ func Test_addonService_GetAddon(t *testing.T) {
 				).Build(),
 			},
 			want: shared.Addon{
-				Name:         "acs-fleetshard",
+				ID:           "acs-fleetshard",
 				Version:      "0.2.0",
 				SourceImage:  "quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac",
 				PackageImage: "quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c",
@@ -60,7 +60,7 @@ func Test_addonService_GetAddon(t *testing.T) {
 		{
 			name: "should return error when addon does not exist",
 			args: args{
-				name: "acs-fleetshard",
+				id: "acs-fleetshard",
 			},
 			fields: fields{
 				k8sClient: testutils.NewFakeClientBuilder(t).Build(), // no objects
@@ -70,7 +70,7 @@ func Test_addonService_GetAddon(t *testing.T) {
 		{
 			name: "should return error when no package secret",
 			args: args{
-				name: "acs-fleetshard",
+				id: "acs-fleetshard",
 			},
 			fields: fields{
 				k8sClient: testutils.NewFakeClientBuilder(t,
@@ -84,7 +84,7 @@ func Test_addonService_GetAddon(t *testing.T) {
 			},
 			wantErr: true,
 			want: shared.Addon{
-				Name:         "acs-fleetshard",
+				ID:           "acs-fleetshard",
 				Version:      "0.2.0",
 				SourceImage:  "quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac",
 				PackageImage: "quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c",
@@ -96,7 +96,7 @@ func Test_addonService_GetAddon(t *testing.T) {
 			ad := &addonService{
 				k8sClient: tt.fields.k8sClient,
 			}
-			got, err := ad.GetAddon(context.TODO(), tt.args.name)
+			got, err := ad.GetAddon(context.TODO(), tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetAddon() error = %v, wantErr %v", err, tt.wantErr)
 				return

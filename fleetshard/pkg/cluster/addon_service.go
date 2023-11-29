@@ -14,8 +14,8 @@ import (
 
 // AddonService allows to access addons installed on a cluster
 type AddonService interface {
-	// GetAddon returns the addon with the specified name or error in case service fails to find such an addon
-	GetAddon(ctx context.Context, name string) (shared.Addon, error)
+	// GetAddon returns the addon with the specified ID or error in case service fails to find such an addon
+	GetAddon(ctx context.Context, id string) (shared.Addon, error)
 }
 
 var (
@@ -33,14 +33,14 @@ func NewAddonService(k8sClient ctrlClient.Client) AddonService {
 	}
 }
 
-func (s *addonService) GetAddon(ctx context.Context, name string) (shared.Addon, error) {
+func (s *addonService) GetAddon(ctx context.Context, id string) (shared.Addon, error) {
 	addonObj := addonsV1alpha1.Addon{}
 	addon := shared.Addon{}
-	if err := s.k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: name}, &addonObj); err != nil {
-		return addon, fmt.Errorf("get addon %s: %w", name, err)
+	if err := s.k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: id}, &addonObj); err != nil {
+		return addon, fmt.Errorf("get addon %s: %w", id, err)
 	}
 
-	addon.Name = addonObj.Name
+	addon.ID = addonObj.Name
 	addon.Version = addonObj.Spec.Version
 
 	if addonObj.Spec.Install.OLMOwnNamespace == nil {
@@ -53,7 +53,7 @@ func (s *addonService) GetAddon(ctx context.Context, name string) (shared.Addon,
 	}
 	addon.PackageImage = addonObj.Spec.AddonPackageOperator.Image
 
-	secret, err := s.getAddonParametersSecret(ctx, addonObj.Spec.Install.OLMOwnNamespace.Namespace, name)
+	secret, err := s.getAddonParametersSecret(ctx, addonObj.Spec.Install.OLMOwnNamespace.Namespace, id)
 	if err != nil {
 		return addon, err
 	}
@@ -66,8 +66,8 @@ func (s *addonService) GetAddon(ctx context.Context, name string) (shared.Addon,
 	return addon, nil
 }
 
-func (s *addonService) getAddonParametersSecret(ctx context.Context, namespace string, addonName string) (corev1.Secret, error) {
-	secretName := fmt.Sprintf("addon-%s-parameters", addonName)
+func (s *addonService) getAddonParametersSecret(ctx context.Context, namespace string, addonID string) (corev1.Secret, error) {
+	secretName := fmt.Sprintf("addon-%s-parameters", addonID)
 	secret := corev1.Secret{} // pragma: allowlist secret
 	err := s.k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: secretName}, &secret)
 
