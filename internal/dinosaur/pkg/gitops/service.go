@@ -52,8 +52,6 @@ type CentralParams struct {
 	SubscriptionID string
 	// Owner is the owner of the Central instance.
 	Owner string
-	// OwnerAccountID is the owner account ID of the Central instance.
-	OwnerAccountID string
 	// OwnerUserID is the owner user ID of the Central instance.
 	OwnerUserID string
 	// Host is the host of the Central instance.
