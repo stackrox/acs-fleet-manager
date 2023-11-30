@@ -186,7 +186,6 @@ func centralParamsFromRequest(centralRequest *dbapi.CentralRequest) gitops.Centr
 		CloudAccountID:   centralRequest.CloudAccountID,
 		SubscriptionID:   centralRequest.SubscriptionID,
 		Owner:            centralRequest.Owner,
-		OwnerAccountID:   centralRequest.OwnerAccountID,
 		OwnerUserID:      centralRequest.OwnerUserID,
 		Host:             centralRequest.Host,
 		OrganizationID:   centralRequest.OrganisationID,
