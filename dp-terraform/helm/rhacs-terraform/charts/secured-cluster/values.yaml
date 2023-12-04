@@ -30,10 +30,10 @@ compliance:
 nodeInventory:
   resources:
     requests:
-      memory: 100Mi
+      memory: 180Mi
       cpu: 20m
     limits:
-      memory: 200Mi
+      memory: 180Mi
 scanner:
   scannerComponent: null
   analyzer:
