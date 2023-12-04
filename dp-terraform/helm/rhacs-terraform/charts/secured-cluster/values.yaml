@@ -7,20 +7,33 @@ centralEndpoint: ""
 admissionControl:
   resources:
     requests:
-      memory: 100Mi
+      memory: 130Mi
       cpu: 100m
+    limits:
+      memory: 150Mi
   tolerations: []
   nodeSelector: {}
 collector:
   resources:
     requests:
-      memory: 50Mi
+      memory: 140Mi
       cpu: 10m
+    limits:
+      memory: 140Mi
 compliance:
   resources:
     requests:
       memory: 100Mi
       cpu: 100m
+    limits:
+      memory: 100Mi
+nodeInventory:
+  resources:
+    requests:
+      memory: 100Mi
+      cpu: 20m
+    limits:
+      memory: 200Mi
 scanner:
   scannerComponent: null
   analyzer:
@@ -40,7 +53,9 @@ scanner:
 sensor:
   resources:
     requests:
-      memory: 100Mi
+      memory: 2700Mi
       cpu: 10m
+    limits:
+      memory: 3500Mi
   tolerations: []
   nodeSelector: {}
