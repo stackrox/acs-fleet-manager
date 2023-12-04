@@ -53,7 +53,7 @@ scanner:
 sensor:
   resources:
     requests:
-      memory: 2700Mi
+      memory: 3500Mi
       cpu: 10m
     limits:
       memory: 3500Mi
