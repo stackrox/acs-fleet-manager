@@ -4,7 +4,7 @@ egressProxy:
   resources:
     requests:
       cpu: 100m
-      memory: 180Mi
+      memory: 220Mi
     limits:
       cpu: 200m
       memory: 220Mi
