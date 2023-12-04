@@ -23,7 +23,7 @@ collector:
 compliance:
   resources:
     requests:
-      memory: 100Mi
+      memory: 140Mi
       cpu: 100m
     limits:
       memory: 140Mi
