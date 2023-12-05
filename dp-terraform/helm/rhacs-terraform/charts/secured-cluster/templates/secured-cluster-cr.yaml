@@ -44,6 +44,11 @@ spec:
       {{- if .Values.compliance.resources }}
       resources: {{ toYaml .Values.compliance.resources | nindent 8 }}
       {{- end }}
+    nodeInventory:
+      {{- if .Values.nodeInventory.resources }}
+      resources: {{ toYaml .Values.nodeInventory.resources | nindent 8 }}
+      {{- end }}
+
   scanner:
     {{- if .Values.scanner.scannerComponent }}
     scannerComponent: {{ .Values.scanner.scannerComponent }}

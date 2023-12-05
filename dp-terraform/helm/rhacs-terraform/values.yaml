@@ -3,7 +3,9 @@
 # Declare variables to be passed into your templates.
 
 fleetshardSync:
-  image: "quay.io/app-sre/acs-fleet-manager:59142fe"
+  image:
+    repo: "quay.io/app-sre/acs-fleet-manager"
+    tag: "main"
   # Can be either OCM, RHSSO, STATIC_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses RHSSO.
   authType: "RHSSO"
   # OCM refresh token, only required in combination with authType=OCM.
@@ -111,8 +113,9 @@ logging:
     - key: node-role.kubernetes.io/acscs-infra
       operator: Exists
       effect: NoSchedule
-  nodeSelector:
-    node-role.kubernetes.io/acscs-infra: ""
+    - key: node-role.kubernetes.io/infra
+      operator: Exists
+      effect: NoSchedule
 
 # See available parameters in charts/audit-logs/values.yaml
 # - enabled flag is used to completely enable/disable logging sub-chart
@@ -190,20 +193,6 @@ secured-cluster:
       node-role.kubernetes.io/acscs-infra: ""
   scanner:
     scannerComponent: Disabled
-    analyzer:
-      tolerations:
-        - key: node-role.kubernetes.io/acscs-infra
-          operator: Exists
-          effect: NoSchedule
-      nodeSelector:
-        node-role.kubernetes.io/acscs-infra: ""
-    db:
-      tolerations:
-        - key: node-role.kubernetes.io/acscs-infra
-          operator: Exists
-          effect: NoSchedule
-      nodeSelector:
-        node-role.kubernetes.io/acscs-infra: ""
 
 external-secrets:
   fullnameOverride: rhacs-external-secrets

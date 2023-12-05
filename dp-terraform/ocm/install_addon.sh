@@ -23,6 +23,9 @@ init_chamber
 
 load_external_config secured-cluster SECURED_CLUSTER_
 
+PROMETHEUS_MEMORY_LIMIT=${PROMETHEUS_MEMORY_LIMIT:-"20Gi"}
+PROMETHEUS_MEMORY_REQUEST=${PROMETHEUS_MEMORY_REQUEST:-"20Gi"}
+
 case $ENVIRONMENT in
   dev)
     FM_ENDPOINT="http://fleet-manager.rhacs.svc.cluster.local:8000"
@@ -33,6 +36,8 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"512Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"500m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"512Mi"}"
+    PROMETHEUS_MEMORY_LIMIT="30Gi"
+    PROMETHEUS_MEMORY_REQUEST="30Gi"
     SECURED_CLUSTER_ENABLED="false"
     ;;
 
@@ -45,7 +50,7 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
-    SECURED_CLUSTER_ENABLED="false"  # TODO(ROX-18908): enable
+    SECURED_CLUSTER_ENABLED="true"
     ;;
 
   stage)
@@ -84,15 +89,7 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     exit 2
 fi
 
-FLEETSHARD_SYNC_ORG="app-sre"
-FLEETSHARD_SYNC_IMAGE="acs-fleet-manager"
-FLEETSHARD_SYNC_TAG="$(make --quiet --no-print-directory -C "${ROOT_DIR}" tag)"
-
-if [[ "${ADDON_DRY_RUN:-}" == "true" ]]; then
-    "${ROOT_DIR}/scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
-else
-    "${ROOT_DIR}/scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
-fi
+FLEETSHARD_OPERATOR_TAG="$(make --quiet --no-print-directory -C "${ROOT_DIR}" tag)"
 
 echo "Loading external config: audit-logs/${CLUSTER_NAME}"
 load_external_config "audit-logs/${CLUSTER_NAME}" AUDIT_LOGS_
@@ -118,27 +115,21 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "acscsEnvironment", "value": "${ENVIRONMENT}" },
             { "id": "auditLogsLogGroupName", "value": "${AUDIT_LOGS_LOG_GROUP_NAME:-}" },
             { "id": "auditLogsRoleArn", "value": "${AUDIT_LOGS_ROLE_ARN:-}" },
-            { "id": "fleetshardSyncAuthType", "value": "RHSSO" },
-            { "id": "fleetshardSyncImageTag", "value": "quay.io/${FLEETSHARD_SYNC_ORG}/${FLEETSHARD_SYNC_IMAGE}:${FLEETSHARD_SYNC_TAG}" },
+            { "id": "fleetshardOperatorImageTag", "value": "${FLEETSHARD_OPERATOR_TAG}" },
             { "id": "fleetshardSyncAwsRegion", "value": "${CLUSTER_REGION}" },
             { "id": "fleetshardSyncFleetManagerEndpoint", "value": "${FM_ENDPOINT}" },
-            { "id": "fleetshardSyncManagedDbEnabled", "value": "true" },
-            { "id": "fleetshardSyncManagedDbPerformanceInsights", "value": "true" },
             { "id": "fleetshardSyncManagedDbSecurityGroup", "value": "${CLUSTER_MANAGED_DB_SECURITY_GROUP}" },
             { "id": "fleetshardSyncManagedDbSubnetGroup", "value": "${CLUSTER_MANAGED_DB_SUBNET_GROUP}" },
-            { "id": "fleetshardSyncRedHatSsoEndpoint", "value": "https://sso.redhat.com" },
-            { "id": "fleetshardSyncRedHatSsoRealm", "value": "redhat-external" },
             { "id": "fleetshardSyncResourcesLimitsCpu", "value": "${FLEETSHARD_SYNC_CPU_LIMIT}" },
             { "id": "fleetshardSyncResourcesLimitsMemory", "value": "${FLEETSHARD_SYNC_MEMORY_LIMIT}" },
             { "id": "fleetshardSyncResourcesRequestsCpu", "value": "${FLEETSHARD_SYNC_CPU_REQUEST}" },
             { "id": "fleetshardSyncResourcesRequestsMemory", "value": "${FLEETSHARD_SYNC_MEMORY_REQUEST}" },
             { "id": "fleetshardSyncSecretEncryptionKeyId", "value": "${CLUSTER_SECRET_ENCRYPTION_KEY_ID}" },
-            { "id": "fleetshardSyncSecretEncryptionType", "value": "kms" },
-            { "id": "loggingAwsRegion", "value": "us-east-1" },
             { "id": "loggingGroupPrefix", "value": "${CLUSTER_NAME}" },
             { "id": "observabilityGithubTag", "value": "${OBSERVABILITY_GITHUB_TAG}" },
-            { "id": "observabilityObservatoriumAuthType", "value": "redhat" },
             { "id": "observabilityObservatoriumGateway", "value": "${OBSERVABILITY_OBSERVATORIUM_GATEWAY}" },
+            { "id": "observabilityPrometheusResourcesLimitsMemory", "value" : "${PROMETHEUS_MEMORY_LIMIT}" },
+            { "id": "observabilityPrometheusResourcesRequestsMemory", "value": "${PROMETHEUS_MEMORY_REQUEST}" },
             { "id": "observabilityOperatorVersion", "value": "${OBSERVABILITY_OPERATOR_VERSION}" },
             { "id": "securedClusterCentralEndpoint", "value": "${SECURED_CLUSTER_CENTRAL_ENDPOINT}" },
             { "id": "securedClusterEnabled", "value": "${SECURED_CLUSTER_ENABLED}" },

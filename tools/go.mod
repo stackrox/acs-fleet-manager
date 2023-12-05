@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/go-bindata/go-bindata/v3 v3.1.4-0.20210427095211-26949cc13d95
 	github.com/matryer/moq v0.3.3
-	github.com/onsi/ginkgo/v2 v2.13.1
+	github.com/onsi/ginkgo/v2 v2.13.2
 	github.com/segmentio/chamber/v2 v2.13.4
 	gotest.tools/gotestsum v1.11.0
 )

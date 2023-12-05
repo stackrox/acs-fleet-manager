@@ -108,13 +108,11 @@ preload_dependency_images() {
     fi
     log "Preloading images into ${CLUSTER_TYPE} cluster..."
     docker_pull "postgres:13"
-    if [[ "$INSTALL_OPERATOR" == "true" || "$RHACS_TARGETED_OPERATOR_UPGRADES" == "true" ]]; then
-        # Preload images required by Central installation.
-        docker_pull "${IMAGE_REGISTRY}/scanner:${SCANNER_VERSION}"
-        docker_pull "${IMAGE_REGISTRY}/scanner-db:${SCANNER_VERSION}"
-        docker_pull "${IMAGE_REGISTRY}/main:${CENTRAL_VERSION}"
-        docker_pull "${IMAGE_REGISTRY}/central-db:${CENTRAL_VERSION}"
-    fi
+    # Preload images required by Central installation.
+    docker_pull "${IMAGE_REGISTRY}/scanner:${SCANNER_VERSION}"
+    docker_pull "${IMAGE_REGISTRY}/scanner-db:${SCANNER_VERSION}"
+    docker_pull "${IMAGE_REGISTRY}/main:${CENTRAL_VERSION}"
+    docker_pull "${IMAGE_REGISTRY}/central-db:${CENTRAL_VERSION}"
 
     if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
         log "Ensuring operator images exist from dev GitOps config"

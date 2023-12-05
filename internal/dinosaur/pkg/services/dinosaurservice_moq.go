@@ -43,7 +43,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			DeprovisionDinosaurForUsersFunc: func(users []string) *serviceError.ServiceError {
 //				panic("mock out the DeprovisionDinosaurForUsers method")
 //			},
-//			DeprovisionExpiredDinosaursFunc: func(dinosaurAgeInHours int) *serviceError.ServiceError {
+//			DeprovisionExpiredDinosaursFunc: func() *serviceError.ServiceError {
 //				panic("mock out the DeprovisionExpiredDinosaurs method")
 //			},
 //			DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
@@ -126,7 +126,7 @@ type DinosaurServiceMock struct {
 	DeprovisionDinosaurForUsersFunc func(users []string) *serviceError.ServiceError
 
 	// DeprovisionExpiredDinosaursFunc mocks the DeprovisionExpiredDinosaurs method.
-	DeprovisionExpiredDinosaursFunc func(dinosaurAgeInHours int) *serviceError.ServiceError
+	DeprovisionExpiredDinosaursFunc func() *serviceError.ServiceError
 
 	// DetectInstanceTypeFunc mocks the DetectInstanceType method.
 	DetectInstanceTypeFunc func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType
@@ -218,8 +218,6 @@ type DinosaurServiceMock struct {
 		}
 		// DeprovisionExpiredDinosaurs holds details about calls to the DeprovisionExpiredDinosaurs method.
 		DeprovisionExpiredDinosaurs []struct {
-			// DinosaurAgeInHours is the dinosaurAgeInHours argument value.
-			DinosaurAgeInHours int
 		}
 		// DetectInstanceType holds details about calls to the DetectInstanceType method.
 		DetectInstanceType []struct {
@@ -549,19 +547,16 @@ func (mock *DinosaurServiceMock) DeprovisionDinosaurForUsersCalls() []struct {
 }
 
 // DeprovisionExpiredDinosaurs calls DeprovisionExpiredDinosaursFunc.
-func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *serviceError.ServiceError {
+func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaurs() *serviceError.ServiceError {
 	if mock.DeprovisionExpiredDinosaursFunc == nil {
 		panic("DinosaurServiceMock.DeprovisionExpiredDinosaursFunc: method is nil but DinosaurService.DeprovisionExpiredDinosaurs was just called")
 	}
 	callInfo := struct {
-		DinosaurAgeInHours int
-	}{
-		DinosaurAgeInHours: dinosaurAgeInHours,
-	}
+	}{}
 	mock.lockDeprovisionExpiredDinosaurs.Lock()
 	mock.calls.DeprovisionExpiredDinosaurs = append(mock.calls.DeprovisionExpiredDinosaurs, callInfo)
 	mock.lockDeprovisionExpiredDinosaurs.Unlock()
-	return mock.DeprovisionExpiredDinosaursFunc(dinosaurAgeInHours)
+	return mock.DeprovisionExpiredDinosaursFunc()
 }
 
 // DeprovisionExpiredDinosaursCalls gets all the calls that were made to DeprovisionExpiredDinosaurs.
@@ -569,10 +564,8 @@ func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaurs(dinosaurAgeInHours 
 //
 //	len(mockedDinosaurService.DeprovisionExpiredDinosaursCalls())
 func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaursCalls() []struct {
-	DinosaurAgeInHours int
 } {
 	var calls []struct {
-		DinosaurAgeInHours int
 	}
 	mock.lockDeprovisionExpiredDinosaurs.RLock()
 	calls = mock.calls.DeprovisionExpiredDinosaurs

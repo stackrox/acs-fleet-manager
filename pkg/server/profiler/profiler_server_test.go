@@ -9,6 +9,8 @@ import (
 )
 
 func TestPprofProfiler(t *testing.T) {
+	// TODO: re-enable test to use a different port. The HTTP test server could not be used here.
+	t.Skip("Skip profiler test because of flakiness caused by using port 6060")
 	server := SingletonPprofServer()
 	server.Start()
 

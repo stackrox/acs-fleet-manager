@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.8 as build
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9 as build
 ENV HOME=/opt/helm
 COPY rhacs-terraform  ${HOME}/rhacs-terraform
 WORKDIR ${HOME}
@@ -23,6 +23,8 @@ RUN microdnf install gzip tar && \
     cd rhacs-terraform/charts && for filename in *.tgz; do tar -xf "$filename" && rm -f "$filename"; done && \
     yq -i 'del(.securityContext.runAsUser) | del(.webhook.securityContext.runAsUser) | del(.certController.securityContext.runAsUser)' external-secrets/values.yaml
 
+ARG FLEETSHARD_SYNC_IMAGE_TAG=main
+RUN yq -i ".fleetshardSync.image.tag = strenv(FLEETSHARD_SYNC_IMAGE_TAG)" rhacs-terraform/values.yaml
 
 FROM quay.io/operator-framework/helm-operator:v1.32.0
 
