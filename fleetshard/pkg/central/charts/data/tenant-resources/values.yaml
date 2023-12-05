@@ -6,7 +6,6 @@ egressProxy:
       cpu: 100m
       memory: 220Mi
     limits:
-      cpu: 200m
       memory: 220Mi
 labels: {}
 annotations: {}
