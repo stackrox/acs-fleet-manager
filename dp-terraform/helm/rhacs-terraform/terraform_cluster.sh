@@ -160,7 +160,8 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set acsOperator.channel="${OPERATOR_CHANNEL}" \
   --set acsOperator.version="${OPERATOR_VERSION}" \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
-  --set fleetshardSync.image="quay.io/${FLEETSHARD_SYNC_ORG}/${FLEETSHARD_SYNC_IMAGE}:${FLEETSHARD_SYNC_TAG}" \
+  --set fleetshardSync.image.repo="quay.io/${FLEETSHARD_SYNC_ORG}/${FLEETSHARD_SYNC_IMAGE}" \
+  --set fleetshardSync.image.tag="${FLEETSHARD_SYNC_TAG}" \
   --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.clusterId="${CLUSTER_ID}" \
   --set fleetshardSync.clusterName="${CLUSTER_NAME}" \

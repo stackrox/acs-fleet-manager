@@ -18,24 +18,27 @@ type QuotaManagementListService struct {
 	quotaManagementList *quotamanagement.QuotaManagementListConfig
 }
 
-// CheckIfQuotaIsDefinedForInstanceType ...
-func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+// HasQuotaAllowance ...
+func (q QuotaManagementListService) HasQuotaAllowance(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 	username := dinosaur.Owner
 	orgID := dinosaur.OrganisationID
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetByID(orgID)
 	userIsRegistered := false
+	allowed := false
 	if orgFound && org.IsUserRegistered(username) {
 		userIsRegistered = true
+		allowed = org.GetMaxAllowedInstances() > 0
 	} else {
-		_, userFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(username)
+		user, userFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(username)
 		userIsRegistered = userFound
+		allowed = user.GetMaxAllowedInstances() > 0
 	}
 
-	// allow user defined in quota list to create standard instances
-	if userIsRegistered && instanceType == types.STANDARD {
-		return true, nil
-	} else if !userIsRegistered && instanceType == types.EVAL { // allow user who are not in quota list to create eval instances
-		return true, nil
+	// allow user defined in quota list to create standard instances, and
+	// allow user who are not in quota list to create eval instances.
+	if userIsRegistered && instanceType == types.STANDARD ||
+		!userIsRegistered && instanceType == types.EVAL {
+		return allowed, nil
 	}
 
 	return false, nil

@@ -5,16 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/openshift-online/ocm-sdk-go/logging"
-
-	"github.com/pkg/errors"
-	pkgerrors "github.com/pkg/errors"
-
 	"github.com/golang/glog"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/openshift-online/ocm-sdk-go/logging"
+	pkgerrors "github.com/pkg/errors"
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
@@ -90,7 +87,7 @@ func NewOCMConnection(ocmConfig *OCMConfig, baseURL string) (*sdkClient.Connecti
 	} else if ocmConfig.SelfToken != "" {
 		builder = builder.Tokens(ocmConfig.SelfToken)
 	} else {
-		return nil, nil, fmt.Errorf("Can't build OCM client connection. No Client/Secret or Token has been provided.")
+		return nil, nil, pkgerrors.New("Can't build OCM client connection. No Client/Secret or Token has been provided.")
 	}
 
 	connection, err := builder.Build()
@@ -131,7 +128,7 @@ func NewMockClient() Client {
 				ID("12345678").
 				Name("stubbed-name").
 				Build()
-			return org, errors.Wrap(err, "failed to build organisation")
+			return org, pkgerrors.Wrap(err, "failed to build organisation")
 		},
 	}
 }
@@ -542,21 +539,28 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
 
-	quotaCostList, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Send()
-	if err != nil {
-		return nil, fmt.Errorf("retrieving relatedResources from the QuotaCosts service: %w", err)
-	}
+	req := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true)
 
-	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
+	// TODO: go 1.21 can infer the following generic arguments from req
+	//       automatically, so this indirection becomes unnecessary.
+	fetchQuotaCosts := fetchPages[*amsv1.QuotaCostListRequest,
+		*amsv1.QuotaCostListResponse,
+		*amsv1.QuotaCostList,
+		*amsv1.QuotaCost,
+	]
+	err := fetchQuotaCosts(req, 100, 1000, func(qc *amsv1.QuotaCost) bool {
 		relatedResourcesList := qc.RelatedResources()
 		for _, relatedResource := range relatedResourcesList {
 			if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {
 				res = append(res, qc)
+				break
 			}
 		}
 		return true
 	})
-
+	if err != nil {
+		return nil, pkgerrors.Wrap(err, "error listing QuotaCosts")
+	}
 	return res, nil
 }
 

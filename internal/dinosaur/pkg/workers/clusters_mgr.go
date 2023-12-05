@@ -92,7 +92,6 @@ type ClusterManagerOptions struct {
 	SupportedProviders         *config.ProviderConfig
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
-	FleetshardOperatorAddon    services.FleetshardOperatorAddon
 }
 
 type processor func() []error
