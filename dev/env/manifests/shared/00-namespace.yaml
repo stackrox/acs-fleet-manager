@@ -2,3 +2,8 @@ kind: Namespace
 apiVersion: v1
 metadata:
   name: "$ACSCS_NAMESPACE"
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: $STACKROX_OPERATOR_NAMESPACE

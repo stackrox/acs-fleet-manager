@@ -110,7 +110,6 @@ export ENABLE_DB_PORT_FORWARDING="false"
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
     # Need to create the namespaces prior to spawning the stern loggers.
     apply "${MANIFESTS_DIR}/shared/00-namespace.yaml"
-    apply "${MANIFESTS_DIR}/rhacs-operator/00-namespace.yaml"
     sleep 2
     log "Spawning logger, log directory is ${LOG_DIR}"
     stern -n "$ACSCS_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${LOG_DIR}/namespace-${ACSCS_NAMESPACE}.txt" 2>&1 &
