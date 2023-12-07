@@ -105,6 +105,26 @@ func SendPanic(w http.ResponseWriter, r *http.Request) {
 // description can't be converted to JSON.
 var panicBody []byte
 
+// SendServiceUnavailable sends a 503 Service Unavailable response with a reason
+func SendServiceUnavailable(w http.ResponseWriter, r *http.Request, reason string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusServiceUnavailable)
+
+	apiError := errors.GeneralError(reason).AsOpenapiError("", r.RequestURI)
+	jsonPayload, err := json.Marshal(apiError)
+	if err != nil {
+		SendPanic(w, r)
+		return
+	}
+
+	_, err = w.Write(jsonPayload)
+	if err != nil {
+		err = fmt.Errorf("Can't send response body for request '%s'", r.URL.Path)
+		glog.Error(err)
+		return
+	}
+}
+
 func init() {
 	var err error
 

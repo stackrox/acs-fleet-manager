@@ -24,11 +24,11 @@ var _ Server = &HealthCheckServer{}
 
 // HealthCheckServer ...
 type HealthCheckServer struct {
-	httpServer        *http.Server
-	serverConfig      *ServerConfig
-	sentryTimeout     time.Duration
-	healthCheckConfig *HealthCheckConfig
-	dbConnection      *db.ConnectionFactory
+	httpServer          *http.Server
+	serverConfig        *ServerConfig
+	sentryTimeout       time.Duration
+	healthCheckConfig   *HealthCheckConfig
+	dbConnectionFactory *db.ConnectionFactory
 }
 
 // NewHealthCheckServer ...
@@ -43,11 +43,11 @@ func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *Se
 	}
 
 	healthServer := &HealthCheckServer{
-		httpServer:        srv,
-		serverConfig:      serverConfig,
-		healthCheckConfig: healthCheckConfig,
-		sentryTimeout:     sentryConfig.Timeout,
-		dbConnection:      dbConnection,
+		httpServer:          srv,
+		serverConfig:        serverConfig,
+		healthCheckConfig:   healthCheckConfig,
+		sentryTimeout:       sentryConfig.Timeout,
+		dbConnectionFactory: dbConnection,
 	}
 
 	router.HandleFunc("/healthcheck", health.StatusHandler).Methods(http.MethodGet)
@@ -111,8 +111,8 @@ func downHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s HealthCheckServer) ready(w http.ResponseWriter, r *http.Request) {
-	err := s.dbConnection.CheckConnection()
+	err := s.dbConnectionFactory.CheckConnection()
 	if err != nil {
-		api.SendPanic(w, r)
+		api.SendServiceUnavailable(w, r, "DB is not ready")
 	}
 }
