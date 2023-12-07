@@ -1235,7 +1235,7 @@ objects:
                 scheme: HTTPS
                 httpHeaders:
                 - name: User-Agent
-                  value: Probe
+                  value: K8sLivenessProbe
               initialDelaySeconds: 15
               periodSeconds: 5
             readinessProbe:
