@@ -110,6 +110,8 @@ func downHandler(w http.ResponseWriter, r *http.Request) {
 	updater.Update(fmt.Errorf("maintenance mode"))
 }
 
+// ready checks for the service dependencies such as DB connection.
+// "Ready" service means it is prepared to serve traffic. It is used by readinessProbe
 func (s HealthCheckServer) ready(w http.ResponseWriter, r *http.Request) {
 	err := s.dbConnectionFactory.CheckConnection()
 	if err != nil {
