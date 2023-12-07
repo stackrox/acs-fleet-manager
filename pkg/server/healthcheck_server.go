@@ -47,7 +47,7 @@ func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *Se
 		serverConfig:        serverConfig,
 		healthCheckConfig:   healthCheckConfig,
 		sentryTimeout:       sentryConfig.Timeout,
-		dbConnectionFactory: dbConnection,
+		dbConnectionFactory: dbConnectionFactory,
 	}
 
 	router.HandleFunc("/healthcheck", health.StatusHandler).Methods(http.MethodGet)
