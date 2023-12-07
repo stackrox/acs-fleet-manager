@@ -32,7 +32,7 @@ type HealthCheckServer struct {
 }
 
 // NewHealthCheckServer ...
-func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config, dbConnection *db.ConnectionFactory) *HealthCheckServer {
+func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config, dbConnectionFactory *db.ConnectionFactory) *HealthCheckServer {
 	router := mux.NewRouter()
 	health.DefaultRegistry = health.NewRegistry()
 	health.Register("maintenance_status", updater)
@@ -111,10 +111,10 @@ func downHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ready checks for the service dependencies such as DB connection.
-// "Ready" service means it is prepared to serve traffic. It is used by readinessProbe
+// A "ready" service means it is prepared to serve traffic. It is used by the readinessProbe.
 func (s HealthCheckServer) ready(w http.ResponseWriter, r *http.Request) {
 	err := s.dbConnectionFactory.CheckConnection()
 	if err != nil {
-		api.SendServiceUnavailable(w, r, "DB is not ready")
+		api.SendServiceUnavailable(w, r, "DB connection failed")
 	}
 }

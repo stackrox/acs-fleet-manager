@@ -105,7 +105,7 @@ func SendPanic(w http.ResponseWriter, r *http.Request) {
 // description can't be converted to JSON.
 var panicBody []byte
 
-// SendServiceUnavailable sends a 503 Service Unavailable response with a reason
+// SendServiceUnavailable sends a 503 Service Unavailable response with a reason.
 func SendServiceUnavailable(w http.ResponseWriter, r *http.Request, reason string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusServiceUnavailable)
