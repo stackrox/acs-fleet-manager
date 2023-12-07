@@ -53,7 +53,7 @@ spec:
               port: 8083
               httpHeaders:
                 - name: User-Agent
-                  value: Probe
+                  value: K8sLivenessProbe
             initialDelaySeconds: 15
             periodSeconds: 5
           readinessProbe:
@@ -62,7 +62,7 @@ spec:
               port: 8083
               httpHeaders:
                 - name: User-Agent
-                  value: Probe
+                  value: K8sLivenessProbe
             initialDelaySeconds: 20
             periodSeconds: 10
           resources: $FLEET_MANAGER_RESOURCES

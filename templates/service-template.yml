@@ -1245,7 +1245,7 @@ objects:
                 scheme: HTTPS
                 httpHeaders:
                 - name: User-Agent
-                  value: Probe
+                  value: K8sLivenessProbe
               initialDelaySeconds: 20
               periodSeconds: 10
           - name: envoy-sidecar
