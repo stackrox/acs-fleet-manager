@@ -14,6 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
+	"github.com/stackrox/acs-fleet-manager/pkg/leader"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
@@ -97,6 +98,7 @@ func ServiceProviders() di.Option {
 		di.Provide(services.NewTelemetryAuth),
 
 		// Types registered as a BootService are started when the env is started
+		di.Provide(leader.NewService, di.As(new(environments.BootService))),
 		di.Provide(server.NewAPIServer, di.As(new(environments.BootService))),
 		di.Provide(server.NewMetricsServer, di.As(new(environments.BootService))),
 		di.Provide(profiler.SingletonPprofServer, di.As(new(environments.BootService))),
