@@ -91,12 +91,17 @@ func (l *worker) run(ctx context.Context) error {
 	}
 
 	go func() {
-		// start the leader election. It will stop when the context is cancelled
-		leaderElection.Run(ctx)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				leaderElection.Run(ctx)
+			}
+		}
 	}()
 
 	go func() {
-		// update every time we get a notification
 		for {
 			select {
 			case <-ctx.Done():

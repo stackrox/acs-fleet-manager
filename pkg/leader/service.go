@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -21,6 +22,10 @@ func NewService() *Service {
 
 // Start implements Service.Start
 func (s *Service) Start() {
+	if !features.LeaderElectionEnabled.Enabled() {
+		return
+	}
+
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 
 	config, err := rest.InClusterConfig()
@@ -45,5 +50,8 @@ func (s *Service) Start() {
 
 // Stop implements Service.Stop
 func (s *Service) Stop() {
+	if !features.LeaderElectionEnabled.Enabled() {
+		return
+	}
 	s.cancel()
 }

@@ -73,6 +73,7 @@ jobs:
       # So that OCM secrets are initialised
       DOCKER_PR_CHECK: true
       TEST_TIMEOUT: 30m
+      LEADER_ELECTION_ENABLED: "false"
     services:
       postgres:
         image: postgres:11
