@@ -38,7 +38,7 @@ func TestInjections(t *testing.T) {
 
 	var bootList []environments.BootService
 	env.MustResolve(&bootList)
-	Expect(len(bootList)).To(Equal(7))
+	Expect(len(bootList)).To(Equal(8))
 
 	_, ok := bootList[0].(*server.APIServer)
 	Expect(ok).To(Equal(true))
@@ -51,7 +51,7 @@ func TestInjections(t *testing.T) {
 
 	var workerList []workers.Worker
 	env.MustResolve(&workerList)
-	Expect(workerList).To(HaveLen(11))
+	Expect(workerList).To(HaveLen(10))
 }
 
 func createServicesCommand(env *environments.Env) *cobra.Command {
