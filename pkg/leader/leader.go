@@ -4,7 +4,7 @@ package leader
 import (
 	"context"
 	"strconv"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -29,8 +29,7 @@ const (
 type worker struct {
 	namespaceName, podName string
 	client                 kubernetes.Interface
-	lock                   sync.Mutex
-	isLeader               bool
+	isLeader               atomic.Bool
 	notify                 chan struct{}
 }
 
@@ -76,16 +75,12 @@ func (l *worker) run(ctx context.Context) error {
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
 				glog.Info("[leader] started leading")
-				l.lock.Lock()
-				l.isLeader = true
-				l.lock.Unlock()
+				l.isLeader.Store(true)
 				l.notify <- struct{}{}
 			},
 			OnStoppedLeading: func() {
 				glog.Info("[leader] stopped leading")
-				l.lock.Lock()
-				l.isLeader = false
-				l.lock.Unlock()
+				l.isLeader.Store(false)
 				l.notify <- struct{}{}
 			},
 		},
@@ -124,9 +119,7 @@ func (l *worker) update(ctx context.Context) {
 		case <-ctx.Done():
 			return nil
 		default:
-			l.lock.Lock()
-			isActive := strconv.FormatBool(l.isLeader)
-			l.lock.Unlock()
+			isActive := strconv.FormatBool(l.isLeader.Load())
 
 			// get the pod
 			pod, err := l.client.CoreV1().Pods(l.namespaceName).Get(ctx, l.podName, metav1.GetOptions{})

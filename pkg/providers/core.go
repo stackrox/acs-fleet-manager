@@ -98,7 +98,6 @@ func ServiceProviders() di.Option {
 		di.Provide(services.NewTelemetryAuth),
 
 		// Types registered as a BootService are started when the env is started
-		di.Provide(leader.NewService, di.As(new(environments.BootService))),
 		di.Provide(server.NewAPIServer, di.As(new(environments.BootService))),
 		di.Provide(server.NewMetricsServer, di.As(new(environments.BootService))),
 		di.Provide(profiler.SingletonPprofServer, di.As(new(environments.BootService))),
@@ -106,5 +105,6 @@ func ServiceProviders() di.Option {
 		di.Provide(workers.NewLeaderElectionManager, di.As(new(environments.BootService))),
 		di.Provide(services.NewTelemetry, di.As(new(environments.BootService))),
 		di.Provide(services.NewDataMigration, di.As(new(environments.BootService))),
+		di.Provide(leader.NewService, di.As(new(environments.BootService))),
 	)
 }

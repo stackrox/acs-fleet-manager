@@ -2,6 +2,7 @@ package leader
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -28,46 +29,45 @@ func TestLeader(t *testing.T) {
 			},
 		},
 	)
-
-	ctx1, cancel1 := context.WithCancel(context.Background())
-	l1 := &worker{
+	worker1 := &worker{
 		namespaceName: "default",
 		podName:       "pod1",
 		notify:        make(chan struct{}),
 		client:        c,
-		isLeader:      false,
+		isLeader:      atomic.Bool{},
 	}
 
-	// start pod1
-	l1.run(ctx1)
-
-	// pod1 will become leader
-	require.Eventually(t, func() bool {
-		return l1.isLeader
-	}, 1*time.Second, 100*time.Millisecond, "should be a leader")
-
-	ctx2 := context.Background()
-	l2 := &worker{
+	worker2 := &worker{
 		namespaceName: "default",
 		podName:       "pod2",
 		notify:        make(chan struct{}),
 		client:        c,
-		isLeader:      false,
+		isLeader:      atomic.Bool{},
 	}
-	// start pod2
-	l2.run(ctx2)
 
-	// stop pod1
-	cancel1()
+	worker1Ctx, worker1Cancel := context.WithCancel(context.Background())
+	worker2Ctx := context.Background()
 
-	// pod2 will become leader
-	require.Eventually(t, func() bool {
-		return l2.isLeader
-	}, 20*time.Second, 100*time.Millisecond, "should be a leader")
+	// start worker 1
+	worker1.run(worker1Ctx)
+
+	// worker 1 should become leader
+	require.Eventually(t, worker1.isLeader.Load, 1*time.Second, 100*time.Millisecond, "should be a leader")
+
+	// start worker 2
+	worker2.run(worker2Ctx)
+
+	// stop worker 1
+	worker1Cancel()
+
+	// worker 2 should become leader
+	require.Eventually(t, worker2.isLeader.Load, 20*time.Second, 100*time.Millisecond, "should be a leader")
 
 }
 
 func TestLeader_update(t *testing.T) {
+	ctx := context.Background()
+
 	c := fake.NewSimpleClientset(&v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "pod1",
@@ -75,23 +75,27 @@ func TestLeader_update(t *testing.T) {
 			Labels:    map[string]string{},
 		},
 	})
-	ctx := context.Background()
-	l1 := &worker{
+
+	w := &worker{
 		namespaceName: "default",
 		podName:       "pod1",
 		notify:        make(chan struct{}),
 		client:        c,
-		isLeader:      true,
+		isLeader:      atomic.Bool{},
 	}
 
-	l1.update(ctx)
+	w.isLeader.Store(true)
+	w.update(ctx)
 
+	// check that the pod has the active label = true
 	pod, err := c.CoreV1().Pods("default").Get(ctx, "pod1", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "true", pod.Labels[activeLabel])
 
-	l1.isLeader = false
-	l1.update(ctx)
+	w.isLeader.Store(false)
+	w.update(ctx)
+
+	// check that the pod has the active label = false
 	pod, err = c.CoreV1().Pods("default").Get(ctx, "pod1", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "false", pod.Labels[activeLabel])
