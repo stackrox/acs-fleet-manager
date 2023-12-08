@@ -9,6 +9,7 @@ import (
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
@@ -59,7 +60,6 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 	api.ClusterProvisioning,
 	api.ClusterProvisioned,
 	api.ClusterCleanup,
-	api.ClusterWaitingForFleetShardOperator,
 	api.ClusterReady,
 	api.ClusterComputeNodeScalingUp,
 	api.ClusterFull,
@@ -92,6 +92,8 @@ type ClusterManagerOptions struct {
 	SupportedProviders         *config.ProviderConfig
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
+	AddonProvisioner           *services.AddonProvisioner
+	GitOpsConfigProvider       gitops.ConfigProvider
 }
 
 type processor func() []error
@@ -324,6 +326,16 @@ func (c *ClusterManager) processReadyClusters() []error {
 	readyClusterCount = int32(len(readyClusters))
 	logger.InfoChangedInt32(&readyClusterCount, "ready clusters count = %d", readyClusterCount)
 
+	gitopsConfig, err := c.GitOpsConfigProvider.Get()
+	if err != nil {
+		errs = append(errs, fmt.Errorf("get gitops config: %w", err))
+		return errs
+	}
+	clusterConfigByID := make(map[string]gitops.DataPlaneClusterConfig)
+	for _, cluster := range gitopsConfig.DataPlaneClusters {
+		clusterConfigByID[cluster.ClusterID] = cluster
+	}
+
 	for _, readyCluster := range readyClusters {
 		emptyClusterReconciled := false
 		var recErr error
@@ -333,10 +345,11 @@ func (c *ClusterManager) processReadyClusters() []error {
 		if !emptyClusterReconciled && recErr == nil {
 			recErr = c.reconcileReadyCluster(readyCluster)
 		}
-
+		if recErr == nil {
+			recErr = c.reconcileClusterAddons(readyCluster, clusterConfigByID)
+		}
 		if recErr != nil {
 			errs = append(errs, errors.Wrapf(recErr, "failed to reconcile ready cluster %s", readyCluster.ClusterID))
-			continue
 		}
 	}
 	return errs
@@ -386,11 +399,6 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 
 func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
 	glog.Infof("Removing Dataplane cluster %s fleetshard service account", cluster.ClusterID)
-	// TODO(ROX-11551): reactivate this, if required for cluster terraforming by fleet-manager
-	// serviceAcountRemovalErr := c.FleetshardOperatorAddon.RemoveServiceAccount(cluster)
-	// if serviceAcountRemovalErr != nil {
-	// 	return errors.Wrapf(serviceAcountRemovalErr, "Failed to removed Dataplance cluster %s fleetshard service account", cluster.ClusterID)
-	// }
 
 	glog.Infof("Soft deleting the Dataplane cluster %s from the database", cluster.ClusterID)
 	deleteError := c.ClusterService.DeleteByClusterID(cluster.ClusterID)
@@ -423,17 +431,6 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	if err != nil {
 		return errors.WithMessagef(err, "failed to reconcile cluster dns of ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
-
-	// TODO: Install the ACS Operator and Fleetshard Operator (Add-Ons)
-	// if c.FleetshardOperatorAddon != nil {
-	//	if err := c.FleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
-	//		if err.IsBadRequest() {
-	//			glog.Infof("fleetshard operator is not found on cluster %s", cluster.ClusterID)
-	//		} else {
-	//			return errors.WithMessagef(err, "failed to reconcile fleet-shard parameters of ready cluster %s: %s", cluster.ClusterID, err.Error())
-	//		}
-	//	}
-	//}
 
 	return nil
 }
@@ -510,23 +507,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	//	return err
 	//}
 
-	if err := c.reconcileClusterDNS(cluster); err != nil {
-		return err
-	}
-
-	// Addon installation step
-	// TODO this is currently the responsible of setting the status of the cluster
-	// and it is setting it to a different value depending on the addon being
-	// installed. The logic to set the status of the cluster should probably done
-	// independently of the installation of the addon, and it should use the
-	// result of the addon/s reconciliation to set the status of the cluster
-	// TODO: Install the ACS Operator and Fleetshard Operator (Add-Ons)
-	addOnErr := c.reconcileAddonOperator(cluster)
-	if addOnErr != nil {
-		return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
-	}
-
-	return nil
+	return c.reconcileClusterDNS(cluster)
 }
 
 func (c *ClusterManager) reconcileClusterDNS(cluster api.Cluster) error {
@@ -563,25 +544,6 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 		metrics.IncreaseClusterTotalOperationsCountMetric(dinosaurConstants.ClusterOperationCreate)
 	}
 	return updatedCluster, nil
-}
-
-func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
-	// TODO: Activate dinosaur reconcilation and FleetshardOperatorAddon.Provision
-	// as soon as this components are available
-	dinosaurOperatorIsReady := true
-
-	glog.Infof("Provisioning fleetshard-operator as it is enabled")
-	fleetshardOperatorIsReady := true
-
-	if dinosaurOperatorIsReady && fleetshardOperatorIsReady {
-		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForFleetShardOperator, provisionedCluster.ClusterID)
-		if err := c.ClusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForFleetShardOperator); err != nil {
-			return errors.Wrapf(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
-		}
-		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterWaitingForFleetShardOperator)
-		return nil
-	}
-	return nil
 }
 
 // reconcileClusterWithConfig reconciles clusters within the dataplane-cluster-configuration file.
@@ -947,5 +909,17 @@ func (c *ClusterManager) setDinosaurPerClusterCountMetrics() error {
 		metrics.UpdateCentralPerClusterCountMetric(counter.Clusterid, clusterExternalID, counter.Count)
 	}
 
+	return nil
+}
+
+func (c *ClusterManager) reconcileClusterAddons(cluster api.Cluster, clusterConfigByID map[string]gitops.DataPlaneClusterConfig) error {
+	clusterConfig, exists := clusterConfigByID[cluster.ClusterID]
+	if !exists {
+		// There's no such cluster in gitops config, skipping
+		return nil
+	}
+	if err := c.AddonProvisioner.Provision(cluster, clusterConfig.Addons); err != nil {
+		return fmt.Errorf("provision addons: %w", err)
+	}
 	return nil
 }
