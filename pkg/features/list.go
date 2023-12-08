@@ -14,5 +14,5 @@ var (
 	AddonAutoUpgrade = registerFeature("Addon auto upgrade", "RHACS_ADDON_AUTO_UPGRADE", true)
 
 	// LeaderElectionEnabled enables the leader election
-	LeaderElectionEnabled = registerFeature("Leader election", "LEADER_ELECTION_ENABLED", true)
+	LeaderElectionEnabled = registerFeature("Leader election", "RHACS_LEADER_ELECTION_ENABLED", true)
 )
