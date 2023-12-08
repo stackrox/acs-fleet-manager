@@ -1,4 +1,4 @@
-package leader
+package serviceregistration
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// Service is the service for leader election.
+// Service is the service for service registration
 type Service struct {
 	ctx    context.Context
 	cancel context.CancelFunc

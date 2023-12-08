@@ -14,11 +14,11 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
-	"github.com/stackrox/acs-fleet-manager/pkg/leader"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"github.com/stackrox/acs-fleet-manager/pkg/server/profiler"
+	"github.com/stackrox/acs-fleet-manager/pkg/serviceregistration"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
@@ -105,6 +105,6 @@ func ServiceProviders() di.Option {
 		di.Provide(workers.NewLeaderElectionManager, di.As(new(environments.BootService))),
 		di.Provide(services.NewTelemetry, di.As(new(environments.BootService))),
 		di.Provide(services.NewDataMigration, di.As(new(environments.BootService))),
-		di.Provide(leader.NewService, di.As(new(environments.BootService))),
+		di.Provide(serviceregistration.NewService, di.As(new(environments.BootService))),
 	)
 }

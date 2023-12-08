@@ -1,5 +1,5 @@
 // Package leader provides a simple leader election mechanism for a pod
-package leader
+package serviceregistration
 
 import (
 	"context"
@@ -56,7 +56,7 @@ func (l *worker) run(ctx context.Context) error {
 	// the lock config
 	lock := resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
-			Name:      "fleet-manager-leader-election",
+			Name:      "fleet-manager-active-bd7c2840",
 			Namespace: l.namespaceName,
 		},
 		Client: l.client.CoordinationV1(),
@@ -74,12 +74,12 @@ func (l *worker) run(ctx context.Context) error {
 		RetryPeriod:   time.Second * 2,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				glog.Info("[leader] started leading")
+				glog.Info("[serviceregistration] started leading")
 				l.isLeader.Store(true)
 				l.notify <- struct{}{}
 			},
 			OnStoppedLeading: func() {
-				glog.Info("[leader] stopped leading")
+				glog.Info("[serviceregistration] stopped leading")
 				l.isLeader.Store(false)
 				l.notify <- struct{}{}
 			},
@@ -87,7 +87,7 @@ func (l *worker) run(ctx context.Context) error {
 	})
 
 	if err != nil {
-		return errors.Wrap(err, "[leader] failed to create leader election")
+		return errors.Wrap(err, "[serviceregistration] failed to create leader election")
 	}
 
 	go func() {
@@ -129,7 +129,7 @@ func (l *worker) update(ctx context.Context) {
 			// get the pod
 			pod, err := l.client.CoreV1().Pods(l.namespaceName).Get(ctx, l.podName, metav1.GetOptions{})
 			if err != nil {
-				glog.Errorf("[leader] error getting pod: %v", err)
+				glog.Errorf("[serviceregistration] error getting pod: %v", err)
 				return errors.Wrap(err, "failed to get pod")
 			}
 
@@ -141,12 +141,12 @@ func (l *worker) update(ctx context.Context) {
 				}
 			}
 
-			glog.Infof("[leader] updating pod %s/%s labels: %s=%s", l.namespaceName, l.podName, activeLabel, isActive)
+			glog.Infof("[serviceregistration] updating pod %s/%s labels: %s=%s", l.namespaceName, l.podName, activeLabel, isActive)
 			patch := `{"metadata":{"labels":{"` + activeLabel + `":"` + isActive + `"}}}`
 
 			_, err = l.client.CoreV1().Pods(l.namespaceName).Patch(ctx, l.podName, types.StrategicMergePatchType, []byte(patch), metav1.PatchOptions{})
 			if err != nil {
-				glog.Errorf("[leader] error updating pod labels: %v", err)
+				glog.Errorf("[serviceregistration] error updating pod labels: %v", err)
 				return errors.Wrap(err, "failed to patch pod")
 			}
 			return nil
