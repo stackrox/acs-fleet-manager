@@ -2,6 +2,7 @@ package serviceregistration
 
 import (
 	"context"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"os"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
@@ -11,13 +12,16 @@ import (
 
 // Service is the service for service registration
 type Service struct {
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx     context.Context
+	cancel  context.CancelFunc
+	workers []workers.Worker
 }
 
 // NewService returns a new Service.
-func NewService() *Service {
-	return &Service{}
+func NewService(workers []workers.Worker) *Service {
+	return &Service{
+		workers: workers,
+	}
 }
 
 // Start implements Service.Start
@@ -41,7 +45,7 @@ func (s *Service) Start() {
 	if !ok {
 		panic("POD_NAME not set")
 	}
-	l, err := newWorker(s.ctx, namespaceName, podName, client)
+	l, err := newWorker(s.ctx, namespaceName, podName, client, s.workers)
 	if err != nil {
 		panic(err)
 	}
