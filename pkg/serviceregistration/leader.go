@@ -3,6 +3,8 @@ package serviceregistration
 
 import (
 	"context"
+	"fmt"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -11,7 +13,6 @@ import (
 
 	"github.com/golang/glog"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -22,24 +23,26 @@ const (
 	activeLabel = "fleet-manager-active"
 )
 
-// worker uses kubernetes leader election to maintain a "fleetmanager-active":"true|false" label on the pod.
+// leaderWorker uses kubernetes leader election to maintain a "fleetmanager-active":"true|false" label on the pod.
 // this is used to route some requests to the leader pod.
 // The default openshift Route will target all pods, but there is another Route that will target only the leader pod,
 // (selector = fleetmanager-active: true) and will be used for requests that should only be handled by the leader.
-type worker struct {
+type leaderWorker struct {
 	namespaceName, podName string
 	client                 kubernetes.Interface
 	isLeader               atomic.Bool
 	notify                 chan struct{}
+	workers                []workers.Worker
 }
 
-// newWorker creates a new worker
-func newWorker(ctx context.Context, namespaceName, podName string, client kubernetes.Interface) (*worker, error) {
-	l := &worker{
+// newWorker creates a new leaderWorker
+func newWorker(ctx context.Context, namespaceName, podName string, client kubernetes.Interface, workers []workers.Worker) (*leaderWorker, error) {
+	l := &leaderWorker{
 		namespaceName: namespaceName,
 		podName:       podName,
 		client:        client,
 		notify:        make(chan struct{}),
+		workers:       workers,
 	}
 
 	err := l.run(ctx)
@@ -51,7 +54,7 @@ func newWorker(ctx context.Context, namespaceName, podName string, client kubern
 }
 
 // run will run the leader election loop
-func (l *worker) run(ctx context.Context) error {
+func (l *leaderWorker) run(ctx context.Context) error {
 
 	// the lock config
 	lock := resourcelock.LeaseLock{
@@ -76,12 +79,28 @@ func (l *worker) run(ctx context.Context) error {
 			OnStartedLeading: func(ctx context.Context) {
 				glog.Info("[serviceregistration] started leading")
 				l.isLeader.Store(true)
-				l.notify <- struct{}{}
+				//TODO: context?
+				l.update(context.Background())
+
+				for _, worker := range l.workers {
+					if !worker.IsRunning() {
+						glog.V(1).Infoln(fmt.Sprintf("Running as the leader and starting worker %T [%s]", worker, worker.GetID()))
+						worker.Start()
+					}
+				}
 			},
 			OnStoppedLeading: func() {
 				glog.Info("[serviceregistration] stopped leading")
 				l.isLeader.Store(false)
-				l.notify <- struct{}{}
+				//TODO: context?
+				l.update(context.Background())
+
+				for _, worker := range l.workers {
+					if worker.IsRunning() {
+						glog.V(1).Infoln(fmt.Sprintf("Stopping running worker %T [%s]", worker, worker.GetID()))
+						worker.Stop()
+					}
+				}
 			},
 		},
 	})
@@ -101,23 +120,11 @@ func (l *worker) run(ctx context.Context) error {
 		}
 	}()
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-l.notify:
-				l.update(ctx)
-			}
-		}
-	}()
-
 	return nil
 }
 
 // update will update the pod labels to reflect the current leader status
-func (l *worker) update(ctx context.Context) {
-
+func (l *leaderWorker) update(ctx context.Context) {
 	// retry forever
 	retry.OnError(retry.DefaultRetry, retryForever, func() error {
 		select {
@@ -142,9 +149,8 @@ func (l *worker) update(ctx context.Context) {
 			}
 
 			glog.Infof("[serviceregistration] updating pod %s/%s labels: %s=%s", l.namespaceName, l.podName, activeLabel, isActive)
-			patch := `{"metadata":{"labels":{"` + activeLabel + `":"` + isActive + `"}}}`
-
-			_, err = l.client.CoreV1().Pods(l.namespaceName).Patch(ctx, l.podName, types.StrategicMergePatchType, []byte(patch), metav1.PatchOptions{})
+			pod.Labels[activeLabel] = isActive
+			_, err = l.client.CoreV1().Pods(l.namespaceName).Update(ctx, pod, metav1.UpdateOptions{})
 			if err != nil {
 				glog.Errorf("[serviceregistration] error updating pod labels: %v", err)
 				return errors.Wrap(err, "failed to patch pod")

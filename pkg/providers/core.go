@@ -23,7 +23,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
 // CoreConfigProviders ...
@@ -102,7 +101,7 @@ func ServiceProviders() di.Option {
 		di.Provide(server.NewMetricsServer, di.As(new(environments.BootService))),
 		di.Provide(profiler.SingletonPprofServer, di.As(new(environments.BootService))),
 		di.Provide(server.NewHealthCheckServer, di.As(new(environments.BootService))),
-		di.Provide(workers.NewLeaderElectionManager, di.As(new(environments.BootService))),
+		//di.Provide(workers.NewLeaderElectionManager, di.As(new(environments.BootService))),
 		di.Provide(services.NewTelemetry, di.As(new(environments.BootService))),
 		di.Provide(services.NewDataMigration, di.As(new(environments.BootService))),
 		di.Provide(serviceregistration.NewService, di.As(new(environments.BootService))),
