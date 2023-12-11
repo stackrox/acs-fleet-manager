@@ -35,7 +35,7 @@ require (
 	github.com/onsi/gomega v1.29.0
 	github.com/openshift-online/ocm-sdk-go v0.1.373
 	github.com/openshift/api v0.0.0-20230502160752-c71432710382
-	github.com/operator-framework/api v0.17.7
+	github.com/operator-framework/api v0.20.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
