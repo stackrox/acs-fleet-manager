@@ -37,7 +37,6 @@ type Services struct {
 	MetricsServer         *server.MetricsServer
 	HealthCheckServer     *server.HealthCheckServer
 	Workers               []coreWorkers.Worker
-	LeaderElectionManager *coreWorkers.LeaderElectionManager
 	APIServer             *server.APIServer
 	BootupServices        []environments.BootService
 	CloudProvidersService services.CloudProvidersService
