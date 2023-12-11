@@ -21,4 +21,4 @@ spec:
       targetPort: 6060
   selector:
     application: fleet-manager
-    active: "true"
+    fleet-manager-active: "true"
