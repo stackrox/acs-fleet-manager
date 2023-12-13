@@ -459,8 +459,8 @@ github.com/onsi/gomega v1.29.0/go.mod h1:9sxs+SwGrKI0+PWe4Fxa9tFQQBG5xSsSbMXOI8P
 github.com/op/go-logging v0.0.0-20160315200505-970db520ece7/go.mod h1:HzydrMdWErDVzsI23lYNej1Htcns9BCg93Dk0bBINWk=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
-github.com/openshift-online/ocm-sdk-go v0.1.388 h1:c8yPCUQwJm3QhcVmnyMPFpeDtxPBaPeYh5hLv1vg9YQ=
-github.com/openshift-online/ocm-sdk-go v0.1.388/go.mod h1:/+VFIw1iW2H0jEkFH4GnbL/liWareyzsL0w7mDIudB4=
+github.com/openshift-online/ocm-sdk-go v0.1.389 h1:DtFS1GJfPDxSqH76fF8STC45WYvkq3SoK5P8We+ycYU=
+github.com/openshift-online/ocm-sdk-go v0.1.389/go.mod h1:/+VFIw1iW2H0jEkFH4GnbL/liWareyzsL0w7mDIudB4=
 github.com/openshift/api v0.0.0-20230502160752-c71432710382 h1:oIlUAGCdktBKMjCMtP7AedtAc00T/GFaSosoqBa2gkU=
 github.com/openshift/api v0.0.0-20230502160752-c71432710382/go.mod h1:ctXNyWanKEjGj8sss1KjjHQ3ENKFm33FFnS5BKaIPh4=
 github.com/openshift/client-go v0.0.0-20230120202327-72f107311084 h1:66uaqNwA+qYyQDwsMWUfjjau8ezmg1dzCqub13KZOcE=
