@@ -73,8 +73,8 @@ github.com/segmentio/analytics-go/v3 v3.2.1 h1:G+f90zxtc1p9G+WigVyTR0xNfOghOGs/P
 github.com/segmentio/analytics-go/v3 v3.2.1/go.mod h1:p8owAF8X+5o27jmvUognuXxdtqvSGtD0ZrfY2kcS9bE=
 github.com/segmentio/backo-go v1.0.1 h1:68RQccglxZeyURy93ASB/2kc9QudzgIDexJ927N++y4=
 github.com/segmentio/backo-go v1.0.1/go.mod h1:9/Rh6yILuLysoQnZ2oNooD2g7aBnvM7r/fNVxRNWfBc=
-github.com/segmentio/chamber/v2 v2.13.4 h1:NYZDmtR+gmEKVImNTHdwNkzMcJsXMOYcILMxCOhEWcY=
-github.com/segmentio/chamber/v2 v2.13.4/go.mod h1:uo12NVgOrFvf7Zo6bN8H8GtLqlLwNWhNt+xmumwmoiA=
+github.com/segmentio/chamber/v2 v2.13.5 h1:qWAGoW5XirC6ijoXKm6r66IOHuv7gaRCwzZy735yqBM=
+github.com/segmentio/chamber/v2 v2.13.5/go.mod h1:uo12NVgOrFvf7Zo6bN8H8GtLqlLwNWhNt+xmumwmoiA=
 github.com/spf13/cobra v1.7.0 h1:hyqWnYt1ZQShIddO5kBpj3vu05/++x6tJ6dg8EC572I=
 github.com/spf13/cobra v1.7.0/go.mod h1:uLxZILRyS/50WlhOIKD7W6V5bgeIt+4sICxh6uRMrb0=
 github.com/spf13/pflag v1.0.3/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
