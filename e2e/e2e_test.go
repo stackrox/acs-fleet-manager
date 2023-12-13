@@ -214,8 +214,8 @@ var _ = Describe("Central", Ordered, func() {
 			}
 		})
 
-		It("should spin up an egress proxy with three healthy replicas", func() {
-			Eventually(assertDeploymentHealthyReplicas(ctx, namespaceName, "egress-proxy", 3)).
+		It("should spin up an egress proxy with two healthy replicas", func() {
+			Eventually(assertDeploymentHealthyReplicas(ctx, namespaceName, "egress-proxy", 2)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())

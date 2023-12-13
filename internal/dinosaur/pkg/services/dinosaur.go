@@ -6,30 +6,27 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
-	dynamicClientAPI "github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-
+	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/golang/glog"
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
-	"github.com/stackrox/acs-fleet-manager/pkg/services"
-	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
-
-	"github.com/golang/glog"
-
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/aws"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	dynamicClientAPI "github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
+	"github.com/stackrox/acs-fleet-manager/pkg/services"
+	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
 )
 
 var (
@@ -54,6 +51,8 @@ const DinosaurRoutesActionCreate DinosaurRoutesAction = "CREATE"
 
 // DinosaurRoutesActionDelete ...
 const DinosaurRoutesActionDelete DinosaurRoutesAction = "DELETE"
+
+const gracePeriod = 14 * 24 * time.Hour
 
 // CNameRecordStatus ...
 type CNameRecordStatus struct {
@@ -100,7 +99,7 @@ type DinosaurService interface {
 	RegisterDinosaurDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionDinosaurForUsers registers all dinosaurs for deprovisioning given the list of owners
 	DeprovisionDinosaurForUsers(users []string) *errors.ServiceError
-	DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *errors.ServiceError
+	DeprovisionExpiredDinosaurs() *errors.ServiceError
 	CountByStatus(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error)
 	CountByRegionAndInstanceType() ([]DinosaurRegionCount, error)
 	ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
@@ -197,7 +196,7 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 		return types.EVAL
 	}
 
-	hasQuota, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaurRequest, types.STANDARD)
+	hasQuota, err := quotaService.HasQuotaAllowance(dinosaurRequest, types.STANDARD)
 	if err != nil {
 		glog.Error(errors.NewWithCause(errors.ErrorGeneral, err, "unable to check quota"))
 		return types.EVAL
@@ -518,13 +517,19 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 }
 
 // DeprovisionExpiredDinosaurs cleaning up expired dinosaurs
-func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *errors.ServiceError {
+func (k *dinosaurService) DeprovisionExpiredDinosaurs() *errors.ServiceError {
 	now := time.Now()
-	dbConn := k.connectionFactory.New().
-		Model(&dbapi.CentralRequest{}).
-		Where("instance_type = ?", types.EVAL.String()).
-		Where("created_at  <=  ?", now.Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
-		Where("status NOT IN (?)", dinosaurDeletionStatuses)
+	dbConn := k.connectionFactory.New().Model(&dbapi.CentralRequest{}).
+		Where("expired_at IS NOT NULL").Where("expired_at < ?", now.Add(-gracePeriod))
+
+	if k.dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral {
+		dbConn = dbConn.Where(dbConn.
+			Or("instance_type = ?", types.EVAL.String()).
+			Where("created_at <= ?", now.Add(
+				-time.Duration(k.dinosaurConfig.CentralLifespan.CentralLifespanInHours)*time.Hour)))
+	}
+
+	dbConn = dbConn.Where("status NOT IN (?)", dinosaurDeletionStatuses)
 
 	db := dbConn.Updates(map[string]interface{}{
 		"status":             dinosaurConstants.CentralRequestStatusDeprovision,
@@ -536,7 +541,7 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *e
 	}
 
 	if db.RowsAffected >= 1 {
-		glog.Infof("%v central_request's lifespans are over %d hours and have had their status updated to deprovisioning", db.RowsAffected, dinosaurAgeInHours)
+		glog.Infof("%v central_request's have had their status updated to deprovisioning", db.RowsAffected)
 		var counter int64
 		for ; counter < db.RowsAffected; counter++ {
 			metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)

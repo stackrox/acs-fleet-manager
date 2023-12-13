@@ -3,7 +3,9 @@
 # Declare variables to be passed into your templates.
 
 fleetshardSync:
-  image: "quay.io/app-sre/acs-fleet-manager:59142fe"
+  image:
+    repo: "quay.io/app-sre/acs-fleet-manager"
+    tag: "main"
   # Can be either OCM, RHSSO, STATIC_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses RHSSO.
   authType: "RHSSO"
   # OCM refresh token, only required in combination with authType=OCM.
@@ -24,7 +26,7 @@ fleetshardSync:
     endpoint: "https://sso.redhat.com"
     realm: "redhat-external"
   egressProxy:
-    image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0-202310101543.p0.gf1330f6.assembly.stream"
+    image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.14"
   auditLogs:
     enabled: true
     skipTLSVerify: true
@@ -74,9 +76,6 @@ acsOperator:
 # - enabled flag is used to completely enable/disable cloudwatch sub-chart
 cloudwatch:
   enabled: true
-  aws:
-    accessKeyId: ""
-    secretAccessKey: ""
   clusterName: ""
   environment: ""
   tolerations:
@@ -102,32 +101,21 @@ observability:
       effect: NoSchedule
   enabled: true
   clusterName: ""
-  github:
-    accessToken: ""
-    repository: ""
   observatorium:
     gateway: ""
-    metricsClientId: ""
-    metricsSecret: ""
-  pagerduty:
-    key: ""
-  deadMansSwitch:
-    url: ""
 
 # See available parameters in charts/logging/values.yaml
 # - enabled flag is used to completely enable/disable logging sub-chart
 logging:
   enabled: true
   groupPrefix: ""
-  aws:
-    accessKeyId: ""
-    secretAccessKey: ""
   tolerations:
     - key: node-role.kubernetes.io/acscs-infra
       operator: Exists
       effect: NoSchedule
-  nodeSelector:
-    node-role.kubernetes.io/acscs-infra: ""
+    - key: node-role.kubernetes.io/infra
+      operator: Exists
+      effect: NoSchedule
 
 # See available parameters in charts/audit-logs/values.yaml
 # - enabled flag is used to completely enable/disable logging sub-chart
@@ -190,25 +178,13 @@ secured-cluster:
   clusterName: ""
   centralEndpoint: ""
   admissionControl:
-    serviceTLS:
-      cert: ""
-      key: ""
     tolerations:
       - key: node-role.kubernetes.io/acscs-infra
         operator: Exists
         effect: NoSchedule
     nodeSelector:
       node-role.kubernetes.io/acscs-infra: ""
-  ca:
-    cert: ""
-  collector:
-    serviceTLS:
-      cert: ""
-      key: ""
   sensor:
-    serviceTLS:
-      cert: ""
-      key: ""
     tolerations:
       - key: node-role.kubernetes.io/acscs-infra
         operator: Exists
@@ -216,20 +192,7 @@ secured-cluster:
     nodeSelector:
       node-role.kubernetes.io/acscs-infra: ""
   scanner:
-    analyzer:
-      tolerations:
-        - key: node-role.kubernetes.io/acscs-infra
-          operator: Exists
-          effect: NoSchedule
-      nodeSelector:
-        node-role.kubernetes.io/acscs-infra: ""
-      db:
-        tolerations:
-          - key: node-role.kubernetes.io/acscs-infra
-            operator: Exists
-            effect: NoSchedule
-        nodeSelector:
-          node-role.kubernetes.io/acscs-infra: ""
+    scannerComponent: Disabled
 
 external-secrets:
   fullnameOverride: rhacs-external-secrets
@@ -266,5 +229,9 @@ secretStore:
     secretName: aws-access-keys # pragma: allowlist secret
     accessKeyId: ""
     secretAccessKey: ""
-    secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret
-    parameterStoreSecretStoreName: parameter-store-secret-store # pragma: allowlist secret
+
+global:
+  secretStore:
+    aws:
+      secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret
+      parameterStoreSecretStoreName: parameter-store-secret-store # pragma: allowlist secret

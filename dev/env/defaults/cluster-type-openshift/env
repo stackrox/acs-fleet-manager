@@ -1,6 +1,4 @@
-export OPENSHIFT_MARKETPLACE_DEFAULT="true"
 export KUBECTL_DEFAULT="oc"
-export OPERATOR_SOURCE_DEFAULT="marketplace"
 export INSTALL_OLM_DEFAULT="false"
 export ENABLE_FM_PORT_FORWARDING_DEFAULT="true"
 # This makes sure that the "ingresscontroller" kind, which only exists on OpenShift by default, is only queried

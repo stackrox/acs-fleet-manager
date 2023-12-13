@@ -4,7 +4,6 @@
 package services
 
 import (
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"sync"
@@ -22,12 +21,6 @@ var _ ClusterService = &ClusterServiceMock{}
 //		mockedClusterService := &ClusterServiceMock{
 //			CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError) {
 //				panic("mock out the CheckClusterStatus method")
-//			},
-//			CheckDinosaurOperatorVersionReadyFunc: func(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
-//				panic("mock out the CheckDinosaurOperatorVersionReady method")
-//			},
-//			ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *serviceError.ServiceError) {
-//				panic("mock out the ConfigureAndSaveIdentityProvider method")
 //			},
 //			CountByStatusFunc: func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *serviceError.ServiceError) {
 //				panic("mock out the CountByStatus method")
@@ -59,17 +52,8 @@ var _ ClusterService = &ClusterServiceMock{}
 //			GetClusterDNSFunc: func(clusterID string) (string, *serviceError.ServiceError) {
 //				panic("mock out the GetClusterDNS method")
 //			},
-//			GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *serviceError.ServiceError) {
-//				panic("mock out the GetComputeNodes method")
-//			},
 //			GetExternalIDFunc: func(clusterID string) (string, *serviceError.ServiceError) {
 //				panic("mock out the GetExternalID method")
-//			},
-//			InstallDinosaurOperatorFunc: func(cluster *api.Cluster) (bool, *serviceError.ServiceError) {
-//				panic("mock out the InstallDinosaurOperator method")
-//			},
-//			IsDinosaurVersionAvailableInClusterFunc: func(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error) {
-//				panic("mock out the IsDinosaurVersionAvailableInCluster method")
 //			},
 //			ListAllClusterIdsFunc: func() ([]api.Cluster, *serviceError.ServiceError) {
 //				panic("mock out the ListAllClusterIds method")
@@ -82,15 +66,6 @@ var _ ClusterService = &ClusterServiceMock{}
 //			},
 //			RegisterClusterJobFunc: func(clusterRequest *api.Cluster) *serviceError.ServiceError {
 //				panic("mock out the RegisterClusterJob method")
-//			},
-//			ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*types.ClusterSpec, *serviceError.ServiceError) {
-//				panic("mock out the ScaleDownComputeNodes method")
-//			},
-//			ScaleUpComputeNodesFunc: func(clusterID string, increment int) (*types.ClusterSpec, *serviceError.ServiceError) {
-//				panic("mock out the ScaleUpComputeNodes method")
-//			},
-//			SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *serviceError.ServiceError) {
-//				panic("mock out the SetComputeNodes method")
 //			},
 //			UpdateFunc: func(cluster api.Cluster) *serviceError.ServiceError {
 //				panic("mock out the Update method")
@@ -113,12 +88,6 @@ var _ ClusterService = &ClusterServiceMock{}
 type ClusterServiceMock struct {
 	// CheckClusterStatusFunc mocks the CheckClusterStatus method.
 	CheckClusterStatusFunc func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError)
-
-	// CheckDinosaurOperatorVersionReadyFunc mocks the CheckDinosaurOperatorVersionReady method.
-	CheckDinosaurOperatorVersionReadyFunc func(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error)
-
-	// ConfigureAndSaveIdentityProviderFunc mocks the ConfigureAndSaveIdentityProvider method.
-	ConfigureAndSaveIdentityProviderFunc func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *serviceError.ServiceError)
 
 	// CountByStatusFunc mocks the CountByStatus method.
 	CountByStatusFunc func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *serviceError.ServiceError)
@@ -150,17 +119,8 @@ type ClusterServiceMock struct {
 	// GetClusterDNSFunc mocks the GetClusterDNS method.
 	GetClusterDNSFunc func(clusterID string) (string, *serviceError.ServiceError)
 
-	// GetComputeNodesFunc mocks the GetComputeNodes method.
-	GetComputeNodesFunc func(clusterID string) (*types.ComputeNodesInfo, *serviceError.ServiceError)
-
 	// GetExternalIDFunc mocks the GetExternalID method.
 	GetExternalIDFunc func(clusterID string) (string, *serviceError.ServiceError)
-
-	// InstallDinosaurOperatorFunc mocks the InstallDinosaurOperator method.
-	InstallDinosaurOperatorFunc func(cluster *api.Cluster) (bool, *serviceError.ServiceError)
-
-	// IsDinosaurVersionAvailableInClusterFunc mocks the IsDinosaurVersionAvailableInCluster method.
-	IsDinosaurVersionAvailableInClusterFunc func(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error)
 
 	// ListAllClusterIdsFunc mocks the ListAllClusterIds method.
 	ListAllClusterIdsFunc func() ([]api.Cluster, *serviceError.ServiceError)
@@ -173,15 +133,6 @@ type ClusterServiceMock struct {
 
 	// RegisterClusterJobFunc mocks the RegisterClusterJob method.
 	RegisterClusterJobFunc func(clusterRequest *api.Cluster) *serviceError.ServiceError
-
-	// ScaleDownComputeNodesFunc mocks the ScaleDownComputeNodes method.
-	ScaleDownComputeNodesFunc func(clusterID string, decrement int) (*types.ClusterSpec, *serviceError.ServiceError)
-
-	// ScaleUpComputeNodesFunc mocks the ScaleUpComputeNodes method.
-	ScaleUpComputeNodesFunc func(clusterID string, increment int) (*types.ClusterSpec, *serviceError.ServiceError)
-
-	// SetComputeNodesFunc mocks the SetComputeNodes method.
-	SetComputeNodesFunc func(clusterID string, numNodes int) (*types.ClusterSpec, *serviceError.ServiceError)
 
 	// UpdateFunc mocks the Update method.
 	UpdateFunc func(cluster api.Cluster) *serviceError.ServiceError
@@ -201,20 +152,6 @@ type ClusterServiceMock struct {
 		CheckClusterStatus []struct {
 			// Cluster is the cluster argument value.
 			Cluster *api.Cluster
-		}
-		// CheckDinosaurOperatorVersionReady holds details about calls to the CheckDinosaurOperatorVersionReady method.
-		CheckDinosaurOperatorVersionReady []struct {
-			// Cluster is the cluster argument value.
-			Cluster *api.Cluster
-			// DinosaurOperatorVersion is the dinosaurOperatorVersion argument value.
-			DinosaurOperatorVersion string
-		}
-		// ConfigureAndSaveIdentityProvider holds details about calls to the ConfigureAndSaveIdentityProvider method.
-		ConfigureAndSaveIdentityProvider []struct {
-			// Cluster is the cluster argument value.
-			Cluster *api.Cluster
-			// IdentityProviderInfo is the identityProviderInfo argument value.
-			IdentityProviderInfo types.IdentityProviderInfo
 		}
 		// CountByStatus holds details about calls to the CountByStatus method.
 		CountByStatus []struct {
@@ -266,29 +203,10 @@ type ClusterServiceMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
-		// GetComputeNodes holds details about calls to the GetComputeNodes method.
-		GetComputeNodes []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-		}
 		// GetExternalID holds details about calls to the GetExternalID method.
 		GetExternalID []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
-		}
-		// InstallDinosaurOperator holds details about calls to the InstallDinosaurOperator method.
-		InstallDinosaurOperator []struct {
-			// Cluster is the cluster argument value.
-			Cluster *api.Cluster
-		}
-		// IsDinosaurVersionAvailableInCluster holds details about calls to the IsDinosaurVersionAvailableInCluster method.
-		IsDinosaurVersionAvailableInCluster []struct {
-			// Cluster is the cluster argument value.
-			Cluster *api.Cluster
-			// DinosaurOperatorVersion is the dinosaurOperatorVersion argument value.
-			DinosaurOperatorVersion string
-			// DinosaurVersion is the dinosaurVersion argument value.
-			DinosaurVersion string
 		}
 		// ListAllClusterIds holds details about calls to the ListAllClusterIds method.
 		ListAllClusterIds []struct {
@@ -311,27 +229,6 @@ type ClusterServiceMock struct {
 		RegisterClusterJob []struct {
 			// ClusterRequest is the clusterRequest argument value.
 			ClusterRequest *api.Cluster
-		}
-		// ScaleDownComputeNodes holds details about calls to the ScaleDownComputeNodes method.
-		ScaleDownComputeNodes []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// Decrement is the decrement argument value.
-			Decrement int
-		}
-		// ScaleUpComputeNodes holds details about calls to the ScaleUpComputeNodes method.
-		ScaleUpComputeNodes []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// Increment is the increment argument value.
-			Increment int
-		}
-		// SetComputeNodes holds details about calls to the SetComputeNodes method.
-		SetComputeNodes []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// NumNodes is the numNodes argument value.
-			NumNodes int
 		}
 		// Update holds details about calls to the Update method.
 		Update []struct {
@@ -360,34 +257,26 @@ type ClusterServiceMock struct {
 			Values map[string]interface{}
 		}
 	}
-	lockCheckClusterStatus                  sync.RWMutex
-	lockCheckDinosaurOperatorVersionReady   sync.RWMutex
-	lockConfigureAndSaveIdentityProvider    sync.RWMutex
-	lockCountByStatus                       sync.RWMutex
-	lockCreate                              sync.RWMutex
-	lockDelete                              sync.RWMutex
-	lockDeleteByClusterID                   sync.RWMutex
-	lockFindAllClusters                     sync.RWMutex
-	lockFindCluster                         sync.RWMutex
-	lockFindClusterByID                     sync.RWMutex
-	lockFindDinosaurInstanceCount           sync.RWMutex
-	lockFindNonEmptyClusterByID             sync.RWMutex
-	lockGetClusterDNS                       sync.RWMutex
-	lockGetComputeNodes                     sync.RWMutex
-	lockGetExternalID                       sync.RWMutex
-	lockInstallDinosaurOperator             sync.RWMutex
-	lockIsDinosaurVersionAvailableInCluster sync.RWMutex
-	lockListAllClusterIds                   sync.RWMutex
-	lockListByStatus                        sync.RWMutex
-	lockListGroupByProviderAndRegion        sync.RWMutex
-	lockRegisterClusterJob                  sync.RWMutex
-	lockScaleDownComputeNodes               sync.RWMutex
-	lockScaleUpComputeNodes                 sync.RWMutex
-	lockSetComputeNodes                     sync.RWMutex
-	lockUpdate                              sync.RWMutex
-	lockUpdateMultiClusterStatus            sync.RWMutex
-	lockUpdateStatus                        sync.RWMutex
-	lockUpdates                             sync.RWMutex
+	lockCheckClusterStatus           sync.RWMutex
+	lockCountByStatus                sync.RWMutex
+	lockCreate                       sync.RWMutex
+	lockDelete                       sync.RWMutex
+	lockDeleteByClusterID            sync.RWMutex
+	lockFindAllClusters              sync.RWMutex
+	lockFindCluster                  sync.RWMutex
+	lockFindClusterByID              sync.RWMutex
+	lockFindDinosaurInstanceCount    sync.RWMutex
+	lockFindNonEmptyClusterByID      sync.RWMutex
+	lockGetClusterDNS                sync.RWMutex
+	lockGetExternalID                sync.RWMutex
+	lockListAllClusterIds            sync.RWMutex
+	lockListByStatus                 sync.RWMutex
+	lockListGroupByProviderAndRegion sync.RWMutex
+	lockRegisterClusterJob           sync.RWMutex
+	lockUpdate                       sync.RWMutex
+	lockUpdateMultiClusterStatus     sync.RWMutex
+	lockUpdateStatus                 sync.RWMutex
+	lockUpdates                      sync.RWMutex
 }
 
 // CheckClusterStatus calls CheckClusterStatusFunc.
@@ -419,78 +308,6 @@ func (mock *ClusterServiceMock) CheckClusterStatusCalls() []struct {
 	mock.lockCheckClusterStatus.RLock()
 	calls = mock.calls.CheckClusterStatus
 	mock.lockCheckClusterStatus.RUnlock()
-	return calls
-}
-
-// CheckDinosaurOperatorVersionReady calls CheckDinosaurOperatorVersionReadyFunc.
-func (mock *ClusterServiceMock) CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
-	if mock.CheckDinosaurOperatorVersionReadyFunc == nil {
-		panic("ClusterServiceMock.CheckDinosaurOperatorVersionReadyFunc: method is nil but ClusterService.CheckDinosaurOperatorVersionReady was just called")
-	}
-	callInfo := struct {
-		Cluster                 *api.Cluster
-		DinosaurOperatorVersion string
-	}{
-		Cluster:                 cluster,
-		DinosaurOperatorVersion: dinosaurOperatorVersion,
-	}
-	mock.lockCheckDinosaurOperatorVersionReady.Lock()
-	mock.calls.CheckDinosaurOperatorVersionReady = append(mock.calls.CheckDinosaurOperatorVersionReady, callInfo)
-	mock.lockCheckDinosaurOperatorVersionReady.Unlock()
-	return mock.CheckDinosaurOperatorVersionReadyFunc(cluster, dinosaurOperatorVersion)
-}
-
-// CheckDinosaurOperatorVersionReadyCalls gets all the calls that were made to CheckDinosaurOperatorVersionReady.
-// Check the length with:
-//
-//	len(mockedClusterService.CheckDinosaurOperatorVersionReadyCalls())
-func (mock *ClusterServiceMock) CheckDinosaurOperatorVersionReadyCalls() []struct {
-	Cluster                 *api.Cluster
-	DinosaurOperatorVersion string
-} {
-	var calls []struct {
-		Cluster                 *api.Cluster
-		DinosaurOperatorVersion string
-	}
-	mock.lockCheckDinosaurOperatorVersionReady.RLock()
-	calls = mock.calls.CheckDinosaurOperatorVersionReady
-	mock.lockCheckDinosaurOperatorVersionReady.RUnlock()
-	return calls
-}
-
-// ConfigureAndSaveIdentityProvider calls ConfigureAndSaveIdentityProviderFunc.
-func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *serviceError.ServiceError) {
-	if mock.ConfigureAndSaveIdentityProviderFunc == nil {
-		panic("ClusterServiceMock.ConfigureAndSaveIdentityProviderFunc: method is nil but ClusterService.ConfigureAndSaveIdentityProvider was just called")
-	}
-	callInfo := struct {
-		Cluster              *api.Cluster
-		IdentityProviderInfo types.IdentityProviderInfo
-	}{
-		Cluster:              cluster,
-		IdentityProviderInfo: identityProviderInfo,
-	}
-	mock.lockConfigureAndSaveIdentityProvider.Lock()
-	mock.calls.ConfigureAndSaveIdentityProvider = append(mock.calls.ConfigureAndSaveIdentityProvider, callInfo)
-	mock.lockConfigureAndSaveIdentityProvider.Unlock()
-	return mock.ConfigureAndSaveIdentityProviderFunc(cluster, identityProviderInfo)
-}
-
-// ConfigureAndSaveIdentityProviderCalls gets all the calls that were made to ConfigureAndSaveIdentityProvider.
-// Check the length with:
-//
-//	len(mockedClusterService.ConfigureAndSaveIdentityProviderCalls())
-func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProviderCalls() []struct {
-	Cluster              *api.Cluster
-	IdentityProviderInfo types.IdentityProviderInfo
-} {
-	var calls []struct {
-		Cluster              *api.Cluster
-		IdentityProviderInfo types.IdentityProviderInfo
-	}
-	mock.lockConfigureAndSaveIdentityProvider.RLock()
-	calls = mock.calls.ConfigureAndSaveIdentityProvider
-	mock.lockConfigureAndSaveIdentityProvider.RUnlock()
 	return calls
 }
 
@@ -814,38 +631,6 @@ func (mock *ClusterServiceMock) GetClusterDNSCalls() []struct {
 	return calls
 }
 
-// GetComputeNodes calls GetComputeNodesFunc.
-func (mock *ClusterServiceMock) GetComputeNodes(clusterID string) (*types.ComputeNodesInfo, *serviceError.ServiceError) {
-	if mock.GetComputeNodesFunc == nil {
-		panic("ClusterServiceMock.GetComputeNodesFunc: method is nil but ClusterService.GetComputeNodes was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-	}{
-		ClusterID: clusterID,
-	}
-	mock.lockGetComputeNodes.Lock()
-	mock.calls.GetComputeNodes = append(mock.calls.GetComputeNodes, callInfo)
-	mock.lockGetComputeNodes.Unlock()
-	return mock.GetComputeNodesFunc(clusterID)
-}
-
-// GetComputeNodesCalls gets all the calls that were made to GetComputeNodes.
-// Check the length with:
-//
-//	len(mockedClusterService.GetComputeNodesCalls())
-func (mock *ClusterServiceMock) GetComputeNodesCalls() []struct {
-	ClusterID string
-} {
-	var calls []struct {
-		ClusterID string
-	}
-	mock.lockGetComputeNodes.RLock()
-	calls = mock.calls.GetComputeNodes
-	mock.lockGetComputeNodes.RUnlock()
-	return calls
-}
-
 // GetExternalID calls GetExternalIDFunc.
 func (mock *ClusterServiceMock) GetExternalID(clusterID string) (string, *serviceError.ServiceError) {
 	if mock.GetExternalIDFunc == nil {
@@ -875,78 +660,6 @@ func (mock *ClusterServiceMock) GetExternalIDCalls() []struct {
 	mock.lockGetExternalID.RLock()
 	calls = mock.calls.GetExternalID
 	mock.lockGetExternalID.RUnlock()
-	return calls
-}
-
-// InstallDinosaurOperator calls InstallDinosaurOperatorFunc.
-func (mock *ClusterServiceMock) InstallDinosaurOperator(cluster *api.Cluster) (bool, *serviceError.ServiceError) {
-	if mock.InstallDinosaurOperatorFunc == nil {
-		panic("ClusterServiceMock.InstallDinosaurOperatorFunc: method is nil but ClusterService.InstallDinosaurOperator was just called")
-	}
-	callInfo := struct {
-		Cluster *api.Cluster
-	}{
-		Cluster: cluster,
-	}
-	mock.lockInstallDinosaurOperator.Lock()
-	mock.calls.InstallDinosaurOperator = append(mock.calls.InstallDinosaurOperator, callInfo)
-	mock.lockInstallDinosaurOperator.Unlock()
-	return mock.InstallDinosaurOperatorFunc(cluster)
-}
-
-// InstallDinosaurOperatorCalls gets all the calls that were made to InstallDinosaurOperator.
-// Check the length with:
-//
-//	len(mockedClusterService.InstallDinosaurOperatorCalls())
-func (mock *ClusterServiceMock) InstallDinosaurOperatorCalls() []struct {
-	Cluster *api.Cluster
-} {
-	var calls []struct {
-		Cluster *api.Cluster
-	}
-	mock.lockInstallDinosaurOperator.RLock()
-	calls = mock.calls.InstallDinosaurOperator
-	mock.lockInstallDinosaurOperator.RUnlock()
-	return calls
-}
-
-// IsDinosaurVersionAvailableInCluster calls IsDinosaurVersionAvailableInClusterFunc.
-func (mock *ClusterServiceMock) IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error) {
-	if mock.IsDinosaurVersionAvailableInClusterFunc == nil {
-		panic("ClusterServiceMock.IsDinosaurVersionAvailableInClusterFunc: method is nil but ClusterService.IsDinosaurVersionAvailableInCluster was just called")
-	}
-	callInfo := struct {
-		Cluster                 *api.Cluster
-		DinosaurOperatorVersion string
-		DinosaurVersion         string
-	}{
-		Cluster:                 cluster,
-		DinosaurOperatorVersion: dinosaurOperatorVersion,
-		DinosaurVersion:         dinosaurVersion,
-	}
-	mock.lockIsDinosaurVersionAvailableInCluster.Lock()
-	mock.calls.IsDinosaurVersionAvailableInCluster = append(mock.calls.IsDinosaurVersionAvailableInCluster, callInfo)
-	mock.lockIsDinosaurVersionAvailableInCluster.Unlock()
-	return mock.IsDinosaurVersionAvailableInClusterFunc(cluster, dinosaurOperatorVersion, dinosaurVersion)
-}
-
-// IsDinosaurVersionAvailableInClusterCalls gets all the calls that were made to IsDinosaurVersionAvailableInCluster.
-// Check the length with:
-//
-//	len(mockedClusterService.IsDinosaurVersionAvailableInClusterCalls())
-func (mock *ClusterServiceMock) IsDinosaurVersionAvailableInClusterCalls() []struct {
-	Cluster                 *api.Cluster
-	DinosaurOperatorVersion string
-	DinosaurVersion         string
-} {
-	var calls []struct {
-		Cluster                 *api.Cluster
-		DinosaurOperatorVersion string
-		DinosaurVersion         string
-	}
-	mock.lockIsDinosaurVersionAvailableInCluster.RLock()
-	calls = mock.calls.IsDinosaurVersionAvailableInCluster
-	mock.lockIsDinosaurVersionAvailableInCluster.RUnlock()
 	return calls
 }
 
@@ -1078,114 +791,6 @@ func (mock *ClusterServiceMock) RegisterClusterJobCalls() []struct {
 	mock.lockRegisterClusterJob.RLock()
 	calls = mock.calls.RegisterClusterJob
 	mock.lockRegisterClusterJob.RUnlock()
-	return calls
-}
-
-// ScaleDownComputeNodes calls ScaleDownComputeNodesFunc.
-func (mock *ClusterServiceMock) ScaleDownComputeNodes(clusterID string, decrement int) (*types.ClusterSpec, *serviceError.ServiceError) {
-	if mock.ScaleDownComputeNodesFunc == nil {
-		panic("ClusterServiceMock.ScaleDownComputeNodesFunc: method is nil but ClusterService.ScaleDownComputeNodes was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-		Decrement int
-	}{
-		ClusterID: clusterID,
-		Decrement: decrement,
-	}
-	mock.lockScaleDownComputeNodes.Lock()
-	mock.calls.ScaleDownComputeNodes = append(mock.calls.ScaleDownComputeNodes, callInfo)
-	mock.lockScaleDownComputeNodes.Unlock()
-	return mock.ScaleDownComputeNodesFunc(clusterID, decrement)
-}
-
-// ScaleDownComputeNodesCalls gets all the calls that were made to ScaleDownComputeNodes.
-// Check the length with:
-//
-//	len(mockedClusterService.ScaleDownComputeNodesCalls())
-func (mock *ClusterServiceMock) ScaleDownComputeNodesCalls() []struct {
-	ClusterID string
-	Decrement int
-} {
-	var calls []struct {
-		ClusterID string
-		Decrement int
-	}
-	mock.lockScaleDownComputeNodes.RLock()
-	calls = mock.calls.ScaleDownComputeNodes
-	mock.lockScaleDownComputeNodes.RUnlock()
-	return calls
-}
-
-// ScaleUpComputeNodes calls ScaleUpComputeNodesFunc.
-func (mock *ClusterServiceMock) ScaleUpComputeNodes(clusterID string, increment int) (*types.ClusterSpec, *serviceError.ServiceError) {
-	if mock.ScaleUpComputeNodesFunc == nil {
-		panic("ClusterServiceMock.ScaleUpComputeNodesFunc: method is nil but ClusterService.ScaleUpComputeNodes was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-		Increment int
-	}{
-		ClusterID: clusterID,
-		Increment: increment,
-	}
-	mock.lockScaleUpComputeNodes.Lock()
-	mock.calls.ScaleUpComputeNodes = append(mock.calls.ScaleUpComputeNodes, callInfo)
-	mock.lockScaleUpComputeNodes.Unlock()
-	return mock.ScaleUpComputeNodesFunc(clusterID, increment)
-}
-
-// ScaleUpComputeNodesCalls gets all the calls that were made to ScaleUpComputeNodes.
-// Check the length with:
-//
-//	len(mockedClusterService.ScaleUpComputeNodesCalls())
-func (mock *ClusterServiceMock) ScaleUpComputeNodesCalls() []struct {
-	ClusterID string
-	Increment int
-} {
-	var calls []struct {
-		ClusterID string
-		Increment int
-	}
-	mock.lockScaleUpComputeNodes.RLock()
-	calls = mock.calls.ScaleUpComputeNodes
-	mock.lockScaleUpComputeNodes.RUnlock()
-	return calls
-}
-
-// SetComputeNodes calls SetComputeNodesFunc.
-func (mock *ClusterServiceMock) SetComputeNodes(clusterID string, numNodes int) (*types.ClusterSpec, *serviceError.ServiceError) {
-	if mock.SetComputeNodesFunc == nil {
-		panic("ClusterServiceMock.SetComputeNodesFunc: method is nil but ClusterService.SetComputeNodes was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-		NumNodes  int
-	}{
-		ClusterID: clusterID,
-		NumNodes:  numNodes,
-	}
-	mock.lockSetComputeNodes.Lock()
-	mock.calls.SetComputeNodes = append(mock.calls.SetComputeNodes, callInfo)
-	mock.lockSetComputeNodes.Unlock()
-	return mock.SetComputeNodesFunc(clusterID, numNodes)
-}
-
-// SetComputeNodesCalls gets all the calls that were made to SetComputeNodes.
-// Check the length with:
-//
-//	len(mockedClusterService.SetComputeNodesCalls())
-func (mock *ClusterServiceMock) SetComputeNodesCalls() []struct {
-	ClusterID string
-	NumNodes  int
-} {
-	var calls []struct {
-		ClusterID string
-		NumNodes  int
-	}
-	mock.lockSetComputeNodes.RLock()
-	calls = mock.calls.SetComputeNodes
-	mock.lockSetComputeNodes.RUnlock()
 	return calls
 }
 

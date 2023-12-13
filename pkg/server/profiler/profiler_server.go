@@ -39,23 +39,30 @@ var (
 // SingletonPprofServer returns the PprofServer
 func SingletonPprofServer() *PprofServer {
 	oncePprofServer.Do(func() {
-		router := mux.NewRouter()
-		router.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
-		router.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
-		router.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
-		router.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
-		router.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
-		router.Handle("/debug/pprof/{cmd}", http.HandlerFunc(pprof.Index)) // special handling for Gorilla mux
-		httpServer := &http.Server{
-			Addr:    "localhost:6060",
-			Handler: router,
-		}
-
-		pprofServerInstance = &PprofServer{
-			httpServer: httpServer,
-		}
+		pprofServerInstance = newPprofServer()
 	})
 	return pprofServerInstance
+}
+
+func getRouter() *mux.Router {
+	router := mux.NewRouter()
+	router.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+	router.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+	router.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+	router.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+	router.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+	router.Handle("/debug/pprof/{cmd}", http.HandlerFunc(pprof.Index)) // special handling for Gorilla mux
+	return router
+}
+
+func newPprofServer() *PprofServer {
+	httpServer := &http.Server{
+		Addr:    "localhost:6060",
+		Handler: getRouter(),
+	}
+	return &PprofServer{
+		httpServer: httpServer,
+	}
 }
 
 // Stop ...

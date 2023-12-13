@@ -21,11 +21,10 @@ export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-saml}"
 
 init_chamber
 
-load_external_config cloudwatch-exporter CLOUDWATCH_EXPORTER_
-load_external_config logging LOGGING_
-load_external_config observability OBSERVABILITY_
 load_external_config secured-cluster SECURED_CLUSTER_
-load_external_config quay/rhacs-eng QUAY_
+
+PROMETHEUS_MEMORY_LIMIT=${PROMETHEUS_MEMORY_LIMIT:-"20Gi"}
+PROMETHEUS_MEMORY_REQUEST=${PROMETHEUS_MEMORY_REQUEST:-"20Gi"}
 
 case $ENVIRONMENT in
   dev)
@@ -37,6 +36,8 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"512Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"500m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"512Mi"}"
+    PROMETHEUS_MEMORY_LIMIT="30Gi"
+    PROMETHEUS_MEMORY_REQUEST="30Gi"
     SECURED_CLUSTER_ENABLED="false"
     ;;
 
@@ -49,7 +50,7 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
-    SECURED_CLUSTER_ENABLED="false"  # TODO(ROX-18908): enable
+    SECURED_CLUSTER_ENABLED="true"
     ;;
 
   stage)
@@ -88,26 +89,13 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     exit 2
 fi
 
-FLEETSHARD_SYNC_ORG="app-sre"
-FLEETSHARD_SYNC_IMAGE="acs-fleet-manager"
-FLEETSHARD_SYNC_TAG="$(make --quiet --no-print-directory -C "${ROOT_DIR}" tag)"
-
-if [[ "${ADDON_DRY_RUN:-}" == "true" ]]; then
-    "${ROOT_DIR}/scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
-else
-    "${ROOT_DIR}/scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
-fi
+FLEETSHARD_OPERATOR_TAG="$(make --quiet --no-print-directory -C "${ROOT_DIR}" tag)"
 
 echo "Loading external config: audit-logs/${CLUSTER_NAME}"
 load_external_config "audit-logs/${CLUSTER_NAME}" AUDIT_LOGS_
 
 echo "Loading external config: cluster-${CLUSTER_NAME}"
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
-
-# Replace all the line breaks with \n
-escape_linebreaks() {
-    <<<"$1" sed '$ ! s/$/\\n/' | tr -d '\n'
-}
 
 # Allows to load an external cluster config (e.g. acs-dev-dp-01) and apply it to a different cluster with override
 OCM_CLUSTER_ID="${OVERRIDE_CLUSTER_ID:-${CLUSTER_ID}}"
@@ -127,49 +115,24 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "acscsEnvironment", "value": "${ENVIRONMENT}" },
             { "id": "auditLogsLogGroupName", "value": "${AUDIT_LOGS_LOG_GROUP_NAME:-}" },
             { "id": "auditLogsRoleArn", "value": "${AUDIT_LOGS_ROLE_ARN:-}" },
-            { "id": "cloudwatchAwsAccessKeyId", "value": "${CLOUDWATCH_EXPORTER_AWS_ACCESS_KEY_ID:-}" },
-            { "id": "cloudwatchAwsSecretAccessKey", "value": "${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" },
-            { "id": "fleetshardSyncAuthType", "value": "RHSSO" },
-            { "id": "fleetshardSyncImageTag", "value": "quay.io/${FLEETSHARD_SYNC_ORG}/${FLEETSHARD_SYNC_IMAGE}:${FLEETSHARD_SYNC_TAG}" },
+            { "id": "fleetshardOperatorImageTag", "value": "${FLEETSHARD_OPERATOR_TAG}" },
             { "id": "fleetshardSyncAwsRegion", "value": "${CLUSTER_REGION}" },
             { "id": "fleetshardSyncFleetManagerEndpoint", "value": "${FM_ENDPOINT}" },
-            { "id": "fleetshardSyncManagedDbEnabled", "value": "true" },
-            { "id": "fleetshardSyncManagedDbPerformanceInsights", "value": "true" },
             { "id": "fleetshardSyncManagedDbSecurityGroup", "value": "${CLUSTER_MANAGED_DB_SECURITY_GROUP}" },
             { "id": "fleetshardSyncManagedDbSubnetGroup", "value": "${CLUSTER_MANAGED_DB_SUBNET_GROUP}" },
-            { "id": "fleetshardSyncRedHatSsoEndpoint", "value": "https://sso.redhat.com" },
-            { "id": "fleetshardSyncRedHatSsoRealm", "value": "redhat-external" },
             { "id": "fleetshardSyncResourcesLimitsCpu", "value": "${FLEETSHARD_SYNC_CPU_LIMIT}" },
             { "id": "fleetshardSyncResourcesLimitsMemory", "value": "${FLEETSHARD_SYNC_MEMORY_LIMIT}" },
             { "id": "fleetshardSyncResourcesRequestsCpu", "value": "${FLEETSHARD_SYNC_CPU_REQUEST}" },
             { "id": "fleetshardSyncResourcesRequestsMemory", "value": "${FLEETSHARD_SYNC_MEMORY_REQUEST}" },
             { "id": "fleetshardSyncSecretEncryptionKeyId", "value": "${CLUSTER_SECRET_ENCRYPTION_KEY_ID}" },
-            { "id": "fleetshardSyncSecretEncryptionType", "value": "kms" },
-            { "id": "loggingAwsAccessKeyId", "value": "${LOGGING_AWS_ACCESS_KEY_ID}" },
-            { "id": "loggingAwsRegion", "value": "us-east-1" },
-            { "id": "loggingAwsSecretAccessKey", "value": "${LOGGING_AWS_SECRET_ACCESS_KEY}" },
             { "id": "loggingGroupPrefix", "value": "${CLUSTER_NAME}" },
-            { "id": "observabilityDeadMansSwitchUrl", "value": "${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" },
-            { "id": "observabilityGithubAccessToken", "value": "${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" },
-            { "id": "observabilityGithubRepository", "value": "https://api.github.com/repos/stackrox/rhacs-observability-resources/contents" },
             { "id": "observabilityGithubTag", "value": "${OBSERVABILITY_GITHUB_TAG}" },
-            { "id": "observabilityObservatoriumAuthType", "value": "redhat" },
             { "id": "observabilityObservatoriumGateway", "value": "${OBSERVABILITY_OBSERVATORIUM_GATEWAY}" },
-            { "id": "observabilityObservatoriumMetricsClientId", "value": "${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" },
-            { "id": "observabilityObservatoriumMetricsSecret", "value": "${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" },
-            { "id": "observabilityObservatoriumRedHatSsoAuthServerUrl", "value": "https://sso.redhat.com/auth/" },
-            { "id": "observabilityObservatoriumRedHatSsoRealm", "value": "redhat-external" },
+            { "id": "observabilityPrometheusResourcesLimitsMemory", "value" : "${PROMETHEUS_MEMORY_LIMIT}" },
+            { "id": "observabilityPrometheusResourcesRequestsMemory", "value": "${PROMETHEUS_MEMORY_REQUEST}" },
             { "id": "observabilityOperatorVersion", "value": "${OBSERVABILITY_OPERATOR_VERSION}" },
-            { "id": "observabilityPagerdutyKey", "value": "${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" },
-            { "id": "securedClusterAdmissionControlServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_ADMISSION_CONTROL_CERT}")" },
-            { "id": "securedClusterAdmissionControlServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_ADMISSION_CONTROL_KEY}")" },
-            { "id": "securedClusterCaCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_CA_CERT}")" },
             { "id": "securedClusterCentralEndpoint", "value": "${SECURED_CLUSTER_CENTRAL_ENDPOINT}" },
-            { "id": "securedClusterCollectorServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_COLLECTOR_CERT}")" },
-            { "id": "securedClusterCollectorServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_COLLECTOR_KEY}")" },
             { "id": "securedClusterEnabled", "value": "${SECURED_CLUSTER_ENABLED}" },
-            { "id": "securedClusterSensorServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_SENSOR_CERT}")" },
-            { "id": "securedClusterSensorServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_SENSOR_KEY}")" },
             { "id": "externalSecretsAwsRoleArn", "value": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ExternalSecretsServiceRole" }
         ]
     }

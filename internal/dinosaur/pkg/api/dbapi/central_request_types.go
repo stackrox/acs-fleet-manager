@@ -83,6 +83,10 @@ type CentralRequest struct {
 
 	// All we need to integrate Central with an IdP.
 	AuthConfig
+
+	// ExpiredAt contains the timestamp of when a Central instance's quota allowance was found to be expired.
+	// After a grace period, the Central instance will be marked for deletion, its status will be set to 'deprovision'.
+	ExpiredAt *time.Time `json:"expired_at"`
 }
 
 // CentralList ...

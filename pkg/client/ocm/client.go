@@ -5,16 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/openshift-online/ocm-sdk-go/logging"
-
-	"github.com/pkg/errors"
-	pkgerrors "github.com/pkg/errors"
-
 	"github.com/golang/glog"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/openshift-online/ocm-sdk-go/logging"
+	pkgerrors "github.com/pkg/errors"
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
@@ -42,11 +39,7 @@ type Client interface {
 	CreateAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error)
 	UpdateAddonParameters(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
 	GetClusterDNS(clusterID string) (string, error)
-	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error)
-	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
-	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
-	GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 	DeleteCluster(clusterID string) (int, error)
 	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
 	DeleteSubscription(id string) (int, error)
@@ -94,7 +87,7 @@ func NewOCMConnection(ocmConfig *OCMConfig, baseURL string) (*sdkClient.Connecti
 	} else if ocmConfig.SelfToken != "" {
 		builder = builder.Tokens(ocmConfig.SelfToken)
 	} else {
-		return nil, nil, fmt.Errorf("Can't build OCM client connection. No Client/Secret or Token has been provided.")
+		return nil, nil, pkgerrors.New("Can't build OCM client connection. No Client/Secret or Token has been provided.")
 	}
 
 	connection, err := builder.Build()
@@ -135,7 +128,7 @@ func NewMockClient() Client {
 				ID("12345678").
 				Name("stubbed-name").
 				Build()
-			return org, errors.Wrap(err, "failed to build organisation")
+			return org, pkgerrors.Wrap(err, "failed to build organisation")
 		},
 	}
 }
@@ -444,90 +437,6 @@ func (c client) CreateIdentityProvider(clusterID string, identityProvider *clust
 	return response.Body(), err
 }
 
-// GetIdentityProviderList ...
-func (c client) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
-	if c.connection == nil {
-		return nil, serviceErrors.InvalidOCMConnection()
-	}
-
-	clusterResource := c.connection.ClustersMgmt().V1().Clusters()
-	response, getIDPErr := clusterResource.Cluster(clusterID).
-		IdentityProviders().
-		List().
-		Send()
-
-	if getIDPErr != nil {
-		return nil, serviceErrors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to get list of identity providers, err: %s", getIDPErr.Error())
-	}
-	return response.Items(), nil
-}
-
-// ScaleUpComputeNodes scales up compute nodes by increment value
-func (c client) ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error) {
-	return c.scaleComputeNodes(clusterID, increment)
-}
-
-// ScaleDownComputeNodes scales down compute nodes by decrement value
-func (c client) ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
-	return c.scaleComputeNodes(clusterID, -decrement)
-}
-
-// scaleComputeNodes scales the Compute nodes up or down by the value of `numNodes`
-func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
-	if c.connection == nil {
-		return nil, serviceErrors.InvalidOCMConnection()
-	}
-
-	clusterClient := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID)
-
-	cluster, err := clusterClient.Get().Send()
-	if err != nil {
-		return nil, fmt.Errorf("retrieving cluster: %w", err)
-	}
-
-	// get current number of compute nodes
-	currentNumOfNodes := cluster.Body().Nodes().Compute()
-
-	// create a cluster object with updated number of compute nodes
-	// NOTE - there is no need to handle whether the number of nodes is valid, as this is handled by OCM
-	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(currentNumOfNodes + numNodes)).
-		Build()
-	if err != nil {
-		return nil, fmt.Errorf("scaling compute nodes by %d nodes: %w", numNodes, err)
-	}
-
-	// patch cluster with updated number of compute nodes
-	resp, err := clusterClient.Update().Body(patch).Send()
-	if err != nil {
-		return nil, fmt.Errorf("patching cluster with updated number of compute nodes: %w", err)
-	}
-
-	return resp.Body(), nil
-}
-
-// SetComputeNodes ...
-func (c client) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
-	if c.connection == nil {
-		return nil, serviceErrors.InvalidOCMConnection()
-	}
-
-	clusterClient := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID)
-
-	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(numNodes)).
-		Build()
-	if err != nil {
-		return nil, fmt.Errorf("building %d compute nodes: %w", numNodes, err)
-	}
-
-	// patch cluster with updated number of compute nodes
-	resp, err := clusterClient.Update().Body(patch).Send()
-	if err != nil {
-		return nil, fmt.Errorf("patching cluster with updated number of compute nodes: %w", err)
-	}
-
-	return resp.Body(), nil
-}
-
 func newAddonParameterListBuilder(params []Parameter) *clustersmgmtv1.AddOnInstallationParameterListBuilder {
 	if len(params) > 0 {
 		var items []*clustersmgmtv1.AddOnInstallationParameterBuilder
@@ -630,21 +539,28 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
 
-	quotaCostList, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Send()
-	if err != nil {
-		return nil, fmt.Errorf("retrieving relatedResources from the QuotaCosts service: %w", err)
-	}
+	req := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true)
 
-	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
+	// TODO: go 1.21 can infer the following generic arguments from req
+	//       automatically, so this indirection becomes unnecessary.
+	fetchQuotaCosts := fetchPages[*amsv1.QuotaCostListRequest,
+		*amsv1.QuotaCostListResponse,
+		*amsv1.QuotaCostList,
+		*amsv1.QuotaCost,
+	]
+	err := fetchQuotaCosts(req, 100, 1000, func(qc *amsv1.QuotaCost) bool {
 		relatedResourcesList := qc.RelatedResources()
 		for _, relatedResource := range relatedResourcesList {
 			if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {
 				res = append(res, qc)
+				break
 			}
 		}
 		return true
 	})
-
+	if err != nil {
+		return nil, pkgerrors.Wrap(err, "error listing QuotaCosts")
+	}
 	return res, nil
 }
 
