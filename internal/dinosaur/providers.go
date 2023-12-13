@@ -66,6 +66,9 @@ func ServiceProviders() di.Option {
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
+		// IMPORTANT:
+		// Each new manager lease should be added to the database via migration,
+		// otherwise manager will never start properly.
 		di.Provide(workers.NewClusterManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewDinosaurManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewAcceptedCentralManager, di.As(new(workers.Worker))),

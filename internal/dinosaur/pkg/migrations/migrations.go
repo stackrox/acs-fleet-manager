@@ -50,6 +50,7 @@ func getMigrations() []*gormigrate.Migration {
 		addSecretFieldToCentralRequests(),
 		removeCentralAndScannerOverrides(),
 		addExpiredAtFieldToCentralRequests(),
+		addExpirationLeaseType(),
 	}
 }
 
