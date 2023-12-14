@@ -63,7 +63,10 @@ EOF
         fi
     fi
 
-    preload_dependency_images
+    if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
+        log "Ensuring operator images exist from dev GitOps config"
+        ensure_operator_image_exists.sh
+    fi
 fi
 
 log
