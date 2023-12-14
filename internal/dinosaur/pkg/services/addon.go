@@ -22,7 +22,7 @@ type AddonProvisioner struct {
 }
 
 // NewAddonProvisioner creates a new instance of AddonProvisioner
-func NewAddonProvisioner(ocmClient ocm.Client) *AddonProvisioner {
+func NewAddonProvisioner(ocmClient ocm.ClusterManagementClient) *AddonProvisioner {
 	return &AddonProvisioner{
 		ocmClient: ocmClient,
 	}
