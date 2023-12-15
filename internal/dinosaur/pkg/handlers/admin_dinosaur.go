@@ -255,7 +255,7 @@ func (h adminCentralHandler) PatchExpiredAt(w http.ResponseWriter, r *http.Reque
 					return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Cannot parse timestamp: %s", err.Error())
 				}
 			}
-			glog.Warningf("Setting expired_at to %q for central %q: %s", ts, id, reason)
+			glog.Warningf("Setting expired_at to %q for central %q: %s", expired_at, id, reason)
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
 			return nil, h.service.Updates(central, map[string]interface{}{
 				"expired_at": &expired_at,
