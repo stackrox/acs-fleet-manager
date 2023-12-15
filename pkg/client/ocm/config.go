@@ -9,45 +9,41 @@ import (
 
 // MockModeStubServer ...
 const (
-	MockModeStubServer            = "stub-server"
-	MockModeEmulateServer         = "emulate-server"
-	centralOperatorAddonID        = "managed-central"
-	fleetshardAddonID             = "fleetshard-operator"
-	ClusterLoggingOperatorAddonID = "cluster-logging-operator"
+	MockModeStubServer    = "stub-server"
+	MockModeEmulateServer = "emulate-server"
 )
 
 // OCMConfig ...
 type OCMConfig struct {
-	BaseURL                string `json:"base_url"`
-	AmsURL                 string `json:"ams_url"`
-	ClientID               string `json:"client-id"`
-	ClientIDFile           string `json:"client-id_file"`
-	ClientSecret           string `json:"client-secret"`
-	ClientSecretFile       string `json:"client-secret_file"`
-	SelfToken              string `json:"self_token"`
-	SelfTokenFile          string `json:"self_token_file"`
-	TokenURL               string `json:"token_url"`
-	Debug                  bool   `json:"debug"`
-	EnableMock             bool   `json:"enable_mock"`
-	MockMode               string `json:"mock_type"`
-	CentralOperatorAddonID string `json:"central_operator_addon_id"`
-	FleetshardAddonID      string `json:"fleetshard_addon_id"`
+	BaseURL                    string `json:"base_url"`
+	AmsURL                     string `json:"ams_url"`
+	ClientID                   string `json:"client-id"`
+	ClientIDFile               string `json:"client-id_file"`
+	ClientSecret               string `json:"client-secret"`
+	ClientSecretFile           string `json:"client-secret_file"`
+	SelfToken                  string `json:"self_token"`
+	SelfTokenFile              string `json:"self_token_file"`
+	TokenURL                   string `json:"token_url"`
+	Debug                      bool   `json:"debug"`
+	EnableMock                 bool   `json:"enable_mock"`
+	MockMode                   string `json:"mock_type"`
+	InheritFleetshardSyncImage bool   `json:"inherit_fleetshard_sync_image"`
+	FleetshardSyncImage        string `json:"fleetshard_sync_image"`
 }
 
 // NewOCMConfig ...
 func NewOCMConfig() *OCMConfig {
 	return &OCMConfig{
-		BaseURL:                "https://api-integration.6943.hive-integration.openshiftapps.com",
-		AmsURL:                 "https://api.stage.openshift.com",
-		TokenURL:               "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
-		ClientIDFile:           "secrets/ocm-service.clientId",
-		ClientSecretFile:       "secrets/ocm-service.clientSecret", // pragma: allowlist secret
-		SelfTokenFile:          "secrets/ocm-service.token",
-		Debug:                  false,
-		EnableMock:             false,
-		MockMode:               MockModeStubServer,
-		CentralOperatorAddonID: centralOperatorAddonID,
-		FleetshardAddonID:      fleetshardAddonID,
+		BaseURL:                    "https://api-integration.6943.hive-integration.openshiftapps.com",
+		AmsURL:                     "https://api.stage.openshift.com",
+		TokenURL:                   "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
+		ClientIDFile:               "secrets/ocm-service.clientId",
+		ClientSecretFile:           "secrets/ocm-service.clientSecret", // pragma: allowlist secret
+		SelfTokenFile:              "secrets/ocm-service.token",
+		Debug:                      false,
+		EnableMock:                 false,
+		MockMode:                   MockModeStubServer,
+		InheritFleetshardSyncImage: false,
 	}
 }
 
@@ -62,8 +58,8 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Debug, "ocm-debug", c.Debug, "Debug flag for OCM API")
 	fs.BoolVar(&c.EnableMock, "enable-ocm-mock", c.EnableMock, "Enable mock ocm clients")
 	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")
-	fs.StringVar(&c.CentralOperatorAddonID, "central-operator-addon-id", c.CentralOperatorAddonID, "The name of the Central operator addon")
-	fs.StringVar(&c.FleetshardAddonID, "fleetshard-addon-id", c.FleetshardAddonID, "The name of the fleetshard operator addon")
+	fs.BoolVar(&c.InheritFleetshardSyncImage, "inherit-fleetshard-sync-image", c.InheritFleetshardSyncImage, "Fleet Manager sets the image if the parameter value is 'inherit'")
+	fs.StringVar(&c.FleetshardSyncImage, "fleetshard-sync-image", c.FleetshardSyncImage, "Fleetshard sync image")
 }
 
 // ReadFiles ...

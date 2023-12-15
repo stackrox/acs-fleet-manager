@@ -750,8 +750,6 @@ deploy/service: OBSERVABILITY_CONFIG_REPO ?= "https://api.github.com/repos/bf2fc
 deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
 deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
-deploy/service: CENTRAL_OPERATOR_OPERATOR_ADDON_ID ?= "managed-central-qe"
-deploy/service: FLEETSHARD_ADDON_ID ?= "fleetshard-operator-qe"
 deploy/service: CENTRAL_IDP_ISSUER ?= "https://sso.stage.redhat.com/auth/realms/redhat-external"
 deploy/service: CENTRAL_IDP_CLIENT_ID ?= "rhacs-ms-dev"
 deploy/service: CENTRAL_REQUEST_EXPIRATION_TIMEOUT ?= "1h"
@@ -791,8 +789,6 @@ deploy/service: deploy/envoy deploy/route
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
 		-p FLEETSHARD_OLM_INDEX_IMAGE="${FLEETSHARD_OLM_INDEX_IMAGE}" \
 		-p CENTRAL_OPERATOR_OLM_INDEX_IMAGE="${CENTRAL_OPERATOR_OLM_INDEX_IMAGE}" \
-		-p CENTRAL_OPERATOR_OPERATOR_ADDON_ID="${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}" \
-		-p FLEETSHARD_ADDON_ID="${FLEETSHARD_ADDON_ID}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
 		-p CENTRAL_REQUEST_EXPIRATION_TIMEOUT="${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}" \
 		| oc apply -f - -n $(NAMESPACE)

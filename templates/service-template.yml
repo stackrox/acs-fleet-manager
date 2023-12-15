@@ -349,16 +349,6 @@ parameters:
   description: The domain name to use for Central instances
   value: acs-stage.rhcloud.com
 
-- name: CENTRAL_OPERATOR_OPERATOR_ADDON_ID
-  displayName: Central operator addon ID
-  description: ID of the Central operator addon
-  value: "managed-central-qe"
-
-- name: FLEETSHARD_ADDON_ID
-  displayName: fleetshard addon ID
-  description: ID of the fleetshard addon
-  value: "fleetshard-operator-qe"
-
 - name: ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
@@ -1286,8 +1276,8 @@ objects:
             - --fleetshard-operator-index-image=${FLEETSHARD_OLM_INDEX_IMAGE}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --central-domain-name=${CENTRAL_DOMAIN_NAME}
-            - --central-operator-addon-id=${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}
-            - --fleetshard-addon-id=${FLEETSHARD_ADDON_ID}
+            - --inherit-fleetshard-sync-image=${INHERIT_FLEETSHARD_SYNC_IMAGE}
+            - --fleetshard-sync-image=${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
             - --alsologtostderr
             - --central-request-expiration-timeout=${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}
             - --central-request-internal-user-agents=${CENTRAL_REQUEST_INTERNAL_USER_AGENTS}

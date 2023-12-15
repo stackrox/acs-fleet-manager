@@ -16,16 +16,33 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+const fleetshardImageParameter = "fleetshardSyncImage"
+
 // AddonProvisioner keeps addon installations on the data plane clusters up-to-date
 type AddonProvisioner struct {
-	ocmClient ocm.Client
+	ocmClient      ocm.Client
+	customizations []addonCustomization
 }
 
 // NewAddonProvisioner creates a new instance of AddonProvisioner
-func NewAddonProvisioner(ocmClient ocm.ClusterManagementClient) *AddonProvisioner {
+func NewAddonProvisioner(ocmClient ocm.ClusterManagementClient, ocmConfig ocm.OCMConfig) *AddonProvisioner {
 	return &AddonProvisioner{
-		ocmClient: ocmClient,
+		ocmClient:      ocmClient,
+		customizations: initCustomizations(ocmConfig),
 	}
+}
+
+func initCustomizations(ocmConfig ocm.OCMConfig) []addonCustomization {
+	var customizations []addonCustomization
+
+	if ocmConfig.InheritFleetshardSyncImage {
+		if ocmConfig.FleetshardSyncImage == "" {
+			glog.Error("fleetshard image should not be empty when inherit customization is enabled")
+		} else {
+			customizations = append(customizations, inheritFleetshardImage(ocmConfig.FleetshardSyncImage))
+		}
+	}
+	return customizations
 }
 
 type updateDecision struct {
@@ -34,6 +51,8 @@ type updateDecision struct {
 	ocmClient      ocm.Client
 	multiErr       *multierror.Error
 }
+
+type addonCustomization func(gitops.AddonConfig) gitops.AddonConfig
 
 // Provision installs, upgrades or uninstalls the addons based on a given config
 func (p *AddonProvisioner) Provision(cluster api.Cluster, addons []gitops.AddonConfig) error {
@@ -123,7 +142,7 @@ func errorOrNil(multiErr *multierror.Error) error {
 }
 
 func (p *AddonProvisioner) installAddon(clusterID string, config gitops.AddonConfig) error {
-	addonInstallation, err := newInstallation(config)
+	addonInstallation, err := p.newInstallation(config)
 	if err != nil {
 		return err
 	}
@@ -134,7 +153,11 @@ func (p *AddonProvisioner) installAddon(clusterID string, config gitops.AddonCon
 	return nil
 }
 
-func newInstallation(config gitops.AddonConfig) (*clustersmgmtv1.AddOnInstallation, error) {
+func (p *AddonProvisioner) newInstallation(config gitops.AddonConfig) (*clustersmgmtv1.AddOnInstallation, error) {
+	for _, customization := range p.customizations {
+		config = customization(config)
+	}
+
 	installation, err := clustersmgmtv1.NewAddOnInstallation().
 		Addon(clustersmgmtv1.NewAddOn().ID(config.ID)).
 		AddonVersion(clustersmgmtv1.NewAddOnVersion().ID(config.Version)).
@@ -149,7 +172,7 @@ func newInstallation(config gitops.AddonConfig) (*clustersmgmtv1.AddOnInstallati
 }
 
 func (p *AddonProvisioner) updateAddon(clusterID string, config gitops.AddonConfig) error {
-	update, err := newInstallation(config)
+	update, err := p.newInstallation(config)
 	if err != nil {
 		return err
 	}
@@ -207,4 +230,13 @@ func convertParametersFromOCMAPI(parameters *clustersmgmtv1.AddOnInstallationPar
 		return true
 	})
 	return result
+}
+
+func inheritFleetshardImage(image string) addonCustomization {
+	return func(addon gitops.AddonConfig) gitops.AddonConfig {
+		if param := addon.Parameters[fleetshardImageParameter]; param == "inherit" {
+			addon.Parameters[fleetshardImageParameter] = image
+		}
+		return addon
+	}
 }
