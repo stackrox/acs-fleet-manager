@@ -653,8 +653,127 @@ func TestAddonProvisioner_Provision_AutoUpgradeDisabled(t *testing.T) {
 	})
 }
 
+func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Install(t *testing.T) {
+	RegisterTestingT(t)
+
+	ocmMock := &ocm.ClientMock{
+		GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
+			return nil, errors.NotFound("")
+		},
+		CreateAddonInstallationFunc: func(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error {
+			return nil
+		},
+	}
+	addonConfig := ocm.AddonConfig{
+		FleetshardSyncImageTag:        "0307e03",
+		InheritFleetshardSyncImageTag: true,
+	}
+	p := &AddonProvisioner{
+		ocmClient:      ocmMock,
+		customizations: initCustomizations(addonConfig),
+	}
+	err := p.Provision(api.Cluster{}, []gitops.AddonConfig{
+		{
+			ID: "acs-fleetshard-dev",
+			Parameters: map[string]string{
+				"fleetshardSyncImageTag": "inherit",
+			},
+		},
+	})
+	Expect(err).To(Not(HaveOccurred()))
+	Expect(len(ocmMock.CreateAddonInstallationCalls())).To(Equal(1))
+	Expect(ocmMock.CreateAddonInstallationCalls()[0].Addon.Parameters().Len()).To(Equal(1))
+	Expect(ocmMock.CreateAddonInstallationCalls()[0].Addon.Parameters().Get(0).ID()).To(Equal("fleetshardSyncImageTag"))
+	Expect(ocmMock.CreateAddonInstallationCalls()[0].Addon.Parameters().Get(0).Value()).To(Equal("0307e03"))
+}
+
+func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Upgrade(t *testing.T) {
+	RegisterTestingT(t)
+
+	ocmMock := &ocm.ClientMock{
+		GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
+			object, err := clustersmgmtv1.NewAddOnInstallation().
+				ID(addonID).
+				Addon(clustersmgmtv1.NewAddOn().ID(addonID)).
+				AddonVersion(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+				State(clustersmgmtv1.AddOnInstallationStateReady).
+				Build()
+			Expect(err).To(Not(HaveOccurred()))
+			return object, nil
+		},
+		GetAddonVersionFunc: func(addonID string, version string) (*addonsmgmtv1.AddonVersion, error) {
+			return addonsmgmtv1.NewAddonVersion().
+				ID("0.2.0").
+				SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
+				PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
+				Build()
+		},
+		UpdateAddonInstallationFunc: func(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error {
+			return nil
+		},
+	}
+	addonConfig := ocm.AddonConfig{
+		FleetshardSyncImageTag:        "0307e03",
+		InheritFleetshardSyncImageTag: true,
+	}
+	p := &AddonProvisioner{
+		ocmClient:      ocmMock,
+		customizations: initCustomizations(addonConfig),
+	}
+	err := p.Provision(api.Cluster{
+		Addons: addonsJSON([]dbapi.AddonInstallation{
+			{
+				ID:                  "acs-fleetshard",
+				Version:             "0.2.0",
+				SourceImage:         "quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac",
+				PackageImage:        "quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c",
+				ParametersSHA256Sum: "3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c", // pragma: allowlist secret
+			},
+		}),
+	},
+		[]gitops.AddonConfig{
+			{
+				ID:      "acs-fleetshard",
+				Version: "0.3.0",
+				Parameters: map[string]string{
+					"fleetshardSyncImageTag": "inherit",
+				},
+			},
+		})
+	Expect(err).To(Not(HaveOccurred()))
+	Expect(len(ocmMock.UpdateAddonInstallationCalls())).To(Equal(1))
+	Expect(ocmMock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Len()).To(Equal(1))
+	Expect(ocmMock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).ID()).To(Equal("fleetshardSyncImageTag"))
+	Expect(ocmMock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).Value()).To(Equal("0307e03"))
+}
+
 func addonsJSON(addons []dbapi.AddonInstallation) api.JSON {
 	result, err := json.Marshal(addons)
 	Expect(err).To(Not(HaveOccurred()))
 	return result
+}
+
+func TestAddonProvisioner_NewAddonProvisioner(t *testing.T) {
+	RegisterTestingT(t)
+
+	addonConfigPtr := &ocm.AddonConfig{
+		URL:          "https://addon-service.test",
+		ClientID:     "addon-client-id",
+		ClientSecret: "addon-client-secret", // pragma: allowlist secret
+		SelfToken:    "addon-token",
+	}
+
+	baseConfigPtr := &ocm.OCMConfig{
+		BaseURL:      "https://base.test",
+		ClientID:     "base-client-id",
+		ClientSecret: "base-client-secret", // pragma: allowlist secret
+		SelfToken:    "base-token",
+	}
+	_, err := NewAddonProvisioner(addonConfigPtr, baseConfigPtr)
+
+	Expect(err).To(Not(HaveOccurred()))
+	Expect(baseConfigPtr.BaseURL).To(Equal("https://base.test"))
+	Expect(baseConfigPtr.ClientID).To(Equal("base-client-id"))
+	Expect(baseConfigPtr.ClientSecret).To(Equal("base-client-secret"))
+	Expect(baseConfigPtr.SelfToken).To(Equal("base-token"))
 }
