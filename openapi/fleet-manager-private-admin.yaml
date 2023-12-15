@@ -208,6 +208,55 @@ paths:
             application/json:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
+  '/api/rhacs/v1/admin/centrals/{id}/expired-at':
+    patch:
+      summary: Update `expired_at` central property
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - in: query
+          name: timestamp
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: reason
+          schema:
+            type: string
+          required: true
+      security:
+        - Bearer: [ ]
+      operationId: updateCentralExpiredAtById
+      responses:
+        "200":
+          description: Central updated by ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Central'
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "404":
+          description: No Central found with the specified ID
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
   '/api/rhacs/v1/admin/centrals/{id}/rotate-secrets':
     post:
       summary: Rotate RHSSO client of a central tenant
@@ -356,6 +405,10 @@ components:
             updated_at:
               format: date-time
               type: string
+            expired_at:
+              format: date-time
+              type: string
+              nullable: true
             failed_reason:
               type: string
             organisation_id:
