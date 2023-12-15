@@ -17,7 +17,7 @@ The following commands generate `crds/secured-cluster.yaml`:
 ```
 git clone git@github.com:stackrox/stackrox.git
 cd stackrox/operator
-git checkout 3.74.0
+git checkout 4.3.1
 kustomize build config/crd > crds/secured-cluster.yaml
 ```
 

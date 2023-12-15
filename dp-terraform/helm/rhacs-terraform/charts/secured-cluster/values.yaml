@@ -20,6 +20,7 @@ collector:
       cpu: 10m
     limits:
       memory: 140Mi
+  collection: "CORE_BPF"
 compliance:
   resources:
     requests:
