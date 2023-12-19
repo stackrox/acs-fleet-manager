@@ -107,6 +107,10 @@ type DinosaurService interface {
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	Restore(ctx context.Context, id string) *errors.ServiceError
 	RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
+	// ResetCentralSecretBackup resets the Secret field of centralReqest, which are the backed up secrets
+	// of a tenant. By resetting the field the next update will store new secrets which enables manual rotation.
+	// This is currently the only way to update secret backups, an automatic approach should be implemented
+	// to accomated for regular processes like central TLS cert rotation.
 	ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 }
 
