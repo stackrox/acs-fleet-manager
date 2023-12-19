@@ -396,7 +396,7 @@ paths:
         required: true
       responses:
         "200":
-          description: RHSSO client successfully rotated
+          description: Secret successfully rotated
         "401":
           content:
             application/json:
@@ -422,7 +422,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
-      summary: Rotate RHSSO client of a central tenant
+      summary: Rotate RHSSO client or Secret Backup of a central tenant
   /api/rhacs/v1/admin/centrals/{id}/restore:
     post:
       parameters:
@@ -523,8 +523,11 @@ components:
     CentralRotateSecretsRequest:
       example:
         rotate_rhsso_client_credentials: true
+        rotate_secret_backup: true
       properties:
         rotate_rhsso_client_credentials:
+          type: boolean
+        rotate_secret_backup:
           type: boolean
       type: object
     Error:

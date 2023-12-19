@@ -107,6 +107,7 @@ type DinosaurService interface {
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	Restore(ctx context.Context, id string) *errors.ServiceError
 	RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
+	RotateCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -167,6 +168,17 @@ func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralR
 		glog.Errorf("Rotating RHSSO client failed: failed to delete RHSSO dynamic client, client ID is %s", centralRequest.AuthConfig.ClientID)
 		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to delete previous RHSSO dynamic client")
 	}
+	return nil
+}
+
+func (k *dinosaurService) RotateCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
+	centralRequest.Secrets = nil // pragma: allowlist secret
+
+	dbConn := k.connectionFactory.New()
+	if err := dbConn.Unscoped().Model(centralRequest).Select("secrets").Updates(centralRequest).Error; err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset secrets for central request")
+	}
+
 	return nil
 }
 
