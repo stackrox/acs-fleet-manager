@@ -522,12 +522,12 @@ components:
       - $ref: '#/components/schemas/CentralList_allOf'
     CentralRotateSecretsRequest:
       example:
+        reset_secret_backup: true
         rotate_rhsso_client_credentials: true
-        rotate_secret_backup: true
       properties:
         rotate_rhsso_client_credentials:
           type: boolean
-        rotate_secret_backup:
+        reset_secret_backup:
           type: boolean
       type: object
     Error:

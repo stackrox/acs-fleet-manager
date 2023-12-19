@@ -454,7 +454,7 @@ components:
       properties:
         rotate_rhsso_client_credentials:
           type: boolean
-        rotate_secret_backup:
+        reset_secret_backup:
           type: boolean
 
   securitySchemes:

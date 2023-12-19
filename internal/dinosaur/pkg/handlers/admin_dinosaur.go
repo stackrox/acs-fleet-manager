@@ -232,8 +232,8 @@ func (h adminCentralHandler) RotateSecrets(w http.ResponseWriter, r *http.Reques
 				}
 			}
 
-			if rotateSecretsRequest.RotateSecretBackup {
-				svcErr = h.service.RotateCentralSecretBackup(ctx, centralRequest)
+			if rotateSecretsRequest.ResetSecretBackup {
+				svcErr = h.service.ResetCentralSecretBackup(ctx, centralRequest)
 				if svcErr != nil {
 					return nil, svcErr
 				}

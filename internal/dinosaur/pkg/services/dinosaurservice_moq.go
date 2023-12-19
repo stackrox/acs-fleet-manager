@@ -82,14 +82,14 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			RegisterDinosaurJobFunc: func(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the RegisterDinosaurJob method")
 //			},
+//			ResetCentralSecretBackupFunc: func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+//				panic("mock out the ResetCentralSecretBackup method")
+//			},
 //			RestoreFunc: func(ctx context.Context, id string) *serviceError.ServiceError {
 //				panic("mock out the Restore method")
 //			},
 //			RotateCentralRHSSOClientFunc: func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the RotateCentralRHSSOClient method")
-//			},
-//			RotateCentralSecretBackupFunc: func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
-//				panic("mock out the RotateCentralSecretBackup method")
 //			},
 //			UpdateFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the Update method")
@@ -167,14 +167,14 @@ type DinosaurServiceMock struct {
 	// RegisterDinosaurJobFunc mocks the RegisterDinosaurJob method.
 	RegisterDinosaurJobFunc func(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
+	// ResetCentralSecretBackupFunc mocks the ResetCentralSecretBackup method.
+	ResetCentralSecretBackupFunc func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
+
 	// RestoreFunc mocks the Restore method.
 	RestoreFunc func(ctx context.Context, id string) *serviceError.ServiceError
 
 	// RotateCentralRHSSOClientFunc mocks the RotateCentralRHSSOClient method.
 	RotateCentralRHSSOClientFunc func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
-
-	// RotateCentralSecretBackupFunc mocks the RotateCentralSecretBackup method.
-	RotateCentralSecretBackupFunc func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// UpdateFunc mocks the Update method.
 	UpdateFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
@@ -289,6 +289,13 @@ type DinosaurServiceMock struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 		}
+		// ResetCentralSecretBackup holds details about calls to the ResetCentralSecretBackup method.
+		ResetCentralSecretBackup []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// CentralRequest is the centralRequest argument value.
+			CentralRequest *dbapi.CentralRequest
+		}
 		// Restore holds details about calls to the Restore method.
 		Restore []struct {
 			// Ctx is the ctx argument value.
@@ -298,13 +305,6 @@ type DinosaurServiceMock struct {
 		}
 		// RotateCentralRHSSOClient holds details about calls to the RotateCentralRHSSOClient method.
 		RotateCentralRHSSOClient []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// CentralRequest is the centralRequest argument value.
-			CentralRequest *dbapi.CentralRequest
-		}
-		// RotateCentralSecretBackup holds details about calls to the RotateCentralSecretBackup method.
-		RotateCentralSecretBackup []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// CentralRequest is the centralRequest argument value.
@@ -356,9 +356,9 @@ type DinosaurServiceMock struct {
 	lockPrepareDinosaurRequest            sync.RWMutex
 	lockRegisterDinosaurDeprovisionJob    sync.RWMutex
 	lockRegisterDinosaurJob               sync.RWMutex
+	lockResetCentralSecretBackup          sync.RWMutex
 	lockRestore                           sync.RWMutex
 	lockRotateCentralRHSSOClient          sync.RWMutex
-	lockRotateCentralSecretBackup         sync.RWMutex
 	lockUpdate                            sync.RWMutex
 	lockUpdateStatus                      sync.RWMutex
 	lockUpdates                           sync.RWMutex
@@ -977,6 +977,42 @@ func (mock *DinosaurServiceMock) RegisterDinosaurJobCalls() []struct {
 	return calls
 }
 
+// ResetCentralSecretBackup calls ResetCentralSecretBackupFunc.
+func (mock *DinosaurServiceMock) ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+	if mock.ResetCentralSecretBackupFunc == nil {
+		panic("DinosaurServiceMock.ResetCentralSecretBackupFunc: method is nil but DinosaurService.ResetCentralSecretBackup was just called")
+	}
+	callInfo := struct {
+		Ctx            context.Context
+		CentralRequest *dbapi.CentralRequest
+	}{
+		Ctx:            ctx,
+		CentralRequest: centralRequest,
+	}
+	mock.lockResetCentralSecretBackup.Lock()
+	mock.calls.ResetCentralSecretBackup = append(mock.calls.ResetCentralSecretBackup, callInfo)
+	mock.lockResetCentralSecretBackup.Unlock()
+	return mock.ResetCentralSecretBackupFunc(ctx, centralRequest)
+}
+
+// ResetCentralSecretBackupCalls gets all the calls that were made to ResetCentralSecretBackup.
+// Check the length with:
+//
+//	len(mockedDinosaurService.ResetCentralSecretBackupCalls())
+func (mock *DinosaurServiceMock) ResetCentralSecretBackupCalls() []struct {
+	Ctx            context.Context
+	CentralRequest *dbapi.CentralRequest
+} {
+	var calls []struct {
+		Ctx            context.Context
+		CentralRequest *dbapi.CentralRequest
+	}
+	mock.lockResetCentralSecretBackup.RLock()
+	calls = mock.calls.ResetCentralSecretBackup
+	mock.lockResetCentralSecretBackup.RUnlock()
+	return calls
+}
+
 // Restore calls RestoreFunc.
 func (mock *DinosaurServiceMock) Restore(ctx context.Context, id string) *serviceError.ServiceError {
 	if mock.RestoreFunc == nil {
@@ -1046,42 +1082,6 @@ func (mock *DinosaurServiceMock) RotateCentralRHSSOClientCalls() []struct {
 	mock.lockRotateCentralRHSSOClient.RLock()
 	calls = mock.calls.RotateCentralRHSSOClient
 	mock.lockRotateCentralRHSSOClient.RUnlock()
-	return calls
-}
-
-// RotateCentralSecretBackup calls RotateCentralSecretBackupFunc.
-func (mock *DinosaurServiceMock) RotateCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
-	if mock.RotateCentralSecretBackupFunc == nil {
-		panic("DinosaurServiceMock.RotateCentralSecretBackupFunc: method is nil but DinosaurService.RotateCentralSecretBackup was just called")
-	}
-	callInfo := struct {
-		Ctx            context.Context
-		CentralRequest *dbapi.CentralRequest
-	}{
-		Ctx:            ctx,
-		CentralRequest: centralRequest,
-	}
-	mock.lockRotateCentralSecretBackup.Lock()
-	mock.calls.RotateCentralSecretBackup = append(mock.calls.RotateCentralSecretBackup, callInfo)
-	mock.lockRotateCentralSecretBackup.Unlock()
-	return mock.RotateCentralSecretBackupFunc(ctx, centralRequest)
-}
-
-// RotateCentralSecretBackupCalls gets all the calls that were made to RotateCentralSecretBackup.
-// Check the length with:
-//
-//	len(mockedDinosaurService.RotateCentralSecretBackupCalls())
-func (mock *DinosaurServiceMock) RotateCentralSecretBackupCalls() []struct {
-	Ctx            context.Context
-	CentralRequest *dbapi.CentralRequest
-} {
-	var calls []struct {
-		Ctx            context.Context
-		CentralRequest *dbapi.CentralRequest
-	}
-	mock.lockRotateCentralSecretBackup.RLock()
-	calls = mock.calls.RotateCentralSecretBackup
-	mock.lockRotateCentralSecretBackup.RUnlock()
 	return calls
 }
 

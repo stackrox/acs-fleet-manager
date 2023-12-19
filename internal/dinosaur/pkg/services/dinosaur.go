@@ -107,7 +107,7 @@ type DinosaurService interface {
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	Restore(ctx context.Context, id string) *errors.ServiceError
 	RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
-	RotateCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
+	ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -171,7 +171,7 @@ func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralR
 	return nil
 }
 
-func (k *dinosaurService) RotateCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
+func (k *dinosaurService) ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	centralRequest.Secrets = nil // pragma: allowlist secret
 
 	dbConn := k.connectionFactory.New()
