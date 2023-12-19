@@ -6,18 +6,21 @@ import (
 )
 
 // ConvertDataPlaneClusterStatus ...
-func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRequest) (*dbapi.DataPlaneClusterStatus, error) {
-	var res dbapi.DataPlaneClusterStatus
-	res.Conditions = make([]dbapi.DataPlaneClusterStatusCondition, len(status.Conditions))
-	for i, cond := range status.Conditions {
-		res.Conditions[i] = dbapi.DataPlaneClusterStatusCondition{
-			Type:    cond.Type,
-			Reason:  cond.Reason,
-			Status:  cond.Status,
-			Message: cond.Message,
-		}
+func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRequest) dbapi.DataPlaneClusterStatus {
+	var addonInstallations []dbapi.AddonInstallation
+	for _, addon := range status.Addons {
+		addonInstallations = append(addonInstallations, dbapi.AddonInstallation{
+			ID:                  addon.Id,
+			Version:             addon.Version,
+			SourceImage:         addon.SourceImage,
+			PackageImage:        addon.PackageImage,
+			ParametersSHA256Sum: addon.ParametersSHA256Sum,
+		})
 	}
-	return &res, nil
+
+	return dbapi.DataPlaneClusterStatus{
+		Addons: addonInstallations,
+	}
 }
 
 // PresentDataPlaneClusterConfig ...
@@ -32,6 +35,5 @@ func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private
 			},
 		},
 	}
-
 	return res
 }
