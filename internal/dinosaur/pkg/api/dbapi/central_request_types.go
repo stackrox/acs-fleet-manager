@@ -87,6 +87,10 @@ type CentralRequest struct {
 	// ExpiredAt contains the timestamp of when a Central instance's quota allowance was found to be expired.
 	// After a grace period, the Central instance will be marked for deletion, its status will be set to 'deprovision'.
 	ExpiredAt *time.Time `json:"expired_at"`
+
+	// Labels is a set of random values assigned to an instance, allowing for
+	// some custom manual or automatic action over a set of labelled instances.
+	Labels api.JSON `json:"labels"`
 }
 
 // CentralList ...
