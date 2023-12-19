@@ -175,7 +175,7 @@ func (k *dinosaurService) RotateCentralSecretBackup(ctx context.Context, central
 	centralRequest.Secrets = nil // pragma: allowlist secret
 
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Unscoped().Model(centralRequest).Select("secrets").Updates(centralRequest).Error; err != nil {
+	if err := dbConn.Model(centralRequest).Select("secrets").Updates(centralRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset secrets for central request")
 	}
 
