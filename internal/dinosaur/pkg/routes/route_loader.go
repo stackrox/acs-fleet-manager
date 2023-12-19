@@ -258,6 +258,9 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminCentralsRouter.HandleFunc("/{id}/expired-at", adminCentralHandler.PatchExpiredAt).
 		Name(logger.NewLogEvent("admin-expired-at", "[admin] set `expired_at` central property").ToString()).
 		Methods(http.MethodPatch)
+	adminCentralsRouter.HandleFunc("/{id}/billing-model", adminCentralHandler.PatchBillingModel).
+		Name(logger.NewLogEvent("admin-billing-model", "[admin] change central billing model").ToString()).
+		Methods(http.MethodPatch)
 
 	adminCreateRouter := adminCentralsRouter.NewRoute().Subrouter()
 	adminCreateRouter.HandleFunc("", adminCentralHandler.Create).Methods(http.MethodPost)
