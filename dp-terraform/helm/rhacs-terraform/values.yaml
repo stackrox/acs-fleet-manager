@@ -61,6 +61,7 @@ fleetshardSync:
     - key: node-role.kubernetes.io/acscs-infra
       operator: Exists
       effect: NoSchedule
+  addonAutoUpgradeEnabled: true
 
 acsOperator:
   enabled: false
