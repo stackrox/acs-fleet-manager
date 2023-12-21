@@ -261,12 +261,12 @@ type ChangeBillingModelOpts struct {
 ChangeBillingModel Change central billing model
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
-  - @param organisationId
+  - @param model
   - @param optional nil or *ChangeBillingModelOpts - Optional Parameters:
   - @param "CloudAccountId" (optional.String) -
   - @param "CloudProvider" (optional.String) -
 */
-func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, organisationId string, localVarOptionals *ChangeBillingModelOpts) (*_nethttp.Response, error) {
+func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, model string, localVarOptionals *ChangeBillingModelOpts) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
@@ -283,7 +283,7 @@ func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, 
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	localVarQueryParams.Add("organisation_id", parameterToString(organisationId, ""))
+	localVarQueryParams.Add("model", parameterToString(model, ""))
 	if localVarOptionals != nil && localVarOptionals.CloudAccountId.IsSet() {
 		localVarQueryParams.Add("cloud_account_id", parameterToString(localVarOptionals.CloudAccountId.Value(), ""))
 	}

@@ -114,7 +114,7 @@ type DinosaurService interface {
 	// This is currently the only way to update secret backups, an automatic approach should be implemented
 	// to accomated for regular processes like central TLS cert rotation.
 	ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
-	ChangeBillingModel(ctx context.Context, centralID string, organizationID string, cloudAccountID string, cloudProvider string) *errors.ServiceError
+	ChangeBillingModel(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -234,7 +234,7 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 }
 
 // reserveQuota - reserves quota for the given dinosaur request. If a RHACS quota has been assigned, it will try to reserve RHACS quota, otherwise it will try with RHACSTrial
-func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) (subscriptionID string, err *errors.ServiceError) {
+func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dbapi.CentralRequest, bm string) (subscriptionID string, err *errors.ServiceError) {
 	if dinosaurRequest.InstanceType == types.EVAL.String() &&
 		!(environments.GetEnvironmentStrFromEnv() == environments.DevelopmentEnv || environments.GetEnvironmentStrFromEnv() == environments.TestingEnv) {
 		if !k.dinosaurConfig.Quota.AllowEvaluatorInstance {
@@ -262,7 +262,7 @@ func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dba
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
-	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType))
+	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType), bm)
 	return subscriptionID, err
 }
 
@@ -292,7 +292,7 @@ func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurReque
 		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", dinosaurRequest.Region, dinosaurRequest.InstanceType))
 	}
 	dinosaurRequest.ClusterID = cluster.ClusterID
-	subscriptionID, err := k.reserveQuota(ctx, dinosaurRequest)
+	subscriptionID, err := k.reserveQuota(ctx, dinosaurRequest, "")
 	if err != nil {
 		return err
 	}
@@ -1040,7 +1040,7 @@ func convertCentralRequestToString(req *dbapi.CentralRequest) string {
 	return fmt.Sprintf("%+v", requestAsMap)
 }
 
-func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID string, organisationID string, cloudAccountID string, cloudProvider string) *errors.ServiceError {
+func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string) *errors.ServiceError {
 	centralRequest, svcErr := k.GetByID(centralID)
 	if svcErr != nil {
 		return svcErr
@@ -1048,9 +1048,8 @@ func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID stri
 
 	centralRequest.CloudAccountID = cloudAccountID
 	centralRequest.CloudProvider = cloudProvider
-	centralRequest.OrganisationID = organisationID
 
-	newSubscriptionID, svcErr := k.reserveQuota(ctx, centralRequest)
+	newSubscriptionID, svcErr := k.reserveQuota(ctx, centralRequest, billingModel)
 	if svcErr != nil {
 		return svcErr
 	}

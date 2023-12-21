@@ -531,9 +531,16 @@ paths:
           type: string
       - explode: true
         in: query
-        name: organisation_id
+        name: model
         required: true
         schema:
+          enum:
+          - standard
+          - marketplace
+          - marketplace-aws
+          - marketplace-gcp
+          - marketplace-rhm
+          - marketplace-azure
           type: string
         style: form
       - explode: true
