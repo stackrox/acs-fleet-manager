@@ -28,7 +28,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			AcceptCentralRequestFunc: func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the AcceptCentralRequest method")
 //			},
-//			ChangeBillingModelFunc: func(ctx context.Context, centralID string, organisationID string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError {
+//			ChangeBillingModelFunc: func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError {
 //				panic("mock out the ChangeBillingModel method")
 //			},
 //			ChangeDinosaurCNAMErecordsFunc: func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
@@ -114,7 +114,7 @@ type DinosaurServiceMock struct {
 	AcceptCentralRequestFunc func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// ChangeBillingModelFunc mocks the ChangeBillingModel method.
-	ChangeBillingModelFunc func(ctx context.Context, centralID string, organisationID string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError
+	ChangeBillingModelFunc func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError
 
 	// ChangeDinosaurCNAMErecordsFunc mocks the ChangeDinosaurCNAMErecords method.
 	ChangeDinosaurCNAMErecordsFunc func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
@@ -201,8 +201,8 @@ type DinosaurServiceMock struct {
 			Ctx context.Context
 			// CentralID is the centralID argument value.
 			CentralID string
-			// OrganisationID is the organisationID argument value.
-			OrganisationID string
+			// BillingModel is the billingModel argument value.
+			BillingModel string
 			// CloudAccountID is the cloudAccountID argument value.
 			CloudAccountID string
 			// CloudProvider is the cloudProvider argument value.
@@ -404,27 +404,27 @@ func (mock *DinosaurServiceMock) AcceptCentralRequestCalls() []struct {
 }
 
 // ChangeBillingModel calls ChangeBillingModelFunc.
-func (mock *DinosaurServiceMock) ChangeBillingModel(ctx context.Context, centralID string, organisationID string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError {
+func (mock *DinosaurServiceMock) ChangeBillingModel(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError {
 	if mock.ChangeBillingModelFunc == nil {
 		panic("DinosaurServiceMock.ChangeBillingModelFunc: method is nil but DinosaurService.ChangeBillingModel was just called")
 	}
 	callInfo := struct {
 		Ctx            context.Context
 		CentralID      string
-		OrganisationID string
+		BillingModel   string
 		CloudAccountID string
 		CloudProvider  string
 	}{
 		Ctx:            ctx,
 		CentralID:      centralID,
-		OrganisationID: organisationID,
+		BillingModel:   billingModel,
 		CloudAccountID: cloudAccountID,
 		CloudProvider:  cloudProvider,
 	}
 	mock.lockChangeBillingModel.Lock()
 	mock.calls.ChangeBillingModel = append(mock.calls.ChangeBillingModel, callInfo)
 	mock.lockChangeBillingModel.Unlock()
-	return mock.ChangeBillingModelFunc(ctx, centralID, organisationID, cloudAccountID, cloudProvider)
+	return mock.ChangeBillingModelFunc(ctx, centralID, billingModel, cloudAccountID, cloudProvider)
 }
 
 // ChangeBillingModelCalls gets all the calls that were made to ChangeBillingModel.
@@ -434,14 +434,14 @@ func (mock *DinosaurServiceMock) ChangeBillingModel(ctx context.Context, central
 func (mock *DinosaurServiceMock) ChangeBillingModelCalls() []struct {
 	Ctx            context.Context
 	CentralID      string
-	OrganisationID string
+	BillingModel   string
 	CloudAccountID string
 	CloudProvider  string
 } {
 	var calls []struct {
 		Ctx            context.Context
 		CentralID      string
-		OrganisationID string
+		BillingModel   string
 		CloudAccountID string
 		CloudProvider  string
 	}

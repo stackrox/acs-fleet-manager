@@ -212,7 +212,7 @@ func Test_dinosaurService_ChangeBillingModel(t *testing.T) {
 		HasQuotaAllowanceFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 			return true, nil
 		},
-		ReserveQuotaFunc: func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+		ReserveQuotaFunc: func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType, _ string) (string, *errors.ServiceError) {
 			return dinosaur.SubscriptionID, nil
 		},
 	}
@@ -242,11 +242,11 @@ func Test_dinosaurService_ChangeBillingModel(t *testing.T) {
 		WithReply(converters.ConvertDinosaurRequest(central))
 	m1 := catcher.NewMock().WithQuery(`UPDATE "central_requests" ` +
 		`SET "updated_at"=$1,"deleted_at"=$2,"region"=$3,"cluster_id"=$4,` +
-		`"cloud_provider"=$5,"cloud_account_id"=$6,"name"=$7,"subscription_id"=$8,"owner"=$9,"organisation_id"=$10 ` +
-		`WHERE status not IN ($11,$12) AND "central_requests"."deleted_at" IS NULL AND "id" = $13`).
+		`"cloud_provider"=$5,"cloud_account_id"=$6,"name"=$7,"subscription_id"=$8,"owner"=$9 ` +
+		`WHERE status not IN ($10,$11) AND "central_requests"."deleted_at" IS NULL AND "id" = $12`).
 		OneTime()
 
-	svcErr := k.ChangeBillingModel(context.Background(), central.ID, "new org ID", "aws_account_id", "aws")
+	svcErr := k.ChangeBillingModel(context.Background(), central.ID, "marketplace", "aws_account_id", "aws")
 	assert.Nil(t, svcErr)
 
 	assert.True(t, m0.Triggered)

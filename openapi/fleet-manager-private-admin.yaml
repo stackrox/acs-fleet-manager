@@ -341,9 +341,16 @@ paths:
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
         - in: query
-          name: organisation_id
+          name: model
           schema:
             type: string
+            enum:
+            - standard
+            - marketplace
+            - marketplace-aws
+            - marketplace-gcp
+            - marketplace-rhm
+            - marketplace-azure
           required: true
         - in: query
           name: cloud_account_id

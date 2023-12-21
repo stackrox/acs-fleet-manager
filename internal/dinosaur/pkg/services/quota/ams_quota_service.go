@@ -114,7 +114,7 @@ func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloud
 }
 
 // ReserveQuota ...
-func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType, forceBillingModel string) (string, *errors.ServiceError) {
 	dinosaurID := dinosaur.ID
 	rr := newBaseQuotaReservedResourceResourceBuilder()
 
@@ -128,10 +128,15 @@ func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.Centr
 	if err != nil {
 		return "", errors.OrganisationNotFound(dinosaur.OrganisationID, err)
 	}
-	bm, err := q.selectBillingModelFromDinosaurInstanceType(org.ID(), dinosaur.CloudProvider, dinosaur.CloudAccountID, instanceType)
-	if err != nil {
-		svcErr := errors.ToServiceError(err)
-		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
+	var bm string
+	if forceBillingModel == "" {
+		bm, err = q.selectBillingModelFromDinosaurInstanceType(org.ID(), dinosaur.CloudProvider, dinosaur.CloudAccountID, instanceType)
+		if err != nil {
+			svcErr := errors.ToServiceError(err)
+			return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
+		}
+	} else {
+		bm = forceBillingModel
 	}
 	rr.BillingModel(amsv1.BillingModel(bm))
 	glog.Infof("Billing model of Central request %s with quota type %s has been set to %s.", dinosaur.ID, instanceType.GetQuotaType(), bm)
