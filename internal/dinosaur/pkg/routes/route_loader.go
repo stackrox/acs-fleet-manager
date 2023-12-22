@@ -259,6 +259,16 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		Name(logger.NewLogEvent("admin-expired-at", "[admin] set `expired_at` central property").ToString()).
 		Methods(http.MethodPatch)
 
+	adminCentralsRouter.HandleFunc("/{id}/labels/{label}", adminCentralHandler.GetLabel).
+		Name(logger.NewLogEvent("admin-get-labels", "[admin] get central labels").ToString()).
+		Methods(http.MethodGet)
+	adminCentralsRouter.HandleFunc("/{id}/labels/{label}", adminCentralHandler.PatchLabel).
+		Name(logger.NewLogEvent("admin-patch-labels", "[admin] set central label").ToString()).
+		Methods(http.MethodPatch)
+	adminCentralsRouter.HandleFunc("/{id}/labels/{label}", adminCentralHandler.DeleteLabel).
+		Name(logger.NewLogEvent("admin-delete-labels", "[admin] delete central label").ToString()).
+		Methods(http.MethodDelete)
+
 	adminCreateRouter := adminCentralsRouter.NewRoute().Subrouter()
 	adminCreateRouter.HandleFunc("", adminCentralHandler.Create).Methods(http.MethodPost)
 
