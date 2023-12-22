@@ -418,6 +418,117 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
 
+  '/api/rhacs/v1/admin/centrals/{id}/labels/{label}':
+    get:
+      summary: Returns the value of the central label.
+      operationId: getCentralLabel
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/label"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: 
+                type: object
+          description: Central labels
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "404":
+          description: No Central found with the specified ID
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+    patch:
+      summary: Updates the value of the central label.
+      operationId: patchCentralLabel
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/label"
+      requestBody:
+        description: Label value in JSON format
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: Label has been modified
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "404":
+          description: No Central found with the specified ID
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+    delete:
+      summary: Deletes the central label.
+      operationId: deleteCentralLabel
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/label"
+      responses:
+        "200":
+          description: Central label deleted
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "404":
+          description: No Central found with the specified ID
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
 components:
   schemas:
     Central:
@@ -485,6 +596,8 @@ components:
               type: string
             namespace:
               type: string
+            labels:
+              type: object
     CentralList:
       allOf:
         - $ref: "fleet-manager.yaml#/components/schemas/List"
@@ -514,6 +627,14 @@ components:
           type: string
         reason:
           type: string
+  parameters:
+    label:
+      name: label
+      description: The name of label
+      schema:
+        type: string
+      in: path
+      required: true
 
   securitySchemes:
     Bearer:

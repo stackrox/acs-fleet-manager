@@ -44,6 +44,12 @@ type AdminCentralHandler interface {
 	// a tenant. In particular, avoid two Central CRs appearing in the same
 	// tenant namespace. This may cause conflicts due to mixed resource ownership.
 	PatchName(w http.ResponseWriter, r *http.Request)
+	// GetLabels returns all central labels
+	GetLabel(w http.ResponseWriter, r *http.Request)
+	// PatchLabels adds or modifies a central label value
+	PatchLabel(w http.ResponseWriter, r *http.Request)
+	// DeleteLabel deletes a central label
+	DeleteLabel(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -297,4 +303,102 @@ func (h adminCentralHandler) PatchName(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h adminCentralHandler) GetLabel(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			label := mux.Vars(r)["label"]
+			cr, svcErr := h.service.GetByID(id)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+			labels, err := cr.Labels.Object()
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot format central labels")
+			}
+			if labels != nil {
+				if value, ok := labels[label]; ok {
+					return value, nil
+				}
+			}
+			return nil, errors.New(errors.ErrorNotFound, "No such label")
+		},
+	}
+	handlers.HandleGet(w, r, cfg)
+}
+
+func (h adminCentralHandler) PatchLabel(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			label := mux.Vars(r)["label"]
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot read body")
+			}
+			var value any
+			if err := json.Unmarshal(body, &value); err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot parse value")
+			}
+			cr, svcErr := h.service.GetByID(id)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+			labels, err := cr.Labels.Object()
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot format central labels")
+			}
+			if labels == nil {
+				labels = make(map[string]interface{}, 1)
+			}
+			labels[label] = value
+			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
+			marshalled, err := json.Marshal(labels)
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot marshal central labels")
+			}
+			if err := h.service.Updates(central, map[string]interface{}{
+				"labels": marshalled,
+			}); err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot update central labels")
+			}
+			return nil, nil
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h adminCentralHandler) DeleteLabel(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			label := mux.Vars(r)["label"]
+			cr, svcErr := h.service.GetByID(id)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+			labels, err := cr.Labels.Object()
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot format central labels")
+			}
+			if labels == nil {
+				return nil, nil
+			}
+			delete(labels, label)
+			marshalled, err := json.Marshal(labels)
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot marshal central labels")
+			}
+			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
+			if err := h.service.Updates(central, map[string]interface{}{
+				"labels": marshalled,
+			}); err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot update central labels")
+			}
+			return nil, nil
+		},
+	}
+	handlers.HandleDelete(w, r, cfg, http.StatusOK)
 }

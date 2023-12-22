@@ -558,7 +558,164 @@ paths:
       security:
       - Bearer: []
       summary: Delete a Central directly in the Database by ID
+  /api/rhacs/v1/admin/centrals/{id}/labels/{label}:
+    delete:
+      operationId: deleteCentralLabel
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: The name of label
+        explode: false
+        in: path
+        name: label
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Central label deleted
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Deletes the central label.
+    get:
+      operationId: getCentralLabel
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: The name of label
+        explode: false
+        in: path
+        name: label
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Central labels
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Returns the value of the central label.
+    patch:
+      operationId: patchCentralLabel
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: The name of label
+        explode: false
+        in: path
+        name: label
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        description: Label value in JSON format
+        required: true
+      responses:
+        "200":
+          description: Label has been modified
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Updates the value of the central label.
 components:
+  parameters:
+    label:
+      description: The name of label
+      explode: false
+      in: path
+      name: label
+      required: true
+      schema:
+        type: string
+      style: simple
   schemas:
     Central:
       allOf:
@@ -721,6 +878,8 @@ components:
           type: string
         namespace:
           type: string
+        labels:
+          type: object
     CentralList_allOf:
       properties:
         items:
