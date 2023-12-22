@@ -353,6 +353,10 @@ parameters:
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
 
+- name: INHERIT_FLEETSHARD_SYNC_IMAGE
+  description: Sets the provided fleetshard image tag if the addon parameter value is 'inherit'"
+  value: "true"
+
 - name: CENTRAL_OPERATOR_OLM_INDEX_IMAGE
   displayName: Central operator OLM index image
   description: Central operator OLM index image

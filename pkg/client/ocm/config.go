@@ -58,7 +58,7 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Debug, "ocm-debug", c.Debug, "Debug flag for OCM API")
 	fs.BoolVar(&c.EnableMock, "enable-ocm-mock", c.EnableMock, "Enable mock ocm clients")
 	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")
-	fs.BoolVar(&c.InheritFleetshardSyncImage, "inherit-fleetshard-sync-image", c.InheritFleetshardSyncImage, "Fleet Manager sets the image if the parameter value is 'inherit'")
+	fs.BoolVar(&c.InheritFleetshardSyncImage, "inherit-fleetshard-sync-image", c.InheritFleetshardSyncImage, "Sets the provided fleetshard image tag if the addon parameter value is 'inherit'")
 	fs.StringVar(&c.FleetshardSyncImage, "fleetshard-sync-image", c.FleetshardSyncImage, "Fleetshard sync image")
 }
 
