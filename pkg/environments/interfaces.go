@@ -1,7 +1,7 @@
 package environments
 
 import (
-	"github.com/defval/di"
+	"github.com/goava/di"
 	"github.com/gorilla/mux"
 	"github.com/spf13/pflag"
 )
