@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/defval/di"
+	"github.com/goava/di"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"

@@ -1,7 +1,7 @@
 package sentry
 
 import (
-	"github.com/defval/di"
+	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
