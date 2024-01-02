@@ -13,7 +13,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 
-	"github.com/goava/di"
+	"github.com/defval/di"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"

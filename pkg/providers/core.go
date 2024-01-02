@@ -2,7 +2,7 @@
 package providers
 
 import (
-	"github.com/goava/di"
+	"github.com/defval/di"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
