@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/openshift/release:golang-1.20 AS build
+FROM registry.ci.openshift.org/openshift/release:golang-1.21 AS build
 
 RUN mkdir /rds_ca
 ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /rds_ca/aws-rds-ca-global-bundle.pem

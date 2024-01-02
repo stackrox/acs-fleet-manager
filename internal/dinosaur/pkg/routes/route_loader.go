@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/goava/di"
+	"github.com/defval/di"
 	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	pkgerrors "github.com/pkg/errors"

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/defval/di"
 	sentryGo "github.com/getsentry/sentry-go"
-	"github.com/goava/di"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"

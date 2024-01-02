@@ -11,7 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 
-	"github.com/goava/di"
+	"github.com/defval/di"
 	"github.com/stackrox/acs-fleet-manager/pkg/server/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 

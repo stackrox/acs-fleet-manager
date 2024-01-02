@@ -1,7 +1,7 @@
 package environments
 
 import (
-	"github.com/goava/di"
+	"github.com/defval/di"
 )
 
 // ServiceProvider ...

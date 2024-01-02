@@ -2,7 +2,7 @@
 package dinosaur
 
 import (
-	"github.com/goava/di"
+	"github.com/defval/di"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/environments"
