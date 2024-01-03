@@ -420,7 +420,7 @@ paths:
 
   '/api/rhacs/v1/admin/centrals/{id}/labels/{label}':
     get:
-      summary: Returns the value of the central label.
+      summary: Returns the value of a central label.
       operationId: getCentralLabel
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
@@ -457,7 +457,10 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
     patch:
-      summary: Updates the value of the central label.
+      summary: Updates central labels with the new label value.
+      description: |
+        Creates or updates a central label with the given value in the labels
+        dictionary. Not atomically.
       operationId: patchCentralLabel
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
@@ -630,7 +633,7 @@ components:
   parameters:
     label:
       name: label
-      description: The name of label
+      description: The name of a label
       schema:
         type: string
       in: path

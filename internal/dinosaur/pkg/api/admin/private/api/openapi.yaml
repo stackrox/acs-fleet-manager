@@ -568,7 +568,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: The name of label
+      - description: The name of a label
         explode: false
         in: path
         name: label
@@ -613,7 +613,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: The name of label
+      - description: The name of a label
         explode: false
         in: path
         name: label
@@ -652,8 +652,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
-      summary: Returns the value of the central label.
+      summary: Returns the value of a central label.
     patch:
+      description: |
+        Creates or updates a central label with the given value in the labels
+        dictionary. Not atomically.
       operationId: patchCentralLabel
       parameters:
       - description: The ID of record
@@ -662,7 +665,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: The name of label
+      - description: The name of a label
         explode: false
         in: path
         name: label
@@ -704,11 +707,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
-      summary: Updates the value of the central label.
+      summary: Updates central labels with the new label value.
 components:
   parameters:
     label:
-      description: The name of label
+      description: The name of a label
       explode: false
       in: path
       name: label

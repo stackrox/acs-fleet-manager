@@ -513,7 +513,7 @@ func (a *DefaultApiService) DeleteCentralById(ctx _context.Context, id string, a
 DeleteCentralLabel Deletes the central label.
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
-  - @param label The name of label
+  - @param label The name of a label
 */
 func (a *DefaultApiService) DeleteCentralLabel(ctx _context.Context, id string, label string) (*_nethttp.Response, error) {
 	var (
@@ -840,10 +840,10 @@ func (a *DefaultApiService) GetCentralById(ctx _context.Context, id string) (Cen
 }
 
 /*
-GetCentralLabel Returns the value of the central label.
+GetCentralLabel Returns the value of a central label.
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
-  - @param label The name of label
+  - @param label The name of a label
 
 @return map[string]interface{}
 */
@@ -1099,10 +1099,11 @@ func (a *DefaultApiService) GetCentrals(ctx _context.Context, localVarOptionals 
 }
 
 /*
-PatchCentralLabel Updates the value of the central label.
+PatchCentralLabel Updates central labels with the new label value.
+Creates or updates a central label with the given value in the labels dictionary. Not atomically.
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
-  - @param label The name of label
+  - @param label The name of a label
   - @param body Label value in JSON format
 */
 func (a *DefaultApiService) PatchCentralLabel(ctx _context.Context, id string, label string, body map[string]interface{}) (*_nethttp.Response, error) {
