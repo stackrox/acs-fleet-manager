@@ -604,8 +604,7 @@ paths:
       summary: Returns the value of a central label.
     patch:
       description: |
-        Creates or updates a central label with the given value in the labels
-        dictionary. Not atomically.
+        Creates or updates a central label with the given value in the labels dictionary. Not atomically.
       operationId: patchCentralLabel
       parameters:
       - description: The ID of record

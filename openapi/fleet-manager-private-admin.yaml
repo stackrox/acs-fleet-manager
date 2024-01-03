@@ -383,7 +383,7 @@ paths:
         "200":
           content:
             application/json:
-              schema: 
+              schema:
                 type: object
           description: Central labels
         "401":
@@ -412,7 +412,7 @@ paths:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
     patch:
       summary: Updates central labels with the new label value.
-      description: |
+      description: >
         Creates or updates a central label with the given value in the labels
         dictionary. Not atomically.
       operationId: patchCentralLabel
