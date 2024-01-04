@@ -16,7 +16,7 @@ require (
 	github.com/getsentry/sentry-go v0.25.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.1.1
-	github.com/go-logr/logr v1.3.0
+	github.com/go-logr/logr v1.4.1
 	github.com/go-resty/resty/v2 v2.10.0
 	github.com/goava/di v1.11.1
 	github.com/gogo/protobuf v1.3.2
