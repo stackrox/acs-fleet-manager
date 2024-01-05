@@ -27,11 +27,11 @@ const (
 // this is used to route some requests to the leader pod.
 // The default openshift Route will target all pods, but there is another Route that will target only the leader pod,
 // (selector = fleetmanager-active: true) and will be used for requests that should only be handled by the leader.
+// It also stops/starts the workers when the leader status changes.
 type leaderWorker struct {
 	namespaceName, podName string
 	client                 kubernetes.Interface
 	isLeader               atomic.Bool
-	notify                 chan struct{}
 	workers                []workers.Worker
 }
 
@@ -41,7 +41,6 @@ func newWorker(ctx context.Context, namespaceName, podName string, client kubern
 		namespaceName: namespaceName,
 		podName:       podName,
 		client:        client,
-		notify:        make(chan struct{}),
 		workers:       workers,
 	}
 
@@ -55,6 +54,8 @@ func newWorker(ctx context.Context, namespaceName, podName string, client kubern
 
 // run will run the leader election loop
 func (l *leaderWorker) run(ctx context.Context) error {
+
+	glog.V(1).Infoln("[serviceregistration] starting leader election")
 
 	// the lock config
 	lock := resourcelock.LeaseLock{
@@ -79,26 +80,26 @@ func (l *leaderWorker) run(ctx context.Context) error {
 			OnStartedLeading: func(ctx context.Context) {
 				glog.Info("[serviceregistration] started leading")
 				l.isLeader.Store(true)
-				//TODO: context?
-				l.update(context.Background())
-
+				l.update(ctx)
 				for _, worker := range l.workers {
 					if !worker.IsRunning() {
-						glog.V(1).Infoln(fmt.Sprintf("Running as the leader and starting worker %T [%s]", worker, worker.GetID()))
+						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] starting worker %q with id %q", worker.GetWorkerType(), worker.GetID()))
 						worker.Start()
+					} else {
+						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] worker %q with id %q already running", worker.GetWorkerType(), worker.GetID()))
 					}
 				}
 			},
 			OnStoppedLeading: func() {
 				glog.Info("[serviceregistration] stopped leading")
 				l.isLeader.Store(false)
-				//TODO: context?
-				l.update(context.Background())
-
+				l.update(ctx)
 				for _, worker := range l.workers {
 					if worker.IsRunning() {
-						glog.V(1).Infoln(fmt.Sprintf("Stopping running worker %T [%s]", worker, worker.GetID()))
+						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] stopping worker %q with id %q", worker.GetWorkerType(), worker.GetID()))
 						worker.Stop()
+					} else {
+						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] worker %q with id %q already stopped", worker.GetWorkerType(), worker.GetID()))
 					}
 				}
 			},
@@ -106,7 +107,8 @@ func (l *leaderWorker) run(ctx context.Context) error {
 	})
 
 	if err != nil {
-		return errors.Wrap(err, "[serviceregistration] failed to create leader election")
+		glog.Errorf("[serviceregistration] error creating leader election: %v", err)
+		return errors.Wrap(err, "failed to create leader election")
 	}
 
 	go func() {
@@ -144,6 +146,7 @@ func (l *leaderWorker) update(ctx context.Context) {
 			if pod.Labels != nil {
 				value, ok := pod.Labels[activeLabel]
 				if ok && value == isActive {
+					glog.V(1).Infof("[serviceregistration] pod %s/%s already has the correct label %s=%s", l.namespaceName, l.podName, activeLabel, isActive)
 					return nil
 				}
 			}

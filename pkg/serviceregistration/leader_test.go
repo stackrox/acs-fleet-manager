@@ -32,7 +32,6 @@ func TestLeader(t *testing.T) {
 	worker1 := &leaderWorker{
 		namespaceName: "default",
 		podName:       "pod1",
-		notify:        make(chan struct{}),
 		client:        c,
 		isLeader:      atomic.Bool{},
 	}
@@ -40,7 +39,6 @@ func TestLeader(t *testing.T) {
 	worker2 := &leaderWorker{
 		namespaceName: "default",
 		podName:       "pod2",
-		notify:        make(chan struct{}),
 		client:        c,
 		isLeader:      atomic.Bool{},
 	}
@@ -79,7 +77,6 @@ func TestLeader_update(t *testing.T) {
 	w := &leaderWorker{
 		namespaceName: "default",
 		podName:       "pod1",
-		notify:        make(chan struct{}),
 		client:        c,
 		isLeader:      atomic.Bool{},
 	}
