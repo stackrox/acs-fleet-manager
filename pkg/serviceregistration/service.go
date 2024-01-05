@@ -6,7 +6,6 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	"os"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -27,10 +26,6 @@ func NewService(workers []workers.Worker) *Service {
 
 // Start implements Service.Start
 func (s *Service) Start() {
-	if !features.LeaderElectionEnabled.Enabled() {
-		return
-	}
-
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 	var client kubernetes.Interface
 	var namespaceName, podName string
@@ -64,8 +59,5 @@ func (s *Service) Start() {
 
 // Stop implements Service.Stop
 func (s *Service) Stop() {
-	if !features.LeaderElectionEnabled.Enabled() {
-		return
-	}
 	s.cancel()
 }
