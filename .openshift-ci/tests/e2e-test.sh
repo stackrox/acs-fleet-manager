@@ -22,7 +22,7 @@ log "Environment up and running"
 log "Waiting for fleet-manager to complete leader election..."
 # Don't have a better way yet to wait until fleet-manager has completed the leader election.
 $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=fleet-manager -c fleet-manager -f --tail=-1 |
-    grep -q --line-buffered --max-count=1 'Running as the leader and starting' || true
+    grep -q --line-buffered --max-count=1 'started leading' || true
 sleep 1
 
 FAIL=0
