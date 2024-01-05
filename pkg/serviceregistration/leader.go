@@ -36,20 +36,13 @@ type leaderWorker struct {
 }
 
 // newWorker creates a new leaderWorker
-func newWorker(ctx context.Context, namespaceName, podName string, client kubernetes.Interface, workers []workers.Worker) (*leaderWorker, error) {
-	l := &leaderWorker{
+func newWorker(namespaceName, podName string, client kubernetes.Interface, workers []workers.Worker) *leaderWorker {
+	return &leaderWorker{
 		namespaceName: namespaceName,
 		podName:       podName,
 		client:        client,
 		workers:       workers,
 	}
-
-	err := l.run(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return l, nil
 }
 
 // run will run the leader election loop

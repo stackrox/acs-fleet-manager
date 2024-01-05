@@ -2,6 +2,7 @@ package serviceregistration
 
 import (
 	"context"
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"k8s.io/client-go/kubernetes/fake"
 	"os"
@@ -26,6 +27,7 @@ func NewService(workers []workers.Worker) *Service {
 
 // Start implements Service.Start
 func (s *Service) Start() {
+	glog.Info("starting service registration")
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 	var client kubernetes.Interface
 	var namespaceName, podName string
@@ -49,12 +51,11 @@ func (s *Service) Start() {
 			panic("POD_NAME not set")
 		}
 	}
-
-	l, err := newWorker(s.ctx, namespaceName, podName, client, s.workers)
-	if err != nil {
+	l := newWorker(namespaceName, podName, client, s.workers)
+	if err := l.run(s.ctx); err != nil {
+		glog.Errorf("error running leader election: %v", err)
 		panic(err)
 	}
-	go l.run(s.ctx)
 }
 
 // Stop implements Service.Stop
