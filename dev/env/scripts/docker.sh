@@ -61,7 +61,7 @@ ensure_fleet_manager_image_exists() {
                 # Attempt to build this image.
                 if [[ "$FLEET_MANAGER_IMAGE" == "$(make -s -C "${GITROOT}" full-image-tag)" ]]; then
                         log "Building local image..."
-                        make -C "${GITROOT}" image/build
+                        make -C "${GITROOT}" image/build GOARCH="$(go env GOARCH)" # supports arm64
                 else
                     die "Cannot find image '${FLEET_MANAGER_IMAGE}' and don't know how to build it"
                 fi

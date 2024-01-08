@@ -62,6 +62,9 @@ else
 GOBIN=$(shell $(GO) env GOBIN)
 endif
 
+# Used for local builds to support arm64
+goarch=$(shell go env GOARCH)
+
 LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
 # Add the project-level bin directory into PATH. Needed in order
 # for `go generate` to use project-level bin directory binaries first
@@ -494,11 +497,10 @@ docker/login/internal:
 .PHONY: docker/login/internal
 
 # Build the image using by specifying a specific image target within the Dockerfile.
-image/build: GOOS=linux
-image/build: DOCKERFILE="Dockerfile"
+image/build: GOARCH?=amd64
 image/build: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f $(DOCKERFILE) .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) --build-arg GOARCH=$(GOARCH) .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
@@ -855,14 +857,15 @@ deploy/bootstrap:
 .PHONY: deploy/bootstrap
 
 # Deploy local images fast for development
+deploy/dev-fast: GOARCH=$(goarch)
 deploy/dev-fast: image/build deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 
-deploy/dev-fast/fleet-manager: GOOS=linux
+deploy/dev-fast/fleet-manager: GOARCH=$(goarch)
 deploy/dev-fast/fleet-manager: image/build
 	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleet-manager
 
-deploy/dev-fast/fleetshard-sync: GOOS=linux
+deploy/dev-fast/fleetshard-sync: GOARCH=$(goarch)
 deploy/dev-fast/fleetshard-sync: image/build
 	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleetshard-sync

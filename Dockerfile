@@ -11,9 +11,11 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 
 COPY . ./
 
+ARG GOARCH
+
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/go/.cache/ \
-    make binary
+    make binary GOOS=linux GOARCH=${GOARCH}
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9 as standard
 
