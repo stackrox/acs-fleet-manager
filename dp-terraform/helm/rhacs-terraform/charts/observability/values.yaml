@@ -11,7 +11,7 @@ github:
   tag: "master"
 
 clusterName: ""
-resyncPeriod: "1h"
+resyncPeriod: "10m"
 retention: "45d"
 
 # Credentials for Observatorium https://observatorium.io/ instance
