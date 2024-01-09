@@ -9,17 +9,8 @@ source "${GITROOT}/dev/env/scripts/docker.sh"
 
 init
 
-cat <<EOF
-** Preparing ACSCS Environment **
-
-Image: ${FLEET_MANAGER_IMAGE}
-Namespace: ${ACSCS_NAMESPACE}
-Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
-Operator Source: ${OPERATOR_SOURCE}
-Using OLM: ${INSTALL_OLM}
-Installing OpenShift Router: ${INSTALL_OPENSHIFT_ROUTER}
-
-EOF
+log "** Preparing ACSCS Environment **"
+print_env
 
 if ! kc_output=$($KUBECTL api-versions 2>&1); then
     die "Error: Sanity check for contacting Kubernetes cluster failed:
@@ -64,10 +55,8 @@ EOF
         fi
     fi
 
-    if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
-        log "Ensuring operator images exist from dev GitOps config"
-        ensure_operator_image_exists.sh
-    fi
+    log "Ensuring operator images exist from dev GitOps config"
+    ensure_operator_image_exists.sh
 fi
 
 log

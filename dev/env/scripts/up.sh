@@ -21,20 +21,9 @@ else
     export CHAMBER_SECRET_BACKEND=null
 fi
 
-cat <<EOF
 
-** Bringing up ACSCS **
-
-Image: ${FLEET_MANAGER_IMAGE}
-Cluster Name: ${CLUSTER_NAME}
-Cluster Type: ${CLUSTER_TYPE}
-Namespace: ${ACSCS_NAMESPACE}
-
-Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
-Enable External Config: ${ENABLE_EXTERNAL_CONFIG}
-AWS Auth Helper: ${AWS_AUTH_HELPER:-none}
-
-EOF
+log "** Bringing up ACSCS **"
+print_env
 
 KUBE_CONFIG=$(assemble_kubeconfig | yq e . -o=json - | jq -c . -)
 export KUBE_CONFIG
@@ -48,18 +37,20 @@ fi
 
 # Deploy database.
 log "Deploying database"
-apply "${MANIFESTS_DIR}/db"
-wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=db" "db"
+make -C "$GITROOT" deploy/db
+wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleet-manager-db" "postgresql"
 log "Database is ready."
 
 # Deploy MS components.
-log "Deploying fleet-manager"
-chamber exec "fleet-manager" -- apply "${MANIFESTS_DIR}/fleet-manager"
-inject_exported_env_vars "$ACSCS_NAMESPACE" "fleet-manager"
+log "Deploying secrets"
+make -C "$GITROOT" deploy/secrets
 
-wait_for_container_to_appear "$ACSCS_NAMESPACE" "application=fleet-manager" "fleet-manager"
+log "Deploying fleet-manager"
+make -C "$GITROOT" deploy/service
+
+wait_for_container_to_appear "$ACSCS_NAMESPACE" "app=fleet-manager" "service"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
-    $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
+    $KUBECTL -n "$ACSCS_NAMESPACE" logs -l app=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
 fi
 
 log "Deploying fleetshard-sync"
@@ -70,7 +61,6 @@ fi
 export TENANT_IMAGE_PULL_SECRET
 
 exec_fleetshard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
-inject_exported_env_vars "$ACSCS_NAMESPACE" "fleetshard-sync"
 
 wait_for_container_to_appear "$ACSCS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
@@ -80,7 +70,7 @@ fi
 # Sanity check.
 wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync" 500
 # Prerequisite for port-forwarding are pods in ready state.
-wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleet-manager" "fleet-manager"
+wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "app=fleet-manager" "service"
 
 if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" ]]; then
     log "Starting port-forwarding for fleet-manager"
@@ -91,7 +81,7 @@ fi
 
 if [[ "$ENABLE_DB_PORT_FORWARDING" == "true" ]]; then
     log "Starting port-forwarding for db"
-    port-forwarding start db 5432 5432
+    port-forwarding start fleet-manager-db 5432 5432
 else
     log "Skipping port-forwarding for db"
 fi

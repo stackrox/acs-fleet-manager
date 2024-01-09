@@ -1,0 +1,19 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: fleet-manager-gitops
+  annotations:
+    description: "Fleet Manager GitOps"
+parameters:
+  - name: GITOPS_CONFIG
+    description: GitOps configuration
+    value: "{}"
+objects:
+- kind: ConfigMap
+  apiVersion: v1
+  metadata:
+    name: gitops-config
+  data:
+    config.yaml: |
+      ${GITOPS_CONFIG}

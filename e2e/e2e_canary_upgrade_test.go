@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	namespace              = "acscs"
+	namespace              = "rhacs"
 	gitopsConfigmapName    = "fleet-manager-gitops-config"
 	gitopsConfigmapDataKey = "config.yaml"
 	operatorVersion1       = "4.2.0-428-g318762a66d"

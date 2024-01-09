@@ -20,7 +20,7 @@ spec:
       containers:
       - env:
         - name: ROUTER_CANONICAL_HOSTNAME
-          value: "$CLUSTER_DNS"
+          value: "host.acscs.internal"
         - name: ROUTER_LISTEN_ADDR
           value: 0.0.0.0:1936
         - name: ROUTER_METRICS_TYPE

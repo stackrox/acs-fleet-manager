@@ -13,7 +13,7 @@
             {
                 "name": "test-route-name",
                 "prefix": "test-route-prefix",
-                "router": "cluster.local"
+                "router": "host.acscs.internal"
             }
         ],
         "versions": {

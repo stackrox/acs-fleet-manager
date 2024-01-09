@@ -31,20 +31,14 @@ parameters:
   displayName: Central's IdP issuer
   description: OIDC issuer URL to pass to Central's auth config
 
-- name: IMAGE_REGISTRY
-  displayName: Image Registry
+- name: REPO_DIGEST # populated by app-interface
+  displayName: Image digest
+  description: The full by-digest URI of a repository image.
   required: true
 
-- name: IMAGE_REPOSITORY
-  displayName: Image Repository
-  required: true
-
-- name: VERSION
-  displayName: Image version
-  value: latest
-
-- name: IMAGE_TAG
-  displayName: Image tag
+- name: IMAGE_TAG # populated by app-interface
+  displayName: Image tag reference
+  description: Human readable tag used for labeling the deployment to indicate the revision being deployed.
   value: latest
 
 - name: GLOG_V
@@ -107,6 +101,11 @@ parameters:
   displayName: Health check Server Bindaddress
   description: Health check server bind adddress
   value: :8083
+
+- name: HEALTH_CHECK_SCHEME
+  displayName: Health check scheme
+  description: Health check scheme
+  value: HTTPS
 
 - name: DATABASE_SECRET_NAME
   displayName: Database secret name
@@ -405,12 +404,12 @@ parameters:
 - name: RHACS_GITOPS_ENABLED
   displayName: RHACS Gitops enabled
   description: Whether to enable configuration of Centrals through gitops be enabled
-  value: "false"
+  value: "true"
 
 - name: RHACS_TARGETED_OPERATOR_UPGRADES
   displayName: RHACS Targeted Operator Upgrades
   description: Whether to enable targeted operator upgrades
-  value: "false"
+  value: "true"
 
 - name: ENABLE_LEADER_ELECTION
   description: Enable leader election
@@ -423,6 +422,12 @@ parameters:
 - name: OCM_ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG
   description: Sets the provided fleetshard image tag if the addon parameter value is 'inherit'"
   value: "true"
+
+- name: ENVOY_CONFIGMAP_NAME
+  description: Envoy configmap reference
+  # Temporarily use a minimum version of the configmap deployed from this file
+  # (-cd for Continuous Deployment).
+  value: "fleet-manager-envoy-config-cd"
 
 objects:
   - kind: ConfigMap
@@ -1063,6 +1068,7 @@ objects:
       name: fleet-manager
       labels:
         app: fleet-manager
+        image.tag: ${IMAGE_TAG}
     spec:
       selector:
         matchLabels:
@@ -1077,6 +1083,7 @@ objects:
         metadata:
           labels:
             app: fleet-manager
+            image.tag: ${IMAGE_TAG}
         spec:
           affinity:
             podAntiAffinity:
@@ -1139,9 +1146,7 @@ objects:
               name: fleet-manager-admin-authz-config
           - name: envoy-config
             configMap:
-              # Temporarily use a minimum version of the configmap deployed from this file
-              # (-cd for Continuous Deployment).
-              name: fleet-manager-envoy-config-cd
+              name: ${ENVOY_CONFIGMAP_NAME}
           - name: envoy-tls
             secret:
               secretName: fleet-manager-envoy-tls # pragma: allowlist secret
@@ -1163,7 +1168,7 @@ objects:
               optional: true
           initContainers:
           - name: migration
-            image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+            image: ${REPO_DIGEST}
             imagePullPolicy: ${IMAGE_PULL_POLICY}
             volumeMounts:
             - name: fleet-manager-credentials
@@ -1196,7 +1201,7 @@ objects:
             - -v=${GLOG_V}
           containers:
           - name: service
-            image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+            image: ${REPO_DIGEST}
             imagePullPolicy: ${IMAGE_PULL_POLICY}
             volumeMounts:
             - name: fleet-manager-credentials
@@ -1383,7 +1388,7 @@ objects:
               httpGet:
                 path: /healthcheck
                 port: 8083
-                scheme: HTTPS
+                scheme: ${HEALTH_CHECK_SCHEME}
                 httpHeaders:
                 - name: User-Agent
                   value: K8sLivenessProbe
@@ -1393,7 +1398,7 @@ objects:
               httpGet:
                 path: /healthcheck/ready
                 port: 8083
-                scheme: HTTPS
+                scheme: ${HEALTH_CHECK_SCHEME}
                 httpHeaders:
                 - name: User-Agent
                   value: K8sLivenessProbe
