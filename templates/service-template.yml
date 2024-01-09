@@ -642,6 +642,18 @@ objects:
       labels:
         app: fleet-manager
     rules:
+        # Allow fleet-manager to update its pod labels
+        # so that it can set/unset the fleet-manager-active label
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+          - update
+          - patch
       - apiGroups:
           - ""
         resources:
