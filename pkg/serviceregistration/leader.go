@@ -73,7 +73,7 @@ func (l *leaderWorker) run(ctx context.Context) error {
 			OnStartedLeading: func(ctx context.Context) {
 				glog.Info("[serviceregistration] started leading")
 				l.isLeader.Store(true)
-				l.update(ctx)
+				l.updateWithRetry(ctx)
 				for _, worker := range l.workers {
 					if !worker.IsRunning() {
 						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] starting worker %q with id %q", worker.GetWorkerType(), worker.GetID()))
@@ -86,7 +86,7 @@ func (l *leaderWorker) run(ctx context.Context) error {
 			OnStoppedLeading: func() {
 				glog.Info("[serviceregistration] stopped leading")
 				l.isLeader.Store(false)
-				l.update(ctx)
+				l.updateWithRetry(ctx)
 				for _, worker := range l.workers {
 					if worker.IsRunning() {
 						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] stopping worker %q with id %q", worker.GetWorkerType(), worker.GetID()))
