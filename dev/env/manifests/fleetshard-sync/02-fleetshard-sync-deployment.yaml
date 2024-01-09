@@ -56,7 +56,7 @@ spec:
             - name: AWS_REGION
               value: "$AWS_REGION"
             - name: RHACS_GITOPS_ENABLED
-              value: "$RHACS_GITOPS_ENABLED"
+              value: "true"
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -83,14 +83,9 @@ spec:
           volumeMounts:
             - mountPath: /secrets
               name: secrets
-            - mountPath: /config
-              name: config
       restartPolicy: Always
       volumes:
         - name: secrets
           secret:
             secretName: fleetshard-sync # pragma: allowlist secret
             optional: false
-        - name: config
-          configMap:
-            name: config

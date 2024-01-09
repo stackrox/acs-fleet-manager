@@ -1,3 +1,1 @@
-export FLEET_MANAGER_RESOURCES_DEFAULT='{"requests":{"cpu":"400m","memory":"1000Mi"},"limits":{"cpu":"400m","memory":"1000Mi"}}'
 export FLEETSHARD_SYNC_RESOURCES_DEFAULT='{"requests":{"cpu":"400m","memory":"1000Mi"},"limits":{"cpu":"400m","memory":"1000Mi"}}'
-export DB_RESOURCES_DEFAULT='{"requests":{"cpu":"400m","memory":"1000Mi"},"limits":{"cpu":"400m","memory":"1000Mi"}}'

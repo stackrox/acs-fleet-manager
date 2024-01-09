@@ -11,7 +11,6 @@ import (
 	// Tool dependencies, not used anywhere in the code.
 	_ "github.com/go-bindata/go-bindata/v3"
 	_ "github.com/matryer/moq"
-	_ "github.com/onsi/ginkgo/v2/ginkgo"
 	_ "github.com/segmentio/chamber/v2"
 	_ "gotest.tools/gotestsum"
 )

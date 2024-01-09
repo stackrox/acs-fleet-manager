@@ -12,12 +12,13 @@ log "Stopping fleet-manager port-forwarding..."
 port-forwarding stop fleet-manager 8000 || true
 
 log "Stopping db port-forwarding..."
-port-forwarding stop db 5432 || true
+port-forwarding stop fleet-manager-db 5432 || true
 
 log "Cleanup files..."
-delete "${MANIFESTS_DIR}/db" || true
-delete "${MANIFESTS_DIR}/fleet-manager" || true
+make -C "${GITROOT}" undeploy
 delete "${MANIFESTS_DIR}/fleetshard-sync" || true
 
 log "Cleanup namespaces..."
 delete_tenant_namespaces
+
+$KUBECTL -n "${STACKROX_OPERATOR_NAMESPACE}" delete deploy -l app=rhacs-operator || true
