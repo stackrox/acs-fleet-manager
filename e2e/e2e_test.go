@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -240,29 +241,12 @@ var _ = Describe("Central", Ordered, func() {
 		// TODO(ROX-11368): Create test to check Central is correctly exposed
 
 		It("should restore secrets and deployment on namespace delete", func() {
-			previousNamespace := corev1.Namespace{}
-			Expect(assertNamespaceExists(ctx, &previousNamespace, namespaceName)()).
-				To(Succeed())
-
 			// Using managedDB false here because e2e don't run with managed postgresql
 			secretBackup := k8s.NewSecretBackup(k8sClient, false)
 			expectedSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
 			Expect(err).ToNot(HaveOccurred())
 
-			previousCreationTime := previousNamespace.CreationTimestamp
-			Expect(k8sClient.Delete(ctx, &previousNamespace)).
-				NotTo(HaveOccurred())
-
-			Eventually(func() error {
-				newNamespace := corev1.Namespace{}
-				if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: namespaceName}, &newNamespace); err != nil {
-					return err
-				}
-				if previousCreationTime.Equal(&newNamespace.CreationTimestamp) {
-					return fmt.Errorf("namespace found but was not yet deleted")
-				}
-				return nil
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+			deleteNamespaceAndWaitForRecreation(ctx, namespaceName, k8sClient)
 
 			actualSecrets := map[string]*corev1.Secret{}
 			Eventually(func() (err error) {
@@ -270,13 +254,44 @@ var _ = Describe("Central", Ordered, func() {
 				return err
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
-			Expect(actualSecrets).ToNot(BeEmpty())
-			Expect(len(actualSecrets)).To(Equal(len(expectedSecrets)))
-			for secretName := range expectedSecrets { // pragma: allowlist secret
-				actualData := actualSecrets[secretName].StringData
-				expectedData := expectedSecrets[secretName].StringData
-				Expect(actualData).To(Equal(expectedData))
+			assertEqualSecrets(actualSecrets, expectedSecrets)
+		})
+
+		It("should delete and recreate secret backup for admin reset API", func() {
+			secretBackup := k8s.NewSecretBackup(k8sClient, false)
+			oldSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(oldSecrets).ToNot(BeEmpty())
+
+			// modify secrets to later test that the backup was updated succesfully
+			for _, secret := range oldSecrets {
+				secret.StringData["test"] = "modified"
+				err := k8sClient.Update(ctx, secret)
+				Expect(err).ToNot(HaveOccurred())
 			}
+
+			_, err = adminAPI.CentralRotateSecrets(ctx, centralRequestID, private.CentralRotateSecretsRequest{ResetSecretBackup: true})
+			Expect(err).ToNot(HaveOccurred())
+
+			// Wait for secrets to be backed up again
+			Eventually(func() error {
+				central, _, err := client.PrivateAPI().GetCentral(ctx, centralRequestID)
+				Expect(err).ToNot(HaveOccurred())
+				if len(central.Metadata.Secrets) == 0 {
+					return errors.New("secrets backup is empty")
+				}
+
+				return nil
+			}).
+				WithTimeout(defaultTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+
+			deleteNamespaceAndWaitForRecreation(ctx, namespaceName, k8sClient)
+
+			newSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
+			Expect(err).ToNot(HaveOccurred())
+			assertEqualSecrets(newSecrets, oldSecrets)
 		})
 
 		It("should transition central to deprovisioning state", func() {
@@ -485,5 +500,36 @@ var _ = Describe("Central", Ordered, func() {
 func printNotes(notes []string) {
 	for _, note := range notes {
 		GinkgoWriter.Println(note)
+	}
+}
+
+func deleteNamespaceAndWaitForRecreation(ctx context.Context, namespaceName string, k8sClient ctrlClient.Client) {
+	previousNamespace := corev1.Namespace{}
+	Expect(assertNamespaceExists(ctx, &previousNamespace, namespaceName)()).
+		To(Succeed())
+
+	previousCreationTime := previousNamespace.CreationTimestamp
+	Expect(k8sClient.Delete(ctx, &previousNamespace)).
+		NotTo(HaveOccurred())
+
+	Eventually(func() error {
+		newNamespace := corev1.Namespace{}
+		if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: namespaceName}, &newNamespace); err != nil {
+			return err
+		}
+		if previousCreationTime.Equal(&newNamespace.CreationTimestamp) {
+			return fmt.Errorf("namespace found but was not yet deleted")
+		}
+		return nil
+	}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+}
+
+func assertEqualSecrets(actualSecrets, expectedSecrets map[string]*corev1.Secret) {
+	Expect(actualSecrets).ToNot(BeEmpty())
+	Expect(len(actualSecrets)).To(Equal(len(expectedSecrets)))
+	for secretName := range expectedSecrets { // pragma: allowlist secret
+		actualData := actualSecrets[secretName].StringData
+		expectedData := expectedSecrets[secretName].StringData
+		Expect(actualData).To(Equal(expectedData))
 	}
 }

@@ -380,6 +380,7 @@ paths:
       summary: Update `expired_at` central property
   /api/rhacs/v1/admin/centrals/{id}/rotate-secrets:
     post:
+      operationId: centralRotateSecrets
       parameters:
       - description: The ID of record
         in: path

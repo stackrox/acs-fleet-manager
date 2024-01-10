@@ -490,6 +490,9 @@ var _ AdminAPI = &AdminAPIMock{}
 //
 //		// make and configure a mocked AdminAPI
 //		mockedAdminAPI := &AdminAPIMock{
+//			CentralRotateSecretsFunc: func(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error) {
+//				panic("mock out the CentralRotateSecrets method")
+//			},
 //			CreateCentralFunc: func(ctx context.Context, async bool, centralRequestPayload admin.CentralRequestPayload) (admin.CentralRequest, *http.Response, error) {
 //				panic("mock out the CreateCentral method")
 //			},
@@ -506,6 +509,9 @@ var _ AdminAPI = &AdminAPIMock{}
 //
 //	}
 type AdminAPIMock struct {
+	// CentralRotateSecretsFunc mocks the CentralRotateSecrets method.
+	CentralRotateSecretsFunc func(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error)
+
 	// CreateCentralFunc mocks the CreateCentral method.
 	CreateCentralFunc func(ctx context.Context, async bool, centralRequestPayload admin.CentralRequestPayload) (admin.CentralRequest, *http.Response, error)
 
@@ -517,6 +523,15 @@ type AdminAPIMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// CentralRotateSecrets holds details about calls to the CentralRotateSecrets method.
+		CentralRotateSecrets []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+			// CentralRotateSecretsRequest is the centralRotateSecretsRequest argument value.
+			CentralRotateSecretsRequest admin.CentralRotateSecretsRequest
+		}
 		// CreateCentral holds details about calls to the CreateCentral method.
 		CreateCentral []struct {
 			// Ctx is the ctx argument value.
@@ -541,9 +556,50 @@ type AdminAPIMock struct {
 			LocalVarOptionals *admin.GetCentralsOpts
 		}
 	}
-	lockCreateCentral       sync.RWMutex
-	lockDeleteDbCentralById sync.RWMutex
-	lockGetCentrals         sync.RWMutex
+	lockCentralRotateSecrets sync.RWMutex
+	lockCreateCentral        sync.RWMutex
+	lockDeleteDbCentralById  sync.RWMutex
+	lockGetCentrals          sync.RWMutex
+}
+
+// CentralRotateSecrets calls CentralRotateSecretsFunc.
+func (mock *AdminAPIMock) CentralRotateSecrets(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error) {
+	if mock.CentralRotateSecretsFunc == nil {
+		panic("AdminAPIMock.CentralRotateSecretsFunc: method is nil but AdminAPI.CentralRotateSecrets was just called")
+	}
+	callInfo := struct {
+		Ctx                         context.Context
+		ID                          string
+		CentralRotateSecretsRequest admin.CentralRotateSecretsRequest
+	}{
+		Ctx:                         ctx,
+		ID:                          id,
+		CentralRotateSecretsRequest: centralRotateSecretsRequest,
+	}
+	mock.lockCentralRotateSecrets.Lock()
+	mock.calls.CentralRotateSecrets = append(mock.calls.CentralRotateSecrets, callInfo)
+	mock.lockCentralRotateSecrets.Unlock()
+	return mock.CentralRotateSecretsFunc(ctx, id, centralRotateSecretsRequest)
+}
+
+// CentralRotateSecretsCalls gets all the calls that were made to CentralRotateSecrets.
+// Check the length with:
+//
+//	len(mockedAdminAPI.CentralRotateSecretsCalls())
+func (mock *AdminAPIMock) CentralRotateSecretsCalls() []struct {
+	Ctx                         context.Context
+	ID                          string
+	CentralRotateSecretsRequest admin.CentralRotateSecretsRequest
+} {
+	var calls []struct {
+		Ctx                         context.Context
+		ID                          string
+		CentralRotateSecretsRequest admin.CentralRotateSecretsRequest
+	}
+	mock.lockCentralRotateSecrets.RLock()
+	calls = mock.calls.CentralRotateSecrets
+	mock.lockCentralRotateSecrets.RUnlock()
+	return calls
 }
 
 // CreateCentral calls CreateCentralFunc.

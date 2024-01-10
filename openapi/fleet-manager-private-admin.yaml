@@ -259,6 +259,7 @@ paths:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
   '/api/rhacs/v1/admin/centrals/{id}/rotate-secrets':
     post:
+      operationId: centralRotateSecrets
       summary: Rotate RHSSO client or Secret Backup of a central tenant
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"

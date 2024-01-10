@@ -143,12 +143,12 @@ func (a *DefaultApiService) ApiRhacsV1AdminCentralsIdRestorePost(ctx _context.Co
 }
 
 /*
-ApiRhacsV1AdminCentralsIdRotateSecretsPost Rotate RHSSO client or Secret Backup of a central tenant
+CentralRotateSecrets Rotate RHSSO client or Secret Backup of a central tenant
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
   - @param centralRotateSecretsRequest Options for secret rotation
 */
-func (a *DefaultApiService) ApiRhacsV1AdminCentralsIdRotateSecretsPost(ctx _context.Context, id string, centralRotateSecretsRequest CentralRotateSecretsRequest) (*_nethttp.Response, error) {
+func (a *DefaultApiService) CentralRotateSecrets(ctx _context.Context, id string, centralRotateSecretsRequest CentralRotateSecretsRequest) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
