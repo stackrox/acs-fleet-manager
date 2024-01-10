@@ -177,7 +177,7 @@ func centralDBPasswordSecretObject() *v1.Secret {
 	}
 }
 
-func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestConditions, conditionType string) (*private.DataPlaneClusterUpdateStatusRequestConditions, bool) {
+func conditionForType(conditions []private.DataPlaneCentralStatusConditions, conditionType string) (*private.DataPlaneCentralStatusConditions, bool) {
 	for _, c := range conditions {
 		if c.Type == conditionType {
 			return &c, true

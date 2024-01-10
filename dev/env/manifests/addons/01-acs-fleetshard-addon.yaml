@@ -1,0 +1,19 @@
+# This object is required for reporting the addon metadata to fleet manager
+apiVersion: addons.managed.openshift.io/v1alpha1
+kind: Addon
+metadata:
+  name: acs-fleetshard
+spec:
+  displayName: Red Hat Advanced Cluster Security Fleet Shard
+  install:
+    olmOwnNamespace:
+      catalogSourceImage: acs-fleetshard-index@sha256:71eabccb4d3962043eac953fb3c09a6cc6a88b18c472dd264efc5eb3da4960ac
+      channel: stable
+      namespace: "$ACSCS_NAMESPACE"
+      packageName: acs-fleetshard
+    type: OLMOwnNamespace
+  installAckRequired: false
+  packageOperator:
+    image: acs-fleetshard-package@sha256:3e51c039662b875c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c
+  pause: true # No actual processing by the addon-operator
+  version: 0.1.0

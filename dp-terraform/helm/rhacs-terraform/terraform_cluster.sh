@@ -180,6 +180,7 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set fleetshardSync.resources.limits.memory="${FLEETSHARD_SYNC_MEMORY_LIMIT}" \
   --set fleetshardSync.secretEncryption.type="kms" \
   --set fleetshardSync.secretEncryption.keyID="${CLUSTER_SECRET_ENCRYPTION_KEY_ID}" \
+  --set fleetshardSync.addonAutoUpgradeEnabled=false \
   --set cloudwatch.clusterName="${CLUSTER_NAME}" \
   --set cloudwatch.environment="${ENVIRONMENT}" \
   --set logging.groupPrefix="${CLUSTER_NAME}" \

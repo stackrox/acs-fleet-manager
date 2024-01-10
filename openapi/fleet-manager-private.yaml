@@ -351,24 +351,23 @@ components:
             type: object
 
     DataPlaneClusterUpdateStatusRequest:
-      # TODO are there any fields that should be required?
-      # TODO are there any fields that should be nullable? (this is, a pointer in the resulting generated Go code)
       description: "Schema for the request to update a data plane cluster's status"
       type: object
       properties:
-        conditions:
-          description: "The cluster data plane conditions"
+        addons:
           type: array
           items:
             type: object
             properties:
-              type:
+              id:
                 type: string
-              reason:
+              version:
                 type: string
-              message:
+              sourceImage:
                 type: string
-              status:
+              packageImage:
+                type: string
+              parametersSHA256Sum:
                 type: string
     DataPlaneCentralStatus:
       description: "Schema of the status object for a Central"
