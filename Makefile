@@ -709,7 +709,6 @@ deploy/secrets:
 		-p CENTRAL_TLS_CERT="$(shell ([ -s './secrets/central-tls.crt' ] && [ -z '${CENTRAL_TLS_CERT}' ]) && cat ./secrets/central-tls.crt || echo '${CENTRAL_TLS_CERT}')" \
 		-p CENTRAL_TLS_KEY="$(shell ([ -s './secrets/central-tls.key' ] && [ -z '${CENTRAL_TLS_KEY}' ]) && cat ./secrets/central-tls.key || echo '${CENTRAL_TLS_KEY}')" \
 		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
-		-p KUBE_CONFIG="${KUBE_CONFIG}" \
 		-p OBSERVABILITY_RHSSO_LOGS_CLIENT_ID="$(shell ([ -s './secrets/rhsso-logs.clientId' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}' ]) && cat ./secrets/rhsso-logs.clientId || echo '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}')" \
 		-p OBSERVABILITY_RHSSO_LOGS_SECRET="$(shell ([ -s './secrets/rhsso-logs.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_SECRET}' ]) && cat ./secrets/rhsso-logs.clientSecret || echo '${OBSERVABILITY_RHSSO_LOGS_SECRET}')" \
 		-p OBSERVABILITY_RHSSO_METRICS_CLIENT_ID="$(shell ([ -s './secrets/rhsso-metrics.clientId' ] && [ -z '${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}' ]) && cat ./secrets/rhsso-metrics.clientId || echo '${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}')" \
