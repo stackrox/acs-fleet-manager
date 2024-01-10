@@ -4,7 +4,7 @@ import "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 
 func readyStatus() *private.DataPlaneCentralStatus {
 	return &private.DataPlaneCentralStatus{
-		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+		Conditions: []private.DataPlaneCentralStatusConditions{
 			{
 				Type:   "Ready",
 				Status: "True",
@@ -15,7 +15,7 @@ func readyStatus() *private.DataPlaneCentralStatus {
 
 func deletedStatus() *private.DataPlaneCentralStatus {
 	return &private.DataPlaneCentralStatus{
-		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+		Conditions: []private.DataPlaneCentralStatusConditions{
 			{
 				Type:   "Ready",
 				Status: "False",
@@ -27,7 +27,7 @@ func deletedStatus() *private.DataPlaneCentralStatus {
 
 func installingStatus() *private.DataPlaneCentralStatus {
 	return &private.DataPlaneCentralStatus{
-		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+		Conditions: []private.DataPlaneCentralStatusConditions{
 			{
 				Type:   "Ready",
 				Status: "False",

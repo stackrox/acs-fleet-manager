@@ -262,8 +262,8 @@ var _ PrivateAPI = &PrivateAPIMock{}
 //			GetCentralsFunc: func(ctx context.Context, id string) (private.ManagedCentralList, *http.Response, error) {
 //				panic("mock out the GetCentrals method")
 //			},
-//			GetDataPlaneClusterAgentConfigFunc: func(ctx context.Context, id string) (private.DataplaneClusterAgentConfig, *http.Response, error) {
-//				panic("mock out the GetDataPlaneClusterAgentConfig method")
+//			UpdateAgentClusterStatusFunc: func(ctx context.Context, id string, request private.DataPlaneClusterUpdateStatusRequest) (*http.Response, error) {
+//				panic("mock out the UpdateAgentClusterStatus method")
 //			},
 //			UpdateCentralClusterStatusFunc: func(ctx context.Context, id string, requestBody map[string]private.DataPlaneCentralStatus) (*http.Response, error) {
 //				panic("mock out the UpdateCentralClusterStatus method")
@@ -281,8 +281,8 @@ type PrivateAPIMock struct {
 	// GetCentralsFunc mocks the GetCentrals method.
 	GetCentralsFunc func(ctx context.Context, id string) (private.ManagedCentralList, *http.Response, error)
 
-	// GetDataPlaneClusterAgentConfigFunc mocks the GetDataPlaneClusterAgentConfig method.
-	GetDataPlaneClusterAgentConfigFunc func(ctx context.Context, id string) (private.DataplaneClusterAgentConfig, *http.Response, error)
+	// UpdateAgentClusterStatusFunc mocks the UpdateAgentClusterStatus method.
+	UpdateAgentClusterStatusFunc func(ctx context.Context, id string, request private.DataPlaneClusterUpdateStatusRequest) (*http.Response, error)
 
 	// UpdateCentralClusterStatusFunc mocks the UpdateCentralClusterStatus method.
 	UpdateCentralClusterStatusFunc func(ctx context.Context, id string, requestBody map[string]private.DataPlaneCentralStatus) (*http.Response, error)
@@ -303,12 +303,14 @@ type PrivateAPIMock struct {
 			// ID is the id argument value.
 			ID string
 		}
-		// GetDataPlaneClusterAgentConfig holds details about calls to the GetDataPlaneClusterAgentConfig method.
-		GetDataPlaneClusterAgentConfig []struct {
+		// UpdateAgentClusterStatus holds details about calls to the UpdateAgentClusterStatus method.
+		UpdateAgentClusterStatus []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+			// Request is the request argument value.
+			Request private.DataPlaneClusterUpdateStatusRequest
 		}
 		// UpdateCentralClusterStatus holds details about calls to the UpdateCentralClusterStatus method.
 		UpdateCentralClusterStatus []struct {
@@ -320,10 +322,10 @@ type PrivateAPIMock struct {
 			RequestBody map[string]private.DataPlaneCentralStatus
 		}
 	}
-	lockGetCentral                     sync.RWMutex
-	lockGetCentrals                    sync.RWMutex
-	lockGetDataPlaneClusterAgentConfig sync.RWMutex
-	lockUpdateCentralClusterStatus     sync.RWMutex
+	lockGetCentral                 sync.RWMutex
+	lockGetCentrals                sync.RWMutex
+	lockUpdateAgentClusterStatus   sync.RWMutex
+	lockUpdateCentralClusterStatus sync.RWMutex
 }
 
 // GetCentral calls GetCentralFunc.
@@ -398,39 +400,43 @@ func (mock *PrivateAPIMock) GetCentralsCalls() []struct {
 	return calls
 }
 
-// GetDataPlaneClusterAgentConfig calls GetDataPlaneClusterAgentConfigFunc.
-func (mock *PrivateAPIMock) GetDataPlaneClusterAgentConfig(ctx context.Context, id string) (private.DataplaneClusterAgentConfig, *http.Response, error) {
-	if mock.GetDataPlaneClusterAgentConfigFunc == nil {
-		panic("PrivateAPIMock.GetDataPlaneClusterAgentConfigFunc: method is nil but PrivateAPI.GetDataPlaneClusterAgentConfig was just called")
+// UpdateAgentClusterStatus calls UpdateAgentClusterStatusFunc.
+func (mock *PrivateAPIMock) UpdateAgentClusterStatus(ctx context.Context, id string, request private.DataPlaneClusterUpdateStatusRequest) (*http.Response, error) {
+	if mock.UpdateAgentClusterStatusFunc == nil {
+		panic("PrivateAPIMock.UpdateAgentClusterStatusFunc: method is nil but PrivateAPI.UpdateAgentClusterStatus was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
-		ID  string
+		Ctx     context.Context
+		ID      string
+		Request private.DataPlaneClusterUpdateStatusRequest
 	}{
-		Ctx: ctx,
-		ID:  id,
+		Ctx:     ctx,
+		ID:      id,
+		Request: request,
 	}
-	mock.lockGetDataPlaneClusterAgentConfig.Lock()
-	mock.calls.GetDataPlaneClusterAgentConfig = append(mock.calls.GetDataPlaneClusterAgentConfig, callInfo)
-	mock.lockGetDataPlaneClusterAgentConfig.Unlock()
-	return mock.GetDataPlaneClusterAgentConfigFunc(ctx, id)
+	mock.lockUpdateAgentClusterStatus.Lock()
+	mock.calls.UpdateAgentClusterStatus = append(mock.calls.UpdateAgentClusterStatus, callInfo)
+	mock.lockUpdateAgentClusterStatus.Unlock()
+	return mock.UpdateAgentClusterStatusFunc(ctx, id, request)
 }
 
-// GetDataPlaneClusterAgentConfigCalls gets all the calls that were made to GetDataPlaneClusterAgentConfig.
+// UpdateAgentClusterStatusCalls gets all the calls that were made to UpdateAgentClusterStatus.
 // Check the length with:
 //
-//	len(mockedPrivateAPI.GetDataPlaneClusterAgentConfigCalls())
-func (mock *PrivateAPIMock) GetDataPlaneClusterAgentConfigCalls() []struct {
-	Ctx context.Context
-	ID  string
+//	len(mockedPrivateAPI.UpdateAgentClusterStatusCalls())
+func (mock *PrivateAPIMock) UpdateAgentClusterStatusCalls() []struct {
+	Ctx     context.Context
+	ID      string
+	Request private.DataPlaneClusterUpdateStatusRequest
 } {
 	var calls []struct {
-		Ctx context.Context
-		ID  string
+		Ctx     context.Context
+		ID      string
+		Request private.DataPlaneClusterUpdateStatusRequest
 	}
-	mock.lockGetDataPlaneClusterAgentConfig.RLock()
-	calls = mock.calls.GetDataPlaneClusterAgentConfig
-	mock.lockGetDataPlaneClusterAgentConfig.RUnlock()
+	mock.lockUpdateAgentClusterStatus.RLock()
+	calls = mock.calls.UpdateAgentClusterStatus
+	mock.lockUpdateAgentClusterStatus.RUnlock()
 	return calls
 }
 

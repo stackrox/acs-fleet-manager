@@ -9,4 +9,7 @@ var (
 
 	// PrintCentralUpdateDiff enables printing the diff of the central update
 	PrintCentralUpdateDiff = registerFeature("Print the diff of the central update", "RHACS_PRINT_CENTRAL_UPDATE_DIFF", true)
+
+	// AddonAutoUpgrade enables addon auto upgrade feature
+	AddonAutoUpgrade = registerFeature("Addon auto upgrade", "RHACS_ADDON_AUTO_UPGRADE", true)
 )

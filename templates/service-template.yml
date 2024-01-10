@@ -19,6 +19,10 @@ parameters:
   description: Which ACS Service Fleet Manager environment to use for this deployment
   value: production
 
+- name: NAMESPACE
+  displayName: Namespace
+  description: Namespace to deploy the service to
+
 - name: CENTRAL_IDP_CLIENT_ID
   displayName: Central's IdP client ID
   description: OIDC client ID to pass to Central's auth config
@@ -630,6 +634,66 @@ objects:
         app: fleet-manager
     imagePullSecrets:
     - name: quay.io
+
+  - kind: Role
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: fleet-manager
+      labels:
+        app: fleet-manager
+    rules:
+        # Allow fleet-manager to update its pod labels
+        # so that it can set/unset the fleet-manager-active label
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+          - update
+          - patch
+      - apiGroups:
+          - ""
+        resources:
+          - configmaps
+        verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
+        verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+
+  - kind: RoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: fleet-manager
+      labels:
+        app: fleet-manager
+    subjects:
+      - kind: ServiceAccount
+        name: fleet-manager
+        namespace: ${NAMESPACE}
+    roleRef:
+      kind: Role
+      name: fleet-manager
+      apiGroup: rbac.authorization.k8s.io
+
   - apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -1121,6 +1185,14 @@ objects:
                 value: "${RHACS_GITOPS_ENABLED}"
               - name: RHACS_TARGETED_OPERATOR_UPGRADES
                 value: "${RHACS_TARGETED_OPERATOR_UPGRADES}"
+              - name: POD_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.name
+              - name: NAMESPACE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.namespace
             command:
             - /usr/local/bin/fleet-manager
             - serve
@@ -1228,25 +1300,24 @@ objects:
               limits:
                 cpu: ${CPU_LIMIT}
                 memory: ${MEMORY_LIMIT}
-            # TODO ROX-11309 Use /api based endpoint for livenessProbe
             livenessProbe:
               httpGet:
                 path: /healthcheck
                 port: 8083
                 scheme: HTTPS
                 httpHeaders:
-                  - name: User-Agent
-                    value: Probe
+                - name: User-Agent
+                  value: K8sLivenessProbe
               initialDelaySeconds: 15
               periodSeconds: 5
             readinessProbe:
               httpGet:
-                path: /healthcheck
+                path: /healthcheck/ready
                 port: 8083
                 scheme: HTTPS
                 httpHeaders:
                 - name: User-Agent
-                  value: Probe
+                  value: K8sLivenessProbe
               initialDelaySeconds: 20
               periodSeconds: 10
           - name: envoy-sidecar
@@ -1341,6 +1412,25 @@ objects:
       - port: 9001
         targetPort: 9001
         protocol: TCP
+
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: fleet-manager-active
+      labels:
+        app: fleet-manager
+        port: api
+      annotations:
+        description: Exposes and load balances the fleet-manager pods. Only targets the active fleet-manager pod.
+        service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-envoy-tls
+    spec:
+      selector:
+        app: fleet-manager
+        fleet-manager-active: "true"
+      ports:
+        - port: 9001
+          targetPort: 9001
+          protocol: TCP
 
   # Services for diagnostic ports (not part of main service because we
   # don't want exposing them externally through same route).

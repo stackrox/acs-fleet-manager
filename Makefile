@@ -62,6 +62,9 @@ else
 GOBIN=$(shell $(GO) env GOBIN)
 endif
 
+# Used for local builds to support arm64
+goarch=$(shell go env GOARCH)
+
 LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
 # Add the project-level bin directory into PATH. Needed in order
 # for `go generate` to use project-level bin directory binaries first
@@ -194,7 +197,6 @@ help:
 	@echo "make openapi/generate            generate openapi modules"
 	@echo "make openapi/validate            validate openapi schema"
 	@echo "make image/build                 build fleet-manager and fleetshard-sync container image"
-	@echo "make image/build/local           build fleet-manager and fleetshard-sync binaries locally, this image supports arm64"
 	@echo "make image/push                  push image"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make secrets/touch               touch all required secret files"
@@ -495,11 +497,10 @@ docker/login/internal:
 .PHONY: docker/login/internal
 
 # Build the image using by specifying a specific image target within the Dockerfile.
-image/build: GOOS=linux
-image/build: DOCKERFILE="Dockerfile"
+image/build: GOARCH?=amd64
 image/build: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f $(DOCKERFILE) .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) --build-arg GOARCH=$(GOARCH) .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
@@ -508,13 +509,6 @@ ifeq ("$(CLUSTER_TYPE)","kind")
 	kind load docker-image $(SHORT_IMAGE_REF)
 endif
 .PHONY: image/build
-
-# Builds the binaries locally and copies them into the image. This build is compatible with arm64.
-image/build/local: GOOS=linux
-image/build/local: DOCKERFILE="Dockerfile.local"
-image/build/local:
-	GOARCH=$(GOARCH) GOOS=$(GOOS) $(MAKE) binary
-	$(MAKE) image/build DOCKERFILE=$(DOCKERFILE)
 
 image/build/probe: GOOS=linux
 image/build/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
@@ -863,15 +857,16 @@ deploy/bootstrap:
 .PHONY: deploy/bootstrap
 
 # Deploy local images fast for development
-deploy/dev-fast: image/build/local deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
+deploy/dev-fast: GOARCH=$(goarch)
+deploy/dev-fast: image/build deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 
-deploy/dev-fast/fleet-manager: GOOS=linux
-deploy/dev-fast/fleet-manager: image/build/local
+deploy/dev-fast/fleet-manager: GOARCH=$(goarch)
+deploy/dev-fast/fleet-manager: image/build
 	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleet-manager
 
-deploy/dev-fast/fleetshard-sync: GOOS=linux
-deploy/dev-fast/fleetshard-sync: image/build/local
+deploy/dev-fast/fleetshard-sync: GOARCH=$(goarch)
+deploy/dev-fast/fleetshard-sync: image/build
 	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleetshard-sync
 
