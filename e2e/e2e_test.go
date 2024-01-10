@@ -265,7 +265,7 @@ var _ = Describe("Central", Ordered, func() {
 
 			// modify secrets to later test that the backup was updated succesfully
 			for _, secret := range oldSecrets {
-				secret.StringData["test"] = "modified"
+				secret.Data["test"] = []byte("modified")
 				err := k8sClient.Update(ctx, secret)
 				Expect(err).ToNot(HaveOccurred())
 			}
@@ -528,8 +528,8 @@ func assertEqualSecrets(actualSecrets, expectedSecrets map[string]*corev1.Secret
 	Expect(actualSecrets).ToNot(BeEmpty())
 	Expect(len(actualSecrets)).To(Equal(len(expectedSecrets)))
 	for secretName := range expectedSecrets { // pragma: allowlist secret
-		actualData := actualSecrets[secretName].StringData
-		expectedData := expectedSecrets[secretName].StringData
+		actualData := actualSecrets[secretName].Data
+		expectedData := expectedSecrets[secretName].Data
 		Expect(actualData).To(Equal(expectedData))
 	}
 }
