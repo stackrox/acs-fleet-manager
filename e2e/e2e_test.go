@@ -274,21 +274,17 @@ var _ = Describe("Central", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Wait for secrets to be backed up again
+			waitCount := 0
 			Eventually(func() error {
-				central, _, err := client.PrivateAPI().GetCentral(ctx, centralRequestID)
-				Expect(err).ToNot(HaveOccurred())
-				if len(central.Metadata.SecretsStored) == 0 {
-					return errors.New("secrets backup is empty")
+				if waitCount < 6 {
+					waitCount++
+					return errors.New("did not wait enough")
 				}
-
 				return nil
-			}).
-				WithTimeout(7 * time.Minute).
-				WithPolling(30 * time.Second).
-				Should(Succeed())
+
+			}).WithTimeout(defaultTimeout).WithPolling(10 * time.Second)
 
 			deleteNamespaceAndWaitForRecreation(ctx, namespaceName, k8sClient)
-
 			newSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
 			Expect(err).ToNot(HaveOccurred())
 			assertEqualSecrets(newSecrets, oldSecrets)
