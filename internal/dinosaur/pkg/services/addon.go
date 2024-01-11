@@ -170,12 +170,15 @@ func (p *AddonProvisioner) newInstallation(config gitops.AddonConfig) (*clusters
 		config = customization(config)
 	}
 
-	installation, err := clustersmgmtv1.NewAddOnInstallation().
+	builder := clustersmgmtv1.NewAddOnInstallation().
 		Addon(clustersmgmtv1.NewAddOn().ID(config.ID)).
-		AddonVersion(clustersmgmtv1.NewAddOnVersion().ID(config.Version)).
-		Parameters(convertParametersToOCMAPI(config.Parameters)).
-		Build()
+		Parameters(convertParametersToOCMAPI(config.Parameters))
 
+	if config.Version != "" {
+		builder = builder.AddonVersion(clustersmgmtv1.NewAddOnVersion().ID(config.Version))
+	}
+
+	installation, err := builder.Build()
 	if err != nil {
 		return nil, fmt.Errorf("build new addon installation %s: %w", config.ID, err)
 	}
@@ -212,15 +215,24 @@ func (c *updateDecision) updateInProgress() bool {
 }
 
 func (c *updateDecision) needsUpdate(current dbapi.AddonInstallation) bool {
-	if c.installedInOCM.AddonVersion().ID() != c.expectedConfig.Version ||
+	expectedVersion := c.expectedConfig.Version
+	if expectedVersion == "" {
+		addon, err := c.ocmClient.GetAddon(c.expectedConfig.ID)
+		if err != nil {
+			c.multiErr = multierror.Append(c.multiErr, fmt.Errorf("get addon %s with the latest version: %w", c.expectedConfig.ID, err))
+		}
+		expectedVersion = addon.Version().ID()
+	}
+
+	if c.installedInOCM.AddonVersion().ID() != expectedVersion ||
 		!maps.Equal(convertParametersFromOCMAPI(c.installedInOCM.Parameters()), c.expectedConfig.Parameters) {
 		return true
 	}
 
-	addonVersion, err := c.ocmClient.GetAddonVersion(c.expectedConfig.ID, c.expectedConfig.Version)
+	addonVersion, err := c.ocmClient.GetAddonVersion(c.expectedConfig.ID, expectedVersion)
 	if err != nil {
 		c.multiErr = multierror.Append(c.multiErr, fmt.Errorf("get addon version object for addon %s with version %s: %w",
-			c.expectedConfig.ID, c.expectedConfig.Version, err))
+			c.expectedConfig.ID, expectedVersion, err))
 		return false
 	}
 

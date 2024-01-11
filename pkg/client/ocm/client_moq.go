@@ -49,6 +49,9 @@ var _ Client = &ClientMock{}
 //			FindSubscriptionsFunc: func(query string) (*amsv1.SubscriptionsListResponse, error) {
 //				panic("mock out the FindSubscriptions method")
 //			},
+//			GetAddonFunc: func(addonID string) (*addonsmgmtv1.Addon, error) {
+//				panic("mock out the GetAddon method")
+//			},
 //			GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *serviceErrors.ServiceError) {
 //				panic("mock out the GetAddonInstallation method")
 //			},
@@ -127,6 +130,9 @@ type ClientMock struct {
 
 	// FindSubscriptionsFunc mocks the FindSubscriptions method.
 	FindSubscriptionsFunc func(query string) (*amsv1.SubscriptionsListResponse, error)
+
+	// GetAddonFunc mocks the GetAddon method.
+	GetAddonFunc func(addonID string) (*addonsmgmtv1.Addon, error)
 
 	// GetAddonInstallationFunc mocks the GetAddonInstallation method.
 	GetAddonInstallationFunc func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *serviceErrors.ServiceError)
@@ -224,6 +230,11 @@ type ClientMock struct {
 			// Query is the query argument value.
 			Query string
 		}
+		// GetAddon holds details about calls to the GetAddon method.
+		GetAddon []struct {
+			// AddonID is the addonID argument value.
+			AddonID string
+		}
 		// GetAddonInstallation holds details about calls to the GetAddonInstallation method.
 		GetAddonInstallation []struct {
 			// ClusterID is the clusterID argument value.
@@ -319,6 +330,7 @@ type ClientMock struct {
 	lockDeleteCluster                 sync.RWMutex
 	lockDeleteSubscription            sync.RWMutex
 	lockFindSubscriptions             sync.RWMutex
+	lockGetAddon                      sync.RWMutex
 	lockGetAddonInstallation          sync.RWMutex
 	lockGetAddonVersion               sync.RWMutex
 	lockGetCloudProviders             sync.RWMutex
@@ -628,6 +640,38 @@ func (mock *ClientMock) FindSubscriptionsCalls() []struct {
 	mock.lockFindSubscriptions.RLock()
 	calls = mock.calls.FindSubscriptions
 	mock.lockFindSubscriptions.RUnlock()
+	return calls
+}
+
+// GetAddon calls GetAddonFunc.
+func (mock *ClientMock) GetAddon(addonID string) (*addonsmgmtv1.Addon, error) {
+	if mock.GetAddonFunc == nil {
+		panic("ClientMock.GetAddonFunc: method is nil but Client.GetAddon was just called")
+	}
+	callInfo := struct {
+		AddonID string
+	}{
+		AddonID: addonID,
+	}
+	mock.lockGetAddon.Lock()
+	mock.calls.GetAddon = append(mock.calls.GetAddon, callInfo)
+	mock.lockGetAddon.Unlock()
+	return mock.GetAddonFunc(addonID)
+}
+
+// GetAddonCalls gets all the calls that were made to GetAddon.
+// Check the length with:
+//
+//	len(mockedClient.GetAddonCalls())
+func (mock *ClientMock) GetAddonCalls() []struct {
+	AddonID string
+} {
+	var calls []struct {
+		AddonID string
+	}
+	mock.lockGetAddon.RLock()
+	calls = mock.calls.GetAddon
+	mock.lockGetAddon.RUnlock()
 	return calls
 }
 
