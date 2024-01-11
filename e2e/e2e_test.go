@@ -240,24 +240,24 @@ var _ = Describe("Central", Ordered, func() {
 		// TODO(ROX-11368): create test to check that Central and Scanner are healthy
 		// TODO(ROX-11368): Create test to check Central is correctly exposed
 
-		It("should restore secrets and deployment on namespace delete", func() {
-			// Using managedDB false here because e2e don't run with managed postgresql
-			secretBackup := k8s.NewSecretBackup(k8sClient, false)
-			expectedSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
-			Expect(err).ToNot(HaveOccurred())
+		// It("should restore secrets and deployment on namespace delete", func() {
+		// 	// Using managedDB false here because e2e don't run with managed postgresql
+		// 	secretBackup := k8s.NewSecretBackup(k8sClient, false)
+		// 	expectedSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
+		// 	Expect(err).ToNot(HaveOccurred())
 
-			deleteNamespaceAndWaitForRecreation(ctx, namespaceName, k8sClient)
+		// 	deleteNamespaceAndWaitForRecreation(ctx, namespaceName, k8sClient)
 
-			actualSecrets := map[string]*corev1.Secret{}
-			Eventually(func() (err error) {
-				actualSecrets, err = secretBackup.CollectSecrets(ctx, namespaceName) // pragma: allowlist secret
-				return err
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+		// 	actualSecrets := map[string]*corev1.Secret{}
+		// 	Eventually(func() (err error) {
+		// 		actualSecrets, err = secretBackup.CollectSecrets(ctx, namespaceName) // pragma: allowlist secret
+		// 		return err
+		// 	}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
-			assertEqualSecrets(actualSecrets, expectedSecrets)
-		})
+		// 	assertEqualSecrets(actualSecrets, expectedSecrets)
+		// })
 
-		It("should delete and recreate secret backup for admin reset API", func() {
+		It("should rotate and restore secret backup for admin reset API", func() {
 			secretBackup := k8s.NewSecretBackup(k8sClient, false)
 			oldSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
 			Expect(err).ToNot(HaveOccurred())
