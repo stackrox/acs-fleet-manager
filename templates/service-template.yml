@@ -712,7 +712,6 @@ objects:
       aws.route53accesskey: badger
       aws.route53secretaccesskey: badger
       observability-config-access.token: badger
-      kubeconfig: badger
   - apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -1271,7 +1270,6 @@ objects:
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
             - --dataplane-cluster-config-file=${DATAPLANE_CLUSTER_CONFIG_FILE}
-            - --kubeconfig=/secrets/fleet-manager-credentials/kubeconfig
             - --fleetshard-poll-interval=${FLEETSHARD_POLL_INTERVAL}
             - --fleetshard-resync-interval=${FLEETSHARD_RESYNC_INTERVAL}
             - --allow-evaluator-instance=${ALLOW_EVALUATOR_INSTANCE}

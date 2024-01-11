@@ -2,9 +2,6 @@ package config
 
 import (
 	"fmt"
-	"io/fs"
-	"os"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/constants"
@@ -14,8 +11,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"gopkg.in/yaml.v2"
-	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 // DataplaneClusterConfig ...
@@ -30,10 +25,8 @@ type DataplaneClusterConfig struct {
 	DataPlaneClusterConfigFile            string `json:"dataplane_cluster_config_file"`
 	ReadOnlyUserList                      userv1.OptionalNames
 	ReadOnlyUserListFile                  string
-	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
-	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
-	Kubeconfig                            string         `json:"kubeconfig"`
-	RawKubernetesConfig                   *clientcmdapi.Config
+	ClusterConfig                         *ClusterConfig             `json:"clusters_config"`
+	EnableReadyDataPlaneClustersReconcile bool                       `json:"enable_ready_dataplane_clusters_reconcile"`
 	CentralOperatorOLMConfig              OperatorInstallationConfig `json:"dinosaur_operator_olm_config"`
 	FleetshardOperatorOLMConfig           OperatorInstallationConfig `json:"fleetshard_operator_olm_config"`
 }
@@ -57,14 +50,6 @@ const (
 	NoScaling string = "none"
 )
 
-func getDefaultKubeconfig() string {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return ""
-	}
-	return filepath.Join(homeDir, ".kube", "config")
-}
-
 // NewDataplaneClusterConfig ...
 func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	return &DataplaneClusterConfig{
@@ -75,7 +60,6 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 		DataPlaneClusterScalingType:           ManualScaling,
 		ClusterConfig:                         &ClusterConfig{},
 		EnableReadyDataPlaneClustersReconcile: true,
-		Kubeconfig:                            getDefaultKubeconfig(),
 		CentralOperatorOLMConfig: OperatorInstallationConfig{
 			IndexImage:             "quay.io/osd-addons/managed-central:production-82b42db",
 			CatalogSourceNamespace: "openshift-marketplace",
@@ -272,24 +256,6 @@ func (s *stringValue) Type() string {
 
 func (s *stringValue) String() string { return string(*s) }
 
-func (c *DataplaneClusterConfig) addKubeconfigFlag(fs *pflag.FlagSet) {
-	name := "kubeconfig"
-	usage := "A path to kubeconfig file used for communication with standalone clusters"
-	if kubeconfigFlag := fs.Lookup(name); kubeconfigFlag != nil {
-		// controller-runtime has already added a "kubeconfig" flag. We make sure that its definition
-		// aligns with our expectations.
-		*kubeconfigFlag = pflag.Flag{
-			Name:      name,
-			Shorthand: "",
-			Usage:     usage,
-			Value:     (*stringValue)(&c.Kubeconfig),
-			DefValue:  c.Kubeconfig,
-		}
-	} else {
-		fs.StringVar(&c.Kubeconfig, name, c.Kubeconfig, usage)
-	}
-}
-
 // AddFlags ...
 func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
@@ -298,7 +264,6 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", c.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
-	c.addKubeconfigFlag(fs)
 	fs.StringVar(&c.CentralOperatorOLMConfig.CatalogSourceNamespace, "central-operator-cs-namespace", c.CentralOperatorOLMConfig.CatalogSourceNamespace, "Central operator catalog source namespace.")
 	fs.StringVar(&c.CentralOperatorOLMConfig.IndexImage, "central-operator-index-image", c.CentralOperatorOLMConfig.IndexImage, "Central operator index image")
 	fs.StringVar(&c.CentralOperatorOLMConfig.Namespace, "central-operator-namespace", c.CentralOperatorOLMConfig.Namespace, "Central operator namespace")
@@ -320,24 +285,6 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 		} else {
 			return err
 		}
-
-		// read kubeconfig and validate standalone clusters are in kubeconfig context
-		for _, cluster := range c.ClusterConfig.clusterList {
-			if cluster.ProviderType != api.ClusterProviderStandalone {
-				continue
-			}
-			// make sure we only read kubeconfig once
-			if c.RawKubernetesConfig == nil {
-				err = c.readKubeconfig()
-				if err != nil {
-					return err
-				}
-			}
-			validationErr := validateClusterIsInKubeconfigContext(*c.RawKubernetesConfig, cluster)
-			if validationErr != nil {
-				return validationErr
-			}
-		}
 	}
 
 	err := readOnlyUserListFile(c.ReadOnlyUserListFile, &c.ReadOnlyUserList)
@@ -346,32 +293,6 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 	}
 
 	return nil
-}
-
-func (c *DataplaneClusterConfig) readKubeconfig() error {
-	_, err := os.Stat(c.Kubeconfig)
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return errors.Errorf("The kubeconfig file %s does not exist", c.Kubeconfig)
-		}
-		return fmt.Errorf("retrieving FileInfo for kubeconfig: %w", err)
-	}
-	config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{Precedence: []string{c.Kubeconfig}},
-		&clientcmd.ConfigOverrides{})
-	rawConfig, err := config.RawConfig()
-	if err != nil {
-		return fmt.Errorf("reading kubeconfig: %w", err)
-	}
-	c.RawKubernetesConfig = &rawConfig
-	return nil
-}
-
-func validateClusterIsInKubeconfigContext(rawConfig clientcmdapi.Config, cluster ManualCluster) error {
-	if _, found := rawConfig.Contexts[cluster.Name]; found {
-		return nil
-	}
-	return errors.Errorf("standalone cluster with ID: %s, and Name %s not in kubeconfig context", cluster.ClusterID, cluster.Name)
 }
 
 func readDataPlaneClusterConfig(file string) (ClusterList, error) {
