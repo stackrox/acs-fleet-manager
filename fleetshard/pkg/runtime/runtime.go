@@ -168,7 +168,6 @@ func (r *Runtime) Start() error {
 		reconciledCentralCountCache = int32(len(list.Items))
 		logger.InfoChangedInt32(&reconciledCentralCountCache, "Received central count changed: received %d centrals", reconciledCentralCountCache)
 		for _, central := range list.Items {
-			glog.Infof("Try to start reconciliation: %s", central.Id)
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, r.client, central,
 					r.dbProvisionClient, postgres.InitializeDatabase, r.secretCipher, r.encryptionKeyGenerator, reconcilerOpts)

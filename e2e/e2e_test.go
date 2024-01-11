@@ -283,7 +283,7 @@ var _ = Describe("Central", Ordered, func() {
 
 				return nil
 			}).
-				WithTimeout(20 * time.Minute).
+				WithTimeout(waitTimeout).
 				WithPolling(10 * time.Second).
 				Should(Succeed())
 

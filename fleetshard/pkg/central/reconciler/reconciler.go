@@ -142,7 +142,6 @@ type CentralReconciler struct {
 func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	// Only allow to start reconcile function once
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
-		glog.Infof("Start reconcile but busy: %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		return nil, ErrBusy
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
@@ -159,7 +158,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	needsReconcile := r.needsReconcile(changed, central, remoteCentral.Metadata.SecretsStored)
 
 	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
-		glog.Infof("skip reconcile: %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		return nil, ErrCentralNotChanged
 	}
 

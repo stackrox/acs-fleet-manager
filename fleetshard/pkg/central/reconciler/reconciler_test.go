@@ -346,6 +346,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		central:                private.ManagedCentral{},
 		resourcesChart:         resourcesChart,
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
+		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
 	}
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
