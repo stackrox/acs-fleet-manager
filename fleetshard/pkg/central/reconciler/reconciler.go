@@ -141,20 +141,17 @@ type CentralReconciler struct {
 // TODO(sbaumer): Should an initial ManagedCentral be added on reconciler creation?
 func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	// Only allow to start reconcile function once
-	glog.Infof("Start reconcile func: %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
 		glog.Infof("Start reconcile but busy: %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		return nil, ErrBusy
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
-	glog.Infof("Start getInstanceConfig: %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	central, err := r.getInstanceConfig(&remoteCentral)
 	if err != nil {
 		return nil, err
 	}
 
-	glog.Infof("Start centralChanged: %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	changed, err := r.centralChanged(remoteCentral)
 	if err != nil {
 		return nil, errors.Wrap(err, "checking if central changed")
