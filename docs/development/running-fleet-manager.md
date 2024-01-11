@@ -29,20 +29,12 @@ Write a Cloud provider configuration file that matches the cloud provider and re
 
 Enable a cluster configuration file for the OSD cluster, see `dev/config/dataplane-cluster-configuration-infractl-osd.yaml` for an example OSD cluster running in GCP. Again, see the cluster creation logs for possibly missing required fields.
 
-Download the kubeconfig for the cluster. Without this the fleet manager will refuse to use the cluster.
-
-```bash
-CLUSTER=... # your cluster's name
-infractl artifacts "${CLUSTER}" --download-dir "~/infra/${CLUSTER}"
-```
-
 Launch the fleet manager using those configuration files:
 
 ```bash
 make binary && ./fleet-manager serve \
    --dataplane-cluster-config-file=$(pwd)/dev/config/dataplane-cluster-configuration-infractl-osd.yaml \
    --providers-config-file=$(pwd)/dev/config/provider-configuration-infractl-osd.yaml \
-   --kubeconfig="~/infra/${CLUSTER}/kubeconfig" \
    2>&1 | tee fleet-manager-serve.log
 ```
 

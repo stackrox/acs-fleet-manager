@@ -54,8 +54,6 @@ fleet-manager allows provisioning of dinosaurs in an already preexisting standal
  - `region` the cloud region where the standalone cluster is provisioned
  - ... rest of the options
 
-> NOTE: `kubeconfig` path can be configured via the `--kubeconfig` CLI flag. Otherwise is defaults to `$HOME/.kube/config`
-
 > NOTE: [OLM](https://github.com/operator-framework/operator-lifecycle-manager#installation) in the destination standalone cluster/s is a prerequisite to be able to install dinosaur operator and fleetshard operators
 
 ## Configuring OSD Cluster Creation and AutoScaling
