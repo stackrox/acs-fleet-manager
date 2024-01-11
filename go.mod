@@ -33,7 +33,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo/v2 v2.13.2
 	github.com/onsi/gomega v1.29.0
-	github.com/openshift-online/ocm-sdk-go v0.1.389
+	github.com/openshift-online/ocm-sdk-go v0.1.391
 	github.com/openshift/addon-operator/apis v0.0.0-20231110045543-dd01f2f5c184
 	github.com/openshift/api v0.0.0-20230502160752-c71432710382
 	github.com/operator-framework/api v0.20.0
