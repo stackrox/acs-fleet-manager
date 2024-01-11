@@ -100,8 +100,6 @@ const (
 	ClusterDeprovisioning ClusterStatus = "deprovisioning"
 	// ClusterCleanup the cluster external resources are being removed
 	ClusterCleanup ClusterStatus = "cleanup"
-	// ClusterWaitingForFleetShardOperator the cluster is waiting for the fleetshard operator to be ready
-	ClusterWaitingForFleetShardOperator ClusterStatus = "waiting_for_fleetshard_operator"
 	// ClusterFull the cluster is full and cannot accept more Central clusters
 	ClusterFull ClusterStatus = "full"
 	// ClusterComputeNodeScalingUp the cluster is in the process of scaling up a compute node
@@ -118,20 +116,19 @@ const (
 
 // ordinals - Used to decide if a status comes after or before a given state
 var ordinals = map[string]int{
-	ClusterAccepted.String():                     0,
-	ClusterProvisioning.String():                 10,
-	ClusterProvisioned.String():                  20,
-	ClusterWaitingForFleetShardOperator.String(): 30,
-	ClusterReady.String():                        40,
-	ClusterComputeNodeScalingUp.String():         50,
-	ClusterDeprovisioning.String():               60,
-	ClusterCleanup.String():                      70,
-	ClusterFailed.String():                       80,
+	ClusterAccepted.String():             0,
+	ClusterProvisioning.String():         10,
+	ClusterProvisioned.String():          20,
+	ClusterReady.String():                40,
+	ClusterComputeNodeScalingUp.String(): 50,
+	ClusterDeprovisioning.String():       60,
+	ClusterCleanup.String():              70,
+	ClusterFailed.String():               80,
 }
 
 // StatusForValidCluster This represents the valid statuses of a dataplane cluster
 var StatusForValidCluster = []string{string(ClusterProvisioning), string(ClusterProvisioned), string(ClusterReady),
-	string(ClusterAccepted), string(ClusterWaitingForFleetShardOperator), string(ClusterComputeNodeScalingUp)}
+	string(ClusterAccepted), string(ClusterComputeNodeScalingUp)}
 
 // ClusterDeletionStatuses are statuses of clusters under deletion
 var ClusterDeletionStatuses = []string{ClusterCleanup.String(), ClusterDeprovisioning.String()}
