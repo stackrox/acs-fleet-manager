@@ -13,7 +13,7 @@ package private
 // DataPlaneCentralStatus Schema of the status object for a Central
 type DataPlaneCentralStatus struct {
 	// The status conditions of a Central
-	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
+	Conditions []DataPlaneCentralStatusConditions `json:"conditions,omitempty"`
 	// Routes created for a Central
 	Routes []DataPlaneCentralStatusRoutes `json:"routes,omitempty"`
 	// Map of Secrets created for a Central

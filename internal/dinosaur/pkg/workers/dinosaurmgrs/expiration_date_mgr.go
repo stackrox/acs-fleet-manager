@@ -16,6 +16,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
+const leaseType = "expiration_date_worker"
+
 // ExpirationDateManager set's the `expired_at` central request property to the
 // current time when the quota allowance returned from AMS equals to 0.
 type ExpirationDateManager struct {
@@ -30,7 +32,7 @@ func NewExpirationDateManager(centralService services.DinosaurService, quotaServ
 	return &ExpirationDateManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
-			WorkerType: "expiration_date_worker",
+			WorkerType: leaseType,
 			Reconciler: workers.Reconciler{},
 		},
 		centralService:      centralService,

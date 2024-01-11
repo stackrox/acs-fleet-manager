@@ -135,6 +135,7 @@ To contact the people that created this template go to [zulip](https://bf2.zulip
 - [Access Control](docs/legacy/access-control.md)
 - [Quota Management](docs/quota/quota.md)
 - [Explanation of JWT token claims used across the fleet-manager](docs/auth/jwt-claims.md)
+- [Gitops: configure ACS Central and ACS Operator](docs/development/gitops-configure-central-and-operator.md)
 
 ## Contributing
 

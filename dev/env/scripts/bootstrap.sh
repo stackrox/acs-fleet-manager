@@ -50,6 +50,7 @@ else
 fi
 
 apply "${MANIFESTS_DIR}/monitoring"
+apply "${MANIFESTS_DIR}/addons"
 
 if is_local_cluster "$CLUSTER_TYPE"; then
     if [[  "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
@@ -63,7 +64,10 @@ EOF
         fi
     fi
 
-    preload_dependency_images
+    if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
+        log "Ensuring operator images exist from dev GitOps config"
+        ensure_operator_image_exists.sh
+    fi
 fi
 
 log

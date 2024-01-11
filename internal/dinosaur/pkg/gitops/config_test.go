@@ -95,6 +95,43 @@ centrals:
               memory: "a"
 `,
 		},
+		{
+			name: "valid cluster config",
+			assert: func(t *testing.T, c *Config, err field.ErrorList) {
+				require.Empty(t, err)
+			},
+			yaml: `
+dataPlaneClusters:
+  - clusterID: 1234567890abcdef1234567890abcdef
+    addons:
+      - id: acs-fleetshard
+`,
+		},
+		{
+			name: "invalid cluster config when no clusterID",
+			assert: func(t *testing.T, c *Config, err field.ErrorList) {
+				require.Len(t, err, 1)
+				assert.Equal(t, field.Required(field.NewPath("dataPlaneClusters").Index(0).Child("clusterID"), "clusterID is required"), err[0])
+			},
+			yaml: `
+dataPlaneClusters:
+  - addons:
+      - id: acs-fleetshard
+`,
+		},
+		{
+			name: "invalid cluster config when no addon ID",
+			assert: func(t *testing.T, c *Config, err field.ErrorList) {
+				require.Len(t, err, 1)
+				assert.Equal(t, field.Required(field.NewPath("dataPlaneClusters").Index(0).Child("addons").Index(0).Child("id"), "id is required"), err[0])
+			},
+			yaml: `
+dataPlaneClusters:
+  - clusterID: 1234567890abcdef1234567890abcdef
+    addons:
+      - version: 0.2.0
+`,
+		},
 	}
 
 	for _, tt := range tests {

@@ -40,3 +40,16 @@ objects:
     tls:
       termination: reencrypt
       insecureEdgeTerminationPolicy: Redirect
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: fleet-manager-active
+    labels:
+      app: fleet-manager
+  spec:
+    to:
+      kind: Service
+      name: fleet-manager-active
+    tls:
+      termination: reencrypt
+      insecureEdgeTerminationPolicy: Redirect

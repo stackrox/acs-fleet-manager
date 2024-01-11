@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
 	health "github.com/docker/go-healthcheck"
@@ -22,32 +24,38 @@ var _ Server = &HealthCheckServer{}
 
 // HealthCheckServer ...
 type HealthCheckServer struct {
-	httpServer        *http.Server
-	serverConfig      *ServerConfig
-	sentryTimeout     time.Duration
-	healthCheckConfig *HealthCheckConfig
+	httpServer          *http.Server
+	serverConfig        *ServerConfig
+	sentryTimeout       time.Duration
+	healthCheckConfig   *HealthCheckConfig
+	dbConnectionFactory *db.ConnectionFactory
 }
 
 // NewHealthCheckServer ...
-func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config) *HealthCheckServer {
+func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config, dbConnectionFactory *db.ConnectionFactory) *HealthCheckServer {
 	router := mux.NewRouter()
 	health.DefaultRegistry = health.NewRegistry()
 	health.Register("maintenance_status", updater)
-	router.HandleFunc("/healthcheck", health.StatusHandler).Methods(http.MethodGet)
-	router.HandleFunc("/healthcheck/down", downHandler).Methods(http.MethodPost)
-	router.HandleFunc("/healthcheck/up", upHandler).Methods(http.MethodPost)
 
 	srv := &http.Server{
 		Handler: router,
 		Addr:    healthCheckConfig.BindAddress,
 	}
 
-	return &HealthCheckServer{
-		httpServer:        srv,
-		serverConfig:      serverConfig,
-		healthCheckConfig: healthCheckConfig,
-		sentryTimeout:     sentryConfig.Timeout,
+	healthServer := &HealthCheckServer{
+		httpServer:          srv,
+		serverConfig:        serverConfig,
+		healthCheckConfig:   healthCheckConfig,
+		sentryTimeout:       sentryConfig.Timeout,
+		dbConnectionFactory: dbConnectionFactory,
 	}
+
+	router.HandleFunc("/healthcheck", health.StatusHandler).Methods(http.MethodGet)
+	router.HandleFunc("/healthcheck/down", downHandler).Methods(http.MethodPost)
+	router.HandleFunc("/healthcheck/up", upHandler).Methods(http.MethodPost)
+	router.HandleFunc("/healthcheck/ready", healthServer.ready).Methods(http.MethodGet)
+
+	return healthServer
 }
 
 // Start ...
@@ -100,4 +108,13 @@ func upHandler(w http.ResponseWriter, r *http.Request) {
 
 func downHandler(w http.ResponseWriter, r *http.Request) {
 	updater.Update(fmt.Errorf("maintenance mode"))
+}
+
+// ready checks for the service dependencies such as DB connection.
+// A "ready" service means it is prepared to serve traffic. It is used by the readinessProbe.
+func (s HealthCheckServer) ready(w http.ResponseWriter, r *http.Request) {
+	err := s.dbConnectionFactory.CheckConnection()
+	if err != nil {
+		api.SendServiceUnavailable(w, r, "DB connection failed")
+	}
 }

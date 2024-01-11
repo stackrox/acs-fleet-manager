@@ -2,15 +2,13 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
-
-	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -18,7 +16,7 @@ import (
 
 // DataPlaneClusterService ...
 type DataPlaneClusterService interface {
-	UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *errors.ServiceError
+	UpdateDataPlaneClusterStatus(clusterID string, status dbapi.DataPlaneClusterStatus) *errors.ServiceError
 	GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *errors.ServiceError)
 }
 
@@ -61,7 +59,7 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 }
 
 // UpdateDataPlaneClusterStatus ...
-func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *errors.ServiceError {
+func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(clusterID string, status dbapi.DataPlaneClusterStatus) *errors.ServiceError {
 	cluster, svcErr := d.ClusterService.FindClusterByID(clusterID)
 	if svcErr != nil {
 		return svcErr
@@ -71,9 +69,6 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 		return errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
 	}
 
-	// We calculate the status based on the stats received by the Fleet operator
-	// BEFORE performing the scaling actions. If scaling actions are performed later
-	// then it will be reflected on the next data plane cluster status report
 	err := d.setClusterStatus(cluster, status)
 	if err != nil {
 		return errors.ToServiceError(err)
@@ -82,19 +77,15 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 	return nil
 }
 
-func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) error {
-	if cluster.Status != api.ClusterReady {
-		clusterIsWaitingForFleetShardOperator := cluster.Status == api.ClusterWaitingForFleetShardOperator
-		err := d.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
-		if err != nil {
-			return fmt.Errorf("updating cluster status to %s: %w", api.ClusterReady, err)
-		}
-		if clusterIsWaitingForFleetShardOperator {
-			metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(cluster.CreatedAt))
-		}
-		metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, api.ClusterReady)
+func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status dbapi.DataPlaneClusterStatus) error {
+	addonsJSON, err := json.Marshal(status.Addons)
+	if err != nil {
+		return fmt.Errorf("marshal fleetshardAddonStatus to JSON: %w", err)
 	}
-
+	cluster.Addons = addonsJSON
+	if err := d.ClusterService.Update(*cluster); err != nil {
+		return fmt.Errorf("updating cluster status: %w", err)
+	}
 	return nil
 }
 

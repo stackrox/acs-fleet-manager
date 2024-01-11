@@ -15,10 +15,9 @@ for some caveats and explanations of this approach.
 The following commands generate `crds/secured-cluster.yaml`:
 
 ```
-git clone git@github.com:stackrox/stackrox.git
-cd stackrox/operator
-git checkout 3.74.0
-kustomize build config/crd > crds/secured-cluster.yaml
+TAG=4.3.1
+wget https://raw.githubusercontent.com/stackrox/stackrox/$TAG/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml
+mv platform.stackrox.io_securedclusters.yaml secured-cluster.yaml
 ```
 
 The `centrals.platform.stackrox.io` CRD will need to be deleted from the output file.
