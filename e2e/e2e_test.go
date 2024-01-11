@@ -105,6 +105,11 @@ var _ = Describe("Central", Ordered, func() {
 			Expect(resp.Status).To(Equal(statusAccepted))
 		})
 
+		It("should wait for an hour", func() {
+			tick := time.NewTimer(1 * time.Hour)
+			<-tick.C
+		})
+
 		It("should transition central request state to provisioning", func() {
 			Eventually(assertCentralRequestProvisioning(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
