@@ -131,9 +131,9 @@ func (l *leaderWorker) updateWithRetry(ctx context.Context) {
 			if err := l.update(ctx); err == nil {
 				return
 			}
-			// sleep min(1000, 10 * 2 ^ attempt milliseconds)
-			sleepDuration := math.Min(baseSleepMillis*math.Pow(2, float64(attempt)), maxSleepMillis)
-			time.Sleep(time.Duration(sleepDuration) * time.Millisecond)
+			// sleep min(1000, 10 * 2 ^ attempt) milliseconds
+			timer := time.NewTimer(time.Duration(math.Min(baseSleepMillis*math.Pow(2, float64(attempt)), maxSleepMillis)) * time.Millisecond)
+			<-timer.C
 			attempt++
 		}
 	}
