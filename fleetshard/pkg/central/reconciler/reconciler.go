@@ -141,6 +141,7 @@ type CentralReconciler struct {
 // TODO(sbaumer): Should an initial ManagedCentral be added on reconciler creation?
 func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	// Only allow to start reconcile function once
+	glog.Infof("Attempt to start reconcile but busy: %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
 		return nil, ErrBusy
 	}
