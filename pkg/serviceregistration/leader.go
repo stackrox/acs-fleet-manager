@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
+	"math"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -16,7 +17,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
-	"k8s.io/client-go/util/retry"
 )
 
 const (
@@ -73,7 +73,7 @@ func (l *leaderWorker) run(ctx context.Context) error {
 			OnStartedLeading: func(ctx context.Context) {
 				glog.Info("[serviceregistration] started leading")
 				l.isLeader.Store(true)
-				l.update(ctx)
+				l.updateWithRetry(ctx)
 				for _, worker := range l.workers {
 					if !worker.IsRunning() {
 						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] starting worker %q with id %q", worker.GetWorkerType(), worker.GetID()))
@@ -86,7 +86,7 @@ func (l *leaderWorker) run(ctx context.Context) error {
 			OnStoppedLeading: func() {
 				glog.Info("[serviceregistration] stopped leading")
 				l.isLeader.Store(false)
-				l.update(ctx)
+				l.updateWithRetry(ctx)
 				for _, worker := range l.workers {
 					if worker.IsRunning() {
 						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] stopping worker %q with id %q", worker.GetWorkerType(), worker.GetID()))
@@ -118,42 +118,58 @@ func (l *leaderWorker) run(ctx context.Context) error {
 	return nil
 }
 
-// update will update the pod labels to reflect the current leader status
-func (l *leaderWorker) update(ctx context.Context) {
-	// retry forever
-	retry.OnError(retry.DefaultRetry, retryForever, func() error {
+const maxSleepMillis = 1000
+const baseSleepMillis = 10
+
+func (l *leaderWorker) updateWithRetry(ctx context.Context) {
+	var attempt int
+	for {
 		select {
 		case <-ctx.Done():
-			return nil
+			return
 		default:
-			isActive := strconv.FormatBool(l.isLeader.Load())
-
-			// get the pod
-			pod, err := l.client.CoreV1().Pods(l.namespaceName).Get(ctx, l.podName, metav1.GetOptions{})
-			if err != nil {
-				glog.Errorf("[serviceregistration] error getting pod: %v", err)
-				return errors.Wrap(err, "failed to get pod")
+			if err := l.update(ctx); err == nil {
+				return
 			}
-
-			// skip if the label is already set and has the correct value
-			if pod.Labels != nil {
-				value, ok := pod.Labels[activeLabel]
-				if ok && value == isActive {
-					glog.V(1).Infof("[serviceregistration] pod %s/%s already has the correct label %s=%s", l.namespaceName, l.podName, activeLabel, isActive)
-					return nil
-				}
-			}
-
-			glog.Infof("[serviceregistration] updating pod %s/%s labels: %s=%s", l.namespaceName, l.podName, activeLabel, isActive)
-			pod.Labels[activeLabel] = isActive
-			_, err = l.client.CoreV1().Pods(l.namespaceName).Update(ctx, pod, metav1.UpdateOptions{})
-			if err != nil {
-				glog.Errorf("[serviceregistration] error updating pod labels: %v", err)
-				return errors.Wrap(err, "failed to patch pod")
-			}
-			return nil
+			// sleep min(1000, 10 * 2 ^ attempt) milliseconds
+			sleepMillis := math.Min(baseSleepMillis*math.Pow(2, float64(attempt)), maxSleepMillis)
+			<-time.After(time.Duration(sleepMillis) * time.Millisecond)
+			attempt++
 		}
-	})
+	}
 }
 
-var retryForever = func(err error) bool { return true }
+// update will update the pod labels to reflect the current leader status
+func (l *leaderWorker) update(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return nil
+	default:
+		isActive := strconv.FormatBool(l.isLeader.Load())
+
+		// get the pod
+		pod, err := l.client.CoreV1().Pods(l.namespaceName).Get(ctx, l.podName, metav1.GetOptions{})
+		if err != nil {
+			glog.Errorf("[serviceregistration] error getting pod: %v", err)
+			return errors.Wrap(err, "failed to get pod")
+		}
+
+		// skip if the label is already set and has the correct value
+		if pod.Labels != nil {
+			value, ok := pod.Labels[activeLabel]
+			if ok && value == isActive {
+				glog.V(1).Infof("[serviceregistration] pod %s/%s already has the correct label %s=%s", l.namespaceName, l.podName, activeLabel, isActive)
+				return nil
+			}
+		}
+
+		glog.Infof("[serviceregistration] updating pod %s/%s labels: %s=%s", l.namespaceName, l.podName, activeLabel, isActive)
+		pod.Labels[activeLabel] = isActive
+		_, err = l.client.CoreV1().Pods(l.namespaceName).Update(ctx, pod, metav1.UpdateOptions{})
+		if err != nil {
+			glog.Errorf("[serviceregistration] error updating pod labels: %v", err)
+			return errors.Wrap(err, "failed to patch pod")
+		}
+		return nil
+	}
+}
