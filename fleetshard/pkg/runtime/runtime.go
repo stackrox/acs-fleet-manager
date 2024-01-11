@@ -156,7 +156,6 @@ func (r *Runtime) Start() error {
 		}
 
 		if features.TargetedOperatorUpgrades.Enabled() {
-			glog.Infof("Start target operator install")
 			err := r.upgradeOperator(list)
 			if err != nil {
 				err = errors.Wrapf(err, "Upgrading operator")
