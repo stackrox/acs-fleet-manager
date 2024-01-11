@@ -284,7 +284,7 @@ var _ = Describe("Central", Ordered, func() {
 				return nil
 			}).
 				WithTimeout(7 * time.Minute).
-				WithPolling(defaultPolling).
+				WithPolling(30 * time.Second).
 				Should(Succeed())
 
 			deleteNamespaceAndWaitForRecreation(ctx, namespaceName, k8sClient)
