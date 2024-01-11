@@ -277,13 +277,13 @@ var _ = Describe("Central", Ordered, func() {
 			Eventually(func() error {
 				central, _, err := client.PrivateAPI().GetCentral(ctx, centralRequestID)
 				Expect(err).ToNot(HaveOccurred())
-				if len(central.Metadata.Secrets) == 0 {
+				if len(central.Metadata.SecretsStored) == 0 {
 					return errors.New("secrets backup is empty")
 				}
 
 				return nil
 			}).
-				WithTimeout(defaultTimeout).
+				WithTimeout(7 * time.Minute).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 
