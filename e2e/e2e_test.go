@@ -289,8 +289,16 @@ var _ = Describe("Central", Ordered, func() {
 
 			deleteNamespaceAndWaitForRecreation(ctx, namespaceName, k8sClient)
 
-			newSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
-			Expect(err).ToNot(HaveOccurred())
+			var newSecrets map[string]*corev1.Secret
+			Eventually(func() error {
+				secrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
+				if err != nil {
+					return err
+				}
+				newSecrets = secrets // pragma: allowlist secret
+				return nil
+			}).WithTimeout(1 * time.Minute).WithPolling(10).Should(Succeed())
+
 			assertEqualSecrets(newSecrets, oldSecrets)
 		})
 
