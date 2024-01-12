@@ -259,7 +259,8 @@ paths:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
   '/api/rhacs/v1/admin/centrals/{id}/rotate-secrets':
     post:
-      summary: Rotate RHSSO client of a central tenant
+      operationId: centralRotateSecrets
+      summary: Rotate RHSSO client or Secret Backup of a central tenant
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       requestBody:
@@ -271,7 +272,7 @@ paths:
         required: true
       responses:
         "200":
-          description: RHSSO client successfully rotated
+          description: Secret successfully rotated
         "401":
           description: Auth token is invalid
           content:
@@ -453,6 +454,8 @@ components:
       type: object
       properties:
         rotate_rhsso_client_credentials:
+          type: boolean
+        reset_secret_backup:
           type: boolean
 
   securitySchemes:

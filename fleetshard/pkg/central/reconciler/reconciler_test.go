@@ -177,6 +177,15 @@ func centralDBPasswordSecretObject() *v1.Secret {
 	}
 }
 
+func centralEncryptionKeySecretObject() *v1.Secret {
+	return &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      centralEncryptionKeySecretName,
+			Namespace: centralNamespace,
+		},
+	}
+}
+
 func conditionForType(conditions []private.DataPlaneCentralStatusConditions, conditionType string) (*private.DataPlaneCentralStatusConditions, bool) {
 	for _, c := range conditions {
 		if c.Type == conditionType {
@@ -346,6 +355,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		central:                private.ManagedCentral{},
 		resourcesChart:         resourcesChart,
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
+		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
 	}
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -370,11 +380,12 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 		centralDeploymentObject(),
 		centralTLSSecretObject(),
 		centralDBPasswordSecretObject(),
+		centralEncryptionKeySecretObject(),
 	)
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
-
+	managedCentral.Metadata.SecretsStored = r.secretBackup.GetWatchedSecrets()
 	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
 	require.NoError(t, err)
 

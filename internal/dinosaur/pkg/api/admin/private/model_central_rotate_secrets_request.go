@@ -13,4 +13,5 @@ package private
 // CentralRotateSecretsRequest struct for CentralRotateSecretsRequest
 type CentralRotateSecretsRequest struct {
 	RotateRhssoClientCredentials bool `json:"rotate_rhsso_client_credentials,omitempty"`
+	ResetSecretBackup            bool `json:"reset_secret_backup,omitempty"`
 }
