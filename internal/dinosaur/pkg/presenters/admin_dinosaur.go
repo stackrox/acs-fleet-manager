@@ -12,10 +12,6 @@ import (
 
 // PresentDinosaurRequestAdminEndpoint presents a dbapi.CentralRequest as an admin.Dinosaur.
 func PresentDinosaurRequestAdminEndpoint(request *dbapi.CentralRequest, _ account.AccountService) (*admin.Central, *errors.ServiceError) {
-	labels, err := request.Labels.Object()
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot format central labels")
-	}
 	return &admin.Central{
 		Id:            request.ID,
 		Kind:          "CentralRequest",
@@ -32,6 +28,6 @@ func PresentDinosaurRequestAdminEndpoint(request *dbapi.CentralRequest, _ accoun
 		ExpiredAt:     request.ExpiredAt,
 		FailedReason:  request.FailedReason,
 		InstanceType:  request.InstanceType,
-		Labels:        labels,
+		Traits:        request.Traits,
 	}, nil
 }

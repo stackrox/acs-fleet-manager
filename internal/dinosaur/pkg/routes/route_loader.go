@@ -259,14 +259,14 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		Name(logger.NewLogEvent("admin-expired-at", "[admin] set `expired_at` central property").ToString()).
 		Methods(http.MethodPatch)
 
-	adminCentralsRouter.HandleFunc("/{id}/labels/{label}", adminCentralHandler.GetLabel).
-		Name(logger.NewLogEvent("admin-get-labels", "[admin] get central labels").ToString()).
+	adminCentralsRouter.HandleFunc("/{id}/traits", adminCentralHandler.GetCentralTraits).
+		Name(logger.NewLogEvent("admin-get-traits", "[admin] get central traits").ToString()).
 		Methods(http.MethodGet)
-	adminCentralsRouter.HandleFunc("/{id}/labels/{label}", adminCentralHandler.PatchLabel).
-		Name(logger.NewLogEvent("admin-patch-labels", "[admin] set central label").ToString()).
+	adminCentralsRouter.HandleFunc("/{id}/traits/{trait}", adminCentralHandler.PatchCentralTrait).
+		Name(logger.NewLogEvent("admin-patch-traits", "[admin] set central trait").ToString()).
 		Methods(http.MethodPatch)
-	adminCentralsRouter.HandleFunc("/{id}/labels/{label}", adminCentralHandler.DeleteLabel).
-		Name(logger.NewLogEvent("admin-delete-labels", "[admin] delete central label").ToString()).
+	adminCentralsRouter.HandleFunc("/{id}/traits/{trait}", adminCentralHandler.DeleteTrait).
+		Name(logger.NewLogEvent("admin-delete-trait", "[admin] delete central trait").ToString()).
 		Methods(http.MethodDelete)
 
 	adminCreateRouter := adminCentralsRouter.NewRoute().Subrouter()

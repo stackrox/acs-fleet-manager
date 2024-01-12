@@ -372,20 +372,19 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
 
-  '/api/rhacs/v1/admin/centrals/{id}/labels/{label}':
+  '/api/rhacs/v1/admin/centrals/{id}/traits':
     get:
-      summary: Returns the value of a central label.
-      operationId: getCentralLabel
+      summary: Returns a list of central traits.
+      operationId: getCentralTraits
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
-        - $ref: "#/components/parameters/label"
       responses:
         "200":
           content:
             application/json:
               schema:
                 type: object
-          description: Central labels
+          description: Central traits
         "401":
           description: Auth token is invalid
           content:
@@ -410,25 +409,19 @@ paths:
             application/json:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
+
+  '/api/rhacs/v1/admin/centrals/{id}/traits/{trait}':
     patch:
-      summary: Updates central labels with the new label value.
+      summary: Adds a trait to a central.
       description: >
-        Creates or updates a central label with the given value in the labels
-        dictionary. Not atomically.
-      operationId: patchCentralLabel
+        Adds a trait to a central. Not atomically.
+      operationId: patchCentralTraits
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
-        - $ref: "#/components/parameters/label"
-      requestBody:
-        description: Label value in JSON format
-        content:
-          application/json:
-            schema:
-              type: object
-        required: true
+        - $ref: "#/components/parameters/trait"
       responses:
         "200":
-          description: Label has been modified
+          description: Trait has been added or already exists.
         "401":
           description: Auth token is invalid
           content:
@@ -454,14 +447,14 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
     delete:
-      summary: Deletes the central label.
-      operationId: deleteCentralLabel
+      summary: Deletes the central trait.
+      operationId: deleteCentralTrait
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
-        - $ref: "#/components/parameters/label"
+        - $ref: "#/components/parameters/trait"
       responses:
         "200":
-          description: Central label deleted
+          description: Central trait deleted
         "401":
           description: Auth token is invalid
           content:
@@ -575,9 +568,9 @@ components:
           type: boolean
 
   parameters:
-    label:
-      name: label
-      description: The name of a label
+    trait:
+      name: trait
+      description: A central trait
       schema:
         type: string
       in: path

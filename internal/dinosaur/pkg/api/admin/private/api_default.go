@@ -510,12 +510,12 @@ func (a *DefaultApiService) DeleteCentralById(ctx _context.Context, id string, a
 }
 
 /*
-DeleteCentralLabel Deletes the central label.
+DeleteCentralTrait Deletes the central trait.
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
-  - @param label The name of a label
+  - @param trait A central trait
 */
-func (a *DefaultApiService) DeleteCentralLabel(ctx _context.Context, id string, label string) (*_nethttp.Response, error) {
+func (a *DefaultApiService) DeleteCentralTrait(ctx _context.Context, id string, trait string) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -525,10 +525,10 @@ func (a *DefaultApiService) DeleteCentralLabel(ctx _context.Context, id string, 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/centrals/{id}/labels/{label}"
+	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/centrals/{id}/traits/{trait}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
-	localVarPath = strings.Replace(localVarPath, "{"+"label"+"}", _neturl.QueryEscape(parameterToString(label, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"trait"+"}", _neturl.QueryEscape(parameterToString(trait, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -840,14 +840,13 @@ func (a *DefaultApiService) GetCentralById(ctx _context.Context, id string) (Cen
 }
 
 /*
-GetCentralLabel Returns the value of a central label.
+GetCentralTraits Returns a list of central traits.
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
-  - @param label The name of a label
 
 @return map[string]interface{}
 */
-func (a *DefaultApiService) GetCentralLabel(ctx _context.Context, id string, label string) (map[string]interface{}, *_nethttp.Response, error) {
+func (a *DefaultApiService) GetCentralTraits(ctx _context.Context, id string) (map[string]interface{}, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -858,10 +857,8 @@ func (a *DefaultApiService) GetCentralLabel(ctx _context.Context, id string, lab
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/centrals/{id}/labels/{label}"
+	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/centrals/{id}/traits"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
-
-	localVarPath = strings.Replace(localVarPath, "{"+"label"+"}", _neturl.QueryEscape(parameterToString(label, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -1099,14 +1096,13 @@ func (a *DefaultApiService) GetCentrals(ctx _context.Context, localVarOptionals 
 }
 
 /*
-PatchCentralLabel Updates central labels with the new label value.
-Creates or updates a central label with the given value in the labels dictionary. Not atomically.
+PatchCentralTraits Adds a trait to a central.
+Adds a trait to a central. Not atomically.
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
-  - @param label The name of a label
-  - @param body Label value in JSON format
+  - @param trait A central trait
 */
-func (a *DefaultApiService) PatchCentralLabel(ctx _context.Context, id string, label string, body map[string]interface{}) (*_nethttp.Response, error) {
+func (a *DefaultApiService) PatchCentralTraits(ctx _context.Context, id string, trait string) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
@@ -1116,17 +1112,17 @@ func (a *DefaultApiService) PatchCentralLabel(ctx _context.Context, id string, l
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/centrals/{id}/labels/{label}"
+	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/centrals/{id}/traits/{trait}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
-	localVarPath = strings.Replace(localVarPath, "{"+"label"+"}", _neturl.QueryEscape(parameterToString(label, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"trait"+"}", _neturl.QueryEscape(parameterToString(trait, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1142,8 +1138,6 @@ func (a *DefaultApiService) PatchCentralLabel(ctx _context.Context, id string, l
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	// body params
-	localVarPostBody = &body
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, err

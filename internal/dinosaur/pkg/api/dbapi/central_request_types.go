@@ -88,9 +88,9 @@ type CentralRequest struct {
 	// After a grace period, the Central instance will be marked for deletion, its status will be set to 'deprovision'.
 	ExpiredAt *time.Time `json:"expired_at"`
 
-	// Labels is a set of random values assigned to an instance, allowing for
-	// some custom manual or automatic action over a set of labelled instances.
-	Labels api.JSON `json:"labels"`
+	// Traits is a set of random values assigned to an instance, allowing for
+	// some custom manual or automatic action over a set of instances.
+	Traits []string `json:"traits"`
 }
 
 // CentralList ...
