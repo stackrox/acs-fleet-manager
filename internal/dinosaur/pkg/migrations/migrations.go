@@ -53,7 +53,7 @@ func getMigrations() []*gormigrate.Migration {
 		addExpirationLeaseType(),
 		addClusterAddons(),
 		addAlternateUserIDFieldToCentralRequests(),
-		addLabelsFieldToCentralRequests(),
+		addTraitsFieldToCentralRequests(),
 	}
 }
 

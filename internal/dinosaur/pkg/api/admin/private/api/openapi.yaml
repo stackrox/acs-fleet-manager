@@ -558,54 +558,9 @@ paths:
       security:
       - Bearer: []
       summary: Delete a Central directly in the Database by ID
-  /api/rhacs/v1/admin/centrals/{id}/labels/{label}:
-    delete:
-      operationId: deleteCentralLabel
-      parameters:
-      - description: The ID of record
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      - description: The name of a label
-        explode: false
-        in: path
-        name: label
-        required: true
-        schema:
-          type: string
-        style: simple
-      responses:
-        "200":
-          description: Central label deleted
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Auth token is invalid
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: User is not authorised to access the service
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: No Central found with the specified ID
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error occurred
-      summary: Deletes the central label.
+  /api/rhacs/v1/admin/centrals/{id}/traits:
     get:
-      operationId: getCentralLabel
+      operationId: getCentralTraits
       parameters:
       - description: The ID of record
         in: path
@@ -613,21 +568,13 @@ paths:
         required: true
         schema:
           type: string
-      - description: The name of a label
-        explode: false
-        in: path
-        name: label
-        required: true
-        schema:
-          type: string
-        style: simple
       responses:
         "200":
           content:
             application/json:
               schema:
                 type: object
-          description: Central labels
+          description: Central traits
         "401":
           content:
             application/json:
@@ -652,11 +599,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
-      summary: Returns the value of a central label.
-    patch:
-      description: |
-        Creates or updates a central label with the given value in the labels dictionary. Not atomically.
-      operationId: patchCentralLabel
+      summary: Returns a list of central traits.
+  /api/rhacs/v1/admin/centrals/{id}/traits/{trait}:
+    delete:
+      operationId: deleteCentralTrait
       parameters:
       - description: The ID of record
         in: path
@@ -664,24 +610,17 @@ paths:
         required: true
         schema:
           type: string
-      - description: The name of a label
+      - description: A central trait
         explode: false
         in: path
-        name: label
+        name: trait
         required: true
         schema:
           type: string
         style: simple
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-        description: Label value in JSON format
-        required: true
       responses:
         "200":
-          description: Label has been modified
+          description: Central trait deleted
         "401":
           content:
             application/json:
@@ -706,14 +645,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
-      summary: Updates central labels with the new label value.
+      summary: Deletes the central trait.
+    patch:
+      description: |
+        Adds a trait to a central. Not atomically.
+      operationId: patchCentralTraits
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: A central trait
+        explode: false
+        in: path
+        name: trait
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Trait has been added or already exists.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Adds a trait to a central.
 components:
   parameters:
-    label:
-      description: The name of a label
+    trait:
+      description: A central trait
       explode: false
       in: path
-      name: label
+      name: trait
       required: true
       schema:
         type: string

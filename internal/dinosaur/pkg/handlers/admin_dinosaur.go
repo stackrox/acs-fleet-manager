@@ -20,6 +20,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 )
 
 // AdminCentralHandler is the interface for the admin central handler
@@ -44,12 +45,12 @@ type AdminCentralHandler interface {
 	// a tenant. In particular, avoid two Central CRs appearing in the same
 	// tenant namespace. This may cause conflicts due to mixed resource ownership.
 	PatchName(w http.ResponseWriter, r *http.Request)
-	// GetLabels returns all central labels
-	GetLabel(w http.ResponseWriter, r *http.Request)
-	// PatchLabels adds or modifies a central label value
-	PatchLabel(w http.ResponseWriter, r *http.Request)
-	// DeleteLabel deletes a central label
-	DeleteLabel(w http.ResponseWriter, r *http.Request)
+	// GetCentralTraits returns all central traits
+	GetCentralTraits(w http.ResponseWriter, r *http.Request)
+	// PatchCentralTrait adds a trait to a central
+	PatchCentralTrait(w http.ResponseWriter, r *http.Request)
+	// DeleteTrait deletes a trait from a central
+	DeleteTrait(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -305,64 +306,37 @@ func (h adminCentralHandler) PatchName(w http.ResponseWriter, r *http.Request) {
 	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
-func (h adminCentralHandler) GetLabel(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) GetCentralTraits(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
-			label := mux.Vars(r)["label"]
 			cr, svcErr := h.service.GetByID(id)
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			labels, err := cr.Labels.Object()
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot format central labels")
-			}
-			if labels != nil {
-				if value, ok := labels[label]; ok {
-					return value, nil
-				}
-			}
-			return nil, errors.New(errors.ErrorNotFound, "No such label")
+			return cr.Traits, nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
 }
 
-func (h adminCentralHandler) PatchLabel(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) PatchCentralTrait(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
-			label := mux.Vars(r)["label"]
-			body, err := io.ReadAll(r.Body)
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot read body")
-			}
-			var value any
-			if err := json.Unmarshal(body, &value); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot parse value")
-			}
+			trait := mux.Vars(r)["trait"]
 			cr, svcErr := h.service.GetByID(id)
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			labels, err := cr.Labels.Object()
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot format central labels")
+			if arrays.Contains(cr.Traits, trait) {
+				return nil, nil
 			}
-			if labels == nil {
-				labels = make(map[string]interface{}, 1)
-			}
-			labels[label] = value
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
-			marshalled, err := json.Marshal(labels)
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot marshal central labels")
-			}
 			if err := h.service.Updates(central, map[string]interface{}{
-				"labels": marshalled,
+				"traits": append(cr.Traits, trait),
 			}); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot update central labels")
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot update central traits")
 			}
 			return nil, nil
 		},
@@ -370,32 +344,23 @@ func (h adminCentralHandler) PatchLabel(w http.ResponseWriter, r *http.Request) 
 	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
-func (h adminCentralHandler) DeleteLabel(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
-			label := mux.Vars(r)["label"]
+			trait := mux.Vars(r)["trait"]
 			cr, svcErr := h.service.GetByID(id)
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			labels, err := cr.Labels.Object()
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot format central labels")
-			}
-			if labels == nil {
-				return nil, nil
-			}
-			delete(labels, label)
-			marshalled, err := json.Marshal(labels)
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot marshal central labels")
+			if !arrays.Contains(cr.Traits, trait) {
+				return nil, errors.New(errors.ErrorNotFound, "Central %q has no trait %q", id, trait)
 			}
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
 			if err := h.service.Updates(central, map[string]interface{}{
-				"labels": marshalled,
+				"traits": arrays.FilterStringSlice(cr.Traits, func(t string) bool { return t != trait }),
 			}); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot update central labels")
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot update central traits")
 			}
 			return nil, nil
 		},

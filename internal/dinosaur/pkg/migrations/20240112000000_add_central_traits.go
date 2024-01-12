@@ -12,20 +12,20 @@ import (
 	"gorm.io/gorm"
 )
 
-func addLabelsFieldToCentralRequests() *gormigrate.Migration {
+func addTraitsFieldToCentralRequests() *gormigrate.Migration {
 	type CentralRequest struct {
 		db.Model
-		Labels api.JSON `json:"labels"`
+		Traits api.JSON `json:"traits"`
 	}
-	migrationID := "20231201161800"
+	migrationID := "20240112000000"
 
 	return &gormigrate.Migration{
 		ID: migrationID,
 		Migrate: func(tx *gorm.DB) error {
-			return addColumnIfNotExists(tx, &CentralRequest{}, "labels")
+			return addColumnIfNotExists(tx, &CentralRequest{}, "traits")
 		},
 		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropColumn(&CentralRequest{}, "labels")
+			return tx.Migrator().DropColumn(&CentralRequest{}, "traits")
 		},
 	}
 }
