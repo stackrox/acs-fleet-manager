@@ -380,6 +380,7 @@ paths:
       summary: Update `expired_at` central property
   /api/rhacs/v1/admin/centrals/{id}/rotate-secrets:
     post:
+      operationId: centralRotateSecrets
       parameters:
       - description: The ID of record
         in: path
@@ -396,7 +397,7 @@ paths:
         required: true
       responses:
         "200":
-          description: RHSSO client successfully rotated
+          description: Secret successfully rotated
         "401":
           content:
             application/json:
@@ -422,7 +423,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
-      summary: Rotate RHSSO client of a central tenant
+      summary: Rotate RHSSO client or Secret Backup of a central tenant
   /api/rhacs/v1/admin/centrals/{id}/restore:
     post:
       parameters:
@@ -522,9 +523,12 @@ components:
       - $ref: '#/components/schemas/CentralList_allOf'
     CentralRotateSecretsRequest:
       example:
+        reset_secret_backup: true
         rotate_rhsso_client_credentials: true
       properties:
         rotate_rhsso_client_credentials:
+          type: boolean
+        reset_secret_backup:
           type: boolean
       type: object
     Error:
