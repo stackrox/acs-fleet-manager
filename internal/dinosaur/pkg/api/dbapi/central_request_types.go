@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"gorm.io/gorm"
 )
@@ -90,7 +91,7 @@ type CentralRequest struct {
 
 	// Traits is a set of random strings assigned to an instance. Some traits
 	// can be hardcoded, and change some processing parameters.
-	Traits []string `json:"traits" gorm:"type:text[]"`
+	Traits pq.StringArray `json:"traits" gorm:"type:text[]"`
 }
 
 // CentralList ...
