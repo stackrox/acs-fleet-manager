@@ -7,6 +7,7 @@ package migrations
 
 import (
 	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/lib/pq"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"gorm.io/gorm"
 )
@@ -14,7 +15,7 @@ import (
 func addTraitsFieldToCentralRequests() *gormigrate.Migration {
 	type CentralRequest struct {
 		db.Model
-		Traits []string `json:"traits" gorm:"type:text[]"`
+		Traits pq.StringArray `json:"traits" gorm:"type:text[]"`
 	}
 	migrationID := "20240112000000"
 
