@@ -90,7 +90,7 @@ type CentralRequest struct {
 
 	// Traits is a set of random strings assigned to an instance. Some traits
 	// can be hardcoded, and change some processing parameters.
-	Traits []string `json:"traits" gorm:"type:string[]"`
+	Traits []string `json:"traits" gorm:"type:text[]"`
 }
 
 // CentralList ...
