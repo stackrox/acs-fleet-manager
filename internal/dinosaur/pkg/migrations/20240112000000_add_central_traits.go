@@ -14,7 +14,7 @@ import (
 func addTraitsFieldToCentralRequests() *gormigrate.Migration {
 	type CentralRequest struct {
 		db.Model
-		Traits []string `json:"traits" gorm:"type:string[]"`
+		Traits []string `json:"traits" gorm:"type:text[]"`
 	}
 	migrationID := "20240112000000"
 
