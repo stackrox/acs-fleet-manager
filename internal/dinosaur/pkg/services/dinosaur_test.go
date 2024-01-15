@@ -186,7 +186,8 @@ func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 	m := mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "central_requests" ` +
 		`SET "deletion_timestamp"=$1,"status"=$2,"updated_at"=$3 WHERE ` +
 		`(expired_at IS NOT NULL AND expired_at < $4 OR instance_type = $5 AND created_at <= $6) ` +
-		`AND status NOT IN ($7,$8) AND "central_requests"."deleted_at" IS NULL`).
+		`AND status NOT IN ($7,$8) AND (traits IS NULL OR $9 != ALL (traits)) ` +
+		`AND "central_requests"."deleted_at" IS NULL`).
 		OneTime()
 
 	svcErr := k.DeprovisionExpiredDinosaurs()
@@ -196,7 +197,8 @@ func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 	m = mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "central_requests" ` +
 		`SET "deletion_timestamp"=$1,"status"=$2,"updated_at"=$3 WHERE ` +
 		`expired_at IS NOT NULL AND expired_at < $4 ` +
-		`AND status NOT IN ($5,$6) AND "central_requests"."deleted_at" IS NULL`).
+		`AND status NOT IN ($5,$6) AND (traits IS NULL OR $7 != ALL (traits)) ` +
+		`AND "central_requests"."deleted_at" IS NULL`).
 		OneTime()
 	k.dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral = false
 	svcErr = k.DeprovisionExpiredDinosaurs()

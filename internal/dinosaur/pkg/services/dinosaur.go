@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -548,6 +549,7 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs() *errors.ServiceError {
 	}
 
 	dbConn = dbConn.Where("status NOT IN (?)", dinosaurDeletionStatuses)
+	dbConn.Where("traits IS NULL OR ? != ALL (traits)", constants.CentralTraitPreserved)
 
 	db := dbConn.Updates(map[string]interface{}{
 		"status":             dinosaurConstants.CentralRequestStatusDeprovision,

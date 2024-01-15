@@ -103,3 +103,7 @@ var ActiveStatuses = func() []CentralStatus {
 	}
 	return active
 }()
+
+const (
+	CentralTraitPreserved = "preserved" // Never deprovision expired instance.
+)
