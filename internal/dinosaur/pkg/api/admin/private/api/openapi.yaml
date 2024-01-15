@@ -378,6 +378,57 @@ paths:
       security:
       - Bearer: []
       summary: Update `expired_at` central property
+  /api/rhacs/v1/admin/centrals/{id}/name:
+    patch:
+      operationId: updateCentralNameById
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CentralUpdateNameRequest'
+        description: Options for patch operation
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Central'
+          description: Central updated by ID
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Update `name` central property
   /api/rhacs/v1/admin/centrals/{id}/rotate-secrets:
     post:
       operationId: centralRotateSecrets
@@ -530,6 +581,19 @@ components:
           type: boolean
         reset_secret_backup:
           type: boolean
+      type: object
+    CentralUpdateNameRequest:
+      example:
+        reason: reason
+        name: name
+      properties:
+        name:
+          type: string
+        reason:
+          type: string
+      required:
+      - name
+      - reason
       type: object
     Error:
       allOf:

@@ -40,6 +40,8 @@ type AdminCentralHandler interface {
 	RotateSecrets(w http.ResponseWriter, r *http.Request)
 	// PatchExpiredAt sets the expired_at central property
 	PatchExpiredAt(w http.ResponseWriter, r *http.Request)
+	// PatchName sets the name central property
+	PatchName(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -267,6 +269,34 @@ func (h adminCentralHandler) PatchExpiredAt(w http.ResponseWriter, r *http.Reque
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
 			return nil, h.service.Updates(central, map[string]interface{}{
 				"expired_at": &expired_at,
+			})
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h adminCentralHandler) PatchName(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			bodyBytes, err := io.ReadAll(r.Body)
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Reading request body: %s", err.Error())
+			}
+			updateNameRequest := private.CentralUpdateNameRequest{}
+			if err := json.Unmarshal(bodyBytes, &updateNameRequest); err != nil {
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Unmarshalling request body: %s", err.Error())
+			}
+			if updateNameRequest.Name == "" {
+				return nil, errors.New(errors.ErrorBadRequest, "No name provided")
+			}
+			if updateNameRequest.Reason == "" {
+				return nil, errors.New(errors.ErrorBadRequest, "No reason provided")
+			}
+			id := mux.Vars(r)["id"]
+			glog.Warningf("Setting name to %q for central %q: %s", updateNameRequest.Name, id, updateNameRequest.Reason)
+			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
+			return nil, h.service.Updates(central, map[string]interface{}{
+				"name": &updateNameRequest.Name,
 			})
 		},
 	}

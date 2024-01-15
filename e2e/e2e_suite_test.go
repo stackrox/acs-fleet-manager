@@ -143,6 +143,19 @@ func isDNSEnabled(routesEnabled bool) (bool, string, string) {
 	return dnsEnabled, accessKey, secretKey
 }
 
+func assertCentralRequestName(ctx context.Context, client *fleetmanager.Client, id string, name string) func() error {
+	return func() error {
+		centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
+		if err != nil {
+			return err
+		}
+		if centralRequest.Name != name {
+			return fmt.Errorf("expected centralRequest name %s, got %s", name, centralRequest.Name)
+		}
+		return nil
+	}
+}
+
 func assertCentralRequestStatus(ctx context.Context, client *fleetmanager.Client, id string, status string) func() error {
 	return func() error {
 		centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
