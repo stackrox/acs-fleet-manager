@@ -353,10 +353,6 @@ parameters:
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
 
-- name: INHERIT_FLEETSHARD_SYNC_IMAGE
-  description: Sets the provided fleetshard image tag if the addon parameter value is 'inherit'"
-  value: "true"
-
 - name: CENTRAL_OPERATOR_OLM_INDEX_IMAGE
   displayName: Central operator OLM index image
   description: Central operator OLM index image
@@ -411,6 +407,14 @@ parameters:
   displayName: RHACS Targeted Operator Upgrades
   description: Whether to enable targeted operator upgrades
   value: "false"
+
+- name: ADDON_SERVICE_OCM_URL
+  displayName: The base URL of the OCM API for the addon service
+  value: "https://api.openshift.com"
+
+- name: ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG
+  description: Sets the provided fleetshard image tag if the addon parameter value is 'inherit'"
+  value: "true"
 
 objects:
   - kind: ConfigMap
@@ -1189,6 +1193,27 @@ objects:
                 valueFrom:
                   fieldRef:
                     fieldPath: metadata.namespace
+              - name: ADDON_SERVICE_OCM_URL
+                value: "${ADDON_SERVICE_OCM_URL}"
+              - name: ADDON_SERVICE_OCM_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: fleet-manager-credentials
+                    key: "ocm-addon-service.clientId"
+              - name: ADDON_SERVICE_OCM_CLIENT_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    name: fleet-manager-credentials
+                    key: "ocm-addon-service.clientSecret"
+              - name: ADDON_SERVICE_OCM_SELF_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: fleet-manager-credentials
+                    key: "ocm-addon-service.token"
+              - name: ADDON_SERVICE_FLEETSHARD_SYNC_IMAGE_TAG
+                value: ${IMAGE_TAG}
+              - name: ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG
+                value: ${INHERIT_FLEETSHARD_SYNC_IMAGE_TAG}
             command:
             - /usr/local/bin/fleet-manager
             - serve
@@ -1280,8 +1305,6 @@ objects:
             - --fleetshard-operator-index-image=${FLEETSHARD_OLM_INDEX_IMAGE}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --central-domain-name=${CENTRAL_DOMAIN_NAME}
-            - --inherit-fleetshard-sync-image=${INHERIT_FLEETSHARD_SYNC_IMAGE}
-            - --fleetshard-sync-image=${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
             - --alsologtostderr
             - --central-request-expiration-timeout=${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}
             - --central-request-internal-user-agents=${CENTRAL_REQUEST_INTERNAL_USER_AGENTS}

@@ -13,10 +13,11 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
+	"github.com/stackrox/rox/pkg/utils"
 	"golang.org/x/exp/maps"
 )
 
-const fleetshardImageParameter = "fleetshardSyncImage"
+const fleetshardImageTagParameter = "fleetshardSyncImageTag"
 
 // AddonProvisioner keeps addon installations on the data plane clusters up-to-date
 type AddonProvisioner struct {
@@ -25,21 +26,32 @@ type AddonProvisioner struct {
 }
 
 // NewAddonProvisioner creates a new instance of AddonProvisioner
-func NewAddonProvisioner(ocmClient ocm.ClusterManagementClient, ocmConfig ocm.OCMConfig) *AddonProvisioner {
+func NewAddonProvisioner(addonConfig *ocm.AddonConfig, baseConfig *ocm.OCMConfig) *AddonProvisioner {
+	addonOCMConfig := *baseConfig
+
+	addonOCMConfig.BaseURL = addonConfig.URL
+	addonOCMConfig.ClientID = addonConfig.ClientID
+	addonOCMConfig.ClientSecret = addonConfig.ClientSecret // pragma: allowlist secret
+	addonOCMConfig.SelfToken = addonConfig.SelfToken
+
+	conn, _, err := ocm.NewOCMConnection(&addonOCMConfig, addonOCMConfig.BaseURL)
+	if err != nil {
+		utils.Should(err, fmt.Errorf("addon service ocm connection: %w", err))
+	}
 	return &AddonProvisioner{
-		ocmClient:      ocmClient,
-		customizations: initCustomizations(ocmConfig),
+		ocmClient:      ocm.NewClient(conn),
+		customizations: initCustomizations(*addonConfig),
 	}
 }
 
-func initCustomizations(ocmConfig ocm.OCMConfig) []addonCustomization {
+func initCustomizations(config ocm.AddonConfig) []addonCustomization {
 	var customizations []addonCustomization
 
-	if ocmConfig.InheritFleetshardSyncImage {
-		if ocmConfig.FleetshardSyncImage == "" {
-			glog.Error("fleetshard image should not be empty when inherit customization is enabled")
+	if config.InheritFleetshardSyncImageTag {
+		if config.FleetshardSyncImageTag == "" {
+			glog.Error("fleetshard image tag should not be empty when inherit customization is enabled")
 		} else {
-			customizations = append(customizations, inheritFleetshardImage(ocmConfig.FleetshardSyncImage))
+			customizations = append(customizations, inheritFleetshardImageTag(config.FleetshardSyncImageTag))
 		}
 	}
 	return customizations
@@ -232,10 +244,10 @@ func convertParametersFromOCMAPI(parameters *clustersmgmtv1.AddOnInstallationPar
 	return result
 }
 
-func inheritFleetshardImage(image string) addonCustomization {
+func inheritFleetshardImageTag(imageTag string) addonCustomization {
 	return func(addon gitops.AddonConfig) gitops.AddonConfig {
-		if param := addon.Parameters[fleetshardImageParameter]; param == "inherit" {
-			addon.Parameters[fleetshardImageParameter] = image
+		if param := addon.Parameters[fleetshardImageTagParameter]; param == "inherit" {
+			addon.Parameters[fleetshardImageTagParameter] = imageTag
 		}
 		return addon
 	}

@@ -15,35 +15,32 @@ const (
 
 // OCMConfig ...
 type OCMConfig struct {
-	BaseURL                    string `json:"base_url"`
-	AmsURL                     string `json:"ams_url"`
-	ClientID                   string `json:"client-id"`
-	ClientIDFile               string `json:"client-id_file"`
-	ClientSecret               string `json:"client-secret"`
-	ClientSecretFile           string `json:"client-secret_file"`
-	SelfToken                  string `json:"self_token"`
-	SelfTokenFile              string `json:"self_token_file"`
-	TokenURL                   string `json:"token_url"`
-	Debug                      bool   `json:"debug"`
-	EnableMock                 bool   `json:"enable_mock"`
-	MockMode                   string `json:"mock_type"`
-	InheritFleetshardSyncImage bool   `json:"inherit_fleetshard_sync_image"`
-	FleetshardSyncImage        string `json:"fleetshard_sync_image"`
+	BaseURL          string `json:"base_url"`
+	AmsURL           string `json:"ams_url"`
+	ClientID         string `json:"client-id"`
+	ClientIDFile     string `json:"client-id_file"`
+	ClientSecret     string `json:"client-secret"`
+	ClientSecretFile string `json:"client-secret_file"`
+	SelfToken        string `json:"self_token"`
+	SelfTokenFile    string `json:"self_token_file"`
+	TokenURL         string `json:"token_url"`
+	Debug            bool   `json:"debug"`
+	EnableMock       bool   `json:"enable_mock"`
+	MockMode         string `json:"mock_type"`
 }
 
 // NewOCMConfig ...
 func NewOCMConfig() *OCMConfig {
 	return &OCMConfig{
-		BaseURL:                    "https://api-integration.6943.hive-integration.openshiftapps.com",
-		AmsURL:                     "https://api.stage.openshift.com",
-		TokenURL:                   "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
-		ClientIDFile:               "secrets/ocm-service.clientId",
-		ClientSecretFile:           "secrets/ocm-service.clientSecret", // pragma: allowlist secret
-		SelfTokenFile:              "secrets/ocm-service.token",
-		Debug:                      false,
-		EnableMock:                 false,
-		MockMode:                   MockModeStubServer,
-		InheritFleetshardSyncImage: false,
+		BaseURL:          "https://api-integration.6943.hive-integration.openshiftapps.com",
+		AmsURL:           "https://api.stage.openshift.com",
+		TokenURL:         "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
+		ClientIDFile:     "secrets/ocm-service.clientId",
+		ClientSecretFile: "secrets/ocm-service.clientSecret", // pragma: allowlist secret
+		SelfTokenFile:    "secrets/ocm-service.token",
+		Debug:            false,
+		EnableMock:       false,
+		MockMode:         MockModeStubServer,
 	}
 }
 
@@ -58,8 +55,6 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Debug, "ocm-debug", c.Debug, "Debug flag for OCM API")
 	fs.BoolVar(&c.EnableMock, "enable-ocm-mock", c.EnableMock, "Enable mock ocm clients")
 	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")
-	fs.BoolVar(&c.InheritFleetshardSyncImage, "inherit-fleetshard-sync-image", c.InheritFleetshardSyncImage, "Sets the provided fleetshard image tag if the addon parameter value is 'inherit'")
-	fs.StringVar(&c.FleetshardSyncImage, "fleetshard-sync-image", c.FleetshardSyncImage, "Fleetshard sync image")
 }
 
 // ReadFiles ...

@@ -25,7 +25,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"quota-type":                                      "quota-management-list",
 		"enable-deletion-of-expired-central":              "true",
 		"dataplane-cluster-scaling-type":                  "manual",
-		"inherit-fleetshard-sync-image":                   "true",
 		"observability-red-hat-sso-auth-server-url":       "https://sso.redhat.com/auth",
 		"observability-red-hat-sso-realm":                 "redhat-external",
 		"observability-red-hat-sso-token-refresher-url":   "http://localhost:8085",

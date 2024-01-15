@@ -45,6 +45,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(auth.NewFleetShardAuthZConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(auth.NewAdminAuthZConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(telemetry.NewTelemetryConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(ocm.NewConfig),
 
 		// Add other core config providers..
 		sentry.ConfigProviders(),

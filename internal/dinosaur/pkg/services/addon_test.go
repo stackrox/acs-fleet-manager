@@ -664,27 +664,27 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Install(t *testing
 			return nil
 		},
 	}
-	ocmConfig := ocm.OCMConfig{
-		FleetshardSyncImage:        "quay.io/app-sre/acs-fleet-manager:0307e03",
-		InheritFleetshardSyncImage: true,
+	addonConfig := ocm.AddonConfig{
+		FleetshardSyncImageTag:        "0307e03",
+		InheritFleetshardSyncImageTag: true,
 	}
 	p := &AddonProvisioner{
 		ocmClient:      ocmMock,
-		customizations: initCustomizations(ocmConfig),
+		customizations: initCustomizations(addonConfig),
 	}
 	err := p.Provision(api.Cluster{}, []gitops.AddonConfig{
 		{
 			ID: "acs-fleetshard-dev",
 			Parameters: map[string]string{
-				"fleetshardSyncImage": "inherit",
+				"fleetshardSyncImageTag": "inherit",
 			},
 		},
 	})
 	Expect(err).To(Not(HaveOccurred()))
 	Expect(len(ocmMock.CreateAddonInstallationCalls())).To(Equal(1))
 	Expect(ocmMock.CreateAddonInstallationCalls()[0].Addon.Parameters().Len()).To(Equal(1))
-	Expect(ocmMock.CreateAddonInstallationCalls()[0].Addon.Parameters().Get(0).ID()).To(Equal("fleetshardSyncImage"))
-	Expect(ocmMock.CreateAddonInstallationCalls()[0].Addon.Parameters().Get(0).Value()).To(Equal("quay.io/app-sre/acs-fleet-manager:0307e03"))
+	Expect(ocmMock.CreateAddonInstallationCalls()[0].Addon.Parameters().Get(0).ID()).To(Equal("fleetshardSyncImageTag"))
+	Expect(ocmMock.CreateAddonInstallationCalls()[0].Addon.Parameters().Get(0).Value()).To(Equal("0307e03"))
 }
 
 func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Upgrade(t *testing.T) {
@@ -712,13 +712,13 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Upgrade(t *testing
 			return nil
 		},
 	}
-	ocmConfig := ocm.OCMConfig{
-		FleetshardSyncImage:        "quay.io/app-sre/acs-fleet-manager:0307e03",
-		InheritFleetshardSyncImage: true,
+	addonConfig := ocm.AddonConfig{
+		FleetshardSyncImageTag:        "0307e03",
+		InheritFleetshardSyncImageTag: true,
 	}
 	p := &AddonProvisioner{
 		ocmClient:      ocmMock,
-		customizations: initCustomizations(ocmConfig),
+		customizations: initCustomizations(addonConfig),
 	}
 	err := p.Provision(api.Cluster{
 		Addons: addonsJSON([]dbapi.AddonInstallation{
@@ -736,19 +736,43 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Upgrade(t *testing
 				ID:      "acs-fleetshard",
 				Version: "0.3.0",
 				Parameters: map[string]string{
-					"fleetshardSyncImage": "inherit",
+					"fleetshardSyncImageTag": "inherit",
 				},
 			},
 		})
 	Expect(err).To(Not(HaveOccurred()))
 	Expect(len(ocmMock.UpdateAddonInstallationCalls())).To(Equal(1))
 	Expect(ocmMock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Len()).To(Equal(1))
-	Expect(ocmMock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).ID()).To(Equal("fleetshardSyncImage"))
-	Expect(ocmMock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).Value()).To(Equal("quay.io/app-sre/acs-fleet-manager:0307e03"))
+	Expect(ocmMock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).ID()).To(Equal("fleetshardSyncImageTag"))
+	Expect(ocmMock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).Value()).To(Equal("0307e03"))
 }
 
 func addonsJSON(addons []dbapi.AddonInstallation) api.JSON {
 	result, err := json.Marshal(addons)
 	Expect(err).To(Not(HaveOccurred()))
 	return result
+}
+
+func TestAddonProvisioner_NewAddonProvisioner(t *testing.T) {
+	RegisterTestingT(t)
+
+	addonConfigPtr := &ocm.AddonConfig{
+		URL:          "https://addon-service.test",
+		ClientID:     "addon-client-id",
+		ClientSecret: "addon-client-secret", // pragma: allowlist secret
+		SelfToken:    "addon-token",
+	}
+
+	baseConfigPtr := &ocm.OCMConfig{
+		BaseURL:      "https://base.test",
+		ClientID:     "base-client-id",
+		ClientSecret: "base-client-secret", // pragma: allowlist secret
+		SelfToken:    "base-token",
+	}
+	_ = NewAddonProvisioner(addonConfigPtr, baseConfigPtr)
+
+	Expect(baseConfigPtr.BaseURL).To(Equal("https://base.test"))
+	Expect(baseConfigPtr.ClientID).To(Equal("base-client-id"))
+	Expect(baseConfigPtr.ClientSecret).To(Equal("base-client-secret"))
+	Expect(baseConfigPtr.SelfToken).To(Equal("base-token"))
 }
