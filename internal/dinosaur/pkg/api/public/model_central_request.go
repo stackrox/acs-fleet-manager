@@ -37,4 +37,5 @@ type CentralRequest struct {
 	FailedReason   string    `json:"failed_reason,omitempty"`
 	Version        string    `json:"version,omitempty"`
 	InstanceType   string    `json:"instance_type,omitempty"`
+	Traits         []string  `json:"traits,omitempty"`
 }

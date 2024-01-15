@@ -91,8 +91,8 @@ type CentralRequest struct {
 	// After a grace period, the Central instance will be marked for deletion, its status will be set to 'deprovision'.
 	ExpiredAt *time.Time `json:"expired_at"`
 
-	// Traits is a set of random values assigned to an instance, allowing for
-	// some custom manual or automatic action over a set of instances.
+	// Traits is a set of random strings assigned to an instance. Some traits
+	// can be hardcoded, and change some processing parameters.
 	Traits []string `json:"traits"`
 }
 

@@ -20,6 +20,7 @@ func ConvertDinosaurRequest(request *dbapi.CentralRequest) []map[string]interfac
 			"created_at":     request.Meta.CreatedAt,
 			"updated_at":     request.Meta.UpdatedAt,
 			"deleted_at":     request.Meta.DeletedAt.Time,
+			"traits":         request.Traits,
 		},
 	}
 }

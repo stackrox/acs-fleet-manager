@@ -866,8 +866,10 @@ components:
           type: string
         namespace:
           type: string
-        labels:
-          type: object
+        traits:
+          items:
+            type: string
+          type: array
     CentralList_allOf:
       properties:
         items:
@@ -922,6 +924,10 @@ components:
           type: string
         instance_type:
           type: string
+        traits:
+          items:
+            type: string
+          type: array
       required:
       - multi_az
   securitySchemes:

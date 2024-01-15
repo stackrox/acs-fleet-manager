@@ -592,8 +592,10 @@ components:
               type: string
             namespace:
               type: string
-            labels:
-              type: object
+            traits:
+              type: array
+              items:
+                type: string
     CentralList:
       allOf:
         - $ref: "fleet-manager.yaml#/components/schemas/List"
