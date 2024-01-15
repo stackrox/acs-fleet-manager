@@ -357,8 +357,9 @@ func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request)
 				return nil, errors.New(errors.ErrorNotFound, "Central %q has no trait %q", id, trait)
 			}
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
+			cr.Traits = arrays.FilterStringSlice(cr.Traits, func(t string) bool { return t != trait })
 			if err := h.service.Updates(central, map[string]interface{}{
-				"traits": arrays.FilterStringSlice(cr.Traits, func(t string) bool { return t != trait }),
+				"traits": cr.Traits,
 			}); err != nil {
 				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot update central traits")
 			}
