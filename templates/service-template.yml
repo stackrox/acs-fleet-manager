@@ -854,7 +854,70 @@ objects:
               socket_address:
                 address: 0.0.0.0
                 port_value: 9001
+            listener_filters:
+            - name: tls_inspector
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector
             filter_chains:
+            - filter_chain_match:
+                server_names:
+                  - "fleet-manager-active.${NAMESPACE}.svc"
+                  - "fleet-manager-active.${NAMESPACE}.svc.cluster.local"
+              transport_socket:
+                name: envoy.transport_sockets.tls
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                  common_tls_context:
+                    tls_certificates:
+                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
+                      private_key: {filename: "/secrets/active-tls/tls.key"}
+              filters:
+              - name: envoy.filters.network.http_connection_manager
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                  access_log:
+                  - name: envoy.access_loggers.file
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+                      path: /dev/stdout
+                  stat_prefix: ingress
+                  route_config:
+                    name: backend
+                    virtual_hosts:
+                    - name: all
+                      domains:
+                      - "*"
+                      routes:
+                      - name: default
+                        match:
+                          prefix: /
+                        route:
+                          cluster: backend
+                        # Add security headers.
+                        typed_per_filter_config:
+                          lua_security_headers:
+                            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                            source_code:
+                              inline_string: |
+                                function envoy_on_response(response_handle)
+                                  contentSecurityPolicy = "default-src 'none'; script-src 'self'; img-src 'self'; style-src 'self'; connect-src 'self'";
+                                  response_handle:headers():add("Content-Security-Policy", contentSecurityPolicy);
+                                  response_handle:headers():add("X-Frame-Options", "deny");
+                                  response_handle:headers():add("X-XSS-Protection", "1; mode=block");
+                                  response_handle:headers():add("X-Content-Type-Options", "nosniff");
+                                  response_handle:headers():add("Referrer-Policy", "no-referrer");
+                                  response_handle:headers():add("X-Download-Options", "noopen");
+                                  response_handle:headers():add("X-DNS-Prefetch-Control", "off");
+                                  response_handle:headers():add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+                                end
+                  http_filters:
+                  - name: lua_security_headers
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
             - transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:
@@ -863,8 +926,6 @@ objects:
                     tls_certificates:
                     - certificate_chain: {filename: "/secrets/tls/tls.crt"}
                       private_key: {filename: "/secrets/tls/tls.key"}
-                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
-                      private_key: {filename: "/secrets/active-tls/tls.key"}
               filters:
               - name: envoy.filters.network.http_connection_manager
                 typed_config:
