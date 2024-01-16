@@ -45,6 +45,8 @@ type AdminCentralHandler interface {
 	// a tenant. In particular, avoid two Central CRs appearing in the same
 	// tenant namespace. This may cause conflicts due to mixed resource ownership.
 	PatchName(w http.ResponseWriter, r *http.Request)
+	// GetCentralTrait tells wheter a central has the trait
+	GetCentralTrait(w http.ResponseWriter, r *http.Request)
 	// GetCentralTraits returns all central traits
 	GetCentralTraits(w http.ResponseWriter, r *http.Request)
 	// PatchCentralTrait adds a trait to a central
@@ -323,6 +325,24 @@ func (h adminCentralHandler) GetCentralTraits(w http.ResponseWriter, r *http.Req
 	handlers.HandleGet(w, r, cfg)
 }
 
+func (h adminCentralHandler) GetCentralTrait(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			trait := mux.Vars(r)["trait"]
+			cr, svcErr := h.service.GetByID(id)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+			if !arrays.Contains(cr.Traits, trait) {
+				return nil, errors.NotFound("The central does not have such trait")
+			}
+			return nil, nil
+		},
+	}
+	handlers.HandleGet(w, r, cfg)
+}
+
 func (h adminCentralHandler) PatchCentralTrait(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
@@ -357,7 +377,7 @@ func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request)
 				return nil, svcErr
 			}
 			if !arrays.Contains(cr.Traits, trait) {
-				return nil, errors.New(errors.ErrorNotFound, "Central %q has no trait %q", id, trait)
+				return nil, errors.NotFound("Central %q has no trait %q", id, trait)
 			}
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
 			cr.Traits = arrays.FilterStringSlice(cr.Traits, func(t string) bool { return t != trait })

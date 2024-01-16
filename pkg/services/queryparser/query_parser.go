@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var validColumns = []string{"region", "name", "cloud_provider", "status", "owner"}
+var validColumns = []string{"region", "name", "cloud_provider", "status", "owner", "traits"}
 
 // BraceTokenFamily ...
 const (
@@ -29,6 +29,8 @@ const (
 	LikeState   = "LIKE"
 	AndState    = "AND"
 	OrState     = "OR"
+	AnyState    = "ANY"
+	AllState    = "ALL"
 )
 
 // MaximumComplexity ...
@@ -67,19 +69,23 @@ var _ QueryParser = &queryParser{}
 // LIKE             = [Ll][Ii][Kk][Ee]
 // AND              = [Aa][Nn][Dd]
 // OR               = [Oo][Rr]
+// ANY              = [Aa][Nn][Yy]
+// ALL              = [Aa][Ll][Ll]
 //
 // VALID TRANSITIONS:
-// START        -> COLUMN | OPEN_BRACE
+// START        -> COLUMN | OPEN_BRACE | VALUE
 // OPEN_BRACE   -> OPEN_BRACE | COLUMN
 // COLUMN       -> EQ | NOT_EQ | LIKE
-// EQ           -> VALUE | QUOTED_VALUE
-// NOT_EQ       -> VALUE | QUOTED_VALUE
+// EQ           -> VALUE | QUOTED_VALUE | ANY | ALL
+// NOT_EQ       -> VALUE | QUOTED_VALUE | ANY | ALL
 // LIKE         -> VALUE | QUOTED_VALUE
 // VALUE        -> OR | AND | CLOSED_BRACE | [END]
 // QUOTED_VALUE -> OR | AND | CLOSED_BRACE | [END]
 // CLOSED_BRACE -> OR | AND | CLOSED_BRACE | [END]
 // AND          -> COLUMN | OPEN_BRACE
 // OR           -> COLUMN | OPEN_BRACE
+// ANY          -> OPEN_BRACE
+// ALL          -> OPEN_BRACE
 func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 
 	// counts the number of joins
@@ -164,6 +170,8 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 			{Name: LikeState, Family: OpTokenFamily, AcceptPattern: `[Ll][Ii][Kk][Ee]`},
 			{Name: AndState, Family: LogicalOpTokenFamily, AcceptPattern: `[Aa][Nn][Dd]`},
 			{Name: OrState, Family: LogicalOpTokenFamily, AcceptPattern: `[Oo][Rr]`},
+			{Name: AnyState, Family: LogicalOpTokenFamily, AcceptPattern: `[Aa][Nn][Yy]`},
+			{Name: AllState, Family: LogicalOpTokenFamily, AcceptPattern: `[Aa][Ll][Ll]`},
 		},
 		Transitions: []TransitionDefinition{
 			{TokenName: StartState, ValidTransitions: []string{Column, OpenBrace}},
@@ -177,6 +185,8 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 			{TokenName: ClosedBrace, ValidTransitions: []string{OrState, AndState, ClosedBrace, EndState}},
 			{TokenName: AndState, ValidTransitions: []string{Column, OpenBrace}},
 			{TokenName: OrState, ValidTransitions: []string{Column, OpenBrace}},
+			{TokenName: AnyState, ValidTransitions: []string{OpenBrace}},
+			{TokenName: AllState, ValidTransitions: []string{OpenBrace}},
 		},
 	}
 

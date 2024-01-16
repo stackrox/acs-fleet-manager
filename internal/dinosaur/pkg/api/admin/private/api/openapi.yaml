@@ -646,6 +646,51 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
       summary: Deletes the central trait.
+    get:
+      operationId: getCentralTrait
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: A central trait
+        explode: false
+        in: path
+        name: trait
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Trait exists.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID or no such trait.
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Returns central trait status.
     patch:
       description: |
         Adds a trait to a central. Not atomically.
