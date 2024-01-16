@@ -343,7 +343,7 @@ parameters:
 
 - name: ENVOY_IMAGE
   description: Envoy image
-  value: envoyproxy/envoy:v1.16.1
+  value: envoyproxy/envoy:v1.28.0
 
 - name: CENTRAL_DOMAIN_NAME
   description: The domain name to use for Central instances
@@ -742,12 +742,10 @@ objects:
         qontract.recycle: "true"
     data:
       main.yaml: | # pragma: allowlist secret
-        # The administration endpoint uses a Unix socket instead of TCP in order
-        # to avoid exposing it outside of the pod. Requests for metrics and
-        # probes will go via an HTTP listener that only accepts requests for the
-        # /metrics and /ready paths.
+        # The administration interface for Envoy uses a Unix socket instead of TCP in order
+        # to avoid exposing it outside of the pod. This interface can be used for administrative tasks,
+        # such as retrieving statistics and metrics from Envoy.
         admin:
-          access_log_path: /dev/null
           address:
             pipe:
               path: /sockets/admin.socket
@@ -756,8 +754,8 @@ objects:
 
           clusters:
 
-          # This backend is used to send metrics and probes requests to the
-          # administration endpoint.
+          # The "admin" cluster configuration sends metrics and probes requests
+          # to the administration endpoint.
           - name: admin
             connect_timeout: 1s
             type: STATIC
@@ -771,10 +769,7 @@ objects:
                           pipe:
                             path: /sockets/admin.socket
 
-          # This cluster is used to send requests to the backend. Note that
-          # currently it uses TLS, but that doesn't make much sense in this
-          # context because this communication is completely iside the pod. We
-          # should change this to use plain TCP and maybe even Unix sockets.
+          # The "backend" cluster is associated with Fleet Manager.
           - name: backend
             connect_timeout: 1s
             type: STATIC
@@ -788,14 +783,6 @@ objects:
                       socket_address:
                         address: 127.0.0.1
                         port_value: 8000 # Fleet Manager port
-            transport_socket:
-              name: envoy.transport_sockets.tls
-              typed_config:
-                "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-                common_tls_context:
-                  validation_context:
-                    trusted_ca:
-                      filename: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
 
           # TODO(ROX-11395): enable rate limiting post-MVP
           # # This cluster is used to send request to the rate limiting service.
@@ -849,8 +836,11 @@ objects:
                                   prefix_rewrite: /stats/prometheus
                       http_filters:
                         - name: envoy.filters.http.router
+                          typed_config:
+                            "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
-          # This listener is used to accept inbound API requests.
+          # This listener is configured to accept incoming HTTPS requests.
+          # It routes requests to the "backend" cluster and adds security headers to the HTTP responses.
           - name: ingress
             address:
               socket_address:
@@ -863,10 +853,8 @@ objects:
                   "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
                   common_tls_context:
                     tls_certificates:
-                    - certificate_chain:
-                        filename: /secrets/tls/tls.crt
-                      private_key:
-                        filename: /secrets/tls/tls.key
+                    - certificate_chain: {filename: "/secrets/tls/tls.crt"}
+                      private_key: {filename: "/secrets/tls/tls.key"}
               filters:
               - name: envoy.filters.network.http_connection_manager
                 typed_config:
@@ -927,8 +915,31 @@ objects:
                           prefix: /
                         route:
                           cluster: backend
+                        # Add security headers.
+                        typed_per_filter_config:
+                          lua_security_headers:
+                            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                            source_code:
+                              inline_string: |
+                                function envoy_on_response(response_handle)
+                                  contentSecurityPolicy = "default-src 'none'; script-src 'self'; img-src 'self'; style-src 'self'; connect-src 'self'";
+                                  response_handle:headers():add("Content-Security-Policy", contentSecurityPolicy);
+                                  response_handle:headers():add("X-Frame-Options", "deny");
+                                  response_handle:headers():add("X-XSS-Protection", "1; mode=block");
+                                  response_handle:headers():add("X-Content-Type-Options", "nosniff");
+                                  response_handle:headers():add("Referrer-Policy", "no-referrer");
+                                  response_handle:headers():add("X-Download-Options", "noopen");
+                                  response_handle:headers():add("X-DNS-Prefetch-Control", "off");
+                                  response_handle:headers():add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+                                end
 
                   http_filters:
+                  - name: lua_security_headers
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
                   # TODO(ROX-11395): enable rate limiting post-MVP
                   # # This is needed to enable the rate limiter:
@@ -943,28 +954,7 @@ objects:
                   #         envoy_grpc:
                   #           cluster_name: limiter
                   #       transport_api_version: V3
-
-                  # TODO(ROX-18694): upgrade envoy version and change implementation for headers response to LuaPerRoute
-                  # This allows Lua scripts to be run during response flow
-                  - name: lua_security_headers
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-                      inline_code: |
-                        function envoy_on_response(response_handle)
-                          csp = "default-src 'none'; script-src 'self'; img-src 'self'; style-src 'self'; connect-src 'self'";
-                          response_handle:headers():add("Content-Security-Policy", csp);
-                          response_handle:headers():add("X-Frame-Options", "deny");
-                          response_handle:headers():add("X-XSS-Protection", "1; mode=block");
-                          response_handle:headers():add("X-Content-Type-Options", "nosniff");
-                          response_handle:headers():add("Referrer-Policy", "no-referrer");
-                          response_handle:headers():add("X-Download-Options", "noopen");
-                          response_handle:headers():add("X-DNS-Prefetch-Control", "off");
-                          response_handle:headers():add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-                        end
-                  # This is mandatory in order to have the HTTP routes above.
-                  - name: envoy.filters.http.router
-
-                  # TODO(ROX-11395): enable rate limiting post-MVP
+                  #
                   # # We need this in order to generate JSON responses according to
                   # # our API guidelines, otherwise Envoy will generate plain text
                   # # responses.
