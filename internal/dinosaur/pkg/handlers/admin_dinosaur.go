@@ -40,7 +40,9 @@ type AdminCentralHandler interface {
 	RotateSecrets(w http.ResponseWriter, r *http.Request)
 	// PatchExpiredAt sets the expired_at central property
 	PatchExpiredAt(w http.ResponseWriter, r *http.Request)
-	// PatchName sets the name central property
+	// PatchName sets the name central property. Tread carefully when renaming
+	// a tenant. In particular, avoid two Central CRs appearing in the same
+	// tenant namespace. This may cause conflicts due to mixed resource ownership.
 	PatchName(w http.ResponseWriter, r *http.Request)
 }
 
