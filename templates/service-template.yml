@@ -741,7 +741,7 @@ objects:
       annotations:
         qontract.recycle: "true"
     data:
-      main.yaml: |
+      main.yaml: | # pragma: allowlist secret
         # The administration endpoint uses a Unix socket instead of TCP in order
         # to avoid exposing it outside of the pod. Requests for metrics and
         # probes will go via an HTTP listener that only accepts requests for the
@@ -867,6 +867,10 @@ objects:
                         filename: /secrets/tls/tls.crt
                       private_key:
                         filename: /secrets/tls/tls.key
+                    - certificate_chain:
+                        filename: /secrets/tls-active/tls.crt
+                      private_key:
+                        filename: /secrets/tls-active/tls.key
               filters:
               - name: envoy.filters.network.http_connection_manager
                 typed_config:
@@ -1073,6 +1077,9 @@ objects:
           - name: envoy-tls
             secret:
               secretName: fleet-manager-envoy-tls # pragma: allowlist secret
+          - name: active-tls
+            secret:
+              secretName: fleet-manager-active-tls # pragma: allowlist secret
           - name: envoy-unix-sockets
             emptyDir:
               medium: Memory
@@ -1335,6 +1342,8 @@ objects:
             volumeMounts:
             - name: envoy-tls
               mountPath: /secrets/tls
+            - name: active-tls
+              mountPath: /secrets/active-tls
             - name: envoy-config
               mountPath: /configs/envoy
             - name: envoy-unix-sockets
