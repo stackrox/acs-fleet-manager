@@ -108,7 +108,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 
 ## Dataplane Cluster Management
 - **enable-ready-dataplane-clusters-reconcile**: Enables reconciliation of data plane clusters in a `Ready` state.
-- **kubeconfig**: A path to kubeconfig file used to communicate with standalone dataplane clusters.
 - **dataplane-cluster-scaling-type**: Sets the behaviour of how the service manages and scales OSD clusters (options: `manual`, `auto` or `none`).
     > For more information on the different dataplane cluster scaling types and their behaviour, see the [dataplane osd cluster options](./data-plane-osd-cluster-options.md) documentation.
 

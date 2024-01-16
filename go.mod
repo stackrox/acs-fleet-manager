@@ -7,7 +7,7 @@ require (
 	github.com/Nerzal/gocloak/v11 v11.2.0
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware/v2 v2.2.0
-	github.com/aws/aws-sdk-go v1.46.6
+	github.com/aws/aws-sdk-go v1.49.16
 	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/containers/image v3.0.2+incompatible
@@ -16,7 +16,7 @@ require (
 	github.com/getsentry/sentry-go v0.25.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.1.1
-	github.com/go-logr/logr v1.3.0
+	github.com/go-logr/logr v1.4.1
 	github.com/go-resty/resty/v2 v2.10.0
 	github.com/goava/di v1.11.1
 	github.com/gogo/protobuf v1.3.2
@@ -33,7 +33,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo/v2 v2.13.2
 	github.com/onsi/gomega v1.29.0
-	github.com/openshift-online/ocm-sdk-go v0.1.389
+	github.com/openshift-online/ocm-sdk-go v0.1.391
 	github.com/openshift/addon-operator/apis v0.0.0-20231110045543-dd01f2f5c184
 	github.com/openshift/api v0.0.0-20230502160752-c71432710382
 	github.com/operator-framework/api v0.20.0
@@ -56,7 +56,7 @@ require (
 	github.com/zgalor/weberr v0.8.2
 	golang.org/x/net v0.19.0
 	golang.org/x/oauth2 v0.15.0
-	golang.org/x/sync v0.5.0
+	golang.org/x/sync v0.6.0
 	golang.org/x/sys v0.15.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0

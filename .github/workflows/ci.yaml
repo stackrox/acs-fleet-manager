@@ -56,6 +56,7 @@ jobs:
     env:
       # TODO make sure that the secrets are configured for your repository
       OCM_ENV: integration
+      E2E: "true"
       # Dummy SSO variables
       SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
       SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
