@@ -868,9 +868,9 @@ objects:
                       private_key:
                         filename: /secrets/tls/tls.key
                     - certificate_chain:
-                        filename: /secrets/tls-active/tls.crt
+                        filename: /secrets/active-tls/tls.crt
                       private_key:
-                        filename: /secrets/tls-active/tls.key
+                        filename: /secrets/active-tls/tls.key
               filters:
               - name: envoy.filters.network.http_connection_manager
                 typed_config:
