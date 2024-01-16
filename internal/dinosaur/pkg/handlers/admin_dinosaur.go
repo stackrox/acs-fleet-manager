@@ -276,24 +276,18 @@ func (h adminCentralHandler) PatchExpiredAt(w http.ResponseWriter, r *http.Reque
 }
 
 func (h adminCentralHandler) PatchName(w http.ResponseWriter, r *http.Request) {
+	updateNameRequest := private.CentralUpdateNameRequest{}
 	cfg := &handlers.HandlerConfig{
+		MarshalInto: &updateNameRequest,
+		Validate: []handlers.Validate{
+			handlers.ValidateLength(&updateNameRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxCentralNameLength),
+			ValidDinosaurClusterName(&updateNameRequest.Name, "name"),
+			ValidateDinosaurClusterNameIsUnique(r.Context(), &updateNameRequest.Name, h.service),
+			handlers.ValidateLength(&updateNameRequest.Reason, "reason", &handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountDescLength),
+		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			bodyBytes, err := io.ReadAll(r.Body)
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Reading request body: %s", err.Error())
-			}
-			updateNameRequest := private.CentralUpdateNameRequest{}
-			if err := json.Unmarshal(bodyBytes, &updateNameRequest); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Unmarshalling request body: %s", err.Error())
-			}
-			if updateNameRequest.Name == "" {
-				return nil, errors.New(errors.ErrorBadRequest, "No name provided")
-			}
-			if updateNameRequest.Reason == "" {
-				return nil, errors.New(errors.ErrorBadRequest, "No reason provided")
-			}
 			id := mux.Vars(r)["id"]
-			glog.Warningf("Setting name to %q for central %q: %s", updateNameRequest.Name, id, updateNameRequest.Reason)
+			glog.Infof("Setting name to %q for central %q: %s", updateNameRequest.Name, id, updateNameRequest.Reason)
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
 			return nil, h.service.Updates(central, map[string]interface{}{
 				"name": &updateNameRequest.Name,

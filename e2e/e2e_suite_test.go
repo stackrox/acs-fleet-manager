@@ -150,7 +150,7 @@ func assertCentralRequestName(ctx context.Context, client *fleetmanager.Client, 
 			return err
 		}
 		if centralRequest.Name != name {
-			return fmt.Errorf("expected centralRequest name %s, got %s", name, centralRequest.Name)
+			return fmt.Errorf("expected centralRequest name %q, got %q", name, centralRequest.Name)
 		}
 		return nil
 	}
