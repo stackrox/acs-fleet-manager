@@ -288,6 +288,9 @@ func (h adminCentralHandler) GetCentralTraits(w http.ResponseWriter, r *http.Req
 			if svcErr != nil {
 				return nil, svcErr
 			}
+			if len(cr.Traits) == 0 {
+				return nil, nil
+			}
 			return cr.Traits, nil
 		},
 	}
