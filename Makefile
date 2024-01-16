@@ -601,6 +601,9 @@ secrets/touch:
           secrets/ocm-service.clientId \
           secrets/ocm-service.clientSecret \
           secrets/ocm-service.token \
+          secrets/ocm-addon-service.clientId \
+          secrets/ocm-addon-service.clientSecret \
+          secrets/ocm-addon-service.token \
           secrets/rhsso-logs.clientId \
           secrets/rhsso-logs.clientSecret \
           secrets/rhsso-metrics.clientId \
@@ -673,8 +676,15 @@ ocm/setup:
 	@echo -n "$(OCM_OFFLINE_TOKEN)" > secrets/ocm-service.token
 	@echo -n "" > secrets/ocm-service.clientId
 	@echo -n "" > secrets/ocm-service.clientSecret
+	@echo -n "" > secrets/ocm-addon-service.clientId; \
+	@echo -n "" > secrets/ocm-addon-service.clientSecret; \
 ifeq ($(OCM_ENV), integration)
-	@if [[ -n "$(DOCKER_PR_CHECK)" ]]; then echo -n "$(OCM_CLIENT_ID)" > secrets/ocm-service.clientId; echo -n "$(OCM_CLIENT_SECRET)" > secrets/ocm-service.clientSecret; fi;
+	@if [[ -n "$(DOCKER_PR_CHECK)" ]]; then \
+		echo -n "$(OCM_CLIENT_ID)" > secrets/ocm-service.clientId; \
+		echo -n "$(OCM_CLIENT_SECRET)" > secrets/ocm-service.clientSecret; \
+		echo -n "$(OCM_CLIENT_ID)" > secrets/ocm-addon-service.clientId; \
+		echo -n "$(OCM_CLIENT_SECRET)" > secrets/ocm-addon-service.clientSecret; \
+	fi \
 endif
 .PHONY: ocm/setup
 

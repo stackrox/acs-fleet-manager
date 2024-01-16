@@ -13,7 +13,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"github.com/stackrox/rox/pkg/utils"
 	"golang.org/x/exp/maps"
 )
 
@@ -26,7 +25,7 @@ type AddonProvisioner struct {
 }
 
 // NewAddonProvisioner creates a new instance of AddonProvisioner
-func NewAddonProvisioner(addonConfig *ocm.AddonConfig, baseConfig *ocm.OCMConfig) *AddonProvisioner {
+func NewAddonProvisioner(addonConfig *ocm.AddonConfig, baseConfig *ocm.OCMConfig) (*AddonProvisioner, error) {
 	addonOCMConfig := *baseConfig
 
 	addonOCMConfig.BaseURL = addonConfig.URL
@@ -36,12 +35,12 @@ func NewAddonProvisioner(addonConfig *ocm.AddonConfig, baseConfig *ocm.OCMConfig
 
 	conn, _, err := ocm.NewOCMConnection(&addonOCMConfig, addonOCMConfig.BaseURL)
 	if err != nil {
-		utils.Should(err, fmt.Errorf("addon service ocm connection: %w", err))
+		return nil, fmt.Errorf("addon service ocm connection: %w", err)
 	}
 	return &AddonProvisioner{
 		ocmClient:      ocm.NewClient(conn),
 		customizations: initCustomizations(*addonConfig),
-	}
+	}, nil
 }
 
 func initCustomizations(config ocm.AddonConfig) []addonCustomization {

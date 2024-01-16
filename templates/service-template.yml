@@ -1195,21 +1195,12 @@ objects:
                     fieldPath: metadata.namespace
               - name: ADDON_SERVICE_OCM_URL
                 value: "${ADDON_SERVICE_OCM_URL}"
-              - name: ADDON_SERVICE_OCM_CLIENT_ID
-                valueFrom:
-                  secretKeyRef:
-                    name: fleet-manager-credentials
-                    key: "ocm-addon-service.clientId"
-              - name: ADDON_SERVICE_OCM_CLIENT_SECRET
-                valueFrom:
-                  secretKeyRef:
-                    name: fleet-manager-credentials
-                    key: "ocm-addon-service.clientSecret"
-              - name: ADDON_SERVICE_OCM_SELF_TOKEN
-                valueFrom:
-                  secretKeyRef:
-                    name: fleet-manager-credentials
-                    key: "ocm-addon-service.token"
+              - name: ADDON_SERVICE_OCM_CLIENT_ID_FILE
+                value: "/secrets/fleet-manager-credentials/ocm-addon-service.clientId"
+              - name: ADDON_SERVICE_OCM_CLIENT_SECRET_FILE
+                value: "/secrets/fleet-manager-credentials/ocm-addon-service.clientSecret"
+              - name: ADDON_SERVICE_OCM_SELF_TOKEN_FILE
+                value: "/secrets/fleet-manager-credentials/ocm-addon-service.token"
               - name: ADDON_SERVICE_FLEETSHARD_SYNC_IMAGE_TAG
                 value: ${IMAGE_TAG}
               - name: ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG
