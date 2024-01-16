@@ -863,6 +863,7 @@ objects:
                 server_names:
                   - "fleet-manager-active.${NAMESPACE}.svc"
                   - "fleet-manager-active.${NAMESPACE}.svc.cluster.local"
+                  - "romndkjdq62p7sr.api.integration.openshift.com"
               transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:
