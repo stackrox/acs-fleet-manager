@@ -861,7 +861,10 @@ objects:
             filter_chains:
             - filter_chain_match:
                 server_names:
+                  - "fleet-manager-active"
+                  - "fleet-manager-active.${NAMESPACE}"
                   - "fleet-manager-active.${NAMESPACE}.svc"
+                  - "fleet-manager-active.${NAMESPACE}.svc.cluster"
                   - "fleet-manager-active.${NAMESPACE}.svc.cluster.local"
                   - "romndkjdq62p7sr.api.integration.openshift.com"
               transport_socket:
