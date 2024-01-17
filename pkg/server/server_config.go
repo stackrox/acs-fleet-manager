@@ -19,20 +19,21 @@ type ServerConfig struct {
 	// For production it is "https://api.openshift.com"
 	PublicHostURL         string `json:"public_url"`
 	EnableTermsAcceptance bool   `json:"enable_terms_acceptance"`
-	ForceLeader           bool   `json:"force_leader"`
+	EnableLeaderElection  bool   `json:"enable_leader_election"`
 }
 
 // NewServerConfig ...
 func NewServerConfig() *ServerConfig {
 	return &ServerConfig{
-		BindAddress:    "localhost:8000",
-		EnableHTTPS:    false,
-		JwksURL:        "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
-		JwksFile:       "config/jwks-file.json",
-		TokenIssuerURL: "https://sso.redhat.com/auth/realms/redhat-external",
-		HTTPSCertFile:  "",
-		HTTPSKeyFile:   "",
-		PublicHostURL:  "http://localhost",
+		BindAddress:          "localhost:8000",
+		EnableHTTPS:          false,
+		JwksURL:              "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
+		JwksFile:             "config/jwks-file.json",
+		TokenIssuerURL:       "https://sso.redhat.com/auth/realms/redhat-external",
+		HTTPSCertFile:        "",
+		HTTPSKeyFile:         "",
+		PublicHostURL:        "http://localhost",
+		EnableLeaderElection: true,
 	}
 }
 
@@ -47,8 +48,7 @@ func (s *ServerConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.JwksFile, "jwks-file", s.JwksFile, "File containing the the JSON web token signing certificates.")
 	fs.StringVar(&s.TokenIssuerURL, "token-issuer-url", s.TokenIssuerURL, "A token issuer URL. Used to validate if a JWT token used for public endpoints was issued from the given URL.")
 	fs.StringVar(&s.PublicHostURL, "public-host-url", s.PublicHostURL, "Public http host URL of the service")
-	fs.BoolVar(&s.ForceLeader, "force-leader", s.ForceLeader, "Disable leader election (for testing)")
-	fs.MarkHidden("force-leader")
+	fs.BoolVar(&s.EnableLeaderElection, "enable-leader-election", s.EnableLeaderElection, "Enable leader election")
 }
 
 // ReadFiles ...

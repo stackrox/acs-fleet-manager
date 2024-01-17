@@ -4,8 +4,12 @@ package serviceregistration
 import (
 	"context"
 	"fmt"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
+	"k8s.io/client-go/rest"
+
 	"math"
+	"os"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -36,7 +40,21 @@ type leaderWorker struct {
 }
 
 // newWorker creates a new leaderWorker
-func newWorker(namespaceName, podName string, client kubernetes.Interface, workers []workers.Worker) *leaderWorker {
+func newWorker(workers []workers.Worker) *leaderWorker {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err)
+	}
+	var ok bool
+	client := kubernetes.NewForConfigOrDie(config)
+	namespaceName, ok := os.LookupEnv("NAMESPACE_NAME")
+	if !ok {
+		panic("NAMESPACE_NAME not set")
+	}
+	podName, ok := os.LookupEnv("POD_NAME")
+	if !ok {
+		panic("POD_NAME not set")
+	}
 	return &leaderWorker{
 		namespaceName: namespaceName,
 		podName:       podName,
@@ -74,27 +92,13 @@ func (l *leaderWorker) run(ctx context.Context) error {
 				glog.Info("[serviceregistration] started leading")
 				l.isLeader.Store(true)
 				l.updateWithRetry(ctx)
-				for _, worker := range l.workers {
-					if !worker.IsRunning() {
-						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] starting worker %q with id %q", worker.GetWorkerType(), worker.GetID()))
-						worker.Start()
-					} else {
-						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] worker %q with id %q already running", worker.GetWorkerType(), worker.GetID()))
-					}
-				}
+				startWorkers(l.workers)
 			},
 			OnStoppedLeading: func() {
 				glog.Info("[serviceregistration] stopped leading")
 				l.isLeader.Store(false)
 				l.updateWithRetry(ctx)
-				for _, worker := range l.workers {
-					if worker.IsRunning() {
-						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] stopping worker %q with id %q", worker.GetWorkerType(), worker.GetID()))
-						worker.Stop()
-					} else {
-						glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] worker %q with id %q already stopped", worker.GetWorkerType(), worker.GetID()))
-					}
-				}
+				stopWorkers(l.workers)
 			},
 		},
 	})
@@ -171,5 +175,27 @@ func (l *leaderWorker) update(ctx context.Context) error {
 			return errors.Wrap(err, "failed to patch pod")
 		}
 		return nil
+	}
+}
+
+func startWorkers(workers []workers.Worker) {
+	for _, worker := range workers {
+		if !worker.IsRunning() {
+			glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] starting worker %q with id %q", worker.GetWorkerType(), worker.GetID()))
+			worker.Start()
+		} else {
+			glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] worker %q with id %q already running", worker.GetWorkerType(), worker.GetID()))
+		}
+	}
+}
+
+func stopWorkers(workers []workers.Worker) {
+	for _, worker := range workers {
+		if worker.IsRunning() {
+			glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] stopping worker %q with id %q", worker.GetWorkerType(), worker.GetID()))
+			worker.Stop()
+		} else {
+			glog.V(1).Infoln(fmt.Sprintf("[serviceregistration] worker %q with id %q already stopped", worker.GetWorkerType(), worker.GetID()))
+		}
 	}
 }
