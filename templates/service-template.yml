@@ -345,6 +345,10 @@ parameters:
   description: Envoy image
   value: envoyproxy/envoy:v1.28.0
 
+- name: ENVOY_LOG_LEVEL
+  description: Envoy log level
+  value: info
+
 - name: CENTRAL_DOMAIN_NAME
   description: The domain name to use for Central instances
   value: acs-stage.rhcloud.com
@@ -1399,6 +1403,8 @@ objects:
             - envoy
             - --config-path
             - /configs/envoy/main.yaml
+            - --log-level
+            - "${ENVOY_LOG_LEVEL}"
             ports:
             - name: api-envoy
               protocol: TCP
