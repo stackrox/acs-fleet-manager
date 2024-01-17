@@ -72,7 +72,6 @@ jobs:
       CENTRAL_TLS_CERT: central_tls_cert # pragma: allowlist secret - dummy value
       CENTRAL_TLS_KEY: central_tls_key # pragma: allowlist secret - dummy value
       # So that OCM secrets are initialised
-      DOCKER_PR_CHECK: true
       TEST_TIMEOUT: 30m
     services:
       postgres:
