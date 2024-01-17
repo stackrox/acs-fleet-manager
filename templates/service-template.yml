@@ -347,7 +347,7 @@ parameters:
 
 - name: ENVOY_LOG_LEVEL
   description: Envoy log level
-  value: debug
+  value: info
 
 - name: CENTRAL_DOMAIN_NAME
   description: The domain name to use for Central instances
