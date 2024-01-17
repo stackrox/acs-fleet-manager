@@ -71,7 +71,6 @@ jobs:
       # Dummy Central TLS env variables
       CENTRAL_TLS_CERT: central_tls_cert # pragma: allowlist secret - dummy value
       CENTRAL_TLS_KEY: central_tls_key # pragma: allowlist secret - dummy value
-      # So that OCM secrets are initialised
       TEST_TIMEOUT: 30m
     services:
       postgres:
