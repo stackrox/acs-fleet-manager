@@ -880,6 +880,8 @@ objects:
                     tls_certificates:
                     - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
                       private_key: {filename: "/secrets/active-tls/tls.key"}
+                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
+                      private_key: {filename: "/secrets/active-tls/tls.key"}
               filters:
               - name: envoy.filters.network.http_connection_manager
                 typed_config:
@@ -934,6 +936,8 @@ objects:
                   full_scan_certs_on_sni_mismatch: true
                   common_tls_context:
                     tls_certificates:
+                    - certificate_chain: {filename: "/secrets/tls/tls.crt"}
+                      private_key: {filename: "/secrets/tls/tls.key"}
                     - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
                       private_key: {filename: "/secrets/active-tls/tls.key"}
               filters:
