@@ -660,22 +660,12 @@ observatorium/token-refresher/setup:
 	@echo The Observatorium token refresher is now running on 'http://localhost:${PORT}'
 .PHONY: observatorium/token-refresher/setup
 
-# OCM login
-ocm/login:
-	@ocm login --url="$(SERVER_URL)" --token="$(OCM_OFFLINE_TOKEN)"
-.PHONY: ocm/login
-
-# Setup OCM_OFFLINE_TOKEN and
-# OCM Client ID and Secret should be set only when running inside docker in integration ENV)
-ocm/setup: OCM_CLIENT_ID ?= badger
-ocm/setup: OCM_CLIENT_SECRET ?= badger
+# Setup dummy OCM_OFFLINE_TOKEN for integration testing
+ocm/setup: OCM_OFFLINE_TOKEN ?= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c" # pragma: allowlist secret
 ocm/setup:
 	@echo -n "$(OCM_OFFLINE_TOKEN)" > secrets/ocm-service.token
 	@echo -n "" > secrets/ocm-service.clientId
 	@echo -n "" > secrets/ocm-service.clientSecret
-ifeq ($(OCM_ENV), integration)
-	@if [[ -n "$(DOCKER_PR_CHECK)" ]]; then echo -n "$(OCM_CLIENT_ID)" > secrets/ocm-service.clientId; echo -n "$(OCM_CLIENT_SECRET)" > secrets/ocm-service.clientSecret; fi;
-endif
 .PHONY: ocm/setup
 
 # create project where the service will be deployed in an OpenShift cluster

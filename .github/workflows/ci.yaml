@@ -118,7 +118,7 @@ jobs:
           GOPATH=$(go env GOPATH)
           export GOPATH
           export PATH=${PATH}:$GOPATH/bin
-          make verify binary test
+          make verify binary test test/integration
         timeout-minutes: 14
   build-push-images:
     name: "Build and push fleet* images to quay.io"
