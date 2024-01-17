@@ -871,8 +871,11 @@ objects:
                 name: envoy.transport_sockets.tls
                 typed_config:
                   "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                  full_scan_certs_on_sni_mismatch: true
                   common_tls_context:
                     tls_certificates:
+                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
+                      private_key: {filename: "/secrets/active-tls/tls.key"}
                     - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
                       private_key: {filename: "/secrets/active-tls/tls.key"}
               filters:
@@ -926,10 +929,13 @@ objects:
                 name: envoy.transport_sockets.tls
                 typed_config:
                   "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                  full_scan_certs_on_sni_mismatch: true
                   common_tls_context:
                     tls_certificates:
                     - certificate_chain: {filename: "/secrets/tls/tls.crt"}
                       private_key: {filename: "/secrets/tls/tls.key"}
+                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
+                      private_key: {filename: "/secrets/active-tls/tls.key"}
               filters:
               - name: envoy.filters.network.http_connection_manager
                 typed_config:
