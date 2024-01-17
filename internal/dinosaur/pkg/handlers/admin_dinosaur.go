@@ -396,10 +396,10 @@ func (h adminCentralHandler) PatchBillingModel(w http.ResponseWriter, r *http.Re
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
-			organisationID := r.PostFormValue("organisation_id")
+			model := r.PostFormValue("model")
 			cloudAccountID := r.PostFormValue("cloud_account_id")
 			cloudProvider := r.PostFormValue("cloud_provider")
-			return nil, h.service.ChangeBillingModel(r.Context(), id, organisationID, cloudAccountID, cloudProvider)
+			return nil, h.service.ChangeBillingModel(r.Context(), id, model, cloudAccountID, cloudProvider)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)

@@ -1054,6 +1054,9 @@ func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID stri
 		return svcErr
 	}
 
-	centralRequest.SubscriptionID = newSubscriptionID
-	return k.Update(centralRequest)
+	if centralRequest.SubscriptionID != newSubscriptionID {
+		centralRequest.SubscriptionID = newSubscriptionID
+		return k.Update(centralRequest)
+	}
+	return nil
 }
