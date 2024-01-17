@@ -39,5 +39,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"central-idp-client-id":                           "rhacs-ms-dev",
 		"central-idp-issuer":                              "https://sso.stage.redhat.com/auth/realms/redhat-external",
 		"admin-authz-config-file":                         "config/admin-authz-roles-dev.yaml",
+		"enable-leader-election":                          "false",
 	}
 }
