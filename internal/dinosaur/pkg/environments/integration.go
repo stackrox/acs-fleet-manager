@@ -29,6 +29,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"enable-https":                        "false",
 		"enable-metrics-https":                "false",
 		"enable-terms-acceptance":             "false",
+		"enable-leader-election":              "false",
 		"ocm-debug":                           "false",
 		"enable-ocm-mock":                     "true",
 		"ocm-mock-mode":                       ocm.MockModeEmulateServer,

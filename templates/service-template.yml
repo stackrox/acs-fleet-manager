@@ -422,6 +422,10 @@ parameters:
   description: Whether to enable targeted operator upgrades
   value: "false"
 
+- name: ENABLE_LEADER_ELECTION
+  description: Enable leader election
+  value: "true"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -1363,6 +1367,7 @@ objects:
             - --central-request-internal-user-agents=${CENTRAL_REQUEST_INTERNAL_USER_AGENTS}
             - --telemetry-endpoint=${TELEMETRY_ENDPONT}
             - --telemetry-storage-key-secret-file=/secrets/fleet-manager-credentials/telemetry.storageKey
+            - --enable-leader-election=${ENABLE_LEADER_ELECTION}
             - -v=${GLOG_V}
             resources:
               requests:
