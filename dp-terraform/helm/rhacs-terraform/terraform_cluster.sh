@@ -68,7 +68,7 @@ case $ENVIRONMENT in
     ;;
 
   stage)
-    FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
+    FM_ENDPOINT="https://gbrh0yv9ebhqegl.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="stage"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
@@ -86,7 +86,7 @@ case $ENVIRONMENT in
     ;;
 
   prod)
-    FM_ENDPOINT="https://api.openshift.com"
+    FM_ENDPOINT="https://ixi6srehbv5uxsa.api.openshift.com"
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
