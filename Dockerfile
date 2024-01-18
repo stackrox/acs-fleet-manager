@@ -19,7 +19,7 @@ ARG TARGETARCH
 
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/go/.cache/ \
-    make binary GOOS=linux GOARCH=${TARGETARCH} GOARGS="-buildvcs=false"
+    make binary GOOS=linux GOARCH=${TARGETARCH}
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9 as standard
 
