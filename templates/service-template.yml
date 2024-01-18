@@ -1485,6 +1485,7 @@ objects:
       annotations:
         description: Exposes and load balances the fleet-manager pods going through envoy beforehand
         service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-envoy-tls
+        service.alpha.kubernetes.io/app-protocols: '{"https":"HTTPS"}'
     spec:
       selector:
         app: fleet-manager
@@ -1492,6 +1493,7 @@ objects:
       - port: 9001
         targetPort: 9001
         protocol: TCP
+        name: https
 
   - kind: Service
     apiVersion: v1
@@ -1503,6 +1505,7 @@ objects:
       annotations:
         description: Exposes and load balances the fleet-manager pods. Only targets the active fleet-manager pod.
         service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-active-tls
+        service.alpha.kubernetes.io/app-protocols: '{"https":"HTTPS"}'
     spec:
       selector:
         app: fleet-manager
@@ -1511,6 +1514,7 @@ objects:
         - port: 9001
           targetPort: 9001
           protocol: TCP
+          name: https
 
   # Services for diagnostic ports (not part of main service because we
   # don't want exposing them externally through same route).
