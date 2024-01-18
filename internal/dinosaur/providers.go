@@ -59,6 +59,7 @@ func ServiceProviders() di.Option {
 		di.Provide(services.NewDinosaurService),
 		di.Provide(services.NewCloudProvidersService),
 		di.Provide(services.NewObservatoriumService),
+		di.Provide(services.NewAddonProvisioner),
 		di.Provide(services.NewClusterPlacementStrategy),
 		di.Provide(services.NewDataPlaneClusterService),
 		di.Provide(services.NewDataPlaneCentralService),

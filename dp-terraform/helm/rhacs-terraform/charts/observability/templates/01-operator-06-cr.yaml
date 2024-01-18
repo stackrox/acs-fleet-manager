@@ -82,6 +82,14 @@ spec:
       limits:
         memory: {{ .Values.grafanaOperator.resources.limits.memory | quote }}
   storage:
+    alertmanager:
+      volumeClaimTemplate:
+        metadata:
+          name: alertmanager
+        spec:
+          resources:
+            requests:
+              storage: {{ .Values.alertManager.resources.requests.storage | quote }}
     prometheus:
       volumeClaimTemplate:
         metadata:
@@ -89,5 +97,4 @@ spec:
         spec:
           resources:
             requests:
-              storage: 250Gi
-        status: {}
+              storage: {{ .Values.prometheus.resources.requests.storage | quote }}

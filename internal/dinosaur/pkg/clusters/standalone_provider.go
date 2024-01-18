@@ -16,11 +16,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // fieldManager indicates that the fleet-manager will be used as a field manager for conflict resolution
@@ -123,46 +120,6 @@ func (s *StandaloneProvider) buildIdentityProviderResource(identityProvider type
 			},
 		},
 	}
-}
-
-// ApplyResources ...
-func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
-	if s.dataplaneClusterConfig.RawKubernetesConfig == nil {
-		return &resources, nil // no kubeconfig read, do nothing.
-	}
-
-	contextName := s.dataplaneClusterConfig.FindClusterNameByClusterID(clusterSpec.InternalID)
-	override := &clientcmd.ConfigOverrides{CurrentContext: contextName}
-	config := *s.dataplaneClusterConfig.RawKubernetesConfig
-	restConfig, err := clientcmd.NewNonInteractiveClientConfig(config, override.CurrentContext, override, &clientcmd.ClientConfigLoadingRules{}).
-		ClientConfig()
-
-	if err != nil {
-		return nil, fmt.Errorf("creating config: %w", err)
-	}
-
-	dynamicClient, err := dynamic.NewForConfig(restConfig)
-	if err != nil {
-		return nil, fmt.Errorf("creating dynamic client: %w", err)
-	}
-
-	// Create a REST mapper that tracks information about the available resources in the cluster.
-	dc, err := discovery.NewDiscoveryClientForConfig(restConfig)
-	if err != nil {
-		return nil, fmt.Errorf("creating discovery client: %w", err)
-	}
-
-	discoveryCachedClient := memory.NewMemCacheClient(dc)
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryCachedClient)
-
-	for _, resource := range resources.Resources {
-		_, err = applyResource(dynamicClient, mapper, resource)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &resources, nil
 }
 
 // ScaleUp ...

@@ -92,6 +92,5 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 func (d *dataPlaneClusterService) clusterCanProcessStatusReports(cluster *api.Cluster) bool {
 	return cluster.Status == api.ClusterReady ||
 		cluster.Status == api.ClusterComputeNodeScalingUp ||
-		cluster.Status == api.ClusterFull ||
-		cluster.Status == api.ClusterWaitingForFleetShardOperator
+		cluster.Status == api.ClusterFull
 }
