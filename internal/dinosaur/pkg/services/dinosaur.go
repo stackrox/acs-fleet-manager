@@ -1046,16 +1046,20 @@ func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID stri
 		return svcErr
 	}
 
+	originalCloudAccountID := centralRequest.CloudAccountID
+	originalCloudProvider := centralRequest.CloudProvider
+	originalSubscriptionID := centralRequest.SubscriptionID
+
 	centralRequest.CloudAccountID = cloudAccountID
 	centralRequest.CloudProvider = cloudProvider
-
-	newSubscriptionID, svcErr := k.reserveQuota(ctx, centralRequest, billingModel)
+	centralRequest.SubscriptionID, svcErr = k.reserveQuota(ctx, centralRequest, billingModel)
 	if svcErr != nil {
 		return svcErr
 	}
 
-	if centralRequest.SubscriptionID != newSubscriptionID {
-		centralRequest.SubscriptionID = newSubscriptionID
+	if centralRequest.SubscriptionID != originalSubscriptionID ||
+		centralRequest.CloudAccountID != originalCloudAccountID ||
+		centralRequest.CloudProvider != originalCloudProvider {
 		return k.Update(centralRequest)
 	}
 	return nil
