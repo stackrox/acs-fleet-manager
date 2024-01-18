@@ -134,6 +134,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0 # Critical for correct image detection in Makefile
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Build and push fleet-manager-tools image to quay.io
         if: github.event_name == 'push'
         env:
@@ -142,4 +144,4 @@ jobs:
       - name: Build and push fleetshard-operator image to quay.io
         run: make image/push/fleetshard-operator
       - name: Build and push fleet-manager image to quay.io
-        run: make image/push/fleet-manager
+        run: make image/push/fleet-manager IMAGE_PLATFORM=linux/amd64,linux/arm64
