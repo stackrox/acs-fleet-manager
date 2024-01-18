@@ -7,15 +7,11 @@
 observabilityOperatorVersion: "v4.2.1"
 
 github:
-  # You can generate a new one at https://github.com/settings/tokens/new, for a user
-  # with access to the repository specified at `github.repository`, and with "repo" scope.
-  # Be mindful of the token expiration.
-  accessToken: ""
-  repository: ""
+  repository: "https://api.github.com/repos/stackrox/rhacs-observability-resources/contents"
   tag: "master"
 
 clusterName: ""
-resyncPeriod: "1h"
+resyncPeriod: "10m"
 retention: "45d"
 
 # Credentials for Observatorium https://observatorium.io/ instance
@@ -25,12 +21,6 @@ observatorium:
   redHatSsoAuthServerUrl: "https://sso.redhat.com/auth/"
   redHatSsoRealm: "redhat-external"
   gateway: ""
-  metricsClientId: ""
-  metricsSecret: ""
-
-pagerduty:
-  # PagerDuty integration key, which is generated within a Ruleset.
-  key: ""
 
 deadMansSwitch:
   # Webhook URL of the dead man's switch provider.
@@ -50,6 +40,7 @@ prometheus:
     requests:
       cpu: 1500m
       memory: 20Gi
+      storage: 250Gi
     limits:
       memory: 20Gi
 
@@ -82,6 +73,7 @@ alertManager:
     requests:
       cpu: 200m
       memory: 256Mi
+      storage: 20Gi
     limits:
       memory: 256Mi
 

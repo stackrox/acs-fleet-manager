@@ -262,8 +262,8 @@ var _ PrivateAPI = &PrivateAPIMock{}
 //			GetCentralsFunc: func(ctx context.Context, id string) (private.ManagedCentralList, *http.Response, error) {
 //				panic("mock out the GetCentrals method")
 //			},
-//			GetDataPlaneClusterAgentConfigFunc: func(ctx context.Context, id string) (private.DataplaneClusterAgentConfig, *http.Response, error) {
-//				panic("mock out the GetDataPlaneClusterAgentConfig method")
+//			UpdateAgentClusterStatusFunc: func(ctx context.Context, id string, request private.DataPlaneClusterUpdateStatusRequest) (*http.Response, error) {
+//				panic("mock out the UpdateAgentClusterStatus method")
 //			},
 //			UpdateCentralClusterStatusFunc: func(ctx context.Context, id string, requestBody map[string]private.DataPlaneCentralStatus) (*http.Response, error) {
 //				panic("mock out the UpdateCentralClusterStatus method")
@@ -281,8 +281,8 @@ type PrivateAPIMock struct {
 	// GetCentralsFunc mocks the GetCentrals method.
 	GetCentralsFunc func(ctx context.Context, id string) (private.ManagedCentralList, *http.Response, error)
 
-	// GetDataPlaneClusterAgentConfigFunc mocks the GetDataPlaneClusterAgentConfig method.
-	GetDataPlaneClusterAgentConfigFunc func(ctx context.Context, id string) (private.DataplaneClusterAgentConfig, *http.Response, error)
+	// UpdateAgentClusterStatusFunc mocks the UpdateAgentClusterStatus method.
+	UpdateAgentClusterStatusFunc func(ctx context.Context, id string, request private.DataPlaneClusterUpdateStatusRequest) (*http.Response, error)
 
 	// UpdateCentralClusterStatusFunc mocks the UpdateCentralClusterStatus method.
 	UpdateCentralClusterStatusFunc func(ctx context.Context, id string, requestBody map[string]private.DataPlaneCentralStatus) (*http.Response, error)
@@ -303,12 +303,14 @@ type PrivateAPIMock struct {
 			// ID is the id argument value.
 			ID string
 		}
-		// GetDataPlaneClusterAgentConfig holds details about calls to the GetDataPlaneClusterAgentConfig method.
-		GetDataPlaneClusterAgentConfig []struct {
+		// UpdateAgentClusterStatus holds details about calls to the UpdateAgentClusterStatus method.
+		UpdateAgentClusterStatus []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+			// Request is the request argument value.
+			Request private.DataPlaneClusterUpdateStatusRequest
 		}
 		// UpdateCentralClusterStatus holds details about calls to the UpdateCentralClusterStatus method.
 		UpdateCentralClusterStatus []struct {
@@ -320,10 +322,10 @@ type PrivateAPIMock struct {
 			RequestBody map[string]private.DataPlaneCentralStatus
 		}
 	}
-	lockGetCentral                     sync.RWMutex
-	lockGetCentrals                    sync.RWMutex
-	lockGetDataPlaneClusterAgentConfig sync.RWMutex
-	lockUpdateCentralClusterStatus     sync.RWMutex
+	lockGetCentral                 sync.RWMutex
+	lockGetCentrals                sync.RWMutex
+	lockUpdateAgentClusterStatus   sync.RWMutex
+	lockUpdateCentralClusterStatus sync.RWMutex
 }
 
 // GetCentral calls GetCentralFunc.
@@ -398,39 +400,43 @@ func (mock *PrivateAPIMock) GetCentralsCalls() []struct {
 	return calls
 }
 
-// GetDataPlaneClusterAgentConfig calls GetDataPlaneClusterAgentConfigFunc.
-func (mock *PrivateAPIMock) GetDataPlaneClusterAgentConfig(ctx context.Context, id string) (private.DataplaneClusterAgentConfig, *http.Response, error) {
-	if mock.GetDataPlaneClusterAgentConfigFunc == nil {
-		panic("PrivateAPIMock.GetDataPlaneClusterAgentConfigFunc: method is nil but PrivateAPI.GetDataPlaneClusterAgentConfig was just called")
+// UpdateAgentClusterStatus calls UpdateAgentClusterStatusFunc.
+func (mock *PrivateAPIMock) UpdateAgentClusterStatus(ctx context.Context, id string, request private.DataPlaneClusterUpdateStatusRequest) (*http.Response, error) {
+	if mock.UpdateAgentClusterStatusFunc == nil {
+		panic("PrivateAPIMock.UpdateAgentClusterStatusFunc: method is nil but PrivateAPI.UpdateAgentClusterStatus was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
-		ID  string
+		Ctx     context.Context
+		ID      string
+		Request private.DataPlaneClusterUpdateStatusRequest
 	}{
-		Ctx: ctx,
-		ID:  id,
+		Ctx:     ctx,
+		ID:      id,
+		Request: request,
 	}
-	mock.lockGetDataPlaneClusterAgentConfig.Lock()
-	mock.calls.GetDataPlaneClusterAgentConfig = append(mock.calls.GetDataPlaneClusterAgentConfig, callInfo)
-	mock.lockGetDataPlaneClusterAgentConfig.Unlock()
-	return mock.GetDataPlaneClusterAgentConfigFunc(ctx, id)
+	mock.lockUpdateAgentClusterStatus.Lock()
+	mock.calls.UpdateAgentClusterStatus = append(mock.calls.UpdateAgentClusterStatus, callInfo)
+	mock.lockUpdateAgentClusterStatus.Unlock()
+	return mock.UpdateAgentClusterStatusFunc(ctx, id, request)
 }
 
-// GetDataPlaneClusterAgentConfigCalls gets all the calls that were made to GetDataPlaneClusterAgentConfig.
+// UpdateAgentClusterStatusCalls gets all the calls that were made to UpdateAgentClusterStatus.
 // Check the length with:
 //
-//	len(mockedPrivateAPI.GetDataPlaneClusterAgentConfigCalls())
-func (mock *PrivateAPIMock) GetDataPlaneClusterAgentConfigCalls() []struct {
-	Ctx context.Context
-	ID  string
+//	len(mockedPrivateAPI.UpdateAgentClusterStatusCalls())
+func (mock *PrivateAPIMock) UpdateAgentClusterStatusCalls() []struct {
+	Ctx     context.Context
+	ID      string
+	Request private.DataPlaneClusterUpdateStatusRequest
 } {
 	var calls []struct {
-		Ctx context.Context
-		ID  string
+		Ctx     context.Context
+		ID      string
+		Request private.DataPlaneClusterUpdateStatusRequest
 	}
-	mock.lockGetDataPlaneClusterAgentConfig.RLock()
-	calls = mock.calls.GetDataPlaneClusterAgentConfig
-	mock.lockGetDataPlaneClusterAgentConfig.RUnlock()
+	mock.lockUpdateAgentClusterStatus.RLock()
+	calls = mock.calls.UpdateAgentClusterStatus
+	mock.lockUpdateAgentClusterStatus.RUnlock()
 	return calls
 }
 
@@ -484,6 +490,9 @@ var _ AdminAPI = &AdminAPIMock{}
 //
 //		// make and configure a mocked AdminAPI
 //		mockedAdminAPI := &AdminAPIMock{
+//			CentralRotateSecretsFunc: func(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error) {
+//				panic("mock out the CentralRotateSecrets method")
+//			},
 //			CreateCentralFunc: func(ctx context.Context, async bool, centralRequestPayload admin.CentralRequestPayload) (admin.CentralRequest, *http.Response, error) {
 //				panic("mock out the CreateCentral method")
 //			},
@@ -493,6 +502,9 @@ var _ AdminAPI = &AdminAPIMock{}
 //			GetCentralsFunc: func(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error) {
 //				panic("mock out the GetCentrals method")
 //			},
+//			UpdateCentralNameByIdFunc: func(ctx context.Context, id string, centralUpdateNameRequest admin.CentralUpdateNameRequest) (admin.Central, *http.Response, error) {
+//				panic("mock out the UpdateCentralNameById method")
+//			},
 //		}
 //
 //		// use mockedAdminAPI in code that requires AdminAPI
@@ -500,6 +512,9 @@ var _ AdminAPI = &AdminAPIMock{}
 //
 //	}
 type AdminAPIMock struct {
+	// CentralRotateSecretsFunc mocks the CentralRotateSecrets method.
+	CentralRotateSecretsFunc func(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error)
+
 	// CreateCentralFunc mocks the CreateCentral method.
 	CreateCentralFunc func(ctx context.Context, async bool, centralRequestPayload admin.CentralRequestPayload) (admin.CentralRequest, *http.Response, error)
 
@@ -509,8 +524,20 @@ type AdminAPIMock struct {
 	// GetCentralsFunc mocks the GetCentrals method.
 	GetCentralsFunc func(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error)
 
+	// UpdateCentralNameByIdFunc mocks the UpdateCentralNameById method.
+	UpdateCentralNameByIdFunc func(ctx context.Context, id string, centralUpdateNameRequest admin.CentralUpdateNameRequest) (admin.Central, *http.Response, error)
+
 	// calls tracks calls to the methods.
 	calls struct {
+		// CentralRotateSecrets holds details about calls to the CentralRotateSecrets method.
+		CentralRotateSecrets []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+			// CentralRotateSecretsRequest is the centralRotateSecretsRequest argument value.
+			CentralRotateSecretsRequest admin.CentralRotateSecretsRequest
+		}
 		// CreateCentral holds details about calls to the CreateCentral method.
 		CreateCentral []struct {
 			// Ctx is the ctx argument value.
@@ -534,10 +561,61 @@ type AdminAPIMock struct {
 			// LocalVarOptionals is the localVarOptionals argument value.
 			LocalVarOptionals *admin.GetCentralsOpts
 		}
+		// UpdateCentralNameById holds details about calls to the UpdateCentralNameById method.
+		UpdateCentralNameById []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+			// CentralUpdateNameRequest is the centralUpdateNameRequest argument value.
+			CentralUpdateNameRequest admin.CentralUpdateNameRequest
+		}
 	}
-	lockCreateCentral       sync.RWMutex
-	lockDeleteDbCentralById sync.RWMutex
-	lockGetCentrals         sync.RWMutex
+	lockCentralRotateSecrets  sync.RWMutex
+	lockCreateCentral         sync.RWMutex
+	lockDeleteDbCentralById   sync.RWMutex
+	lockGetCentrals           sync.RWMutex
+	lockUpdateCentralNameById sync.RWMutex
+}
+
+// CentralRotateSecrets calls CentralRotateSecretsFunc.
+func (mock *AdminAPIMock) CentralRotateSecrets(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error) {
+	if mock.CentralRotateSecretsFunc == nil {
+		panic("AdminAPIMock.CentralRotateSecretsFunc: method is nil but AdminAPI.CentralRotateSecrets was just called")
+	}
+	callInfo := struct {
+		Ctx                         context.Context
+		ID                          string
+		CentralRotateSecretsRequest admin.CentralRotateSecretsRequest
+	}{
+		Ctx:                         ctx,
+		ID:                          id,
+		CentralRotateSecretsRequest: centralRotateSecretsRequest,
+	}
+	mock.lockCentralRotateSecrets.Lock()
+	mock.calls.CentralRotateSecrets = append(mock.calls.CentralRotateSecrets, callInfo)
+	mock.lockCentralRotateSecrets.Unlock()
+	return mock.CentralRotateSecretsFunc(ctx, id, centralRotateSecretsRequest)
+}
+
+// CentralRotateSecretsCalls gets all the calls that were made to CentralRotateSecrets.
+// Check the length with:
+//
+//	len(mockedAdminAPI.CentralRotateSecretsCalls())
+func (mock *AdminAPIMock) CentralRotateSecretsCalls() []struct {
+	Ctx                         context.Context
+	ID                          string
+	CentralRotateSecretsRequest admin.CentralRotateSecretsRequest
+} {
+	var calls []struct {
+		Ctx                         context.Context
+		ID                          string
+		CentralRotateSecretsRequest admin.CentralRotateSecretsRequest
+	}
+	mock.lockCentralRotateSecrets.RLock()
+	calls = mock.calls.CentralRotateSecrets
+	mock.lockCentralRotateSecrets.RUnlock()
+	return calls
 }
 
 // CreateCentral calls CreateCentralFunc.
@@ -649,5 +727,45 @@ func (mock *AdminAPIMock) GetCentralsCalls() []struct {
 	mock.lockGetCentrals.RLock()
 	calls = mock.calls.GetCentrals
 	mock.lockGetCentrals.RUnlock()
+	return calls
+}
+
+// UpdateCentralNameById calls UpdateCentralNameByIdFunc.
+func (mock *AdminAPIMock) UpdateCentralNameById(ctx context.Context, id string, centralUpdateNameRequest admin.CentralUpdateNameRequest) (admin.Central, *http.Response, error) {
+	if mock.UpdateCentralNameByIdFunc == nil {
+		panic("AdminAPIMock.UpdateCentralNameByIdFunc: method is nil but AdminAPI.UpdateCentralNameById was just called")
+	}
+	callInfo := struct {
+		Ctx                      context.Context
+		ID                       string
+		CentralUpdateNameRequest admin.CentralUpdateNameRequest
+	}{
+		Ctx:                      ctx,
+		ID:                       id,
+		CentralUpdateNameRequest: centralUpdateNameRequest,
+	}
+	mock.lockUpdateCentralNameById.Lock()
+	mock.calls.UpdateCentralNameById = append(mock.calls.UpdateCentralNameById, callInfo)
+	mock.lockUpdateCentralNameById.Unlock()
+	return mock.UpdateCentralNameByIdFunc(ctx, id, centralUpdateNameRequest)
+}
+
+// UpdateCentralNameByIdCalls gets all the calls that were made to UpdateCentralNameById.
+// Check the length with:
+//
+//	len(mockedAdminAPI.UpdateCentralNameByIdCalls())
+func (mock *AdminAPIMock) UpdateCentralNameByIdCalls() []struct {
+	Ctx                      context.Context
+	ID                       string
+	CentralUpdateNameRequest admin.CentralUpdateNameRequest
+} {
+	var calls []struct {
+		Ctx                      context.Context
+		ID                       string
+		CentralUpdateNameRequest admin.CentralUpdateNameRequest
+	}
+	mock.lockUpdateCentralNameById.RLock()
+	calls = mock.calls.UpdateCentralNameById
+	mock.lockUpdateCentralNameById.RUnlock()
 	return calls
 }

@@ -19,6 +19,10 @@ parameters:
   description: Which ACS Service Fleet Manager environment to use for this deployment
   value: production
 
+- name: NAMESPACE
+  displayName: Namespace
+  description: Namespace to deploy the service to
+
 - name: CENTRAL_IDP_CLIENT_ID
   displayName: Central's IdP client ID
   description: OIDC client ID to pass to Central's auth config
@@ -339,7 +343,11 @@ parameters:
 
 - name: ENVOY_IMAGE
   description: Envoy image
-  value: envoyproxy/envoy:v1.16.1
+  value: envoyproxy/envoy:v1.28.0
+
+- name: ENVOY_LOG_LEVEL
+  description: Envoy log level
+  value: info
 
 - name: CENTRAL_DOMAIN_NAME
   description: The domain name to use for Central instances
@@ -630,6 +638,66 @@ objects:
         app: fleet-manager
     imagePullSecrets:
     - name: quay.io
+
+  - kind: Role
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: fleet-manager
+      labels:
+        app: fleet-manager
+    rules:
+        # Allow fleet-manager to update its pod labels
+        # so that it can set/unset the fleet-manager-active label
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+          - update
+          - patch
+      - apiGroups:
+          - ""
+        resources:
+          - configmaps
+        verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
+        verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+
+  - kind: RoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: fleet-manager
+      labels:
+        app: fleet-manager
+    subjects:
+      - kind: ServiceAccount
+        name: fleet-manager
+        namespace: ${NAMESPACE}
+    roleRef:
+      kind: Role
+      name: fleet-manager
+      apiGroup: rbac.authorization.k8s.io
+
   - apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -648,7 +716,6 @@ objects:
       aws.route53accesskey: badger
       aws.route53secretaccesskey: badger
       observability-config-access.token: badger
-      kubeconfig: badger
   - apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -678,13 +745,11 @@ objects:
       annotations:
         qontract.recycle: "true"
     data:
-      main.yaml: |
-        # The administration endpoint uses a Unix socket instead of TCP in order
-        # to avoid exposing it outside of the pod. Requests for metrics and
-        # probes will go via an HTTP listener that only accepts requests for the
-        # /metrics and /ready paths.
+      main.yaml: | # pragma: allowlist secret
+        # The administration interface for Envoy uses a Unix socket instead of TCP in order
+        # to avoid exposing it outside of the pod. This interface can be used for administrative tasks,
+        # such as retrieving statistics and metrics from Envoy.
         admin:
-          access_log_path: /dev/null
           address:
             pipe:
               path: /sockets/admin.socket
@@ -693,8 +758,8 @@ objects:
 
           clusters:
 
-          # This backend is used to send metrics and probes requests to the
-          # administration endpoint.
+          # The "admin" cluster configuration sends metrics and probes requests
+          # to the administration endpoint.
           - name: admin
             connect_timeout: 1s
             type: STATIC
@@ -708,10 +773,7 @@ objects:
                           pipe:
                             path: /sockets/admin.socket
 
-          # This cluster is used to send requests to the backend. Note that
-          # currently it uses TLS, but that doesn't make much sense in this
-          # context because this communication is completely iside the pod. We
-          # should change this to use plain TCP and maybe even Unix sockets.
+          # The "backend" cluster is associated with Fleet Manager.
           - name: backend
             connect_timeout: 1s
             type: STATIC
@@ -786,24 +848,98 @@ objects:
                                   prefix_rewrite: /stats/prometheus
                       http_filters:
                         - name: envoy.filters.http.router
+                          typed_config:
+                            "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
-          # This listener is used to accept inbound API requests.
+          # This listener is configured to accept incoming HTTPS requests.
+          # It routes requests to the "backend" cluster and adds security headers to the HTTP responses.
           - name: ingress
             address:
               socket_address:
                 address: 0.0.0.0
                 port_value: 9001
+            listener_filters:
+            - name: tls_inspector
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector
             filter_chains:
+            - filter_chain_match:
+                server_names:
+                  - "fleet-manager-active"
+                  - "fleet-manager-active.${NAMESPACE}"
+                  - "fleet-manager-active.${NAMESPACE}.svc"
+                  - "fleet-manager-active.${NAMESPACE}.svc.cluster"
+                  - "fleet-manager-active.${NAMESPACE}.svc.cluster.local"
+                  - "romndkjdq62p7sr.api.integration.openshift.com"
+              transport_socket:
+                name: envoy.transport_sockets.tls
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                  full_scan_certs_on_sni_mismatch: true
+                  common_tls_context:
+                    tls_certificates:
+                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
+                      private_key: {filename: "/secrets/active-tls/tls.key"}
+                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
+                      private_key: {filename: "/secrets/active-tls/tls.key"}
+              filters:
+              - name: envoy.filters.network.http_connection_manager
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                  access_log:
+                  - name: envoy.access_loggers.file
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+                      path: /dev/stdout
+                  stat_prefix: ingress
+                  route_config:
+                    name: backend
+                    virtual_hosts:
+                    - name: all
+                      domains:
+                      - "*"
+                      routes:
+                      - name: default
+                        match:
+                          prefix: /
+                        route:
+                          cluster: backend
+                        # Add security headers.
+                        typed_per_filter_config:
+                          lua_security_headers:
+                            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                            source_code:
+                              inline_string: |
+                                function envoy_on_response(response_handle)
+                                  contentSecurityPolicy = "default-src 'none'; script-src 'self'; img-src 'self'; style-src 'self'; connect-src 'self'";
+                                  response_handle:headers():add("Content-Security-Policy", contentSecurityPolicy);
+                                  response_handle:headers():add("X-Frame-Options", "deny");
+                                  response_handle:headers():add("X-XSS-Protection", "1; mode=block");
+                                  response_handle:headers():add("X-Content-Type-Options", "nosniff");
+                                  response_handle:headers():add("Referrer-Policy", "no-referrer");
+                                  response_handle:headers():add("X-Download-Options", "noopen");
+                                  response_handle:headers():add("X-DNS-Prefetch-Control", "off");
+                                  response_handle:headers():add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+                                end
+                  http_filters:
+                  - name: lua_security_headers
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
             - transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:
                   "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                  full_scan_certs_on_sni_mismatch: true
                   common_tls_context:
                     tls_certificates:
-                    - certificate_chain:
-                        filename: /secrets/tls/tls.crt
-                      private_key:
-                        filename: /secrets/tls/tls.key
+                    - certificate_chain: {filename: "/secrets/tls/tls.crt"}
+                      private_key: {filename: "/secrets/tls/tls.key"}
+                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
+                      private_key: {filename: "/secrets/active-tls/tls.key"}
               filters:
               - name: envoy.filters.network.http_connection_manager
                 typed_config:
@@ -864,8 +1000,31 @@ objects:
                           prefix: /
                         route:
                           cluster: backend
+                        # Add security headers.
+                        typed_per_filter_config:
+                          lua_security_headers:
+                            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                            source_code:
+                              inline_string: |
+                                function envoy_on_response(response_handle)
+                                  contentSecurityPolicy = "default-src 'none'; script-src 'self'; img-src 'self'; style-src 'self'; connect-src 'self'";
+                                  response_handle:headers():add("Content-Security-Policy", contentSecurityPolicy);
+                                  response_handle:headers():add("X-Frame-Options", "deny");
+                                  response_handle:headers():add("X-XSS-Protection", "1; mode=block");
+                                  response_handle:headers():add("X-Content-Type-Options", "nosniff");
+                                  response_handle:headers():add("Referrer-Policy", "no-referrer");
+                                  response_handle:headers():add("X-Download-Options", "noopen");
+                                  response_handle:headers():add("X-DNS-Prefetch-Control", "off");
+                                  response_handle:headers():add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+                                end
 
                   http_filters:
+                  - name: lua_security_headers
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
                   # TODO(ROX-11395): enable rate limiting post-MVP
                   # # This is needed to enable the rate limiter:
@@ -880,28 +1039,7 @@ objects:
                   #         envoy_grpc:
                   #           cluster_name: limiter
                   #       transport_api_version: V3
-
-                  # TODO(ROX-18694): upgrade envoy version and change implementation for headers response to LuaPerRoute
-                  # This allows Lua scripts to be run during response flow
-                  - name: lua_security_headers
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-                      inline_code: |
-                        function envoy_on_response(response_handle)
-                          csp = "default-src 'none'; script-src 'self'; img-src 'self'; style-src 'self'; connect-src 'self'";
-                          response_handle:headers():add("Content-Security-Policy", csp);
-                          response_handle:headers():add("X-Frame-Options", "deny");
-                          response_handle:headers():add("X-XSS-Protection", "1; mode=block");
-                          response_handle:headers():add("X-Content-Type-Options", "nosniff");
-                          response_handle:headers():add("Referrer-Policy", "no-referrer");
-                          response_handle:headers():add("X-Download-Options", "noopen");
-                          response_handle:headers():add("X-DNS-Prefetch-Control", "off");
-                          response_handle:headers():add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-                        end
-                  # This is mandatory in order to have the HTTP routes above.
-                  - name: envoy.filters.http.router
-
-                  # TODO(ROX-11395): enable rate limiting post-MVP
+                  #
                   # # We need this in order to generate JSON responses according to
                   # # our API guidelines, otherwise Envoy will generate plain text
                   # # responses.
@@ -1010,6 +1148,9 @@ objects:
           - name: envoy-tls
             secret:
               secretName: fleet-manager-envoy-tls # pragma: allowlist secret
+          - name: active-tls
+            secret:
+              secretName: fleet-manager-active-tls # pragma: allowlist secret
           - name: envoy-unix-sockets
             emptyDir:
               medium: Memory
@@ -1121,6 +1262,14 @@ objects:
                 value: "${RHACS_GITOPS_ENABLED}"
               - name: RHACS_TARGETED_OPERATOR_UPGRADES
                 value: "${RHACS_TARGETED_OPERATOR_UPGRADES}"
+              - name: POD_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.name
+              - name: NAMESPACE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.namespace
             command:
             - /usr/local/bin/fleet-manager
             - serve
@@ -1199,7 +1348,6 @@ objects:
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
             - --dataplane-cluster-config-file=${DATAPLANE_CLUSTER_CONFIG_FILE}
-            - --kubeconfig=/secrets/fleet-manager-credentials/kubeconfig
             - --fleetshard-poll-interval=${FLEETSHARD_POLL_INTERVAL}
             - --fleetshard-resync-interval=${FLEETSHARD_RESYNC_INTERVAL}
             - --allow-evaluator-instance=${ALLOW_EVALUATOR_INSTANCE}
@@ -1228,25 +1376,24 @@ objects:
               limits:
                 cpu: ${CPU_LIMIT}
                 memory: ${MEMORY_LIMIT}
-            # TODO ROX-11309 Use /api based endpoint for livenessProbe
             livenessProbe:
               httpGet:
                 path: /healthcheck
                 port: 8083
                 scheme: HTTPS
                 httpHeaders:
-                  - name: User-Agent
-                    value: Probe
+                - name: User-Agent
+                  value: K8sLivenessProbe
               initialDelaySeconds: 15
               periodSeconds: 5
             readinessProbe:
               httpGet:
-                path: /healthcheck
+                path: /healthcheck/ready
                 port: 8083
                 scheme: HTTPS
                 httpHeaders:
                 - name: User-Agent
-                  value: Probe
+                  value: K8sLivenessProbe
               initialDelaySeconds: 20
               periodSeconds: 10
           - name: envoy-sidecar
@@ -1256,6 +1403,8 @@ objects:
             - envoy
             - --config-path
             - /configs/envoy/main.yaml
+            - --log-level
+            - "${ENVOY_LOG_LEVEL}"
             ports:
             - name: api-envoy
               protocol: TCP
@@ -1266,6 +1415,8 @@ objects:
             volumeMounts:
             - name: envoy-tls
               mountPath: /secrets/tls
+            - name: active-tls
+              mountPath: /secrets/active-tls
             - name: envoy-config
               mountPath: /configs/envoy
             - name: envoy-unix-sockets
@@ -1341,6 +1492,25 @@ objects:
       - port: 9001
         targetPort: 9001
         protocol: TCP
+
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: fleet-manager-active
+      labels:
+        app: fleet-manager
+        port: api-envoy
+      annotations:
+        description: Exposes and load balances the fleet-manager pods. Only targets the active fleet-manager pod.
+        service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-active-tls
+    spec:
+      selector:
+        app: fleet-manager
+        fleet-manager-active: "true"
+      ports:
+        - port: 9001
+          targetPort: 9001
+          protocol: TCP
 
   # Services for diagnostic ports (not part of main service because we
   # don't want exposing them externally through same route).

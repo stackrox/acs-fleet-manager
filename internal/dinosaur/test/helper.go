@@ -37,7 +37,6 @@ type Services struct {
 	MetricsServer         *server.MetricsServer
 	HealthCheckServer     *server.HealthCheckServer
 	Workers               []coreWorkers.Worker
-	LeaderElectionManager *coreWorkers.LeaderElectionManager
 	APIServer             *server.APIServer
 	BootupServices        []environments.BootService
 	CloudProvidersService services.CloudProvidersService
@@ -66,8 +65,6 @@ func NewDinosaurHelperWithHooks(t *testing.T, server *httptest.Server, configura
 			dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral = true
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
-			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
-
 			// Integration tests require a valid OCM client. This requires OCM service account credentials to be set.
 			ocmConfig.EnableMock = false
 			ocmConfig.ReadFiles()

@@ -6,7 +6,7 @@
 #- This list is ordered, any new cluster should be appended at the end.
 #e.g.:
 #clusters:
-#  - name: anyname # This field is required for a standalone cluster i.e when the provider_type is "standalone". The value has to match the cluster / context name in the given kubeconfig file via the `--kubeconfig` flag.
+#  - name: anyname # This field is required for a standalone cluster i.e when the provider_type is "standalone".
 #    cluster_id: 1jp6kdr7k0sjbe5adck2prjur8f39378  #This field is required
 #    cloud_provider: aws
 #    region: us-east-1

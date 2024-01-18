@@ -1,12 +1,16 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.8
+FROM registry.ci.openshift.org/openshift/release:golang-1.20 AS build
+
+RUN mkdir /src
+WORKDIR /src
+COPY . ./
+
+RUN make binary
+
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9 as standard
 
 ENV KUBECTL_VERSION=v1.28.1
 
-COPY \
-    fleet-manager \
-    fleetshard-sync \
-    acsfleetctl \
-    /usr/local/bin/
+COPY --from=build /src/fleet-manager /src/fleetshard-sync /src/acsfleetctl /usr/local/bin/
 
 RUN microdnf install tar gzip
 

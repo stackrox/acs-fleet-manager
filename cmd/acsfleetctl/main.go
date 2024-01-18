@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/admin"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/centrals"
+	gitopsCmd "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops/cmd"
 )
 
 func main() {
@@ -26,4 +27,5 @@ func main() {
 func setupSubCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(centrals.NewCentralsCommand())
 	rootCmd.AddCommand(admin.NewAdminCommand())
+	rootCmd.AddCommand(gitopsCmd.NewGitOpsCommand())
 }

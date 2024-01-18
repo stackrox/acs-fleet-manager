@@ -155,7 +155,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, errors.Wrap(err, "checking if central changed")
 	}
-	needsReconcile := r.needsReconcile(changed, central)
+	needsReconcile := r.needsReconcile(changed, central, remoteCentral.Metadata.SecretsStored)
 
 	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
 		return nil, ErrCentralNotChanged
@@ -1593,10 +1593,15 @@ func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.Managed
 		isRemoteCentralReady(&remoteCentral)
 }
 
-func (r *CentralReconciler) needsReconcile(changed bool, central *v1alpha1.Central) bool {
+func (r *CentralReconciler) needsReconcile(changed bool, central *v1alpha1.Central, storedSecrets []string) bool {
+	if !r.areSecretsStored(storedSecrets) {
+		return true
+	}
+
 	if changed {
 		return true
 	}
+
 	forceReconcile, ok := central.Labels["rhacs.redhat.com/force-reconcile"]
 	return ok && forceReconcile == "true"
 }

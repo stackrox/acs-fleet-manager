@@ -43,7 +43,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			DeprovisionDinosaurForUsersFunc: func(users []string) *serviceError.ServiceError {
 //				panic("mock out the DeprovisionDinosaurForUsers method")
 //			},
-//			DeprovisionExpiredDinosaursFunc: func(dinosaurAgeInHours int) *serviceError.ServiceError {
+//			DeprovisionExpiredDinosaursFunc: func() *serviceError.ServiceError {
 //				panic("mock out the DeprovisionExpiredDinosaurs method")
 //			},
 //			DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
@@ -81,6 +81,9 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			},
 //			RegisterDinosaurJobFunc: func(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the RegisterDinosaurJob method")
+//			},
+//			ResetCentralSecretBackupFunc: func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+//				panic("mock out the ResetCentralSecretBackup method")
 //			},
 //			RestoreFunc: func(ctx context.Context, id string) *serviceError.ServiceError {
 //				panic("mock out the Restore method")
@@ -126,7 +129,7 @@ type DinosaurServiceMock struct {
 	DeprovisionDinosaurForUsersFunc func(users []string) *serviceError.ServiceError
 
 	// DeprovisionExpiredDinosaursFunc mocks the DeprovisionExpiredDinosaurs method.
-	DeprovisionExpiredDinosaursFunc func(dinosaurAgeInHours int) *serviceError.ServiceError
+	DeprovisionExpiredDinosaursFunc func() *serviceError.ServiceError
 
 	// DetectInstanceTypeFunc mocks the DetectInstanceType method.
 	DetectInstanceTypeFunc func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType
@@ -163,6 +166,9 @@ type DinosaurServiceMock struct {
 
 	// RegisterDinosaurJobFunc mocks the RegisterDinosaurJob method.
 	RegisterDinosaurJobFunc func(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
+
+	// ResetCentralSecretBackupFunc mocks the ResetCentralSecretBackup method.
+	ResetCentralSecretBackupFunc func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// RestoreFunc mocks the Restore method.
 	RestoreFunc func(ctx context.Context, id string) *serviceError.ServiceError
@@ -218,8 +224,6 @@ type DinosaurServiceMock struct {
 		}
 		// DeprovisionExpiredDinosaurs holds details about calls to the DeprovisionExpiredDinosaurs method.
 		DeprovisionExpiredDinosaurs []struct {
-			// DinosaurAgeInHours is the dinosaurAgeInHours argument value.
-			DinosaurAgeInHours int
 		}
 		// DetectInstanceType holds details about calls to the DetectInstanceType method.
 		DetectInstanceType []struct {
@@ -285,6 +289,13 @@ type DinosaurServiceMock struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 		}
+		// ResetCentralSecretBackup holds details about calls to the ResetCentralSecretBackup method.
+		ResetCentralSecretBackup []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// CentralRequest is the centralRequest argument value.
+			CentralRequest *dbapi.CentralRequest
+		}
 		// Restore holds details about calls to the Restore method.
 		Restore []struct {
 			// Ctx is the ctx argument value.
@@ -345,6 +356,7 @@ type DinosaurServiceMock struct {
 	lockPrepareDinosaurRequest            sync.RWMutex
 	lockRegisterDinosaurDeprovisionJob    sync.RWMutex
 	lockRegisterDinosaurJob               sync.RWMutex
+	lockResetCentralSecretBackup          sync.RWMutex
 	lockRestore                           sync.RWMutex
 	lockRotateCentralRHSSOClient          sync.RWMutex
 	lockUpdate                            sync.RWMutex
@@ -549,19 +561,16 @@ func (mock *DinosaurServiceMock) DeprovisionDinosaurForUsersCalls() []struct {
 }
 
 // DeprovisionExpiredDinosaurs calls DeprovisionExpiredDinosaursFunc.
-func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *serviceError.ServiceError {
+func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaurs() *serviceError.ServiceError {
 	if mock.DeprovisionExpiredDinosaursFunc == nil {
 		panic("DinosaurServiceMock.DeprovisionExpiredDinosaursFunc: method is nil but DinosaurService.DeprovisionExpiredDinosaurs was just called")
 	}
 	callInfo := struct {
-		DinosaurAgeInHours int
-	}{
-		DinosaurAgeInHours: dinosaurAgeInHours,
-	}
+	}{}
 	mock.lockDeprovisionExpiredDinosaurs.Lock()
 	mock.calls.DeprovisionExpiredDinosaurs = append(mock.calls.DeprovisionExpiredDinosaurs, callInfo)
 	mock.lockDeprovisionExpiredDinosaurs.Unlock()
-	return mock.DeprovisionExpiredDinosaursFunc(dinosaurAgeInHours)
+	return mock.DeprovisionExpiredDinosaursFunc()
 }
 
 // DeprovisionExpiredDinosaursCalls gets all the calls that were made to DeprovisionExpiredDinosaurs.
@@ -569,10 +578,8 @@ func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaurs(dinosaurAgeInHours 
 //
 //	len(mockedDinosaurService.DeprovisionExpiredDinosaursCalls())
 func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaursCalls() []struct {
-	DinosaurAgeInHours int
 } {
 	var calls []struct {
-		DinosaurAgeInHours int
 	}
 	mock.lockDeprovisionExpiredDinosaurs.RLock()
 	calls = mock.calls.DeprovisionExpiredDinosaurs
@@ -967,6 +974,42 @@ func (mock *DinosaurServiceMock) RegisterDinosaurJobCalls() []struct {
 	mock.lockRegisterDinosaurJob.RLock()
 	calls = mock.calls.RegisterDinosaurJob
 	mock.lockRegisterDinosaurJob.RUnlock()
+	return calls
+}
+
+// ResetCentralSecretBackup calls ResetCentralSecretBackupFunc.
+func (mock *DinosaurServiceMock) ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+	if mock.ResetCentralSecretBackupFunc == nil {
+		panic("DinosaurServiceMock.ResetCentralSecretBackupFunc: method is nil but DinosaurService.ResetCentralSecretBackup was just called")
+	}
+	callInfo := struct {
+		Ctx            context.Context
+		CentralRequest *dbapi.CentralRequest
+	}{
+		Ctx:            ctx,
+		CentralRequest: centralRequest,
+	}
+	mock.lockResetCentralSecretBackup.Lock()
+	mock.calls.ResetCentralSecretBackup = append(mock.calls.ResetCentralSecretBackup, callInfo)
+	mock.lockResetCentralSecretBackup.Unlock()
+	return mock.ResetCentralSecretBackupFunc(ctx, centralRequest)
+}
+
+// ResetCentralSecretBackupCalls gets all the calls that were made to ResetCentralSecretBackup.
+// Check the length with:
+//
+//	len(mockedDinosaurService.ResetCentralSecretBackupCalls())
+func (mock *DinosaurServiceMock) ResetCentralSecretBackupCalls() []struct {
+	Ctx            context.Context
+	CentralRequest *dbapi.CentralRequest
+} {
+	var calls []struct {
+		Ctx            context.Context
+		CentralRequest *dbapi.CentralRequest
+	}
+	mock.lockResetCentralSecretBackup.RLock()
+	calls = mock.calls.ResetCentralSecretBackup
+	mock.lockResetCentralSecretBackup.RUnlock()
 	return calls
 }
 

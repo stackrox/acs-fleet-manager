@@ -196,12 +196,12 @@ func Test_AMSCheckQuota(t *testing.T) {
 				},
 				Owner: tt.args.owner,
 			}
-			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaur, types.STANDARD)
+			standardAllowance, err := quotaService.HasQuotaAllowance(dinosaur, types.STANDARD)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
-			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaur, types.EVAL)
+			evalAllowance, err := quotaService.HasQuotaAllowance(dinosaur, types.EVAL)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
-			gomega.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
-			gomega.Expect(eq).To(gomega.Equal(tt.args.hasEvalQuota))
+			gomega.Expect(standardAllowance).To(gomega.Equal(tt.args.hasStandardQuota))
+			gomega.Expect(evalAllowance).To(gomega.Equal(tt.args.hasEvalQuota))
 
 			_, err = quotaService.ReserveQuota(emptyCtx, dinosaur, tt.args.dinosaurInstanceType)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
@@ -749,7 +749,7 @@ func Test_Delete_Quota(t *testing.T) {
 	}
 }
 
-func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
+func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 	type args struct {
 		dinosaurRequest      *dbapi.CentralRequest
 		dinosaurInstanceType types.DinosaurInstanceType
@@ -842,7 +842,8 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 						panic("unexpected error")
 					}
 					rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
-					qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
+					cloudAccount := v1.NewCloudAccount().CloudAccountID("cloudAccountID").CloudProviderID(awsCloudProvider)
+					qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq2).CloudAccounts(cloudAccount).Build()
 					if err != nil {
 						panic("unexpected error")
 					}
@@ -851,7 +852,10 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
+				dinosaurRequest: &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1",
+					CloudProvider:  awsCloudProvider,
+					CloudAccountID: "cloudAccountID",
+				},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    true,
@@ -925,9 +929,245 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
-			res, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.args.dinosaurRequest, tt.args.dinosaurInstanceType)
+			res, err := quotaService.HasQuotaAllowance(tt.args.dinosaurRequest, tt.args.dinosaurInstanceType)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			gomega.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
+}
+
+func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
+	standardCentral := &dbapi.CentralRequest{
+		InstanceType: "standard",
+	}
+
+	cloudCentral := &dbapi.CentralRequest{
+		InstanceType:   "standard",
+		CloudProvider:  awsCloudProvider,
+		CloudAccountID: "cloudAccountID",
+	}
+	const notAllowed = 0
+	const notConsumed = 0
+	const allowed = 1
+	const consumed = 1
+
+	tests := []struct {
+		name         string
+		amsClient    ocm.AMSClient
+		getQuotaFunc func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error)
+		central      *dbapi.CentralRequest
+
+		want       bool
+		wantErr    bool
+		wantErrMsg string
+	}{
+		{
+			name: "returns true for single allowed quota cost",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+				}, nil
+			},
+			central: standardCentral,
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "returns true for single allowed quota cost for eval instance",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+				}, nil
+			},
+			central: &dbapi.CentralRequest{
+				InstanceType: "eval",
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "returns false for no quota cost",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{}, nil
+			},
+			central: standardCentral,
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "returns true for several allowed quota costs",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+				}, nil
+			},
+			central: standardCentral,
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "returns true for one of several allowed quota costs",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, notAllowed, consumed, t),
+				}, nil
+			},
+			central: standardCentral,
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "returns true if organisation has exceeded their quota limits but entitlement is still active",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, consumed*2, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, consumed*3, t),
+				}, nil
+			},
+			central: standardCentral,
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "returns false for no quota cost allowed",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, notAllowed, consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, notAllowed, consumed, t),
+				}, nil
+			},
+			central: standardCentral,
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "returns false if cloud account has no allowed cost, but standard has",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeCloudTestQuotaCost(resourceName, organizationID, notAllowed, consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, consumed, t),
+				}, nil
+			},
+			central: cloudCentral,
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "returns false if standard account has no allowed cost, but cloud has",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeCloudTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, notAllowed, notConsumed, t),
+				}, nil
+			},
+			central: standardCentral,
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "returns false if cloud account has no allowed cost, neither standard has",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeCloudTestQuotaCost(resourceName, organizationID, notAllowed, notConsumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, notAllowed, notConsumed, t),
+				}, nil
+			},
+			central: cloudCentral,
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "returns true if cloud account has allowed cost, and standard has",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeCloudTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+				}, nil
+			},
+			central: cloudCentral,
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "returns false if cloud account has no active account",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeCloudTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+				}, nil
+			},
+			central: &dbapi.CentralRequest{
+				InstanceType:   "standard",
+				CloudProvider:  awsCloudProvider,
+				CloudAccountID: "unsubscribedCloudAccountID",
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "returns an error when it fails to get quota costs from ams",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return nil, fmt.Errorf("failed to get quota cost")
+			},
+			central:    standardCentral,
+			want:       false,
+			wantErr:    true,
+			wantErrMsg: "RHACS-MGMT-9: failed to get assigned quota of type \"standard\" for organization with external id \"\" and id \"fake-org-id-\"\n caused by: failed to get quota cost",
+		},
+		{
+			name: "returns an error when it finds only unsupported billing models",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				rrbq := v1.NewRelatedResource().BillingModel("unsupported").Product(product).ResourceName(resourceName).Cost(1)
+				qcb, err := v1.NewQuotaCost().Allowed(allowed).Consumed(notConsumed).OrganizationID(organizationID).RelatedResources(rrbq).Build()
+				require.NoError(t, err)
+				return []*v1.QuotaCost{qcb}, nil
+			},
+			central:    standardCentral,
+			want:       false,
+			wantErr:    true,
+			wantErrMsg: "RHACS-MGMT-9: found only unsupported billing models [\"unsupported\"] for product \"RHACS\"",
+		},
+	}
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+
+			var amsClient ocm.AMSClient = &ocm.ClientMock{
+				GetOrganisationFromExternalIDFunc: makeOrganizationFromExternalID,
+				GetQuotaCostsForProductFunc:       tt.getQuotaFunc,
+			}
+
+			quotaServiceFactory := NewDefaultQuotaServiceFactory(amsClient, nil, nil)
+			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
+
+			got, err := quotaService.HasQuotaAllowance(tt.central, types.DinosaurInstanceType(tt.central.InstanceType))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			if tt.wantErr {
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErrMsg), err.Error())
+			}
+			g.Expect(got).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func makeStandardTestQuotaCost(resourceName string, organizationID string, allowed int, consumed int, t *testing.T) *v1.QuotaCost {
+	rrbq := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+	qcb, err := v1.NewQuotaCost().Allowed(allowed).Consumed(consumed).OrganizationID(organizationID).RelatedResources(rrbq).Build()
+	require.NoError(t, err)
+	return qcb
+}
+
+func makeCloudTestQuotaCost(resourceName string, organizationID string, allowed int, consumed int, t *testing.T) *v1.QuotaCost {
+	cloudAccount := v1.NewCloudAccount().CloudAccountID("cloudAccountID").CloudProviderID(awsCloudProvider)
+	rrbq := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplaceAWS)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+	qcb, err := v1.NewQuotaCost().Allowed(allowed).Consumed(consumed).OrganizationID(organizationID).RelatedResources(rrbq).CloudAccounts(cloudAccount).Build()
+	require.NoError(t, err)
+	return qcb
+}
+
+func makeOrganizationFromExternalID(externalId string) (*v1.Organization, error) {
+	org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
+	return org, nil
 }

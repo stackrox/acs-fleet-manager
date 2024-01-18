@@ -23,10 +23,10 @@ type PublicAPI interface {
 
 // PrivateAPI is a wrapper interface for the fleetmanager client private API.
 type PrivateAPI interface {
-	GetDataPlaneClusterAgentConfig(ctx context.Context, id string) (private.DataplaneClusterAgentConfig, *http.Response, error)
 	GetCentral(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error)
 	GetCentrals(ctx context.Context, id string) (private.ManagedCentralList, *http.Response, error)
 	UpdateCentralClusterStatus(ctx context.Context, id string, requestBody map[string]private.DataPlaneCentralStatus) (*http.Response, error)
+	UpdateAgentClusterStatus(ctx context.Context, id string, request private.DataPlaneClusterUpdateStatusRequest) (*http.Response, error)
 }
 
 // AdminAPI is a wrapper interface for the fleetmanager client admin API.
@@ -34,6 +34,8 @@ type AdminAPI interface {
 	GetCentrals(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error)
 	CreateCentral(ctx context.Context, async bool, centralRequestPayload admin.CentralRequestPayload) (admin.CentralRequest, *http.Response, error)
 	DeleteDbCentralById(ctx context.Context, id string) (*http.Response, error)
+	CentralRotateSecrets(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error)
+	UpdateCentralNameById(ctx context.Context, id string, centralUpdateNameRequest admin.CentralUpdateNameRequest) (admin.Central, *http.Response, error)
 }
 
 var (

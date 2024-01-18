@@ -49,6 +49,9 @@ func getMigrations() []*gormigrate.Migration {
 		removeAvailableOperatorField(),
 		addSecretFieldToCentralRequests(),
 		removeCentralAndScannerOverrides(),
+		addExpiredAtFieldToCentralRequests(),
+		addExpirationLeaseType(),
+		addClusterAddons(),
 	}
 }
 

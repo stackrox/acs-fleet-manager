@@ -61,7 +61,7 @@ ensure_fleet_manager_image_exists() {
                 # Attempt to build this image.
                 if [[ "$FLEET_MANAGER_IMAGE" == "$(make -s -C "${GITROOT}" full-image-tag)" ]]; then
                         log "Building local image..."
-                        make -C "${GITROOT}" image/build/local
+                        make -C "${GITROOT}" image/build GOARCH="$(go env GOARCH)" # supports arm64
                 else
                     die "Cannot find image '${FLEET_MANAGER_IMAGE}' and don't know how to build it"
                 fi
@@ -100,26 +100,4 @@ is_local_deploy() {
         return 1
     fi
     return 0
-}
-
-preload_dependency_images() {
-    if is_running_inside_docker; then
-        return
-    fi
-    log "Preloading images into ${CLUSTER_TYPE} cluster..."
-    docker_pull "postgres:13"
-    if [[ "$INSTALL_OPERATOR" == "true" || "$RHACS_TARGETED_OPERATOR_UPGRADES" == "true" ]]; then
-        # Preload images required by Central installation.
-        docker_pull "${IMAGE_REGISTRY}/scanner:${SCANNER_VERSION}"
-        docker_pull "${IMAGE_REGISTRY}/scanner-db:${SCANNER_VERSION}"
-        docker_pull "${IMAGE_REGISTRY}/main:${CENTRAL_VERSION}"
-        docker_pull "${IMAGE_REGISTRY}/central-db:${CENTRAL_VERSION}"
-    fi
-
-    if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
-        log "Ensuring operator images exist from dev GitOps config"
-        ensure_operator_image_exists.sh
-    fi
-
-    log "Images preloaded"
 }

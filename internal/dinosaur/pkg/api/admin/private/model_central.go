@@ -31,6 +31,7 @@ type Central struct {
 	Host           string               `json:"host,omitempty"`
 	CreatedAt      time.Time            `json:"created_at,omitempty"`
 	UpdatedAt      time.Time            `json:"updated_at,omitempty"`
+	ExpiredAt      *time.Time           `json:"expired_at,omitempty"`
 	FailedReason   string               `json:"failed_reason,omitempty"`
 	OrganisationId string               `json:"organisation_id,omitempty"`
 	SubscriptionId string               `json:"subscription_id,omitempty"`

@@ -5,30 +5,36 @@ pullSecret: ""
 clusterName: ""
 centralEndpoint: ""
 admissionControl:
-  serviceTLS:
-    cert: ""
-    key: ""
   resources:
     requests:
-      memory: 100Mi
+      memory: 150Mi
       cpu: 100m
+    limits:
+      memory: 150Mi
   tolerations: []
   nodeSelector: {}
-ca:
-  cert: ""
 collector:
-  serviceTLS:
-    cert: ""
-    key: ""
   resources:
     requests:
-      memory: 50Mi
+      memory: 140Mi
       cpu: 10m
+    limits:
+      memory: 140Mi
+  collection: "CORE_BPF"
 compliance:
   resources:
     requests:
-      memory: 100Mi
+      memory: 140Mi
       cpu: 100m
+    limits:
+      memory: 140Mi
+nodeInventory:
+  resources:
+    requests:
+      memory: 180Mi
+      cpu: 20m
+    limits:
+      memory: 180Mi
 scanner:
   scannerComponent: null
   analyzer:
@@ -46,12 +52,11 @@ scanner:
         memory: 100Mi
         cpu: 100m
 sensor:
-  serviceTLS:
-    cert: ""
-    key: ""
   resources:
     requests:
-      memory: 100Mi
+      memory: 3500Mi
       cpu: 10m
+    limits:
+      memory: 3500Mi
   tolerations: []
   nodeSelector: {}

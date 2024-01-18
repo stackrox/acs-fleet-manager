@@ -320,8 +320,118 @@ paths:
       security:
       - Bearer: []
       summary: Return the details of Central instance by ID
+  /api/rhacs/v1/admin/centrals/{id}/expired-at:
+    patch:
+      operationId: updateCentralExpiredAtById
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - explode: true
+        in: query
+        name: timestamp
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reason
+        required: true
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Central'
+          description: Central updated by ID
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Update `expired_at` central property
+  /api/rhacs/v1/admin/centrals/{id}/name:
+    patch:
+      operationId: updateCentralNameById
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CentralUpdateNameRequest'
+        description: Options for patch operation
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Central'
+          description: Central updated by ID
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Update `name` central property
   /api/rhacs/v1/admin/centrals/{id}/rotate-secrets:
     post:
+      operationId: centralRotateSecrets
       parameters:
       - description: The ID of record
         in: path
@@ -338,7 +448,7 @@ paths:
         required: true
       responses:
         "200":
-          description: RHSSO client successfully rotated
+          description: Secret successfully rotated
         "401":
           content:
             application/json:
@@ -364,7 +474,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
-      summary: Rotate RHSSO client of a central tenant
+      summary: Rotate RHSSO client or Secret Backup of a central tenant
   /api/rhacs/v1/admin/centrals/{id}/restore:
     post:
       parameters:
@@ -464,10 +574,26 @@ components:
       - $ref: '#/components/schemas/CentralList_allOf'
     CentralRotateSecretsRequest:
       example:
+        reset_secret_backup: true
         rotate_rhsso_client_credentials: true
       properties:
         rotate_rhsso_client_credentials:
           type: boolean
+        reset_secret_backup:
+          type: boolean
+      type: object
+    CentralUpdateNameRequest:
+      example:
+        reason: reason
+        name: name
+      properties:
+        name:
+          type: string
+        reason:
+          type: string
+      required:
+      - name
+      - reason
       type: object
     Error:
       allOf:
@@ -566,6 +692,10 @@ components:
           type: string
         updated_at:
           format: date-time
+          type: string
+        expired_at:
+          format: date-time
+          nullable: true
           type: string
         failed_reason:
           type: string

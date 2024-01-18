@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	"github.com/stackrox/acs-fleet-manager/pkg/serviceregistration"
 )
 
 func TestInjections(t *testing.T) {
@@ -46,12 +47,12 @@ func TestInjections(t *testing.T) {
 	Expect(ok).To(Equal(true))
 	_, ok = bootList[3].(*server.HealthCheckServer)
 	Expect(ok).To(Equal(true))
-	_, ok = bootList[4].(*workers.LeaderElectionManager)
+	_, ok = bootList[4].(*serviceregistration.Service)
 	Expect(ok).To(Equal(true))
 
 	var workerList []workers.Worker
 	env.MustResolve(&workerList)
-	Expect(workerList).To(HaveLen(9))
+	Expect(workerList).To(HaveLen(10))
 }
 
 func createServicesCommand(env *environments.Env) *cobra.Command {

@@ -9,9 +9,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/wellknown"
 
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	operatorsv1alpha2 "github.com/operator-framework/api/pkg/operators/v1alpha2"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	v1 "k8s.io/api/core/v1"
@@ -19,21 +16,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
-	"k8s.io/client-go/tools/clientcmd"
-)
-
-const (
-	centralOperatorCatalogSourceName       = "managed-central-cs"
-	centralOperatorOperatorGroupName       = "managed-central-og"
-	centralOperatorSubscriptionName        = "managed-central-sub"
-	fleetShardOperatorCatalogSourceName    = "fleetshard-operator-cs"
-	fleetShardOperatorOperatorGroupName    = "fleetshard-operator-og"
-	fleetShardOperatorSubscriptionName     = "fleetshard-operator-sub"
-	fleetShardOperatorParametersSecretName = "addon-fleetshard-operator-parameters" // pragma: allowlist secret
 )
 
 // fieldManager indicates that the fleet-manager will be used as a field manager for conflict resolution
@@ -63,9 +47,6 @@ func newStandaloneProvider(connectionFactory *db.ConnectionFactory, dataplaneClu
 	}
 }
 
-// blank assignment to verify that StandaloneProvider implements Provider
-var _ Provider = &StandaloneProvider{}
-
 // Create ...
 func (s *StandaloneProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 	return nil, nil
@@ -74,191 +55,6 @@ func (s *StandaloneProvider) Create(request *types.ClusterRequest) (*types.Clust
 // Delete ...
 func (s *StandaloneProvider) Delete(spec *types.ClusterSpec) (bool, error) {
 	return true, nil
-}
-
-// InstallDinosaurOperator ...
-func (s *StandaloneProvider) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error) {
-	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
-		Resources: []interface{}{
-			s.buildDinosaurOperatorNamespace(),
-			s.buildDinosaurOperatorCatalogSource(),
-			s.buildDinosaurOperatorOperatorGroup(),
-			s.buildDinosaurOperatorSubscription(),
-		},
-	})
-
-	return true, err
-}
-
-func (s *StandaloneProvider) buildDinosaurOperatorNamespace() *v1.Namespace {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
-	return &v1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1.SchemeGroupVersion.String(),
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: dinosaurOperatorOLMConfig.Namespace,
-		},
-	}
-}
-
-func (s *StandaloneProvider) buildDinosaurOperatorCatalogSource() *operatorsv1alpha1.CatalogSource {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
-	return &operatorsv1alpha1.CatalogSource{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
-			Kind:       operatorsv1alpha1.CatalogSourceKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralOperatorCatalogSourceName,
-			Namespace: dinosaurOperatorOLMConfig.CatalogSourceNamespace,
-		},
-		Spec: operatorsv1alpha1.CatalogSourceSpec{
-			SourceType: operatorsv1alpha1.SourceTypeGrpc,
-			Image:      dinosaurOperatorOLMConfig.IndexImage,
-		},
-	}
-}
-
-func (s *StandaloneProvider) buildDinosaurOperatorOperatorGroup() *operatorsv1alpha2.OperatorGroup {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
-	return &operatorsv1alpha2.OperatorGroup{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: operatorsv1alpha2.SchemeGroupVersion.String(),
-			Kind:       operatorsv1alpha2.OperatorGroupKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralOperatorOperatorGroupName,
-			Namespace: dinosaurOperatorOLMConfig.Namespace,
-		},
-		// Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
-		Spec: operatorsv1alpha2.OperatorGroupSpec{},
-	}
-}
-
-func (s *StandaloneProvider) buildDinosaurOperatorSubscription() *operatorsv1alpha1.Subscription {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
-	return &operatorsv1alpha1.Subscription{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
-			Kind:       operatorsv1alpha1.SubscriptionKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralOperatorSubscriptionName,
-			Namespace: dinosaurOperatorOLMConfig.Namespace,
-		},
-		Spec: &operatorsv1alpha1.SubscriptionSpec{
-			CatalogSource:          centralOperatorCatalogSourceName,
-			Channel:                dinosaurOperatorOLMConfig.SubscriptionChannel,
-			CatalogSourceNamespace: dinosaurOperatorOLMConfig.CatalogSourceNamespace,
-			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
-			Package:                dinosaurOperatorOLMConfig.Package,
-		},
-	}
-}
-
-// InstallFleetshard ...
-func (s *StandaloneProvider) InstallFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
-	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
-		Resources: []interface{}{
-			s.buildFleetShardOperatorNamespace(),
-			s.buildFleetShardSyncSecret(params),
-			s.buildFleetShardOperatorCatalogSource(),
-			s.buildFleetShardOperatorOperatorGroup(),
-			s.buildFleetShardOperatorSubscription(),
-		},
-	})
-
-	return true, err
-}
-
-func (s *StandaloneProvider) buildFleetShardOperatorNamespace() *v1.Namespace {
-	fleetshardOLMConfig := s.dataplaneClusterConfig.FleetshardOperatorOLMConfig
-	return &v1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1.SchemeGroupVersion.String(),
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: fleetshardOLMConfig.Namespace,
-		},
-	}
-}
-
-func (s *StandaloneProvider) buildFleetShardOperatorCatalogSource() *operatorsv1alpha1.CatalogSource {
-	fleetshardOLMConfig := s.dataplaneClusterConfig.FleetshardOperatorOLMConfig
-	return &operatorsv1alpha1.CatalogSource{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
-			Kind:       operatorsv1alpha1.CatalogSourceKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fleetShardOperatorCatalogSourceName,
-			Namespace: fleetshardOLMConfig.CatalogSourceNamespace,
-		},
-		Spec: v1alpha1.CatalogSourceSpec{
-			SourceType: v1alpha1.SourceTypeGrpc,
-			Image:      fleetshardOLMConfig.IndexImage,
-		},
-	}
-}
-
-func (s *StandaloneProvider) buildFleetShardOperatorOperatorGroup() *operatorsv1alpha2.OperatorGroup {
-	fleetshardOLMConfig := s.dataplaneClusterConfig.FleetshardOperatorOLMConfig
-	return &operatorsv1alpha2.OperatorGroup{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: operatorsv1alpha2.SchemeGroupVersion.String(),
-			Kind:       operatorsv1alpha2.OperatorGroupKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fleetShardOperatorOperatorGroupName,
-			Namespace: fleetshardOLMConfig.Namespace,
-		},
-		// Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
-		Spec: operatorsv1alpha2.OperatorGroupSpec{},
-	}
-}
-
-func (s *StandaloneProvider) buildFleetShardOperatorSubscription() *operatorsv1alpha1.Subscription {
-	fleetshardOLMConfig := s.dataplaneClusterConfig.FleetshardOperatorOLMConfig
-	return &operatorsv1alpha1.Subscription{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
-			Kind:       operatorsv1alpha1.SubscriptionKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fleetShardOperatorSubscriptionName,
-			Namespace: fleetshardOLMConfig.Namespace,
-		},
-		Spec: &operatorsv1alpha1.SubscriptionSpec{
-			CatalogSource:          fleetShardOperatorCatalogSourceName,
-			Channel:                fleetshardOLMConfig.SubscriptionChannel,
-			CatalogSourceNamespace: fleetshardOLMConfig.CatalogSourceNamespace,
-			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
-			Package:                fleetshardOLMConfig.Package,
-		},
-	}
-}
-
-func (s *StandaloneProvider) buildFleetShardSyncSecret(params []types.Parameter) *v1.Secret {
-	secretStringData := map[string]string{}
-	for _, param := range params {
-		secretStringData[param.ID] = param.Value
-	}
-
-	fleetshardOLMConfig := s.dataplaneClusterConfig.FleetshardOperatorOLMConfig
-	return &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fleetShardOperatorParametersSecretName,
-			Namespace: fleetshardOLMConfig.Namespace,
-		},
-		StringData: secretStringData,
-	}
 }
 
 // CheckClusterStatus ...
@@ -270,19 +66,6 @@ func (s *StandaloneProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types
 // GetClusterDNS ...
 func (s *StandaloneProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (string, error) {
 	return "", nil // NOOP for now
-}
-
-// AddIdentityProvider ...
-func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
-	// setup identity provider
-	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
-		Resources: []interface{}{
-			s.buildOpenIDPClientSecret(identityProvider),
-			s.buildIdentityProviderResource(identityProvider),
-		},
-	})
-
-	return &identityProvider, err
 }
 
 // buildOpenIDPClientSecret builds the k8s secret which holds OpenIDP clientSecret value
@@ -337,46 +120,6 @@ func (s *StandaloneProvider) buildIdentityProviderResource(identityProvider type
 			},
 		},
 	}
-}
-
-// ApplyResources ...
-func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
-	if s.dataplaneClusterConfig.RawKubernetesConfig == nil {
-		return &resources, nil // no kubeconfig read, do nothing.
-	}
-
-	contextName := s.dataplaneClusterConfig.FindClusterNameByClusterID(clusterSpec.InternalID)
-	override := &clientcmd.ConfigOverrides{CurrentContext: contextName}
-	config := *s.dataplaneClusterConfig.RawKubernetesConfig
-	restConfig, err := clientcmd.NewNonInteractiveClientConfig(config, override.CurrentContext, override, &clientcmd.ClientConfigLoadingRules{}).
-		ClientConfig()
-
-	if err != nil {
-		return nil, fmt.Errorf("creating config: %w", err)
-	}
-
-	dynamicClient, err := dynamic.NewForConfig(restConfig)
-	if err != nil {
-		return nil, fmt.Errorf("creating dynamic client: %w", err)
-	}
-
-	// Create a REST mapper that tracks information about the available resources in the cluster.
-	dc, err := discovery.NewDiscoveryClientForConfig(restConfig)
-	if err != nil {
-		return nil, fmt.Errorf("creating discovery client: %w", err)
-	}
-
-	discoveryCachedClient := memory.NewMemCacheClient(dc)
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryCachedClient)
-
-	for _, resource := range resources.Resources {
-		_, err = applyResource(dynamicClient, mapper, resource)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &resources, nil
 }
 
 // ScaleUp ...

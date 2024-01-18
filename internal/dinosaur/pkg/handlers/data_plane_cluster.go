@@ -35,12 +35,8 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 			handlers.ValidateLength(&dataPlaneClusterID, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			ctx := r.Context()
-			dataPlaneClusterStatus, err := presenters.ConvertDataPlaneClusterStatus(dataPlaneClusterUpdateRequest)
-			if err != nil {
-				return nil, errors.Validation(err.Error())
-			}
-			svcErr := h.service.UpdateDataPlaneClusterStatus(ctx, dataPlaneClusterID, dataPlaneClusterStatus)
+			dataPlaneClusterStatus := presenters.ConvertDataPlaneClusterStatus(dataPlaneClusterUpdateRequest)
+			svcErr := h.service.UpdateDataPlaneClusterStatus(dataPlaneClusterID, dataPlaneClusterStatus)
 			return nil, svcErr
 		},
 	}
