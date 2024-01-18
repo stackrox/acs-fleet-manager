@@ -63,7 +63,6 @@ GOBIN=$(shell $(GO) env GOBIN)
 endif
 
 ifeq ($(IMAGE_PLATFORM),)
-# Used for local builds to support arm64
 IMAGE_PLATFORM=linux/$(shell $(GO) env GOARCH)
 endif
 
@@ -498,10 +497,9 @@ docker/login/internal:
 	$(DOCKER) login -u kubeadmin --password-stdin <<< $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
 .PHONY: docker/login/internal
 
-# Build the image using by specifying a specific image target within the Dockerfile.
-image/build: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
+# Build the image
 image/build:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(IMAGE_REF) -t $(SHORT_IMAGE_REF) --platform $(IMAGE_PLATFORM) $(BUILDX_BUILD_ARGS) .
+	DOCKER_CONFIG=${DOCKER_CONFIG} DOCKER_BUILDKIT=1 $(DOCKER) build -t $(SHORT_IMAGE_REF) .
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 ifeq ("$(CLUSTER_TYPE)","kind")
@@ -536,8 +534,9 @@ image/push: image/push/fleet-manager image/push/probe
 .PHONY: image/push
 
 image/push/fleet-manager: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
-image/push/fleet-manager: BUILDX_BUILD_ARGS=--push
-image/push/fleet-manager: image/build
+image/push/fleet-manager:
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(IMAGE_REF) --platform $(IMAGE_PLATFORM) --push .
+	@echo
 	@echo "Image was pushed as $(IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(IMAGE_REF)"
 .PHONY: image/push/fleet-manager
