@@ -501,8 +501,7 @@ docker/login/internal:
 # Build the image using by specifying a specific image target within the Dockerfile.
 image/build: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(IMAGE_REF) --platform $(IMAGE_PLATFORM) .
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(IMAGE_REF) -t $(SHORT_IMAGE_REF) --platform $(IMAGE_PLATFORM) --load .
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 ifeq ("$(CLUSTER_TYPE)","kind")
