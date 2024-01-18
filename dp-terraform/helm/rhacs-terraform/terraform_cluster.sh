@@ -50,7 +50,7 @@ case $ENVIRONMENT in
     ;;
 
   integration)
-    FM_ENDPOINT="https://qj3layty4dynlnz.api.integration.openshift.com"
+    FM_ENDPOINT="https://romndkjdq62p7sr.api.integration.openshift.com"
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
