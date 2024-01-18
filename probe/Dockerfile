@@ -1,5 +1,5 @@
 FROM registry.access.redhat.com/ubi8/go-toolset:1.20 AS build
-
+USER root
 ENV GOFLAGS="-mod=mod"
 
 RUN mkdir /src
