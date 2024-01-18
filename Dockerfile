@@ -1,9 +1,12 @@
 FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.20 AS build
 
-RUN mkdir /src /rds_ca
-ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /rds_ca/aws-rds-ca-global-bundle.pem
+WORKDIR /opt/acscs/src
 
-WORKDIR /src
+ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /opt/acscs/rds_ca/aws-rds-ca-global-bundle.pem
+
+RUN go env -w GOCACHE=/go/.cache; \
+    go env -w GOMODCACHE=/go/pkg/mod
+
 RUN --mount=type=cache,target=/go/pkg/mod/ \
      --mount=type=bind,source=go.sum,target=go.sum \
      --mount=type=bind,source=go.mod,target=go.mod \
@@ -15,7 +18,7 @@ ARG TARGETARCH
 
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/go/.cache/ \
-    make binary GOOS=linux GOARCH=${TARGETARCH}
+    make binary GOOS=linux GOARCH=${TARGETARCH} GOARGS="-buildvcs=false"
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9 as standard
 
@@ -25,8 +28,8 @@ RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
 USER unprivilegeduser
 
-COPY --chown=unprivilegeduser --from=build /src/fleet-manager /src/fleetshard-sync /usr/local/bin/
-COPY --chown=unprivilegeduser --from=build /rds_ca /usr/local/share/ca-certificates
+COPY --chown=unprivilegeduser --from=build /opt/acscs/src/fleet-manager /opt/acscs/src/fleetshard-sync /usr/local/bin/
+COPY --chown=unprivilegeduser --from=build /opt/acscs/rds_ca /usr/local/share/ca-certificates
 
 EXPOSE 8000
 WORKDIR /
