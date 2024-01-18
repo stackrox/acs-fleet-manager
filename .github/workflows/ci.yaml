@@ -146,4 +146,4 @@ jobs:
       - name: Build and push fleetshard-operator image to quay.io
         run: make image/push/fleetshard-operator
       - name: Build and push fleet-manager image to quay.io
-        run: make image/push/fleet-manager
+        run: make image/push/fleet-manager IMAGE_PLATFORM=linux/amd64,linux/arm64

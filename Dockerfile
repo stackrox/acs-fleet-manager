@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/openshift/release:golang-1.20 AS build
+FROM --platform=$BUILDPLATFORM registry.ci.openshift.org/openshift/release:golang-1.20 AS build
 
 RUN mkdir /src /rds_ca
 ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /rds_ca/aws-rds-ca-global-bundle.pem
@@ -11,11 +11,11 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 
 COPY . ./
 
-ARG GOARCH
+ARG TARGETARCH
 
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/go/.cache/ \
-    make binary GOOS=linux GOARCH=${GOARCH}
+    make binary GOOS=linux GOARCH=${TARGETARCH}
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9 as standard
 
