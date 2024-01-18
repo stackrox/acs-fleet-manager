@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM registry.ci.openshift.org/openshift/release:golang-1.20 AS build
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.20 AS build
 
 RUN mkdir /src /rds_ca
 ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /rds_ca/aws-rds-ca-global-bundle.pem
