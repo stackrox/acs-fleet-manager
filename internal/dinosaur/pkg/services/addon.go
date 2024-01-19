@@ -138,7 +138,7 @@ func (p *AddonProvisioner) getInstalledAddons(cluster api.Cluster) ([]dbapi.Addo
 		return []dbapi.AddonInstallation{}, nil
 	}
 	if len(cluster.Addons) == 0 {
-		glog.V(10).Info("No addons installed on the cluster, skipping")
+		glog.V(10).Info("No addons reported from the data plane, skipping")
 		return []dbapi.AddonInstallation{}, nil
 	}
 	var installedAddons []dbapi.AddonInstallation

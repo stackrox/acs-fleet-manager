@@ -691,6 +691,9 @@ deploy/secrets:
 		-p OCM_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-service.clientId' ] && [ -z '${OCM_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-service.clientId || echo '${OCM_SERVICE_CLIENT_ID}')" \
 		-p OCM_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-service.clientSecret' ] && [ -z '${OCM_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-service.clientSecret || echo '${OCM_SERVICE_CLIENT_SECRET}')" \
 		-p OCM_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-service.token' ] && [ -z '${OCM_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-service.token || echo '${OCM_SERVICE_TOKEN}')" \
+		-p OCM_ADDON_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-addon-service.clientId' ] && [ -z '${OCM_ADDON_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-addon-service.clientId || echo '${OCM_ADDON_SERVICE_CLIENT_ID}')" \
+		-p OCM_ADDON_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-addon-service.clientSecret' ] && [ -z '${OCM_ADDON_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-addon-service.clientSecret || echo '${OCM_ADDON_SERVICE_CLIENT_SECRET}')" \
+		-p OCM_ADDON_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-addon-service.token' ] && [ -z '${OCM_ADDON_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-addon-service.token || echo '${OCM_ADDON_SERVICE_TOKEN}')" \
 		-p SENTRY_KEY="$(shell ([ -s './secrets/sentry.key' ] && [ -z '${SENTRY_KEY}' ]) && cat ./secrets/sentry.key || echo '${SENTRY_KEY}')" \
 		-p AWS_ACCESS_KEY="$(shell ([ -s './secrets/aws.accesskey' ] && [ -z '${AWS_ACCESS_KEY}' ]) && cat ./secrets/aws.accesskey || echo '${AWS_ACCESS_KEY}')" \
 		-p AWS_ACCOUNT_ID="$(shell ([ -s './secrets/aws.accountid' ] && [ -z '${AWS_ACCOUNT_ID}' ]) && cat ./secrets/aws.accountid || echo '${AWS_ACCOUNT_ID}')" \

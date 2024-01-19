@@ -416,11 +416,11 @@ parameters:
   description: Enable leader election
   value: "true"
 
-- name: ADDON_SERVICE_OCM_URL
+- name: OCM_ADDON_SERVICE_URL
   displayName: The base URL of the OCM API for the addon service
   value: "https://api.openshift.com"
 
-- name: ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG
+- name: OCM_ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG
   description: Sets the provided fleetshard image tag if the addon parameter value is 'inherit'"
   value: "true"
 
@@ -1312,13 +1312,13 @@ objects:
             - --central-idp-issuer=${CENTRAL_IDP_ISSUER}
             - --ocm-client-id-file=/secrets/fleet-manager-credentials/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/fleet-manager-credentials/ocm-service.clientSecret
-            - --ocm-addon-url=${ADDON_SERVICE_OCM_URL}
+            - --ocm-addon-url=${OCM_ADDON_SERVICE_URL}
             - --ocm-addon-client-id-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientId
             - --ocm-addon-client-secret-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientSecret
             - --ocm-addon-client-secret-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientSecret
-            - --inherit-fleetshard-sync-image-tag=${ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG}
+            - --inherit-fleetshard-sync-image-tag=${OCM_ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG}
+            - --addon-self-token-file=/secrets/fleet-manager-credentials/ocm-addon-service.token
             - --fleetshard-sync-image-tag=${IMAGE_TAG}
-            - --addon-self-token-file=/secrets/service/ocm-addon-service.token
             - --sso-base-url=${SSO_BASE_URL}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
             - --sso-debug=${SSO_DEBUG}
