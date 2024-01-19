@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/hashicorp/go-multierror"
+	addonsmgmtv1 "github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
@@ -56,63 +57,63 @@ func initCustomizations(config ocm.AddonConfig) []addonCustomization {
 	return customizations
 }
 
-type updateDecision struct {
-	installedInOCM *clustersmgmtv1.AddOnInstallation
-	expectedConfig gitops.AddonConfig
-	ocmClient      ocm.Client
-	multiErr       *multierror.Error
-}
-
 type addonCustomization func(gitops.AddonConfig) gitops.AddonConfig
 
 // Provision installs, upgrades or uninstalls the addons based on a given config
-func (p *AddonProvisioner) Provision(cluster api.Cluster, addons []gitops.AddonConfig) error {
+func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gitops.AddonConfig) error {
 	var multiErr *multierror.Error
 	clusterID := cluster.ClusterID
 
-	updateDecisions := make(map[string]*updateDecision)
-	for _, addon := range addons {
-		for _, customization := range p.customizations {
-			addon = customization(addon)
-		}
-		addonInstallation, addonErr := p.ocmClient.GetAddonInstallation(clusterID, addon.ID)
-		if addonErr != nil {
-			if addonErr.Is404() {
-				// addon does not exist, install it
-				multiErr = multierror.Append(multiErr, p.installAddon(clusterID, addon))
-			} else {
-				multiErr = multierror.Append(multiErr, fmt.Errorf("failed to get addon %s: %w", addon.ID, addonErr))
-			}
-		} else {
-			updateDecisions[addonInstallation.ID()] = &updateDecision{
-				installedInOCM: addonInstallation,
-				expectedConfig: addon,
-				ocmClient:      p.ocmClient,
-				multiErr:       multiErr,
-			}
-		}
-	}
 	installedAddons, err := p.getInstalledAddons(cluster)
 	if err != nil {
 		multiErr = multierror.Append(multiErr, err)
 	}
-	for _, installedAddon := range installedAddons {
-		decision, exists := updateDecisions[installedAddon.ID]
-		if !exists {
-			// addon is installed on the cluster but not present in gitops config - uninstall it
-			multiErr = multierror.Append(multiErr, p.uninstallAddon(clusterID, installedAddon.ID))
-		} else {
-			if decision.updateInProgress() {
-				glog.V(10).Infof("Addon %s is not in a final state: %s, skip until the next worker iteration",
-					decision.installedInOCM.ID(), decision.installedInOCM.State())
-			} else if decision.needsUpdate(installedAddon) {
-				multiErr = multierror.Append(multiErr, p.updateAddon(clusterID, decision.expectedConfig))
+
+	for _, expectedConfig := range expectedConfigs {
+		for _, customization := range p.customizations {
+			expectedConfig = customization(expectedConfig)
+		}
+		installedInOCM, addonErr := p.ocmClient.GetAddonInstallation(clusterID, expectedConfig.ID)
+		installedOnCluster, exists := installedAddons[expectedConfig.ID]
+		if exists {
+			delete(installedAddons, expectedConfig.ID) // retained installations are absent in GitOps - we need to uninstall them
+		}
+		if addonErr != nil {
+			if addonErr.Is404() {
+				// addon does not exist, install it
+				multiErr = multierror.Append(multiErr, p.installAddon(clusterID, expectedConfig))
 			} else {
-				glog.V(10).Infof("Addon %s is already up-to-date", installedAddon.ID)
-				multiErr = validateUpToDateAddon(multiErr, decision.installedInOCM, installedAddon)
+				multiErr = multierror.Append(multiErr, fmt.Errorf("failed to get addon %s: %w", expectedConfig.ID, addonErr))
 			}
+			continue
+		}
+		if updateInProgress(installedInOCM) {
+			glog.V(10).Infof("Addon %s is not in a final state: %s, skip until the next worker iteration", installedInOCM.ID(), installedInOCM.State())
+			continue
+		}
+		if gitOpsConfigDifferent(expectedConfig, installedInOCM) {
+			multiErr = multierror.Append(multiErr, p.updateAddon(clusterID, expectedConfig))
+			continue
+		}
+		versionInstalledInOCM, err := p.ocmClient.GetAddonVersion(installedInOCM.ID(), installedInOCM.AddonVersion().ID())
+		if err != nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("get addon version object for addon %s with version %s: %w",
+				expectedConfig.ID, expectedConfig.Version, err))
+			continue
+		}
+		if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
+			multiErr = multierror.Append(multiErr, p.updateAddon(clusterID, expectedConfig))
+		} else {
+			glog.V(10).Infof("Addon %s is already up-to-date", installedOnCluster.ID)
+			multiErr = validateUpToDateAddon(multiErr, installedInOCM, installedOnCluster)
 		}
 	}
+
+	for _, installedAddon := range installedAddons {
+		// addon is installed on the cluster but not present in gitops config - uninstall it
+		multiErr = multierror.Append(multiErr, p.uninstallAddon(clusterID, installedAddon.ID))
+	}
+
 	return errorOrNil(multiErr)
 }
 
@@ -132,20 +133,24 @@ func validateUpToDateAddon(multiErr *multierror.Error, ocmInstallation *clusters
 	return multiErr
 }
 
-func (p *AddonProvisioner) getInstalledAddons(cluster api.Cluster) ([]dbapi.AddonInstallation, error) {
+func (p *AddonProvisioner) getInstalledAddons(cluster api.Cluster) (map[string]dbapi.AddonInstallation, error) {
 	if !features.AddonAutoUpgrade.Enabled() {
 		glog.V(10).Info("Addon auto upgrade feature is disabled, the existing addon installations will NOT be updated")
-		return []dbapi.AddonInstallation{}, nil
+		return map[string]dbapi.AddonInstallation{}, nil
 	}
 	if len(cluster.Addons) == 0 {
 		glog.V(10).Info("No addons reported from the data plane, skipping")
-		return []dbapi.AddonInstallation{}, nil
+		return map[string]dbapi.AddonInstallation{}, nil
 	}
 	var installedAddons []dbapi.AddonInstallation
 	if err := json.Unmarshal(cluster.Addons, &installedAddons); err != nil {
-		return []dbapi.AddonInstallation{}, fmt.Errorf("unmarshal installed addons: %w", err)
+		return map[string]dbapi.AddonInstallation{}, fmt.Errorf("unmarshal installed addons: %w", err)
 	}
-	return installedAddons, nil
+	result := make(map[string]dbapi.AddonInstallation)
+	for _, addon := range installedAddons {
+		result[addon.ID] = addon
+	}
+	return result, nil
 }
 
 func errorOrNil(multiErr *multierror.Error) error {
@@ -205,23 +210,15 @@ func isFinalState(state clustersmgmtv1.AddOnInstallationState) bool {
 	return state == clustersmgmtv1.AddOnInstallationStateFailed || state == clustersmgmtv1.AddOnInstallationStateReady
 }
 
-func (c *updateDecision) updateInProgress() bool {
-	return !isFinalState(c.installedInOCM.State())
+func updateInProgress(installedInOCM *clustersmgmtv1.AddOnInstallation) bool {
+	return !isFinalState(installedInOCM.State())
 }
 
-func (c *updateDecision) needsUpdate(current dbapi.AddonInstallation) bool {
-	if c.installedInOCM.AddonVersion().ID() != c.expectedConfig.Version ||
-		!maps.Equal(convertParametersFromOCMAPI(c.installedInOCM.Parameters()), c.expectedConfig.Parameters) {
-		return true
-	}
+func gitOpsConfigDifferent(expectedConfig gitops.AddonConfig, installedInOCM *clustersmgmtv1.AddOnInstallation) bool {
+	return installedInOCM.AddonVersion().ID() != expectedConfig.Version || !maps.Equal(convertParametersFromOCMAPI(installedInOCM.Parameters()), expectedConfig.Parameters)
+}
 
-	addonVersion, err := c.ocmClient.GetAddonVersion(c.expectedConfig.ID, c.expectedConfig.Version)
-	if err != nil {
-		c.multiErr = multierror.Append(c.multiErr, fmt.Errorf("get addon version object for addon %s with version %s: %w",
-			c.expectedConfig.ID, c.expectedConfig.Version, err))
-		return false
-	}
-
+func clusterInstallationDifferent(current dbapi.AddonInstallation, addonVersion *addonsmgmtv1.AddonVersion) bool {
 	return current.SourceImage != addonVersion.SourceImage() || current.PackageImage != addonVersion.PackageImage()
 }
 
