@@ -1409,7 +1409,7 @@ objects:
             - name: api-envoy
               protocol: TCP
               containerPort: 9001
-            - name: api-envoy-active
+            - name: api-active
               protocol: TCP
               containerPort: 9002
             - name: metrics-envoy
@@ -1502,7 +1502,7 @@ objects:
       name: fleet-manager-active
       labels:
         app: fleet-manager
-        port: api-envoy
+        port: api-active
       annotations:
         description: Exposes and load balances the fleet-manager pods. Only targets the active fleet-manager pod.
         service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-active-tls
