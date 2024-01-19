@@ -72,6 +72,9 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, addons []gitops.AddonC
 
 	updateDecisions := make(map[string]*updateDecision)
 	for _, addon := range addons {
+		for _, customization := range p.customizations {
+			addon = customization(addon)
+		}
 		addonInstallation, addonErr := p.ocmClient.GetAddonInstallation(clusterID, addon.ID)
 		if addonErr != nil {
 			if addonErr.Is404() {
@@ -165,10 +168,6 @@ func (p *AddonProvisioner) installAddon(clusterID string, config gitops.AddonCon
 }
 
 func (p *AddonProvisioner) newInstallation(config gitops.AddonConfig) (*clustersmgmtv1.AddOnInstallation, error) {
-	for _, customization := range p.customizations {
-		config = customization(config)
-	}
-
 	installation, err := clustersmgmtv1.NewAddOnInstallation().
 		Addon(clustersmgmtv1.NewAddOn().ID(config.ID)).
 		AddonVersion(clustersmgmtv1.NewAddOnVersion().ID(config.Version)).
