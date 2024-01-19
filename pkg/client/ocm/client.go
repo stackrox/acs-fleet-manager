@@ -39,6 +39,7 @@ type Client interface {
 	CreateAddonInstallation(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error
 	UpdateAddonInstallation(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error
 	DeleteAddonInstallation(clusterID string, addonID string) error
+	GetAddon(addonID string) (*addonsmgmtv1.Addon, error)
 	GetAddonVersion(addonID string, version string) (*addonsmgmtv1.AddonVersion, error)
 	GetClusterDNS(clusterID string) (string, error)
 	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
@@ -312,6 +313,22 @@ func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmg
 	return regionList, nil
 }
 
+func (c *client) GetAddon(addonID string) (*addonsmgmtv1.Addon, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
+	resp, err := c.connection.AddonsMgmt().V1().Addons().Addon(addonID).Get().Send()
+	if err != nil {
+		if resp != nil && resp.Status() == http.StatusNotFound {
+			return nil, serviceErrors.NotFound("")
+		}
+		return nil, serviceErrors.GeneralError("sending GetAddon request: %v", err)
+	}
+
+	return resp.Body(), nil
+}
+
 func (c *client) GetAddonVersion(addonID string, versionID string) (*addonsmgmtv1.AddonVersion, error) {
 	if c.connection == nil {
 		return nil, serviceErrors.InvalidOCMConnection()
@@ -322,7 +339,7 @@ func (c *client) GetAddonVersion(addonID string, versionID string) (*addonsmgmtv
 		if resp != nil && resp.Status() == http.StatusNotFound {
 			return nil, serviceErrors.NotFound("")
 		}
-		return nil, serviceErrors.GeneralError("sending GetAddon request: %v", err)
+		return nil, serviceErrors.GeneralError("sending GetAddonVersion request: %v", err)
 	}
 
 	return resp.Body(), nil

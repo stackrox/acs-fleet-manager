@@ -91,6 +91,14 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 			glog.V(10).Infof("Addon %s is not in a final state: %s, skip until the next worker iteration", installedInOCM.ID(), installedInOCM.State())
 			continue
 		}
+		if expectedConfig.Version == "" {
+			addon, err := p.ocmClient.GetAddon(expectedConfig.ID)
+			if err != nil {
+				multiErr = multierror.Append(multiErr, fmt.Errorf("get addon %s with the latest version: %w", expectedConfig.ID, err))
+				continue
+			}
+			expectedConfig.Version = addon.Version().ID()
+		}
 		if gitOpsConfigDifferent(expectedConfig, installedInOCM) {
 			multiErr = multierror.Append(multiErr, p.updateAddon(clusterID, expectedConfig))
 			continue
@@ -98,7 +106,7 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 		versionInstalledInOCM, err := p.ocmClient.GetAddonVersion(installedInOCM.ID(), installedInOCM.AddonVersion().ID())
 		if err != nil {
 			multiErr = multierror.Append(multiErr, fmt.Errorf("get addon version object for addon %s with version %s: %w",
-				expectedConfig.ID, expectedConfig.Version, err))
+				installedInOCM.ID(), installedInOCM.AddonVersion().ID(), err))
 			continue
 		}
 		if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
@@ -173,11 +181,15 @@ func (p *AddonProvisioner) installAddon(clusterID string, config gitops.AddonCon
 }
 
 func (p *AddonProvisioner) newInstallation(config gitops.AddonConfig) (*clustersmgmtv1.AddOnInstallation, error) {
-	installation, err := clustersmgmtv1.NewAddOnInstallation().
+	builder := clustersmgmtv1.NewAddOnInstallation().
 		Addon(clustersmgmtv1.NewAddOn().ID(config.ID)).
-		AddonVersion(clustersmgmtv1.NewAddOnVersion().ID(config.Version)).
-		Parameters(convertParametersToOCMAPI(config.Parameters)).
-		Build()
+		Parameters(convertParametersToOCMAPI(config.Parameters))
+
+	if config.Version != "" {
+		builder = builder.AddonVersion(clustersmgmtv1.NewAddOnVersion().ID(config.Version))
+	}
+
+	installation, err := builder.Build()
 
 	if err != nil {
 		return nil, fmt.Errorf("build new addon installation %s: %w", config.ID, err)
