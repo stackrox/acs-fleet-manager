@@ -110,7 +110,7 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 			continue
 		}
 		if !existOnCluster {
-			glog.V(10).Infof("Addon %s is not (yet?) installed on the data plane", installedInOCM.ID())
+			glog.V(10).Infof("Addon %s is not installed on the data plane", installedInOCM.ID())
 			continue
 		}
 		if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
@@ -151,7 +151,6 @@ func (p *AddonProvisioner) getInstalledAddons(cluster api.Cluster) (map[string]d
 		return map[string]dbapi.AddonInstallation{}, nil
 	}
 	if len(cluster.Addons) == 0 {
-		glog.V(10).Info("No addons reported from the data plane, skipping")
 		return map[string]dbapi.AddonInstallation{}, nil
 	}
 	var installedAddons []dbapi.AddonInstallation
