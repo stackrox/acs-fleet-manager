@@ -356,17 +356,9 @@ func (h adminCentralHandler) PatchCentralTrait(w http.ResponseWriter, r *http.Re
 			if !regexp.MustCompile("^[a-zA-Z0-9_-]{1,50}$").MatchString(trait) {
 				return nil, errors.BadRequest("Trait must be a non-empty string of 50 characters maximum")
 			}
-			cr, svcErr := h.service.GetByID(id)
-			if svcErr != nil {
-				return nil, svcErr
-			}
-			if arrays.Contains(cr.Traits, trait) {
-				return nil, nil
-			}
-
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
 			if err := h.service.Updates(central, map[string]interface{}{
-				"traits": gorm.Expr(`SELECT array_agg(DISTINCT trait) FROM unnest(array_append(traits, ?)) AS trait_set(trait)`, trait),
+				"traits": gorm.Expr(`(SELECT array_agg(DISTINCT v) FROM unnest(array_append(traits, ?)) AS traits_tmp(v))`, trait),
 			}); err != nil {
 				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Could not update central traits")
 			}
@@ -381,13 +373,6 @@ func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request)
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			trait := mux.Vars(r)["trait"]
-			cr, svcErr := h.service.GetByID(id)
-			if svcErr != nil {
-				return nil, svcErr
-			}
-			if !arrays.Contains(cr.Traits, trait) {
-				return nil, errors.NotFound("Central %q has no trait %q", id, trait)
-			}
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
 			if err := h.service.Updates(central, map[string]interface{}{
 				"traits": gorm.Expr(`array_remove(traits, ?)`, trait),
