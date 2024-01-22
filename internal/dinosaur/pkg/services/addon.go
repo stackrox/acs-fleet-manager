@@ -182,6 +182,7 @@ func (p *AddonProvisioner) installAddon(clusterID string, config gitops.AddonCon
 
 func (p *AddonProvisioner) newInstallation(config gitops.AddonConfig) (*clustersmgmtv1.AddOnInstallation, error) {
 	builder := clustersmgmtv1.NewAddOnInstallation().
+		ID(config.ID).
 		Addon(clustersmgmtv1.NewAddOn().ID(config.ID)).
 		Parameters(convertParametersToOCMAPI(config.Parameters))
 
