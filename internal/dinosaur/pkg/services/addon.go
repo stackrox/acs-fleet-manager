@@ -74,8 +74,8 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 			expectedConfig = customization(expectedConfig)
 		}
 		installedInOCM, addonErr := p.ocmClient.GetAddonInstallation(clusterID, expectedConfig.ID)
-		installedOnCluster, exists := installedAddons[expectedConfig.ID]
-		if exists {
+		installedOnCluster, existOnCluster := installedAddons[expectedConfig.ID]
+		if existOnCluster {
 			delete(installedAddons, expectedConfig.ID) // retained installations are absent in GitOps - we need to uninstall them
 		}
 		if addonErr != nil {
@@ -107,6 +107,10 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 		if err != nil {
 			multiErr = multierror.Append(multiErr, fmt.Errorf("get addon version object for addon %s with version %s: %w",
 				installedInOCM.ID(), installedInOCM.AddonVersion().ID(), err))
+			continue
+		}
+		if !existOnCluster {
+			glog.V(10).Infof("Addon %s is not (yet?) installed on the data plane", installedInOCM.ID())
 			continue
 		}
 		if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
