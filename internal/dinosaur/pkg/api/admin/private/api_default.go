@@ -1205,7 +1205,6 @@ func (a *DefaultApiService) GetCentrals(ctx _context.Context, localVarOptionals 
 
 /*
 PatchCentralTraits Adds a trait to a central.
-Adds a trait to a central. Not atomically.
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
   - @param trait A central trait

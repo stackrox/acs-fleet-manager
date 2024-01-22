@@ -692,8 +692,6 @@ paths:
           description: Unexpected error occurred
       summary: Returns central trait status.
     patch:
-      description: |
-        Adds a trait to a central. Not atomically.
       operationId: patchCentralTraits
       parameters:
       - description: The ID of record

@@ -492,8 +492,6 @@ paths:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
     patch:
       summary: Adds a trait to a central.
-      description: >
-        Adds a trait to a central. Not atomically.
       operationId: patchCentralTraits
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
