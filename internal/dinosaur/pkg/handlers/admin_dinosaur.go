@@ -3,12 +3,16 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
+	"github.com/lib/pq"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -21,6 +25,7 @@ import (
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
+	"gorm.io/gorm"
 )
 
 // AdminCentralHandler is the interface for the admin central handler
@@ -317,7 +322,7 @@ func (h adminCentralHandler) GetCentralTraits(w http.ResponseWriter, r *http.Req
 				return nil, svcErr
 			}
 			if len(cr.Traits) == 0 {
-				return nil, nil
+				return pq.StringArray{}, nil
 			}
 			return cr.Traits, nil
 		},
@@ -335,7 +340,7 @@ func (h adminCentralHandler) GetCentralTrait(w http.ResponseWriter, r *http.Requ
 				return nil, svcErr
 			}
 			if !arrays.Contains(cr.Traits, trait) {
-				return nil, errors.NotFound("The central does not have such trait")
+				return nil, errors.NotFound(fmt.Sprintf("Trait %q not found", trait))
 			}
 			return nil, nil
 		},
@@ -347,7 +352,10 @@ func (h adminCentralHandler) PatchCentralTrait(w http.ResponseWriter, r *http.Re
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
-			trait := mux.Vars(r)["trait"]
+			trait := strings.TrimSpace(mux.Vars(r)["trait"])
+			if !regexp.MustCompile("^[a-zA-Z0-9_-]{1,50}$").MatchString(trait) {
+				return nil, errors.BadRequest("Trait must be a non-empty string of 50 characters maximum")
+			}
 			cr, svcErr := h.service.GetByID(id)
 			if svcErr != nil {
 				return nil, svcErr
@@ -355,11 +363,12 @@ func (h adminCentralHandler) PatchCentralTrait(w http.ResponseWriter, r *http.Re
 			if arrays.Contains(cr.Traits, trait) {
 				return nil, nil
 			}
+
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
 			if err := h.service.Updates(central, map[string]interface{}{
-				"traits": append(cr.Traits, trait),
+				"traits": gorm.Expr(`SELECT array_agg(DISTINCT trait) FROM unnest(array_append(traits, ?)) AS trait_set(trait)`, trait),
 			}); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot update central traits")
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Could not update central traits")
 			}
 			return nil, nil
 		},
@@ -380,11 +389,10 @@ func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request)
 				return nil, errors.NotFound("Central %q has no trait %q", id, trait)
 			}
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
-			cr.Traits = arrays.FilterStringSlice(cr.Traits, func(t string) bool { return t != trait })
 			if err := h.service.Updates(central, map[string]interface{}{
-				"traits": cr.Traits,
+				"traits": gorm.Expr(`array_remove(traits, ?)`, trait),
 			}); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Cannot update central traits")
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Could not update central traits")
 			}
 			return nil, nil
 		},
