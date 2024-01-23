@@ -353,16 +353,6 @@ parameters:
   description: The domain name to use for Central instances
   value: acs-stage.rhcloud.com
 
-- name: CENTRAL_OPERATOR_OPERATOR_ADDON_ID
-  displayName: Central operator addon ID
-  description: ID of the Central operator addon
-  value: "managed-central-qe"
-
-- name: FLEETSHARD_ADDON_ID
-  displayName: fleetshard addon ID
-  description: ID of the fleetshard addon
-  value: "fleetshard-operator-qe"
-
 - name: ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
@@ -424,6 +414,14 @@ parameters:
 
 - name: ENABLE_LEADER_ELECTION
   description: Enable leader election
+  value: "true"
+
+- name: OCM_ADDON_SERVICE_URL
+  displayName: The base URL of the OCM API for the addon service
+  value: "https://api.openshift.com"
+
+- name: OCM_ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG
+  description: Sets the provided fleetshard image tag if the addon parameter value is 'inherit'"
   value: "true"
 
 objects:
@@ -1314,6 +1312,13 @@ objects:
             - --central-idp-issuer=${CENTRAL_IDP_ISSUER}
             - --ocm-client-id-file=/secrets/fleet-manager-credentials/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/fleet-manager-credentials/ocm-service.clientSecret
+            - --ocm-addon-url=${OCM_ADDON_SERVICE_URL}
+            - --ocm-addon-client-id-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientId
+            - --ocm-addon-client-secret-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientSecret
+            - --ocm-addon-client-secret-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientSecret
+            - --inherit-fleetshard-sync-image-tag=${OCM_ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG}
+            - --addon-self-token-file=/secrets/fleet-manager-credentials/ocm-addon-service.token
+            - --fleetshard-sync-image-tag=${IMAGE_TAG}
             - --sso-base-url=${SSO_BASE_URL}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
             - --sso-debug=${SSO_DEBUG}
@@ -1360,8 +1365,6 @@ objects:
             - --fleetshard-operator-index-image=${FLEETSHARD_OLM_INDEX_IMAGE}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --central-domain-name=${CENTRAL_DOMAIN_NAME}
-            - --central-operator-addon-id=${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}
-            - --fleetshard-addon-id=${FLEETSHARD_ADDON_ID}
             - --alsologtostderr
             - --central-request-expiration-timeout=${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}
             - --central-request-internal-user-agents=${CENTRAL_REQUEST_INTERNAL_USER_AGENTS}
