@@ -497,11 +497,23 @@ var _ fleetmanager.AdminAPI = &AdminAPIMock{}
 //			CreateCentralFunc: func(ctx context.Context, async bool, centralRequestPayload admin.CentralRequestPayload) (admin.CentralRequest, *http.Response, error) {
 //				panic("mock out the CreateCentral method")
 //			},
+//			DeleteCentralTraitFunc: func(ctx context.Context, id string, trait string) (*http.Response, error) {
+//				panic("mock out the DeleteCentralTrait method")
+//			},
 //			DeleteDbCentralByIdFunc: func(ctx context.Context, id string) (*http.Response, error) {
 //				panic("mock out the DeleteDbCentralById method")
 //			},
+//			GetCentralTraitFunc: func(ctx context.Context, id string, trait string) (*http.Response, error) {
+//				panic("mock out the GetCentralTrait method")
+//			},
+//			GetCentralTraitsFunc: func(ctx context.Context, id string) (map[string]interface{}, *http.Response, error) {
+//				panic("mock out the GetCentralTraits method")
+//			},
 //			GetCentralsFunc: func(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error) {
 //				panic("mock out the GetCentrals method")
+//			},
+//			PatchCentralTraitsFunc: func(ctx context.Context, id string, trait string) (*http.Response, error) {
+//				panic("mock out the PatchCentralTraits method")
 //			},
 //			UpdateCentralNameByIdFunc: func(ctx context.Context, id string, centralUpdateNameRequest admin.CentralUpdateNameRequest) (admin.Central, *http.Response, error) {
 //				panic("mock out the UpdateCentralNameById method")
@@ -519,11 +531,23 @@ type AdminAPIMock struct {
 	// CreateCentralFunc mocks the CreateCentral method.
 	CreateCentralFunc func(ctx context.Context, async bool, centralRequestPayload admin.CentralRequestPayload) (admin.CentralRequest, *http.Response, error)
 
+	// DeleteCentralTraitFunc mocks the DeleteCentralTrait method.
+	DeleteCentralTraitFunc func(ctx context.Context, id string, trait string) (*http.Response, error)
+
 	// DeleteDbCentralByIdFunc mocks the DeleteDbCentralById method.
 	DeleteDbCentralByIdFunc func(ctx context.Context, id string) (*http.Response, error)
 
+	// GetCentralTraitFunc mocks the GetCentralTrait method.
+	GetCentralTraitFunc func(ctx context.Context, id string, trait string) (*http.Response, error)
+
+	// GetCentralTraitsFunc mocks the GetCentralTraits method.
+	GetCentralTraitsFunc func(ctx context.Context, id string) ([]string, *http.Response, error)
+
 	// GetCentralsFunc mocks the GetCentrals method.
 	GetCentralsFunc func(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error)
+
+	// PatchCentralTraitsFunc mocks the PatchCentralTraits method.
+	PatchCentralTraitsFunc func(ctx context.Context, id string, trait string) (*http.Response, error)
 
 	// UpdateCentralNameByIdFunc mocks the UpdateCentralNameById method.
 	UpdateCentralNameByIdFunc func(ctx context.Context, id string, centralUpdateNameRequest admin.CentralUpdateNameRequest) (admin.Central, *http.Response, error)
@@ -548,8 +572,33 @@ type AdminAPIMock struct {
 			// CentralRequestPayload is the centralRequestPayload argument value.
 			CentralRequestPayload admin.CentralRequestPayload
 		}
+		// DeleteCentralTrait holds details about calls to the DeleteCentralTrait method.
+		DeleteCentralTrait []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+			// Trait is the trait argument value.
+			Trait string
+		}
 		// DeleteDbCentralById holds details about calls to the DeleteDbCentralById method.
 		DeleteDbCentralById []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+		}
+		// GetCentralTrait holds details about calls to the GetCentralTrait method.
+		GetCentralTrait []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+			// Trait is the trait argument value.
+			Trait string
+		}
+		// GetCentralTraits holds details about calls to the GetCentralTraits method.
+		GetCentralTraits []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// ID is the id argument value.
@@ -561,6 +610,15 @@ type AdminAPIMock struct {
 			Ctx context.Context
 			// LocalVarOptionals is the localVarOptionals argument value.
 			LocalVarOptionals *admin.GetCentralsOpts
+		}
+		// PatchCentralTraits holds details about calls to the PatchCentralTraits method.
+		PatchCentralTraits []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+			// Trait is the trait argument value.
+			Trait string
 		}
 		// UpdateCentralNameById holds details about calls to the UpdateCentralNameById method.
 		UpdateCentralNameById []struct {
@@ -574,8 +632,12 @@ type AdminAPIMock struct {
 	}
 	lockCentralRotateSecrets  sync.RWMutex
 	lockCreateCentral         sync.RWMutex
+	lockDeleteCentralTrait    sync.RWMutex
 	lockDeleteDbCentralById   sync.RWMutex
+	lockGetCentralTrait       sync.RWMutex
+	lockGetCentralTraits      sync.RWMutex
 	lockGetCentrals           sync.RWMutex
+	lockPatchCentralTraits    sync.RWMutex
 	lockUpdateCentralNameById sync.RWMutex
 }
 
@@ -659,6 +721,46 @@ func (mock *AdminAPIMock) CreateCentralCalls() []struct {
 	return calls
 }
 
+// DeleteCentralTrait calls DeleteCentralTraitFunc.
+func (mock *AdminAPIMock) DeleteCentralTrait(ctx context.Context, id string, trait string) (*http.Response, error) {
+	if mock.DeleteCentralTraitFunc == nil {
+		panic("AdminAPIMock.DeleteCentralTraitFunc: method is nil but AdminAPI.DeleteCentralTrait was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		ID    string
+		Trait string
+	}{
+		Ctx:   ctx,
+		ID:    id,
+		Trait: trait,
+	}
+	mock.lockDeleteCentralTrait.Lock()
+	mock.calls.DeleteCentralTrait = append(mock.calls.DeleteCentralTrait, callInfo)
+	mock.lockDeleteCentralTrait.Unlock()
+	return mock.DeleteCentralTraitFunc(ctx, id, trait)
+}
+
+// DeleteCentralTraitCalls gets all the calls that were made to DeleteCentralTrait.
+// Check the length with:
+//
+//	len(mockedAdminAPI.DeleteCentralTraitCalls())
+func (mock *AdminAPIMock) DeleteCentralTraitCalls() []struct {
+	Ctx   context.Context
+	ID    string
+	Trait string
+} {
+	var calls []struct {
+		Ctx   context.Context
+		ID    string
+		Trait string
+	}
+	mock.lockDeleteCentralTrait.RLock()
+	calls = mock.calls.DeleteCentralTrait
+	mock.lockDeleteCentralTrait.RUnlock()
+	return calls
+}
+
 // DeleteDbCentralById calls DeleteDbCentralByIdFunc.
 func (mock *AdminAPIMock) DeleteDbCentralById(ctx context.Context, id string) (*http.Response, error) {
 	if mock.DeleteDbCentralByIdFunc == nil {
@@ -695,6 +797,82 @@ func (mock *AdminAPIMock) DeleteDbCentralByIdCalls() []struct {
 	return calls
 }
 
+// GetCentralTrait calls GetCentralTraitFunc.
+func (mock *AdminAPIMock) GetCentralTrait(ctx context.Context, id string, trait string) (*http.Response, error) {
+	if mock.GetCentralTraitFunc == nil {
+		panic("AdminAPIMock.GetCentralTraitFunc: method is nil but AdminAPI.GetCentralTrait was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		ID    string
+		Trait string
+	}{
+		Ctx:   ctx,
+		ID:    id,
+		Trait: trait,
+	}
+	mock.lockGetCentralTrait.Lock()
+	mock.calls.GetCentralTrait = append(mock.calls.GetCentralTrait, callInfo)
+	mock.lockGetCentralTrait.Unlock()
+	return mock.GetCentralTraitFunc(ctx, id, trait)
+}
+
+// GetCentralTraitCalls gets all the calls that were made to GetCentralTrait.
+// Check the length with:
+//
+//	len(mockedAdminAPI.GetCentralTraitCalls())
+func (mock *AdminAPIMock) GetCentralTraitCalls() []struct {
+	Ctx   context.Context
+	ID    string
+	Trait string
+} {
+	var calls []struct {
+		Ctx   context.Context
+		ID    string
+		Trait string
+	}
+	mock.lockGetCentralTrait.RLock()
+	calls = mock.calls.GetCentralTrait
+	mock.lockGetCentralTrait.RUnlock()
+	return calls
+}
+
+// GetCentralTraits calls GetCentralTraitsFunc.
+func (mock *AdminAPIMock) GetCentralTraits(ctx context.Context, id string) ([]string, *http.Response, error) {
+	if mock.GetCentralTraitsFunc == nil {
+		panic("AdminAPIMock.GetCentralTraitsFunc: method is nil but AdminAPI.GetCentralTraits was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		ID  string
+	}{
+		Ctx: ctx,
+		ID:  id,
+	}
+	mock.lockGetCentralTraits.Lock()
+	mock.calls.GetCentralTraits = append(mock.calls.GetCentralTraits, callInfo)
+	mock.lockGetCentralTraits.Unlock()
+	return mock.GetCentralTraitsFunc(ctx, id)
+}
+
+// GetCentralTraitsCalls gets all the calls that were made to GetCentralTraits.
+// Check the length with:
+//
+//	len(mockedAdminAPI.GetCentralTraitsCalls())
+func (mock *AdminAPIMock) GetCentralTraitsCalls() []struct {
+	Ctx context.Context
+	ID  string
+} {
+	var calls []struct {
+		Ctx context.Context
+		ID  string
+	}
+	mock.lockGetCentralTraits.RLock()
+	calls = mock.calls.GetCentralTraits
+	mock.lockGetCentralTraits.RUnlock()
+	return calls
+}
+
 // GetCentrals calls GetCentralsFunc.
 func (mock *AdminAPIMock) GetCentrals(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error) {
 	if mock.GetCentralsFunc == nil {
@@ -728,6 +906,46 @@ func (mock *AdminAPIMock) GetCentralsCalls() []struct {
 	mock.lockGetCentrals.RLock()
 	calls = mock.calls.GetCentrals
 	mock.lockGetCentrals.RUnlock()
+	return calls
+}
+
+// PatchCentralTraits calls PatchCentralTraitsFunc.
+func (mock *AdminAPIMock) PatchCentralTraits(ctx context.Context, id string, trait string) (*http.Response, error) {
+	if mock.PatchCentralTraitsFunc == nil {
+		panic("AdminAPIMock.PatchCentralTraitsFunc: method is nil but AdminAPI.PatchCentralTraits was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		ID    string
+		Trait string
+	}{
+		Ctx:   ctx,
+		ID:    id,
+		Trait: trait,
+	}
+	mock.lockPatchCentralTraits.Lock()
+	mock.calls.PatchCentralTraits = append(mock.calls.PatchCentralTraits, callInfo)
+	mock.lockPatchCentralTraits.Unlock()
+	return mock.PatchCentralTraitsFunc(ctx, id, trait)
+}
+
+// PatchCentralTraitsCalls gets all the calls that were made to PatchCentralTraits.
+// Check the length with:
+//
+//	len(mockedAdminAPI.PatchCentralTraitsCalls())
+func (mock *AdminAPIMock) PatchCentralTraitsCalls() []struct {
+	Ctx   context.Context
+	ID    string
+	Trait string
+} {
+	var calls []struct {
+		Ctx   context.Context
+		ID    string
+		Trait string
+	}
+	mock.lockPatchCentralTraits.RLock()
+	calls = mock.calls.PatchCentralTraits
+	mock.lockPatchCentralTraits.RUnlock()
 	return calls
 }
 

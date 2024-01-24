@@ -48,6 +48,7 @@ const (
 
 var (
 	statusAccepted = constants.CentralRequestStatusAccepted.String()
+	apiTests       = make(map[string]func(context.Context, *fleetmanager.Client, string))
 )
 
 var _ = Describe("Central", Ordered, func() {
@@ -429,6 +430,10 @@ var _ = Describe("Central", Ordered, func() {
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
+
+		for text, test := range apiTests {
+			It(text, func() { test(ctx, client, centralRequestID) })
+		}
 
 		It("should transition central to deprovisioning state when deleting", func() {
 			Expect(deleteCentralByID(ctx, client, centralRequestID)).
