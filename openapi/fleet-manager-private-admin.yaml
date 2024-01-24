@@ -429,7 +429,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                type: array
+                items:
+                  type: string
           description: Central traits
         "401":
           description: Auth token is invalid

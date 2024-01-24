@@ -952,16 +952,16 @@ GetCentralTraits Returns a list of central traits.
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
 
-@return map[string]interface{}
+@return []string
 */
-func (a *DefaultApiService) GetCentralTraits(ctx _context.Context, id string) (map[string]interface{}, *_nethttp.Response, error) {
+func (a *DefaultApiService) GetCentralTraits(ctx _context.Context, id string) ([]string, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  map[string]interface{}
+		localVarReturnValue  []string
 	)
 
 	// create path and map variables

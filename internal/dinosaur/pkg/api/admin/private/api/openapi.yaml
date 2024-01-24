@@ -573,7 +573,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                items:
+                  type: string
+                type: array
           description: Central traits
         "401":
           content:
