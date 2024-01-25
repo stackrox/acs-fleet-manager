@@ -109,8 +109,8 @@ jobs:
           go mod tidy
       - name: Clean and generate files
         run: |
-          make clean/go-generated && make generated
-      - name: Test there were no changes
+          make clean/go-generated && make generate
+      - name: Test that there were no changes
         run: |
           git diff --exit-code
       - name: Setup tests secrets
