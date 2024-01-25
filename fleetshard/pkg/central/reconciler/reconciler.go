@@ -529,27 +529,35 @@ func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, nam
 }
 
 func getAuthProviderConfig(remoteCentral private.ManagedCentral) *declarativeconfig.AuthProvider {
+	groups := []declarativeconfig.Group{
+		{
+			AttributeKey:   "userid",
+			AttributeValue: remoteCentral.Spec.Auth.OwnerUserId,
+			RoleName:       "Admin",
+		},
+		{
+			AttributeKey:   "groups",
+			AttributeValue: "admin:org:all",
+			RoleName:       "Admin",
+		},
+		{
+			AttributeKey:   "rh_is_org_admin",
+			AttributeValue: "true",
+			RoleName:       "Admin",
+		},
+	}
+	if remoteCentral.Spec.Auth.OwnerAlternateUserId != "" {
+		groups = append(groups, declarativeconfig.Group{
+			AttributeKey:   "userid",
+			AttributeValue: remoteCentral.Spec.Auth.OwnerAlternateUserId,
+			RoleName:       "Admin",
+		})
+	}
 	return &declarativeconfig.AuthProvider{
 		Name:             authProviderName(remoteCentral),
 		UIEndpoint:       remoteCentral.Spec.UiEndpoint.Host,
 		ExtraUIEndpoints: []string{"localhost:8443"},
-		Groups: []declarativeconfig.Group{
-			{
-				AttributeKey:   "userid",
-				AttributeValue: remoteCentral.Spec.Auth.OwnerUserId,
-				RoleName:       "Admin",
-			},
-			{
-				AttributeKey:   "groups",
-				AttributeValue: "admin:org:all",
-				RoleName:       "Admin",
-			},
-			{
-				AttributeKey:   "rh_is_org_admin",
-				AttributeValue: "true",
-				RoleName:       "Admin",
-			},
-		},
+		Groups:           groups,
 		RequiredAttributes: []declarativeconfig.RequiredAttribute{
 			{
 				AttributeKey:   "rh_org_id",
