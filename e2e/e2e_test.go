@@ -431,9 +431,11 @@ var _ = Describe("Central", Ordered, func() {
 				Should(Succeed())
 		})
 
-		for text, test := range apiTests {
-			It(text, func() { test(ctx, client, centralRequestID) })
-		}
+		Describe("API tests", Ordered, func() {
+			for should, test := range apiTests {
+				It(should, func() { test(ctx, client, centralRequestID) })
+			}
+		})
 
 		It("should transition central to deprovisioning state when deleting", func() {
 			Expect(deleteCentralByID(ctx, client, centralRequestID)).
