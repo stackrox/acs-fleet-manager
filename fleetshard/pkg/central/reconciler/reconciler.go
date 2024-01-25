@@ -639,7 +639,8 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 
 	centralExists := true
 	existingCentral := v1alpha1.Central{}
-	centralKey := ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}
+	centralKey := ctrlClient.
+		ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}
 	err := r.client.Get(ctx, centralKey, &existingCentral)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -928,7 +929,7 @@ func (r *CentralReconciler) ensureCentralTLSSecretHasOwnerReference(ctx context.
 	}
 
 	secret.OwnerReferences = []metav1.OwnerReference{
-		*metav1.NewControllerRef(centralCR, centralCR.GroupVersionKind()),
+		*metav1.NewControllerRef(centralCR, v1alpha1.CentralGVK),
 	}
 
 	if err := r.client.Update(ctx, secret); err != nil {
