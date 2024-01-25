@@ -22,6 +22,7 @@ var (
 	alternateTenantIDClaim     = "rh-org-id"
 	alternateTenantUserIDClaim = "rh-user-id"
 
+	// Sub claim in old format.
 	alternateSubClaim = "deprecated_sub"
 )
 
