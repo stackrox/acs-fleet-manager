@@ -10,7 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	ocmClientMocks "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )

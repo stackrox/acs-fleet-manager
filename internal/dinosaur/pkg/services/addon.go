@@ -11,7 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	ocmClient "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
