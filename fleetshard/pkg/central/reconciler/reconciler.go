@@ -922,8 +922,13 @@ func (r *CentralReconciler) ensureCentralTLSSecretHasOwnerReference(ctx context.
 		return nil
 	}
 
+	centralCR := &v1alpha1.Central{}
+	if err := r.client.Get(ctx, ctrlClient.ObjectKeyFromObject(central), centralCR); err != nil {
+		return fmt.Errorf("getting current central CR from k8s: %w", err)
+	}
+
 	secret.OwnerReferences = []metav1.OwnerReference{
-		*metav1.NewControllerRef(central, central.GroupVersionKind()),
+		*metav1.NewControllerRef(centralCR, centralCR.GroupVersionKind()),
 	}
 
 	if err := r.client.Update(ctx, secret); err != nil {
