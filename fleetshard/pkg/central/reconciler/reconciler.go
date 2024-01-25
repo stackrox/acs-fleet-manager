@@ -916,6 +916,10 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (m
 func (r *CentralReconciler) ensureCentralTLSSecretHasOwnerReference(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 	secret, err := r.getSecret(remoteCentral.Metadata.Namespace, k8s.CentralTLSSecretName)
 	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			// no need to ensure correct owner reference if the secret doesn't exist
+			return nil
+		}
 		return err
 	}
 
