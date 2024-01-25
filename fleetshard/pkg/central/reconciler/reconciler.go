@@ -546,10 +546,10 @@ func getAuthProviderConfig(remoteCentral private.ManagedCentral) *declarativecon
 			RoleName:       "Admin",
 		},
 	}
-	if remoteCentral.Spec.Auth.OwnerAlternativeUserId != "" {
+	if remoteCentral.Spec.Auth.OwnerAlternateUserId != "" {
 		groups = append(groups, declarativeconfig.Group{
 			AttributeKey:   "userid",
-			AttributeValue: remoteCentral.Spec.Auth.OwnerAlternativeUserId,
+			AttributeValue: remoteCentral.Spec.Auth.OwnerAlternateUserId,
 			RoleName:       "Admin",
 		})
 	}

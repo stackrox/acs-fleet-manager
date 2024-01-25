@@ -12,10 +12,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func addAlternativeUserIDFieldToCentralRequests() *gormigrate.Migration {
+func addAlternateUserIDFieldToCentralRequests() *gormigrate.Migration {
 	type CentralRequest struct {
 		db.Model
-		OwnerAlternativeUserID string `json:"owner_alternative_user_id"`
+		OwnerAlternateUserID string `json:"owner_alternate_user_id"`
 	}
 	migrationID := "20240122180000"
 

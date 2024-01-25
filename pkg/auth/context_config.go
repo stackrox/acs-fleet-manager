@@ -21,6 +21,8 @@ var (
 	// The claims relate to the Red Hat organisation and user that created the service account.
 	alternateTenantIDClaim     = "rh-org-id"
 	alternateTenantUserIDClaim = "rh-user-id"
+
+	alternateSubClaim = "deprecated_sub"
 )
 
 // ContextConfig ...

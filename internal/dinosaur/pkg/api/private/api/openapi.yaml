@@ -454,7 +454,7 @@ components:
           type: string
         ownerUserId:
           type: string
-        ownerAlternativeUserId:
+        ownerAlternateUserId:
           type: string
         ownerOrgId:
           type: string
