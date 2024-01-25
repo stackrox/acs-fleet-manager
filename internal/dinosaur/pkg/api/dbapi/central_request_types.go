@@ -46,7 +46,7 @@ type CentralRequest struct {
 	OwnerUserID string `json:"owner_user_id"`
 	// OwnerAlternateUserID is the user_id claim of the Red Hat SSO token.
 	// It is introduced to allow for a seamless migration of the subject claim format.
-	OwnerAlternateUserID string `json:"owner_alternative_user_id"`
+	OwnerAlternateUserID string `json:"owner_alternate_user_id"`
 
 	// Instance-independent part of the Central's hostname. For example, this
 	// can be `rhacs-dev.com`, `acs-stage.rhcloud.com`, etc.
