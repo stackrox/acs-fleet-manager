@@ -1,7 +1,6 @@
 package fleetmanager
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 
@@ -9,40 +8,14 @@ import (
 	admin "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	api "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/interface"
 )
-
-//go:generate moq -out api_moq.go . PublicAPI PrivateAPI AdminAPI
-
-// PublicAPI is a wrapper interface for the fleetmanager client public API.
-type PublicAPI interface {
-	CreateCentral(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error)
-	DeleteCentralById(ctx context.Context, id string, async bool) (*http.Response, error)
-	GetCentralById(ctx context.Context, id string) (public.CentralRequest, *http.Response, error)
-	GetCentrals(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error)
-}
-
-// PrivateAPI is a wrapper interface for the fleetmanager client private API.
-type PrivateAPI interface {
-	GetCentral(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error)
-	GetCentrals(ctx context.Context, id string) (private.ManagedCentralList, *http.Response, error)
-	UpdateCentralClusterStatus(ctx context.Context, id string, requestBody map[string]private.DataPlaneCentralStatus) (*http.Response, error)
-	UpdateAgentClusterStatus(ctx context.Context, id string, request private.DataPlaneClusterUpdateStatusRequest) (*http.Response, error)
-}
-
-// AdminAPI is a wrapper interface for the fleetmanager client admin API.
-type AdminAPI interface {
-	GetCentrals(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error)
-	CreateCentral(ctx context.Context, async bool, centralRequestPayload admin.CentralRequestPayload) (admin.CentralRequest, *http.Response, error)
-	DeleteDbCentralById(ctx context.Context, id string) (*http.Response, error)
-	CentralRotateSecrets(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error)
-	UpdateCentralNameById(ctx context.Context, id string, centralUpdateNameRequest admin.CentralUpdateNameRequest) (admin.Central, *http.Response, error)
-}
 
 var (
 	_ http.RoundTripper = (*authTransport)(nil)
-	_ PublicAPI         = (*publicAPIDelegate)(nil)
-	_ PrivateAPI        = (*privateAPIDelegate)(nil)
-	_ AdminAPI          = (*adminAPIDelegate)(nil)
+	_ api.PublicAPI     = (*publicAPIDelegate)(nil)
+	_ api.PrivateAPI    = (*privateAPIDelegate)(nil)
+	_ api.AdminAPI      = (*adminAPIDelegate)(nil)
 )
 
 type publicAPIDelegate struct {
@@ -81,9 +54,9 @@ func newAuthTransport(auth Auth) *authTransport {
 // Client is a helper struct that wraps around the API clients generated from
 // OpenAPI spec for the three different API groups of fleet manager: public, private, admin.
 type Client struct {
-	publicAPI  PublicAPI
-	privateAPI PrivateAPI
-	adminAPI   AdminAPI
+	publicAPI  api.PublicAPI
+	privateAPI api.PrivateAPI
+	adminAPI   api.AdminAPI
 }
 
 // ClientOption to configure the Client.
@@ -164,16 +137,16 @@ func NewClient(endpoint string, auth Auth, opts ...ClientOption) (*Client, error
 }
 
 // PublicAPI returns the service to interact with fleet manager's public API.
-func (c *Client) PublicAPI() PublicAPI {
+func (c *Client) PublicAPI() api.PublicAPI {
 	return c.publicAPI
 }
 
 // PrivateAPI returns the service to interact with fleet manager's private API.
-func (c *Client) PrivateAPI() PrivateAPI {
+func (c *Client) PrivateAPI() api.PrivateAPI {
 	return c.privateAPI
 }
 
 // AdminAPI returns the service to interact with fleet manager's admin API.
-func (c *Client) AdminAPI() AdminAPI {
+func (c *Client) AdminAPI() api.AdminAPI {
 	return c.adminAPI
 }

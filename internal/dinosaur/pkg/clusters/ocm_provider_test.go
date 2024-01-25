@@ -7,6 +7,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocmClient "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	ocmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -16,7 +18,7 @@ import (
 
 func TestOCMProvider_Create(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocmClient.Client
 	}
 	type args struct {
 		clusterReq types.ClusterRequest
@@ -50,7 +52,7 @@ func TestOCMProvider_Create(t *testing.T) {
 		{
 			name: "should return created cluster",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					CreateClusterFunc: func(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error) {
 						return clustersmgmtv1.NewCluster().ID(internalID).ExternalID(externalID).Build()
 					},
@@ -70,7 +72,7 @@ func TestOCMProvider_Create(t *testing.T) {
 		{
 			name: "should return error when create cluster failed from OCM",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					CreateClusterFunc: func(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error) {
 						return nil, errors.Errorf("failed to create cluster")
 					},
@@ -97,7 +99,7 @@ func TestOCMProvider_Create(t *testing.T) {
 
 func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocmClient.Client
 	}
 	type args struct {
 		clusterSpec *types.ClusterSpec
@@ -125,7 +127,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 		{
 			name: "should return cluster status ready",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
 						sb := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateReady)
 						return clustersmgmtv1.NewCluster().Status(sb).ExternalID(externalID).Build()
@@ -146,7 +148,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 		{
 			name: "should return cluster status failed",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
 						sb := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateError).ProvisionErrorMessage(clusterFailedProvisioningErrorText)
 						return clustersmgmtv1.NewCluster().Status(sb).ExternalID(externalID).Build()
@@ -168,7 +170,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 		{
 			name: "should return error when failed to get cluster from OCM",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
 						return nil, errors.Errorf("failed to get cluster")
 					},
@@ -197,7 +199,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 
 func TestOCMProvider_Delete(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocmClient.Client
 	}
 	type args struct {
 		clusterSpec *types.ClusterSpec
@@ -222,7 +224,7 @@ func TestOCMProvider_Delete(t *testing.T) {
 		{
 			name: "should return true if cluster is not found from OCM",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					DeleteClusterFunc: func(clusterID string) (int, error) {
 						return http.StatusNotFound, nil
 					},
@@ -237,7 +239,7 @@ func TestOCMProvider_Delete(t *testing.T) {
 		{
 			name: "should return false if the cluster still exists in OCM",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					DeleteClusterFunc: func(clusterID string) (int, error) {
 						return http.StatusConflict, nil
 					},
@@ -252,7 +254,7 @@ func TestOCMProvider_Delete(t *testing.T) {
 		{
 			name: "should return error",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					DeleteClusterFunc: func(clusterID string) (int, error) {
 						return 0, errors.Errorf("failed to delete cluster from OCM")
 					},
@@ -281,7 +283,7 @@ func TestOCMProvider_Delete(t *testing.T) {
 
 func TestOCMProvider_GetClusterDNS(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocmClient.Client
 	}
 	type args struct {
 		clusterSpec *types.ClusterSpec
@@ -308,7 +310,7 @@ func TestOCMProvider_GetClusterDNS(t *testing.T) {
 		{
 			name: "should return dns value from OCM",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					GetClusterDNSFunc: func(clusterID string) (string, error) {
 						return dns, nil
 					},
@@ -323,7 +325,7 @@ func TestOCMProvider_GetClusterDNS(t *testing.T) {
 		{
 			name: "should return error",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					GetClusterDNSFunc: func(clusterID string) (string, error) {
 						return "", errors.Errorf("failed to get dns value from OCM")
 					},
@@ -352,7 +354,7 @@ func TestOCMProvider_GetClusterDNS(t *testing.T) {
 
 func TestOCMProvider_GetCloudProviders(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocmClient.Client
 	}
 
 	providerID1 := "provider-id-1"
@@ -368,7 +370,7 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 		{
 			name: "should return cloud providers when there are no cloud providers returned from ocm",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					GetCloudProvidersFunc: func() (*clustersmgmtv1.CloudProviderList, error) {
 						return clustersmgmtv1.NewCloudProviderList().Build()
 					},
@@ -380,7 +382,7 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 		{
 			name: "should return cloud providers when there are cloud providers returned from ocm",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					GetCloudProvidersFunc: func() (*clustersmgmtv1.CloudProviderList, error) {
 						p := clustersmgmtv1.NewCloudProvider().ID(providerID1).Name(providerName1).DisplayName(providerDisplayName1)
 						return clustersmgmtv1.NewCloudProviderList().Items(p).Build()
@@ -397,7 +399,7 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 		{
 			name: "should return error when failed to get cloud providers",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					GetCloudProvidersFunc: func() (*clustersmgmtv1.CloudProviderList, error) {
 						return nil, errors.Errorf("failed to get cloud providers")
 					},
@@ -423,7 +425,7 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 
 func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocmClient.Client
 	}
 
 	type args struct {
@@ -449,7 +451,7 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 		{
 			name: "should return cloud providers when there are no cloud providers returned from ocm",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 						Expect(provider.ID()).To(Equal(providerID1))
 						Expect(provider.Name()).To(Equal(providerName1))
@@ -469,7 +471,7 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 		{
 			name: "should return cloud providers when there are cloud providers returned from ocm",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 						Expect(provider.ID()).To(Equal(providerID1))
 						Expect(provider.Name()).To(Equal(providerName1))
@@ -501,7 +503,7 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 		{
 			name: "should return error when failed to get cloud provider regions",
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmMocks.ClientMock{
 					GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 						return nil, errors.Errorf("failed get cloud provider regions")
 					},

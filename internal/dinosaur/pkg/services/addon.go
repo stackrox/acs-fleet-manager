@@ -11,7 +11,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocmClient "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"golang.org/x/exp/maps"
@@ -21,7 +22,7 @@ const fleetshardImageTagParameter = "fleetshardSyncImageTag"
 
 // AddonProvisioner keeps addon installations on the data plane clusters up-to-date
 type AddonProvisioner struct {
-	ocmClient      ocm.Client
+	ocmClient      ocmClient.Client
 	customizations []addonCustomization
 }
 

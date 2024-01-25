@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/rs/xid"
+	ocmInterface "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
 )
 
 // MaxClusterNameLength ...
@@ -12,17 +13,7 @@ const (
 	MaxClusterNameLength = 15
 )
 
-// IDGenerator NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider
-// moving the type into a ocmtest package.
-// IDGenerator interface for string ID generators.
-//
-//go:generate moq -out idgenerator_moq.go . IDGenerator
-type IDGenerator interface {
-	// Generate create a new string ID.
-	Generate() string
-}
-
-var _ IDGenerator = idGenerator{}
+var _ ocmInterface.IDGenerator = idGenerator{}
 
 // idGenerator internal implementation of IDGenerator.
 type idGenerator struct {
@@ -31,7 +22,7 @@ type idGenerator struct {
 }
 
 // NewIDGenerator create a new default implementation of IDGenerator.
-func NewIDGenerator(prefix string) IDGenerator {
+func NewIDGenerator(prefix string) ocmInterface.IDGenerator {
 	return idGenerator{
 		prefix: prefix,
 	}

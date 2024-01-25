@@ -9,6 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocmIDgen "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
 )
 
 // ClusterNamePrefix a prefix used for new OCM cluster names
@@ -33,7 +34,7 @@ var _ ClusterBuilder = &clusterBuilder{}
 // clusterBuilder internal ClusterBuilder implementation.
 type clusterBuilder struct {
 	// idGenerator generates cluster IDs.
-	idGenerator ocm.IDGenerator
+	idGenerator ocmIDgen.IDGenerator
 
 	// awsConfig contains aws credentials for use with the OCM cluster service.
 	awsConfig *config.AWSConfig

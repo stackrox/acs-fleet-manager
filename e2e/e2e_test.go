@@ -21,6 +21,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	fm "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/interface"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,7 +52,7 @@ var (
 
 var _ = Describe("Central", Ordered, func() {
 	var client *fleetmanager.Client
-	var adminAPI fleetmanager.AdminAPI
+	var adminAPI fm.AdminAPI
 	var notes []string
 	var ctx = context.Background()
 

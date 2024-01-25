@@ -13,6 +13,8 @@ import (
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift-online/ocm-sdk-go/logging"
 	pkgerrors "github.com/pkg/errors"
+	ocmClient "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
@@ -25,49 +27,17 @@ const TermsEventcodeOnlineService = "onlineService"
 // TermsEventcodeRegister ...
 const TermsEventcodeRegister = "register"
 
-// Client ...
-//
-//go:generate moq -out client_moq.go . Client
-type Client interface {
-	CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error)
-	GetClusterIngresses(clusterID string) (*clustersmgmtv1.IngressesListResponse, error)
-	GetCluster(clusterID string) (*clustersmgmtv1.Cluster, error)
-	GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, error)
-	GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error)
-	GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
-	GetAddonInstallation(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *serviceErrors.ServiceError)
-	CreateAddonInstallation(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error
-	UpdateAddonInstallation(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error
-	DeleteAddonInstallation(clusterID string, addonID string) error
-	GetAddon(addonID string) (*addonsmgmtv1.Addon, error)
-	GetAddonVersion(addonID string, version string) (*addonsmgmtv1.AddonVersion, error)
-	GetClusterDNS(clusterID string) (string, error)
-	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
-	DeleteCluster(clusterID string) (int, error)
-	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
-	DeleteSubscription(id string) (int, error)
-	FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error)
-	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectURL string, err error)
-	GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error)
-	GetOrganisationFromExternalID(externalID string) (*amsv1.Organization, error)
-	Connection() *sdkClient.Connection
-	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
-	GetCustomerCloudAccounts(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
-	// GetCurrentAccount returns the account information of the user to whom belongs the token
-	GetCurrentAccount(userToken string) (int, *amsv1.Account, error)
-}
-
-var _ Client = &client{}
+var _ ocmClient.Client = &client{}
 
 type client struct {
 	connection *sdkClient.Connection
 }
 
 // AMSClient ...
-type AMSClient Client
+type AMSClient ocmClient.Client
 
 // ClusterManagementClient ...
-type ClusterManagementClient Client
+type ClusterManagementClient ocmClient.Client
 
 // NewOCMConnection ...
 func NewOCMConnection(ocmConfig *OCMConfig, baseURL string) (*sdkClient.Connection, func(), error) {
@@ -119,13 +89,13 @@ func getLogger(isDebugEnabled bool) (*logging.GoLogger, error) {
 }
 
 // NewClient ...
-func NewClient(connection *sdkClient.Connection) Client {
+func NewClient(connection *sdkClient.Connection) ocmClient.Client {
 	return &client{connection: connection}
 }
 
 // NewMockClient returns a new OCM client with stubbed responses.
-func NewMockClient() Client {
-	return &ClientMock{
+func NewMockClient() ocmClient.Client {
+	return &mocks.ClientMock{
 		GetOrganisationFromExternalIDFunc: func(externalID string) (*amsv1.Organization, error) {
 			org, err := amsv1.NewOrganization().
 				ID("12345678").

@@ -7,7 +7,8 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocmClient "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	ocmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
@@ -16,14 +17,14 @@ func TestRequireTermsAcceptanceMiddleware(t *testing.T) {
 	tests := []struct {
 		name     string
 		enabled  bool
-		client   ocm.Client
+		client   ocmClient.Client
 		next     http.Handler
 		wantCode int
 	}{
 		{
 			name:    "should fail if terms checks is enabled and terms are required",
 			enabled: true,
-			client: &ocm.ClientMock{
+			client: &ocmMocks.ClientMock{
 				GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
 					return true, "", nil
 				},
@@ -36,7 +37,7 @@ func TestRequireTermsAcceptanceMiddleware(t *testing.T) {
 		{
 			name:    "should succeed if terms check is not a enabled even and terms are required",
 			enabled: false,
-			client: &ocm.ClientMock{
+			client: &ocmMocks.ClientMock{
 				GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
 					return true, "", nil
 				},
@@ -49,7 +50,7 @@ func TestRequireTermsAcceptanceMiddleware(t *testing.T) {
 		{
 			name:    "should succeed if terms checks is enabled and terms are not required",
 			enabled: true,
-			client: &ocm.ClientMock{
+			client: &ocmMocks.ClientMock{
 				GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
 					return false, "", nil
 				},

@@ -5,19 +5,16 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocmClient "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 
-const (
-	ipdAlreadyCreatedErrorToCheck = "already exists"
-)
-
 // OCMProvider ...
 type OCMProvider struct {
-	ocmClient      ocm.Client
+	ocmClient      ocmClient.Client
 	clusterBuilder ClusterBuilder
 	ocmConfig      *ocm.OCMConfig
 }

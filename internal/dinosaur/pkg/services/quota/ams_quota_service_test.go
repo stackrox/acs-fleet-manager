@@ -12,6 +12,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocmClient "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	ocmClientMock "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 
 	"github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -25,7 +27,7 @@ var emptyCtx = context.Background()
 
 func Test_AMSCheckQuota(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocmClient.Client
 	}
 	type args struct {
 		dinosaurID           string
@@ -53,7 +55,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				false,
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
 						return cloudAuthorizationResp, nil
@@ -89,7 +91,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				false,
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						if cb.ProductID() == string(ocm.RHACSProduct) {
 							cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
@@ -129,7 +131,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				false,
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return cloudAuthorizationResp, nil
@@ -159,7 +161,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				false,
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return nil, fmt.Errorf("some errors")
 					},
@@ -211,7 +213,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 
 func Test_AMSReserveQuota(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocmClient.Client
 	}
 	type args struct {
 		dinosaurID      string
@@ -235,7 +237,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -265,7 +267,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -298,7 +300,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -331,7 +333,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -361,7 +363,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -392,7 +394,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -417,7 +419,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -448,7 +450,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return cloudAuthorizationResp, nil
@@ -477,7 +479,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -505,7 +507,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -540,7 +542,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				cloudAccountID: "different cloudAccountID",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -575,7 +577,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				cloudAccountID: "cloudAccountID",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -614,7 +616,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				cloudProviderID: "aws",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -664,7 +666,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 
 			if tt.wantBillingModel != "" || tt.wantBillingMarketplaceAccount != "" {
-				ocmClientMock := tt.fields.ocmClient.(*ocm.ClientMock)
+				ocmClientMock := tt.fields.ocmClient.(*ocmClientMock.ClientMock)
 				clusterAuthorizationCalls := ocmClientMock.ClusterAuthorizationCalls()
 				gomega.Expect(len(clusterAuthorizationCalls)).To(gomega.Equal(1))
 				clusterAuthorizationResources := clusterAuthorizationCalls[0].Cb.Resources()
@@ -691,7 +693,7 @@ func mockClusterAuthorizationResponse() *v1.ClusterAuthorizationResponse {
 
 func Test_Delete_Quota(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocmClient.Client
 	}
 	type args struct {
 		subscriptionID string
@@ -713,7 +715,7 @@ func Test_Delete_Quota(t *testing.T) {
 				subscriptionID: "1223",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					DeleteSubscriptionFunc: func(id string) (int, error) {
 						return 1, nil
 					},
@@ -727,7 +729,7 @@ func Test_Delete_Quota(t *testing.T) {
 				subscriptionID: "1223",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					DeleteSubscriptionFunc: func(id string) (int, error) {
 						return 0, serviceErrors.GeneralError("failed to delete subscription")
 					},
@@ -757,14 +759,14 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		ocmClient ocm.Client
+		ocmClient ocmClient.Client
 		args      args
 		want      bool
 		wantErr   bool
 	}{
 		{
 			name: "returns false if no quota cost exists for the dinosaur's organization",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
@@ -782,7 +784,7 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns false if the quota cost billing model is not among the supported ones",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
@@ -806,7 +808,7 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns true if there is at least a 'standard' quota cost billing model",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
@@ -830,7 +832,7 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns true if there is at least a 'marketplace' quota cost billing model",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
@@ -863,7 +865,7 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns false if there is no supported billing model with an 'allowed' value greater than 0",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
@@ -891,7 +893,7 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns an error if it fails retrieving the organization ID",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					return nil, fmt.Errorf("error getting org")
 				},
@@ -907,7 +909,7 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns an error if it fails retrieving quota costs",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
@@ -1134,7 +1136,7 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 
-			var amsClient ocm.AMSClient = &ocm.ClientMock{
+			var amsClient ocm.AMSClient = &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: makeOrganizationFromExternalID,
 				GetQuotaCostsForProductFunc:       tt.getQuotaFunc,
 			}

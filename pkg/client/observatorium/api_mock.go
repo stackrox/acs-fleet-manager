@@ -7,16 +7,12 @@ import (
 
 	pV1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	pModel "github.com/prometheus/common/model"
+	mocks "github.com/stackrox/acs-fleet-manager/pkg/client/observatorium/mocks"
 )
-
-// API an alias for pV1.API
-//
-//go:generate moq -out api_moq.go . API
-type API = pV1.API
 
 // MockAPI returns a mocked instance of pV1.API
 func (c *Client) MockAPI() pV1.API {
-	return &APIMock{
+	return &mocks.APIMock{
 		QueryFunc: func(ctx context.Context, query string, ts time.Time, opts ...pV1.Option) (pModel.Value, pV1.Warnings, error) {
 			values := getMockQueryData(query)
 			return values, []string{}, nil

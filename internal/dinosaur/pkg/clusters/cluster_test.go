@@ -7,6 +7,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocmIDgen "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	ocmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
@@ -35,7 +37,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		SecretAccessKey(awsConfig.SecretAccessKey)
 
 	type fields struct {
-		idGenerator            ocm.IDGenerator
+		idGenerator            ocmIDgen.IDGenerator
 		awsConfig              *config.AWSConfig
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 	}
@@ -101,7 +103,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "successful conversion of all supported provided values",
 			fields: fields{
-				idGenerator: &ocm.IDGeneratorMock{
+				idGenerator: &ocmMocks.IDGeneratorMock{
 					GenerateFunc: func() string {
 						return ""
 					},
