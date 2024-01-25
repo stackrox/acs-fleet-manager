@@ -22,12 +22,12 @@ func addAlternateUserIDFieldToCentralRequests() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: migrationID,
 		Migrate: func(tx *gorm.DB) error {
-			return addColumnIfNotExists(tx, &CentralRequest{}, "owner_alternative_user_id")
+			return addColumnIfNotExists(tx, &CentralRequest{}, "owner_alternate_user_id")
 		},
 		Rollback: func(tx *gorm.DB) error {
 			return errors.Wrap(
-				tx.Migrator().DropColumn(&CentralRequest{}, "owner_alternative_user_id"),
-				"failed to drop owner_alternative_user_id column",
+				tx.Migrator().DropColumn(&CentralRequest{}, "owner_alternate_user_id"),
+				"failed to drop owner_alternate_user_id column",
 			)
 		},
 	}
