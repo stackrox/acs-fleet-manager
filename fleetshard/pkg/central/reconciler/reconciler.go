@@ -786,7 +786,7 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 	}
 
 	// Only report secrets if Central is ready, to ensure we're not trying to get secrets before they are created.
-	// Only report secrets once. Ensures we don't overwrite initial secrets with corrupted secrets
+	// Only report secrets if not all secrets are already stored to ensures we don't overwrite initial secrets with corrupted secrets
 	// from the cluster state.
 	if isRemoteCentralReady(remoteCentral) && !r.areSecretsStored(remoteCentral.Metadata.SecretsStored) {
 		secrets, err := r.collectSecretsEncrypted(ctx, remoteCentral)
