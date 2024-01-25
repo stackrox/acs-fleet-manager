@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	centralTLSSecretName           = "central-tls"            // pragma: allowlist secret
+	CentralTLSSecretName           = "central-tls"            // pragma: allowlist secret
 	centralDBPasswordSecretName    = "central-db-password"    // pragma: allowlist secret
 	centralEncryptionKeySecretName = "central-encryption-key" // pragma: allowlist secret
 )
 
 var defaultSecretsToWatch = []string{
-	centralTLSSecretName,
+	CentralTLSSecretName,
 	centralEncryptionKeySecretName,
 }
 
