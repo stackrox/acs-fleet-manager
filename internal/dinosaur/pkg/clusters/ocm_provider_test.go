@@ -7,7 +7,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
-	ocmClient "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	ocmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	ocmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 
 	. "github.com/onsi/gomega"
@@ -18,7 +18,7 @@ import (
 
 func TestOCMProvider_Create(t *testing.T) {
 	type fields struct {
-		ocmClient ocmClient.Client
+		ocmClient ocm.Client
 	}
 	type args struct {
 		clusterReq types.ClusterRequest
@@ -87,7 +87,7 @@ func TestOCMProvider_Create(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, cb, &ocm.OCMConfig{})
+			p := newOCMProvider(test.fields.ocmClient, cb, &ocmImpl.OCMConfig{})
 			resp, err := p.Create(&test.args.clusterReq)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -99,7 +99,7 @@ func TestOCMProvider_Create(t *testing.T) {
 
 func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 	type fields struct {
-		ocmClient ocmClient.Client
+		ocmClient ocm.Client
 	}
 	type args struct {
 		clusterSpec *types.ClusterSpec
@@ -187,7 +187,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
+			p := newOCMProvider(test.fields.ocmClient, nil, &ocmImpl.OCMConfig{})
 			resp, err := p.CheckClusterStatus(test.args.clusterSpec)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -199,7 +199,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 
 func TestOCMProvider_Delete(t *testing.T) {
 	type fields struct {
-		ocmClient ocmClient.Client
+		ocmClient ocm.Client
 	}
 	type args struct {
 		clusterSpec *types.ClusterSpec
@@ -271,7 +271,7 @@ func TestOCMProvider_Delete(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
+			p := newOCMProvider(test.fields.ocmClient, nil, &ocmImpl.OCMConfig{})
 			resp, err := p.Delete(test.args.clusterSpec)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -283,7 +283,7 @@ func TestOCMProvider_Delete(t *testing.T) {
 
 func TestOCMProvider_GetClusterDNS(t *testing.T) {
 	type fields struct {
-		ocmClient ocmClient.Client
+		ocmClient ocm.Client
 	}
 	type args struct {
 		clusterSpec *types.ClusterSpec
@@ -342,7 +342,7 @@ func TestOCMProvider_GetClusterDNS(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
+			p := newOCMProvider(test.fields.ocmClient, nil, &ocmImpl.OCMConfig{})
 			resp, err := p.GetClusterDNS(test.args.clusterSpec)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -354,7 +354,7 @@ func TestOCMProvider_GetClusterDNS(t *testing.T) {
 
 func TestOCMProvider_GetCloudProviders(t *testing.T) {
 	type fields struct {
-		ocmClient ocmClient.Client
+		ocmClient ocm.Client
 	}
 
 	providerID1 := "provider-id-1"
@@ -413,7 +413,7 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
+			p := newOCMProvider(test.fields.ocmClient, nil, &ocmImpl.OCMConfig{})
 			resp, err := p.GetCloudProviders()
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -425,7 +425,7 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 
 func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 	type fields struct {
-		ocmClient ocmClient.Client
+		ocmClient ocm.Client
 	}
 
 	type args struct {
@@ -517,7 +517,7 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
+			p := newOCMProvider(test.fields.ocmClient, nil, &ocmImpl.OCMConfig{})
 			resp, err := p.GetCloudProviderRegions(test.args.providerInfo)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {

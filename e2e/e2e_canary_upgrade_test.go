@@ -14,6 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -60,10 +61,10 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 
 	BeforeEach(func() {
 		SkipIf(!features.TargetedOperatorUpgrades.Enabled() || !runCanaryUpgradeTests, "Skipping canary upgrade test")
-		option := fleetmanager.OptionFromEnv()
-		auth, err := fleetmanager.NewStaticAuth(ctx, fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
+		option := fmImpl.OptionFromEnv()
+		auth, err := fmImpl.NewStaticAuth(ctx, fmImpl.StaticOption{StaticToken: option.Static.StaticToken})
 		Expect(err).ToNot(HaveOccurred())
-		client, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
+		client, err = fmImpl.NewClient(fleetManagerEndpoint, auth)
 		Expect(err).ToNot(HaveOccurred())
 	})
 

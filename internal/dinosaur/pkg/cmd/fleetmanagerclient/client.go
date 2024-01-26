@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	impl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 )
 
 var (
@@ -41,8 +42,8 @@ func AuthenticatedClientWithRHOASToken(ctx context.Context) *fleetmanager.Client
 	}
 
 	singletonRHOASTokenInstance.Do(func() {
-		auth, err := fleetmanager.NewAuth(ctx, fleetmanager.StaticTokenAuthName, fleetmanager.Option{
-			Static: fleetmanager.StaticOption{
+		auth, err := impl.NewAuth(ctx, impl.StaticTokenAuthName, impl.Option{
+			Static: impl.StaticOption{
 				StaticToken: rhoasToken,
 			},
 		})
@@ -51,7 +52,7 @@ func AuthenticatedClientWithRHOASToken(ctx context.Context) *fleetmanager.Client
 			return
 		}
 
-		fmClientAuthWithRHOASToken, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
+		fmClientAuthWithRHOASToken, err = impl.NewClient(fleetManagerEndpoint, auth)
 		if err != nil {
 			glog.Fatalf("Failed to create connection: %s", err)
 			return
@@ -80,8 +81,8 @@ func AuthenticatedClientWithOCM(ctx context.Context) *fleetmanager.Client {
 	}
 
 	singletonOCMRefreshTokenInstance.Do(func() {
-		auth, err := fleetmanager.NewAuth(ctx, fleetmanager.OCMAuthName, fleetmanager.Option{
-			Ocm: fleetmanager.OCMOption{
+		auth, err := impl.NewAuth(ctx, impl.OCMAuthName, impl.Option{
+			Ocm: impl.OCMOption{
 				RefreshToken: ocmRefreshToken,
 			},
 		})
@@ -90,7 +91,7 @@ func AuthenticatedClientWithOCM(ctx context.Context) *fleetmanager.Client {
 			return
 		}
 
-		fmClientAuthWithOCMRefreshToken, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
+		fmClientAuthWithOCMRefreshToken, err = impl.NewClient(fleetManagerEndpoint, auth)
 		if err != nil {
 			glog.Fatalf("Failed to create connection: %s", err)
 			return

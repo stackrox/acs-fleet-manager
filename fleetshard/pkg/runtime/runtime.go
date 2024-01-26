@@ -21,6 +21,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
@@ -64,25 +65,25 @@ type Runtime struct {
 
 // NewRuntime creates a new runtime
 func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
-	authOption := fleetmanager.Option{
-		Sso: fleetmanager.RHSSOOption{
+	authOption := fmImpl.Option{
+		Sso: fmImpl.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
 			ClientSecret: config.RHSSOClientSecret, // pragma: allowlist secret
 			Realm:        config.RHSSORealm,
 			Endpoint:     config.RHSSOEndpoint,
 		},
-		Ocm: fleetmanager.OCMOption{
+		Ocm: fmImpl.OCMOption{
 			RefreshToken: config.OCMRefreshToken,
 		},
-		Static: fleetmanager.StaticOption{
+		Static: fmImpl.StaticOption{
 			StaticToken: config.StaticToken,
 		},
 	}
-	auth, err := fleetmanager.NewAuth(ctx, config.AuthType, authOption)
+	auth, err := fmImpl.NewAuth(ctx, config.AuthType, authOption)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager authentication")
 	}
-	client, err := fleetmanager.NewClient(config.FleetManagerEndpoint, auth, fleetmanager.WithUserAgent(
+	client, err := fmImpl.NewClient(config.FleetManagerEndpoint, auth, fmImpl.WithUserAgent(
 		fmt.Sprintf("fleetshard-synchronizer/%s", config.ClusterID)),
 	)
 	if err != nil {

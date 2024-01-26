@@ -1,5 +1,5 @@
 // Package ocm ...
-package ocm
+package impl
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift-online/ocm-sdk-go/logging"
 	pkgerrors "github.com/pkg/errors"
-	ocmClient "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
@@ -27,17 +27,17 @@ const TermsEventcodeOnlineService = "onlineService"
 // TermsEventcodeRegister ...
 const TermsEventcodeRegister = "register"
 
-var _ ocmClient.Client = &client{}
+var _ ocm.Client = &client{}
 
 type client struct {
 	connection *sdkClient.Connection
 }
 
 // AMSClient ...
-type AMSClient ocmClient.Client
+type AMSClient ocm.Client
 
 // ClusterManagementClient ...
-type ClusterManagementClient ocmClient.Client
+type ClusterManagementClient ocm.Client
 
 // NewOCMConnection ...
 func NewOCMConnection(ocmConfig *OCMConfig, baseURL string) (*sdkClient.Connection, func(), error) {
@@ -89,12 +89,12 @@ func getLogger(isDebugEnabled bool) (*logging.GoLogger, error) {
 }
 
 // NewClient ...
-func NewClient(connection *sdkClient.Connection) ocmClient.Client {
+func NewClient(connection *sdkClient.Connection) ocm.Client {
 	return &client{connection: connection}
 }
 
 // NewMockClient returns a new OCM client with stubbed responses.
-func NewMockClient() ocmClient.Client {
+func NewMockClient() ocm.Client {
 	return &mocks.ClientMock{
 		GetOrganisationFromExternalIDFunc: func(externalID string) (*amsv1.Organization, error) {
 			org, err := amsv1.NewOrganization().

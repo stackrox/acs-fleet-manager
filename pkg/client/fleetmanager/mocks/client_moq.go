@@ -8,20 +8,20 @@ import (
 	admin "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/interface"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"net/http"
 	"sync"
 )
 
-// Ensure, that PublicAPIMock does implement api.PublicAPI.
+// Ensure, that PublicAPIMock does implement fleetmanager.PublicAPI.
 // If this is not the case, regenerate this file with moq.
-var _ api.PublicAPI = &PublicAPIMock{}
+var _ fleetmanager.PublicAPI = &PublicAPIMock{}
 
-// PublicAPIMock is a mock implementation of api.PublicAPI.
+// PublicAPIMock is a mock implementation of fleetmanager.PublicAPI.
 //
 //	func TestSomethingThatUsesPublicAPI(t *testing.T) {
 //
-//		// make and configure a mocked api.PublicAPI
+//		// make and configure a mocked fleetmanager.PublicAPI
 //		mockedPublicAPI := &PublicAPIMock{
 //			CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 //				panic("mock out the CreateCentral method")
@@ -37,7 +37,7 @@ var _ api.PublicAPI = &PublicAPIMock{}
 //			},
 //		}
 //
-//		// use mockedPublicAPI in code that requires api.PublicAPI
+//		// use mockedPublicAPI in code that requires fleetmanager.PublicAPI
 //		// and then make assertions.
 //
 //	}
@@ -247,15 +247,15 @@ func (mock *PublicAPIMock) GetCentralsCalls() []struct {
 	return calls
 }
 
-// Ensure, that PrivateAPIMock does implement api.PrivateAPI.
+// Ensure, that PrivateAPIMock does implement fleetmanager.PrivateAPI.
 // If this is not the case, regenerate this file with moq.
-var _ api.PrivateAPI = &PrivateAPIMock{}
+var _ fleetmanager.PrivateAPI = &PrivateAPIMock{}
 
-// PrivateAPIMock is a mock implementation of api.PrivateAPI.
+// PrivateAPIMock is a mock implementation of fleetmanager.PrivateAPI.
 //
 //	func TestSomethingThatUsesPrivateAPI(t *testing.T) {
 //
-//		// make and configure a mocked api.PrivateAPI
+//		// make and configure a mocked fleetmanager.PrivateAPI
 //		mockedPrivateAPI := &PrivateAPIMock{
 //			GetCentralFunc: func(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error) {
 //				panic("mock out the GetCentral method")
@@ -271,7 +271,7 @@ var _ api.PrivateAPI = &PrivateAPIMock{}
 //			},
 //		}
 //
-//		// use mockedPrivateAPI in code that requires api.PrivateAPI
+//		// use mockedPrivateAPI in code that requires fleetmanager.PrivateAPI
 //		// and then make assertions.
 //
 //	}
@@ -481,15 +481,15 @@ func (mock *PrivateAPIMock) UpdateCentralClusterStatusCalls() []struct {
 	return calls
 }
 
-// Ensure, that AdminAPIMock does implement api.AdminAPI.
+// Ensure, that AdminAPIMock does implement fleetmanager.AdminAPI.
 // If this is not the case, regenerate this file with moq.
-var _ api.AdminAPI = &AdminAPIMock{}
+var _ fleetmanager.AdminAPI = &AdminAPIMock{}
 
-// AdminAPIMock is a mock implementation of api.AdminAPI.
+// AdminAPIMock is a mock implementation of fleetmanager.AdminAPI.
 //
 //	func TestSomethingThatUsesAdminAPI(t *testing.T) {
 //
-//		// make and configure a mocked api.AdminAPI
+//		// make and configure a mocked fleetmanager.AdminAPI
 //		mockedAdminAPI := &AdminAPIMock{
 //			CentralRotateSecretsFunc: func(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error) {
 //				panic("mock out the CentralRotateSecrets method")
@@ -508,7 +508,7 @@ var _ api.AdminAPI = &AdminAPIMock{}
 //			},
 //		}
 //
-//		// use mockedAdminAPI in code that requires api.AdminAPI
+//		// use mockedAdminAPI in code that requires fleetmanager.AdminAPI
 //		// and then make assertions.
 //
 //	}

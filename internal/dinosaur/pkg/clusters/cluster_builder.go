@@ -9,7 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
-	ocmIDgen "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	ocmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 )
 
 // ClusterNamePrefix a prefix used for new OCM cluster names
@@ -34,7 +34,7 @@ var _ ClusterBuilder = &clusterBuilder{}
 // clusterBuilder internal ClusterBuilder implementation.
 type clusterBuilder struct {
 	// idGenerator generates cluster IDs.
-	idGenerator ocmIDgen.IDGenerator
+	idGenerator ocm.IDGenerator
 
 	// awsConfig contains aws credentials for use with the OCM cluster service.
 	awsConfig *config.AWSConfig
@@ -46,7 +46,7 @@ type clusterBuilder struct {
 // NewClusterBuilder create a new default implementation of ClusterBuilder.
 func NewClusterBuilder(awsConfig *config.AWSConfig, dataplaneClusterConfig *config.DataplaneClusterConfig) ClusterBuilder {
 	return &clusterBuilder{
-		idGenerator:            ocm.NewIDGenerator(ClusterNamePrefix),
+		idGenerator:            ocmImpl.NewIDGenerator(ClusterNamePrefix),
 		awsConfig:              awsConfig,
 		dataplaneClusterConfig: dataplaneClusterConfig,
 	}

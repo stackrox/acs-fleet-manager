@@ -4,26 +4,26 @@
 package mocks
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"sync"
 )
 
-// Ensure, that IDGeneratorMock does implement ocminterface.IDGenerator.
+// Ensure, that IDGeneratorMock does implement ocm.IDGenerator.
 // If this is not the case, regenerate this file with moq.
-var _ ocminterface.IDGenerator = &IDGeneratorMock{}
+var _ ocm.IDGenerator = &IDGeneratorMock{}
 
-// IDGeneratorMock is a mock implementation of ocminterface.IDGenerator.
+// IDGeneratorMock is a mock implementation of ocm.IDGenerator.
 //
 //	func TestSomethingThatUsesIDGenerator(t *testing.T) {
 //
-//		// make and configure a mocked ocminterface.IDGenerator
+//		// make and configure a mocked ocm.IDGenerator
 //		mockedIDGenerator := &IDGeneratorMock{
 //			GenerateFunc: func() string {
 //				panic("mock out the Generate method")
 //			},
 //		}
 //
-//		// use mockedIDGenerator in code that requires ocminterface.IDGenerator
+//		// use mockedIDGenerator in code that requires ocm.IDGenerator
 //		// and then make assertions.
 //
 //	}

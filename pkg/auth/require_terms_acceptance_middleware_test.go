@@ -7,7 +7,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	ocmClient "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	ocmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -17,7 +17,7 @@ func TestRequireTermsAcceptanceMiddleware(t *testing.T) {
 	tests := []struct {
 		name     string
 		enabled  bool
-		client   ocmClient.Client
+		client   ocm.Client
 		next     http.Handler
 		wantCode int
 	}{

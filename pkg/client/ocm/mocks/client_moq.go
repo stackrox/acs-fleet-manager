@@ -8,20 +8,20 @@ import (
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	addonsmgmtv1 "github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"sync"
 )
 
-// Ensure, that ClientMock does implement ocminterface.Client.
+// Ensure, that ClientMock does implement ocm.Client.
 // If this is not the case, regenerate this file with moq.
-var _ ocminterface.Client = &ClientMock{}
+var _ ocm.Client = &ClientMock{}
 
-// ClientMock is a mock implementation of ocminterface.Client.
+// ClientMock is a mock implementation of ocm.Client.
 //
 //	func TestSomethingThatUsesClient(t *testing.T) {
 //
-//		// make and configure a mocked ocminterface.Client
+//		// make and configure a mocked ocm.Client
 //		mockedClient := &ClientMock{
 //			ClusterAuthorizationFunc: func(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error) {
 //				panic("mock out the ClusterAuthorization method")
@@ -100,7 +100,7 @@ var _ ocminterface.Client = &ClientMock{}
 //			},
 //		}
 //
-//		// use mockedClient in code that requires ocminterface.Client
+//		// use mockedClient in code that requires ocm.Client
 //		// and then make assertions.
 //
 //	}

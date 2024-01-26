@@ -7,7 +7,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
-	ocmIDgen "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	ocmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	ocmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -37,7 +37,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		SecretAccessKey(awsConfig.SecretAccessKey)
 
 	type fields struct {
-		idGenerator            ocmIDgen.IDGenerator
+		idGenerator            ocm.IDGenerator
 		awsConfig              *config.AWSConfig
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 	}
@@ -55,7 +55,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil aws config results in error",
 			fields: fields{
-				idGenerator:            ocm.NewIDGenerator(""),
+				idGenerator:            ocmImpl.NewIDGenerator(""),
 				awsConfig:              nil,
 				dataplaneClusterConfig: dataplaneClusterConfig,
 			},
@@ -67,7 +67,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil cluster creation config results in error",
 			fields: fields{
-				idGenerator:            ocm.NewIDGenerator(""),
+				idGenerator:            ocmImpl.NewIDGenerator(""),
 				awsConfig:              awsConfig,
 				dataplaneClusterConfig: nil,
 			},
@@ -79,7 +79,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil cluster results in error",
 			fields: fields{
-				idGenerator:            ocm.NewIDGenerator(""),
+				idGenerator:            ocmImpl.NewIDGenerator(""),
 				awsConfig:              awsConfig,
 				dataplaneClusterConfig: dataplaneClusterConfig,
 			},

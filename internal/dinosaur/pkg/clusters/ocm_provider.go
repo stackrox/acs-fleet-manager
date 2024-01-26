@@ -5,7 +5,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
-	ocmClient "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/interface"
+	ocmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/pkg/errors"
@@ -14,9 +14,9 @@ import (
 
 // OCMProvider ...
 type OCMProvider struct {
-	ocmClient      ocmClient.Client
+	ocmClient      ocm.Client
 	clusterBuilder ClusterBuilder
-	ocmConfig      *ocm.OCMConfig
+	ocmConfig      *ocmImpl.OCMConfig
 }
 
 // blank assignment to verify that OCMProvider implements Provider
@@ -147,7 +147,7 @@ func (o *OCMProvider) GetCloudProviderRegions(providerInfo types.CloudProviderIn
 // ensure OCMProvider implements Provider interface
 var _ Provider = &OCMProvider{}
 
-func newOCMProvider(ocmClient ocm.ClusterManagementClient, clusterBuilder ClusterBuilder, ocmConfig *ocm.OCMConfig) *OCMProvider {
+func newOCMProvider(ocmClient ocmImpl.ClusterManagementClient, clusterBuilder ClusterBuilder, ocmConfig *ocmImpl.OCMConfig) *OCMProvider {
 	return &OCMProvider{
 		ocmClient:      ocmClient,
 		clusterBuilder: clusterBuilder,

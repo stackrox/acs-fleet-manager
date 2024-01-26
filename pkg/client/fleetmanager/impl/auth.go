@@ -1,5 +1,5 @@
 // Package fleetmanager ...
-package fleetmanager
+package impl
 
 import (
 	"context"

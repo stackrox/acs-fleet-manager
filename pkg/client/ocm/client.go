@@ -1,4 +1,4 @@
-package ocminterface
+package ocm
 
 import (
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
@@ -8,7 +8,7 @@ import (
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
-//go:generate moq -rm -out ../mocks/client_moq.go -pkg mocks . Client
+//go:generate moq -rm -out mocks/client_moq.go -pkg mocks . Client
 
 // Client is an interface to OCM
 type Client interface {
