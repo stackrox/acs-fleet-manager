@@ -104,6 +104,9 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      - name: Test go modules
+        run: |
+          go mod tidy && git diff --exit-code
       - name: Setup tests secrets
         run: |
           make ocm/setup aws/setup redhatsso/setup centralcert/setup observatorium/setup secrets/touch
