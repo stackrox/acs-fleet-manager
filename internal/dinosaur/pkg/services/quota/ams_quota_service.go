@@ -142,7 +142,9 @@ func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.Centr
 	rr.BillingModel(amsv1.BillingModel(bm))
 	glog.Infof("Billing model of Central request %q with quota type %q has been set to %q.", dinosaur.ID, instanceType.GetQuotaType(), bm)
 
-	if bm != string(amsv1.BillingModelStandard) {
+	if bm != string(amsv1.BillingModelStandard) &&
+		bm != string(amsv1.BillingModelMarketplace) &&
+		bm != string(amsv1.BillingModelMarketplaceRHM) {
 		if err := q.verifyCloudAccountInAMS(dinosaur, org.ID()); err != nil {
 			return "", err
 		}
