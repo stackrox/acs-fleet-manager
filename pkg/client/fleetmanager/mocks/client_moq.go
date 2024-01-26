@@ -506,7 +506,7 @@ var _ fleetmanager.AdminAPI = &AdminAPIMock{}
 //			GetCentralTraitFunc: func(ctx context.Context, id string, trait string) (*http.Response, error) {
 //				panic("mock out the GetCentralTrait method")
 //			},
-//			GetCentralTraitsFunc: func(ctx context.Context, id string) (map[string]interface{}, *http.Response, error) {
+//			GetCentralTraitsFunc: func(ctx context.Context, id string) ([]string, *http.Response, error) {
 //				panic("mock out the GetCentralTraits method")
 //			},
 //			GetCentralsFunc: func(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error) {
