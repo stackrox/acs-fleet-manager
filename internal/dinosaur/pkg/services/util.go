@@ -54,7 +54,7 @@ func replaceHostSpecialChar(name string) (string, error) {
 	// This should never fail based on above replacement of invalid characters.
 	validationErrors := validation.IsDNS1035Label(replacedName)
 	if len(validationErrors) > 0 {
-		return replacedName, fmt.Errorf("Host name is not valid: %s. A DNS-1035 label must consist of lower case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character, regex used for validation is '[a-z]([-a-z0-9]*[a-z0-9])?'", strings.Join(validationErrors[:], ","))
+		return replacedName, fmt.Errorf("host name %q is not valid: a DNS-1035 label must consist of lower case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character, regex used for validation is '[a-z]([-a-z0-9]*[a-z0-9])?'", strings.Join(validationErrors[:], ","))
 	}
 
 	return replacedName, nil
