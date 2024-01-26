@@ -20,8 +20,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
-	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
+	fmAPI "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	fleetmanager "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
@@ -51,7 +51,7 @@ var backoff = wait.Backoff{
 // Runtime represents the runtime to reconcile all centrals associated with the given cluster.
 type Runtime struct {
 	config                 *config.Config
-	client                 *fleetmanager.Client
+	client                 *fmAPI.Client
 	clusterID              string
 	reconcilers            reconcilerRegistry
 	k8sClient              ctrlClient.Client
@@ -65,25 +65,25 @@ type Runtime struct {
 
 // NewRuntime creates a new runtime
 func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
-	authOption := fmImpl.Option{
-		Sso: fmImpl.RHSSOOption{
+	authOption := fleetmanager.Option{
+		Sso: fleetmanager.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
 			ClientSecret: config.RHSSOClientSecret, // pragma: allowlist secret
 			Realm:        config.RHSSORealm,
 			Endpoint:     config.RHSSOEndpoint,
 		},
-		Ocm: fmImpl.OCMOption{
+		Ocm: fleetmanager.OCMOption{
 			RefreshToken: config.OCMRefreshToken,
 		},
-		Static: fmImpl.StaticOption{
+		Static: fleetmanager.StaticOption{
 			StaticToken: config.StaticToken,
 		},
 	}
-	auth, err := fmImpl.NewAuth(ctx, config.AuthType, authOption)
+	auth, err := fleetmanager.NewAuth(ctx, config.AuthType, authOption)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager authentication")
 	}
-	client, err := fmImpl.NewClient(config.FleetManagerEndpoint, auth, fmImpl.WithUserAgent(
+	client, err := fleetmanager.NewClient(config.FleetManagerEndpoint, auth, fleetmanager.WithUserAgent(
 		fmt.Sprintf("fleetshard-synchronizer/%s", config.ClusterID)),
 	)
 	if err != nil {

@@ -10,8 +10,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
-	ocmClientMocks "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
+	ocmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
+	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
@@ -19,7 +19,7 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 	RegisterTestingT(t)
 
 	type fields struct {
-		ocmClient *ocmClientMocks.ClientMock
+		ocmClient *ocm.ClientMock
 	}
 	type args struct {
 		cluster api.Cluster
@@ -31,7 +31,7 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 		fields  fields
 		args    args
 		wantErr bool
-		want    func(mock *ocmClientMocks.ClientMock)
+		want    func(mock *ocm.ClientMock)
 	}{
 		{
 			name:    "should return no error when no addons have to be installed",
@@ -40,7 +40,7 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 		{
 			name: "should install addon when not installed in ocm",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						return nil, errors.NotFound("")
 					},
@@ -56,14 +56,14 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 					},
 				},
 			},
-			want: func(mock *ocmClientMocks.ClientMock) {
+			want: func(mock *ocm.ClientMock) {
 				Expect(len(mock.GetAddonInstallationCalls())).To(Equal(1))
 			},
 		},
 		{
 			name: "should return error when ocmClient.GetAddonInstallation returns error",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						return nil, errors.GeneralError("test")
 					},
@@ -81,7 +81,7 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 		{
 			name: "should return error when ocmClient.CreateAddonInstallation returns error",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						return nil, errors.NotFound("")
 					},
@@ -102,7 +102,7 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 		{
 			name: "should install one addon if failed to request another one from ocm",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						if addonID == "beta" {
 							return nil, errors.NotFound("")
@@ -125,14 +125,14 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			want: func(mock *ocmClientMocks.ClientMock) {
+			want: func(mock *ocm.ClientMock) {
 				Expect(len(mock.CreateAddonInstallationCalls())).To(Equal(1))
 			},
 		},
 		{
 			name: "should install one addon if can't create another one in ocm",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						return nil, errors.NotFound("")
 					},
@@ -155,14 +155,14 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			want: func(mock *ocmClientMocks.ClientMock) {
+			want: func(mock *ocm.ClientMock) {
 				Expect(len(mock.CreateAddonInstallationCalls())).To(Equal(2))
 			},
 		},
 		{
 			name: "should NOT upgrade when no addons installed yet",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						object, err := clustersmgmtv1.NewAddOnInstallation().
 							ID(addonID).
@@ -182,14 +182,14 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 					},
 				},
 			},
-			want: func(mock *ocmClientMocks.ClientMock) {
+			want: func(mock *ocm.ClientMock) {
 				Expect(len(mock.UpdateAddonInstallationCalls())).To(BeZero())
 			},
 		},
 		{
 			name: "should NOT upgrade when the version in config didn't change",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						object, err := clustersmgmtv1.NewAddOnInstallation().
 							ID(addonID).
@@ -232,14 +232,14 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 					},
 				},
 			},
-			want: func(mock *ocmClientMocks.ClientMock) {
+			want: func(mock *ocm.ClientMock) {
 				Expect(len(mock.UpdateAddonInstallationCalls())).To(BeZero())
 			},
 		},
 		{
 			name: "should return error when checksum mismatch",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						object, err := clustersmgmtv1.NewAddOnInstallation().
 							ID(addonID).
@@ -287,7 +287,7 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 		{
 			name: "should upgrade when parameters changed",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						object, err := clustersmgmtv1.NewAddOnInstallation().
 							ID(addonID).
@@ -333,14 +333,14 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 					},
 				},
 			},
-			want: func(mock *ocmClientMocks.ClientMock) {
+			want: func(mock *ocm.ClientMock) {
 				Expect(len(mock.UpdateAddonInstallationCalls())).To(Equal(1))
 			},
 		},
 		{
 			name: "should upgrade when version changed",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						object, err := clustersmgmtv1.NewAddOnInstallation().
 							ID(addonID).
@@ -386,14 +386,14 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 					},
 				},
 			},
-			want: func(mock *ocmClientMocks.ClientMock) {
+			want: func(mock *ocm.ClientMock) {
 				Expect(len(mock.UpdateAddonInstallationCalls())).To(Equal(1))
 			},
 		},
 		{
 			name: "should upgrade when sourceImage changed",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						object, err := clustersmgmtv1.NewAddOnInstallation().
 							ID(addonID).
@@ -439,14 +439,14 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 					},
 				},
 			},
-			want: func(mock *ocmClientMocks.ClientMock) {
+			want: func(mock *ocm.ClientMock) {
 				Expect(len(mock.UpdateAddonInstallationCalls())).To(Equal(1))
 			},
 		},
 		{
 			name: "should upgrade when packageImage changed",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						object, err := clustersmgmtv1.NewAddOnInstallation().
 							ID(addonID).
@@ -492,14 +492,14 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 					},
 				},
 			},
-			want: func(mock *ocmClientMocks.ClientMock) {
+			want: func(mock *ocm.ClientMock) {
 				Expect(len(mock.UpdateAddonInstallationCalls())).To(Equal(1))
 			},
 		},
 		{
 			name: "should uninstall when no addon declared in gitops",
 			fields: fields{
-				ocmClient: &ocmClientMocks.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						object, err := clustersmgmtv1.NewAddOnInstallation().
 							ID(addonID).
@@ -537,7 +537,7 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 				addons: []gitops.AddonConfig{},
 			},
-			want: func(mock *ocmClientMocks.ClientMock) {
+			want: func(mock *ocm.ClientMock) {
 				Expect(len(mock.DeleteAddonInstallationCalls())).To(Equal(1))
 			},
 		},
@@ -587,7 +587,7 @@ func TestAddonProvisioner_Provision_NonFinalState(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ocmMock := &ocmClientMocks.ClientMock{
+			ocmMock := &ocm.ClientMock{
 				GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 					builder := clustersmgmtv1.NewAddOnInstallation().
 						ID(addonID).
@@ -629,7 +629,7 @@ func TestAddonProvisioner_Provision_NonFinalState(t *testing.T) {
 func TestAddonProvisioner_Provision_AutoUpgradeDisabled(t *testing.T) {
 	t.Setenv("RHACS_ADDON_AUTO_UPGRADE", "false")
 	t.Run("should NOT upgrade when auto upgrade feature is disabled", func(t *testing.T) {
-		mock := ocmClientMocks.ClientMock{
+		mock := ocm.ClientMock{
 			GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 				object, err := clustersmgmtv1.NewAddOnInstallation().
 					ID(addonID).
@@ -657,7 +657,7 @@ func TestAddonProvisioner_Provision_AutoUpgradeDisabled(t *testing.T) {
 func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Install(t *testing.T) {
 	RegisterTestingT(t)
 
-	ocmMock := &ocmClientMocks.ClientMock{
+	ocmMock := &ocm.ClientMock{
 		GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 			return nil, errors.NotFound("")
 		},
@@ -665,7 +665,7 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Install(t *testing
 			return nil
 		},
 	}
-	addonConfig := ocm.AddonConfig{
+	addonConfig := ocmImpl.AddonConfig{
 		FleetshardSyncImageTag:        "0307e03",
 		InheritFleetshardSyncImageTag: true,
 	}
@@ -691,7 +691,7 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Install(t *testing
 func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Upgrade(t *testing.T) {
 	RegisterTestingT(t)
 
-	ocmMock := &ocmClientMocks.ClientMock{
+	ocmMock := &ocm.ClientMock{
 		GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 			object, err := clustersmgmtv1.NewAddOnInstallation().
 				ID(addonID).
@@ -713,7 +713,7 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Upgrade(t *testing
 			return nil
 		},
 	}
-	addonConfig := ocm.AddonConfig{
+	addonConfig := ocmImpl.AddonConfig{
 		FleetshardSyncImageTag:        "0307e03",
 		InheritFleetshardSyncImageTag: true,
 	}
@@ -757,14 +757,14 @@ func addonsJSON(addons []dbapi.AddonInstallation) api.JSON {
 func TestAddonProvisioner_NewAddonProvisioner(t *testing.T) {
 	RegisterTestingT(t)
 
-	addonConfigPtr := &ocm.AddonConfig{
+	addonConfigPtr := &ocmImpl.AddonConfig{
 		URL:          "https://addon-service.test",
 		ClientID:     "addon-client-id",
 		ClientSecret: "addon-client-secret", // pragma: allowlist secret
 		SelfToken:    "addon-token",
 	}
 
-	baseConfigPtr := &ocm.OCMConfig{
+	baseConfigPtr := &ocmImpl.OCMConfig{
 		BaseURL:      "https://base.test",
 		ClientID:     "base-client-id",
 		ClientSecret: "base-client-secret", // pragma: allowlist secret
