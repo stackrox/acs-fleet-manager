@@ -50,12 +50,12 @@ type AdminCentralHandler interface {
 	// a tenant. In particular, avoid two Central CRs appearing in the same
 	// tenant namespace. This may cause conflicts due to mixed resource ownership.
 	PatchName(w http.ResponseWriter, r *http.Request)
-	// GetCentralTrait tells wheter a central has the trait
-	GetCentralTrait(w http.ResponseWriter, r *http.Request)
-	// GetCentralTraits returns all central traits
-	GetCentralTraits(w http.ResponseWriter, r *http.Request)
-	// PatchCentralTrait adds a trait to a central
-	PatchCentralTrait(w http.ResponseWriter, r *http.Request)
+	// ListTraits returns all central traits
+	ListTraits(w http.ResponseWriter, r *http.Request)
+	// GetTrait tells wheter a central has the trait
+	GetTrait(w http.ResponseWriter, r *http.Request)
+	// PatchTraits adds a trait to the set of central traits
+	PatchTraits(w http.ResponseWriter, r *http.Request)
 	// DeleteTrait deletes a trait from a central
 	DeleteTrait(w http.ResponseWriter, r *http.Request)
 }
@@ -313,7 +313,7 @@ func (h adminCentralHandler) PatchName(w http.ResponseWriter, r *http.Request) {
 	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
-func (h adminCentralHandler) GetCentralTraits(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) ListTraits(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
@@ -330,7 +330,7 @@ func (h adminCentralHandler) GetCentralTraits(w http.ResponseWriter, r *http.Req
 	handlers.HandleGet(w, r, cfg)
 }
 
-func (h adminCentralHandler) GetCentralTrait(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) GetTrait(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
@@ -348,7 +348,7 @@ func (h adminCentralHandler) GetCentralTrait(w http.ResponseWriter, r *http.Requ
 	handlers.HandleGet(w, r, cfg)
 }
 
-func (h adminCentralHandler) PatchCentralTrait(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) PatchTraits(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
