@@ -276,8 +276,8 @@ func (s *dataPlaneCentralService) addRoutesToRequest(centralRequest *dbapi.Centr
 }
 
 func (d *dataPlaneCentralService) addSecretsToRequest(centralRequest *dbapi.CentralRequest, centralStatus *dbapi.DataPlaneCentralStatus, cluster *api.Cluster) *serviceError.ServiceError {
-	if centralRequest.Secrets != nil { // pragma: allowlist secret
-		logger.Logger.V(10).Infof("skip persisting secrets for Central %s as they are already stored", centralRequest.ID)
+	if centralStatus.Secrets == nil || len(centralStatus.Secrets) == 0 { // pragma: allowlist secret
+		logger.Logger.V(10).Infof("skip persisting secrets for Central %s, report is empty or nil", centralRequest.ID)
 		return nil
 	}
 	logger.Logger.Infof("store secret information for central %s", centralRequest.ID)
