@@ -12,7 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	fleetmanager "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/mocks"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stackrox/rox/pkg/httputil"

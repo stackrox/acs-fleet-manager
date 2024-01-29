@@ -6,7 +6,7 @@ import (
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/pkg/errors"
 	mocket "github.com/selvatico/go-mocket"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocmClientMock "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stretchr/testify/assert"
 )
@@ -67,7 +67,7 @@ func TestDataMigration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			connectionFactory := db.NewMockConnectionFactory(nil)
-			amsClient := ocm.ClientMock{GetOrganisationFromExternalIDFunc: func(externalID string) (*amsv1.Organization, error) {
+			amsClient := ocmClientMock.ClientMock{GetOrganisationFromExternalIDFunc: func(externalID string) (*amsv1.Organization, error) {
 				org, err := amsv1.NewOrganization().
 					ID("12345678").
 					Name("dummy-org").

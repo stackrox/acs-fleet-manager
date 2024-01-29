@@ -1,4 +1,8 @@
-package fleetmanager
+package mocks
+
+import (
+	fleetmanager "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+)
 
 // ClientMock API mocks holder.
 type ClientMock struct {
@@ -17,10 +21,6 @@ func NewClientMock() *ClientMock {
 }
 
 // Client returns new Client instance
-func (m *ClientMock) Client() *Client {
-	return &Client{
-		privateAPI: m.PrivateAPIMock,
-		publicAPI:  m.PublicAPIMock,
-		adminAPI:   m.AdminAPIMock,
-	}
+func (m *ClientMock) Client() *fleetmanager.Client {
+	return fleetmanager.MakeClient(m.PublicAPIMock, m.PrivateAPIMock, m.AdminAPIMock)
 }

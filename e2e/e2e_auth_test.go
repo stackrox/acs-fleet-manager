@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 )
 
 const (
@@ -40,7 +41,7 @@ var _ = Describe("AuthN/Z Fleet* components", Ordered, func() {
 	skipOnProd := env == "production"
 	skipOnNonProd := env != "production"
 
-	authOption := fleetmanager.OptionFromEnv()
+	authOption := fmImpl.OptionFromEnv()
 
 	var client *fleetmanager.Client
 
@@ -72,9 +73,9 @@ var _ = Describe("AuthN/Z Fleet* components", Ordered, func() {
 
 	Describe("OCM auth type", func() {
 		BeforeEach(func() {
-			auth, err := fleetmanager.NewOCMAuth(context.Background(), authOption.Ocm)
+			auth, err := fmImpl.NewOCMAuth(context.Background(), authOption.Ocm)
 			Expect(err).ToNot(HaveOccurred())
-			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
+			fmClient, err := fmImpl.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
 			client = fmClient
 		})
@@ -94,9 +95,9 @@ var _ = Describe("AuthN/Z Fleet* components", Ordered, func() {
 
 	Describe("Static token auth type", func() {
 		BeforeEach(func() {
-			auth, err := fleetmanager.NewStaticAuth(context.Background(), authOption.Static)
+			auth, err := fmImpl.NewStaticAuth(context.Background(), authOption.Static)
 			Expect(err).ToNot(HaveOccurred())
-			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
+			fmClient, err := fmImpl.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
 			client = fmClient
 		})
@@ -122,9 +123,9 @@ var _ = Describe("AuthN/Z Fleet* components", Ordered, func() {
 				Skip("RHSSO_SERVICE_ACCOUNT_CLIENT_ID / RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET not set, cannot initialize auth type")
 			}
 			// Create the auth type for RH SSO.
-			auth, err := fleetmanager.NewRHSSOAuth(context.Background(), rhSSOOpt)
+			auth, err := fmImpl.NewRHSSOAuth(context.Background(), rhSSOOpt)
 			Expect(err).ToNot(HaveOccurred())
-			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
+			fmClient, err := fmImpl.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
 			client = fmClient
 		})

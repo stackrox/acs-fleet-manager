@@ -21,6 +21,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,16 +63,16 @@ var _ = Describe("Central", Ordered, func() {
 	BeforeEach(func() {
 		SkipIf(!runCentralTests, "Skipping Central tests")
 
-		option := fleetmanager.OptionFromEnv()
-		auth, err := fleetmanager.NewStaticAuth(context.Background(), fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
+		option := fmImpl.OptionFromEnv()
+		auth, err := fmImpl.NewStaticAuth(context.Background(), fmImpl.StaticOption{StaticToken: option.Static.StaticToken})
 		Expect(err).ToNot(HaveOccurred())
-		client, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
+		client, err = fmImpl.NewClient(fleetManagerEndpoint, auth)
 		Expect(err).ToNot(HaveOccurred())
 
 		adminStaticToken := os.Getenv("STATIC_TOKEN_ADMIN")
-		adminAuth, err := fleetmanager.NewStaticAuth(context.Background(), fleetmanager.StaticOption{StaticToken: adminStaticToken})
+		adminAuth, err := fmImpl.NewStaticAuth(context.Background(), fmImpl.StaticOption{StaticToken: adminStaticToken})
 		Expect(err).ToNot(HaveOccurred())
-		adminClient, err := fleetmanager.NewClient(fleetManagerEndpoint, adminAuth)
+		adminClient, err := fmImpl.NewClient(fleetManagerEndpoint, adminAuth)
 		Expect(err).ToNot(HaveOccurred())
 		adminAPI = adminClient.AdminAPI()
 

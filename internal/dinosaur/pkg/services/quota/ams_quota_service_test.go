@@ -12,6 +12,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
+	ocmClientMock "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 
 	"github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -53,7 +55,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				false,
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
 						return cloudAuthorizationResp, nil
@@ -63,10 +65,10 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						if product != string(ocm.RHACSProduct) {
+						if product != string(ocmImpl.RHACSProduct) {
 							return []*v1.QuotaCost{}, nil
 						}
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb}, nil
@@ -89,9 +91,9 @@ func Test_AMSCheckQuota(t *testing.T) {
 				false,
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
-						if cb.ProductID() == string(ocm.RHACSProduct) {
+						if cb.ProductID() == string(ocmImpl.RHACSProduct) {
 							cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
 							return cloudAuthorizationResp, nil
 						}
@@ -103,10 +105,10 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						if product != string(ocm.RHACSProduct) {
+						if product != string(ocmImpl.RHACSProduct) {
 							return []*v1.QuotaCost{}, nil
 						}
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb}, nil
@@ -129,7 +131,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				false,
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return cloudAuthorizationResp, nil
@@ -159,7 +161,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				false,
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return nil, fmt.Errorf("some errors")
 					},
@@ -168,10 +170,10 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						if product != string(ocm.RHACSProduct) {
+						if product != string(ocmImpl.RHACSProduct) {
 							return []*v1.QuotaCost{}, nil
 						}
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb}, nil
@@ -235,7 +237,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -244,7 +246,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb}, nil
@@ -265,7 +267,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -274,10 +276,10 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb1, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
-						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb1, qcb2}, nil
@@ -298,7 +300,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -307,10 +309,10 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb1, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
-						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb2, qcb1}, nil
@@ -331,7 +333,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -340,7 +342,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
 						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb1}, nil
@@ -361,7 +363,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -370,10 +372,10 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb1, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
-						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb2, qcb1}, nil
@@ -392,7 +394,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -417,7 +419,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -426,10 +428,10 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string("unknownbillingmodelone")).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string("unknownbillingmodelone")).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb1, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
-						rrbq2 := v1.NewRelatedResource().BillingModel(string("unknownbillingmodeltwo")).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq2 := v1.NewRelatedResource().BillingModel(string("unknownbillingmodeltwo")).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb1, qcb2}, nil
@@ -448,7 +450,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return cloudAuthorizationResp, nil
@@ -458,7 +460,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb}, nil
@@ -477,7 +479,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -486,7 +488,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
 						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb1}, nil
@@ -505,7 +507,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:      "testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -514,7 +516,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
 						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb1}, nil
@@ -540,7 +542,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				cloudAccountID: "different cloudAccountID",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -549,7 +551,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
 						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb1}, nil
@@ -575,7 +577,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				cloudAccountID: "cloudAccountID",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -584,7 +586,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
 						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb1}, nil
@@ -614,7 +616,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				cloudProviderID: "aws",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
@@ -623,7 +625,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
 						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb1}, nil
@@ -664,7 +666,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 
 			if tt.wantBillingModel != "" || tt.wantBillingMarketplaceAccount != "" {
-				ocmClientMock := tt.fields.ocmClient.(*ocm.ClientMock)
+				ocmClientMock := tt.fields.ocmClient.(*ocmClientMock.ClientMock)
 				clusterAuthorizationCalls := ocmClientMock.ClusterAuthorizationCalls()
 				gomega.Expect(len(clusterAuthorizationCalls)).To(gomega.Equal(1))
 				clusterAuthorizationResources := clusterAuthorizationCalls[0].Cb.Resources()
@@ -713,7 +715,7 @@ func Test_Delete_Quota(t *testing.T) {
 				subscriptionID: "1223",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					DeleteSubscriptionFunc: func(id string) (int, error) {
 						return 1, nil
 					},
@@ -727,7 +729,7 @@ func Test_Delete_Quota(t *testing.T) {
 				subscriptionID: "1223",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocmClientMock.ClientMock{
 					DeleteSubscriptionFunc: func(id string) (int, error) {
 						return 0, serviceErrors.GeneralError("failed to delete subscription")
 					},
@@ -764,7 +766,7 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 	}{
 		{
 			name: "returns false if no quota cost exists for the dinosaur's organization",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
@@ -782,14 +784,14 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns false if the quota cost billing model is not among the supported ones",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-					rrbq1 := v1.NewRelatedResource().BillingModel("unknownbillingmodel").Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
-					rrbq2 := v1.NewRelatedResource().BillingModel("unknownbillingmodel2").Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(1)
+					rrbq1 := v1.NewRelatedResource().BillingModel("unknownbillingmodel").Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
+					rrbq2 := v1.NewRelatedResource().BillingModel("unknownbillingmodel2").Product(string(ocmImpl.RHACSTrialProduct)).ResourceName(resourceName).Cost(1)
 					qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1, rrbq2).Build()
 					if err != nil {
 						panic("unexpected error")
@@ -806,14 +808,14 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns true if there is at least a 'standard' quota cost billing model",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-					rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
-					rrbq2 := v1.NewRelatedResource().BillingModel("unknownbillingmodel2").Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(1)
+					rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
+					rrbq2 := v1.NewRelatedResource().BillingModel("unknownbillingmodel2").Product(string(ocmImpl.RHACSTrialProduct)).ResourceName(resourceName).Cost(1)
 					qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1, rrbq2).Build()
 					if err != nil {
 						panic("unexpected error")
@@ -830,18 +832,18 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns true if there is at least a 'marketplace' quota cost billing model",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-					rrbq1 := v1.NewRelatedResource().BillingModel("unknownbillingmodel").Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+					rrbq1 := v1.NewRelatedResource().BillingModel("unknownbillingmodel").Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 					qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 					if err != nil {
 						panic("unexpected error")
 					}
-					rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+					rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 					cloudAccount := v1.NewCloudAccount().CloudAccountID("cloudAccountID").CloudProviderID(awsCloudProvider)
 					qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq2).CloudAccounts(cloudAccount).Build()
 					if err != nil {
@@ -863,18 +865,18 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns false if there is no supported billing model with an 'allowed' value greater than 0",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-					rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+					rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 					qcb, err := v1.NewQuotaCost().Allowed(0).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 					if err != nil {
 						panic("unexpected error")
 					}
-					rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+					rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 					qcb2, err := v1.NewQuotaCost().Allowed(0).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 					if err != nil {
 						panic("unexpected error")
@@ -891,7 +893,7 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns an error if it fails retrieving the organization ID",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					return nil, fmt.Errorf("error getting org")
 				},
@@ -907,7 +909,7 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 		},
 		{
 			name: "returns an error if it fails retrieving quota costs",
-			ocmClient: &ocm.ClientMock{
+			ocmClient: &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 					return org, nil
@@ -953,7 +955,7 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		amsClient    ocm.AMSClient
+		amsClient    ocmImpl.AMSClient
 		getQuotaFunc func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error)
 		central      *dbapi.CentralRequest
 
@@ -1134,7 +1136,7 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 
-			var amsClient ocm.AMSClient = &ocm.ClientMock{
+			var amsClient ocmImpl.AMSClient = &ocmClientMock.ClientMock{
 				GetOrganisationFromExternalIDFunc: makeOrganizationFromExternalID,
 				GetQuotaCostsForProductFunc:       tt.getQuotaFunc,
 			}
@@ -1153,7 +1155,7 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 }
 
 func makeStandardTestQuotaCost(resourceName string, organizationID string, allowed int, consumed int, t *testing.T) *v1.QuotaCost {
-	rrbq := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+	rrbq := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 	qcb, err := v1.NewQuotaCost().Allowed(allowed).Consumed(consumed).OrganizationID(organizationID).RelatedResources(rrbq).Build()
 	require.NoError(t, err)
 	return qcb
@@ -1161,7 +1163,7 @@ func makeStandardTestQuotaCost(resourceName string, organizationID string, allow
 
 func makeCloudTestQuotaCost(resourceName string, organizationID string, allowed int, consumed int, t *testing.T) *v1.QuotaCost {
 	cloudAccount := v1.NewCloudAccount().CloudAccountID("cloudAccountID").CloudProviderID(awsCloudProvider)
-	rrbq := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplaceAWS)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+	rrbq := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplaceAWS)).Product(string(ocmImpl.RHACSProduct)).ResourceName(resourceName).Cost(1)
 	qcb, err := v1.NewQuotaCost().Allowed(allowed).Consumed(consumed).OrganizationID(organizationID).RelatedResources(rrbq).CloudAccounts(cloudAccount).Build()
 	require.NoError(t, err)
 	return qcb

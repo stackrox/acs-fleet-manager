@@ -10,7 +10,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
+	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
@@ -664,7 +665,7 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Install(t *testing
 			return nil
 		},
 	}
-	addonConfig := ocm.AddonConfig{
+	addonConfig := ocmImpl.AddonConfig{
 		FleetshardSyncImageTag:        "0307e03",
 		InheritFleetshardSyncImageTag: true,
 	}
@@ -712,7 +713,7 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Upgrade(t *testing
 			return nil
 		},
 	}
-	addonConfig := ocm.AddonConfig{
+	addonConfig := ocmImpl.AddonConfig{
 		FleetshardSyncImageTag:        "0307e03",
 		InheritFleetshardSyncImageTag: true,
 	}
@@ -756,14 +757,14 @@ func addonsJSON(addons []dbapi.AddonInstallation) api.JSON {
 func TestAddonProvisioner_NewAddonProvisioner(t *testing.T) {
 	RegisterTestingT(t)
 
-	addonConfigPtr := &ocm.AddonConfig{
+	addonConfigPtr := &ocmImpl.AddonConfig{
 		URL:          "https://addon-service.test",
 		ClientID:     "addon-client-id",
 		ClientSecret: "addon-client-secret", // pragma: allowlist secret
 		SelfToken:    "addon-token",
 	}
 
-	baseConfigPtr := &ocm.OCMConfig{
+	baseConfigPtr := &ocmImpl.OCMConfig{
 		BaseURL:      "https://base.test",
 		ClientID:     "base-client-id",
 		ClientSecret: "base-client-secret", // pragma: allowlist secret

@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )

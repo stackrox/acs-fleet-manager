@@ -12,6 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"golang.org/x/exp/maps"
@@ -26,7 +27,7 @@ type AddonProvisioner struct {
 }
 
 // NewAddonProvisioner creates a new instance of AddonProvisioner
-func NewAddonProvisioner(addonConfig *ocm.AddonConfig, baseConfig *ocm.OCMConfig) (*AddonProvisioner, error) {
+func NewAddonProvisioner(addonConfig *ocmImpl.AddonConfig, baseConfig *ocmImpl.OCMConfig) (*AddonProvisioner, error) {
 	addonOCMConfig := *baseConfig
 
 	addonOCMConfig.BaseURL = addonConfig.URL
@@ -34,17 +35,17 @@ func NewAddonProvisioner(addonConfig *ocm.AddonConfig, baseConfig *ocm.OCMConfig
 	addonOCMConfig.ClientSecret = addonConfig.ClientSecret // pragma: allowlist secret
 	addonOCMConfig.SelfToken = addonConfig.SelfToken
 
-	conn, _, err := ocm.NewOCMConnection(&addonOCMConfig, addonOCMConfig.BaseURL)
+	conn, _, err := ocmImpl.NewOCMConnection(&addonOCMConfig, addonOCMConfig.BaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("addon service ocm connection: %w", err)
 	}
 	return &AddonProvisioner{
-		ocmClient:      ocm.NewClient(conn),
+		ocmClient:      ocmImpl.NewClient(conn),
 		customizations: initCustomizations(*addonConfig),
 	}, nil
 }
 
-func initCustomizations(config ocm.AddonConfig) []addonCustomization {
+func initCustomizations(config ocmImpl.AddonConfig) []addonCustomization {
 	var customizations []addonCustomization
 
 	if config.InheritFleetshardSyncImageTag {
