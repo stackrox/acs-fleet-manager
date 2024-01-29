@@ -573,9 +573,10 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "cloud account matches cloud_accounts response results in successful call",
 			args: args{
-				dinosaurID:     "12231",
-				owner:          "testUser",
-				cloudAccountID: "cloudAccountID",
+				dinosaurID:      "12231",
+				owner:           "testUser",
+				cloudAccountID:  "cloudAccountID",
+				cloudProviderID: "aws",
 			},
 			fields: fields{
 				ocmClient: &ocmClientMock.ClientMock{
@@ -587,7 +588,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return org, nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocmImpl.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						rrbq1 := v1.NewRelatedResource().CloudProvider("aws").BillingModel(string(v1.BillingModelMarketplaceAWS)).Product(string(ocmImpl.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
 						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						require.NoError(t, err)
 						return []*v1.QuotaCost{qcb1}, nil
@@ -595,7 +596,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
 						cloudAccount, _ := v1.NewCloudAccount().
 							CloudAccountID("cloudAccountID").
-							CloudProviderID("cloudProviderID").
+							CloudProviderID("aws").
 							Build()
 						return []*v1.CloudAccount{
 							cloudAccount,
@@ -603,7 +604,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 					},
 				},
 			},
-			wantBillingModel:              string(v1.BillingModelMarketplace),
+			wantBillingModel:              string(v1.BillingModelMarketplaceAWS),
 			wantBillingMarketplaceAccount: "cloudAccountID",
 			want:                          "1234",
 			wantErr:                       false,
