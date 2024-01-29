@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -26,6 +25,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 	"gorm.io/gorm"
+)
+
+var (
+	validTraitRegexp = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,50}$`)
 )
 
 // AdminCentralHandler is the interface for the admin central handler
@@ -332,6 +335,7 @@ func (h adminCentralHandler) ListTraits(w http.ResponseWriter, r *http.Request) 
 
 func (h adminCentralHandler) GetTrait(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{handlers.ValidateRegex(r, "trait", validTraitRegexp)},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			trait := mux.Vars(r)["trait"]
@@ -350,12 +354,10 @@ func (h adminCentralHandler) GetTrait(w http.ResponseWriter, r *http.Request) {
 
 func (h adminCentralHandler) PatchTraits(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{handlers.ValidateRegex(r, "trait", validTraitRegexp)},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
-			trait := strings.TrimSpace(mux.Vars(r)["trait"])
-			if !regexp.MustCompile("^[a-zA-Z0-9_-]{1,50}$").MatchString(trait) {
-				return nil, errors.BadRequest("Trait must be a non-empty string of 50 characters maximum")
-			}
+			trait := mux.Vars(r)["trait"]
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
 			if err := h.service.Updates(central, map[string]interface{}{
 				"traits": gorm.Expr(`(SELECT array_agg(DISTINCT v) FROM unnest(array_append(traits, ?)) AS traits_tmp(v))`, trait),
@@ -370,6 +372,7 @@ func (h adminCentralHandler) PatchTraits(w http.ResponseWriter, r *http.Request)
 
 func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{handlers.ValidateRegex(r, "trait", validTraitRegexp)},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			trait := mux.Vars(r)["trait"]

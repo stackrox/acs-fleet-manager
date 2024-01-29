@@ -4,10 +4,11 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/xeipuuv/gojsonschema"
-
 	"net/url"
 	"strconv"
+
+	"github.com/gorilla/mux"
+	"github.com/xeipuuv/gojsonschema"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
@@ -143,4 +144,14 @@ func ValidatQueryParam(queryParams url.Values, field string) Validate {
 		return nil
 	}
 
+}
+
+func ValidateRegex(r *http.Request, field string, regex *regexp.Regexp) Validate {
+	return func() *errors.ServiceError {
+		value := mux.Vars(r)[field]
+		if !regex.MatchString(value) {
+			return errors.MalformedServiceAccountName("%s %q does not match %s", field, value, regex.String())
+		}
+		return nil
+	}
 }
