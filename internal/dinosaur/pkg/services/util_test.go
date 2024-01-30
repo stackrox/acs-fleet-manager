@@ -11,7 +11,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
 	pkgErr "github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -83,7 +82,7 @@ func Test_handleCreateError(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *errors.ServiceError
+		want *serviceError.ServiceError
 	}{
 		{
 			name: "Handler should return a general error for any other errors than violating unique constraints",
@@ -91,7 +90,7 @@ func Test_handleCreateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          gorm.ErrInvalidField,
 			},
-			want: errors.GeneralError("Unable to create %s: %s", resourceType, gorm.ErrInvalidField.Error()),
+			want: serviceError.GeneralError("Unable to create %s: %s", resourceType, gorm.ErrInvalidField.Error()),
 		},
 		{
 			name: "Handler should return a conflict error if creation error is due to violating unique constraints",
@@ -99,7 +98,7 @@ func Test_handleCreateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          fmt.Errorf("transaction violates unique constraints"),
 			},
-			want: errors.Conflict("This %s already exists", resourceType),
+			want: serviceError.Conflict("This %s already exists", resourceType),
 		},
 	}
 	for _, tt := range tests {
@@ -119,7 +118,7 @@ func Test_handleUpdateError(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *errors.ServiceError
+		want *serviceError.ServiceError
 	}{
 		{
 			name: "Handler should return a general error for any other errors than violating unique constraints",
@@ -127,7 +126,7 @@ func Test_handleUpdateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          gorm.ErrInvalidData,
 			},
-			want: errors.GeneralError("Unable to update %s: %s", resourceType, gorm.ErrInvalidData.Error()),
+			want: serviceError.GeneralError("Unable to update %s: %s", resourceType, gorm.ErrInvalidData.Error()),
 		},
 		{
 			name: "Handler should return a conflict error if update error is due to violating unique constraints",
@@ -135,7 +134,7 @@ func Test_handleUpdateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          fmt.Errorf("transaction violates unique constraints"),
 			},
-			want: errors.Conflict("Changes to %s conflict with existing records", resourceType),
+			want: serviceError.Conflict("Changes to %s conflict with existing records", resourceType),
 		},
 	}
 	for _, tt := range tests {

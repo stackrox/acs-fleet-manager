@@ -7,7 +7,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
-	apiErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -77,12 +76,12 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 			newClusterServiceMock: func() ClusterService {
 				return &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
-						return nil, serviceErrors.New(apiErrors.ErrorGeneral, "error in FindAllClusters")
+						return nil, serviceErrors.New(serviceErrors.ErrorGeneral, "error in FindAllClusters")
 					},
 				}
 			},
 			central:         centralRequest,
-			expectedError:   serviceErrors.New(apiErrors.ErrorGeneral, "error in FindAllClusters"),
+			expectedError:   serviceErrors.New(serviceErrors.ErrorGeneral, "error in FindAllClusters"),
 			expectedCluster: nil,
 		},
 		{

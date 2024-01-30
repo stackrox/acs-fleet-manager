@@ -22,8 +22,6 @@ type DataPlaneClusterService interface {
 
 var _ DataPlaneClusterService = &dataPlaneClusterService{}
 
-const dataPlaneClusterStatusCondReadyName = "Ready"
-
 type dataPlaneClusterService struct {
 	di.Inject
 	ClusterService         ClusterService
@@ -87,10 +85,4 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 		return fmt.Errorf("updating cluster status: %w", err)
 	}
 	return nil
-}
-
-func (d *dataPlaneClusterService) clusterCanProcessStatusReports(cluster *api.Cluster) bool {
-	return cluster.Status == api.ClusterReady ||
-		cluster.Status == api.ClusterComputeNodeScalingUp ||
-		cluster.Status == api.ClusterFull
 }
