@@ -529,27 +529,35 @@ func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, nam
 }
 
 func getAuthProviderConfig(remoteCentral private.ManagedCentral) *declarativeconfig.AuthProvider {
+	groups := []declarativeconfig.Group{
+		{
+			AttributeKey:   "userid",
+			AttributeValue: remoteCentral.Spec.Auth.OwnerUserId,
+			RoleName:       "Admin",
+		},
+		{
+			AttributeKey:   "groups",
+			AttributeValue: "admin:org:all",
+			RoleName:       "Admin",
+		},
+		{
+			AttributeKey:   "rh_is_org_admin",
+			AttributeValue: "true",
+			RoleName:       "Admin",
+		},
+	}
+	if remoteCentral.Spec.Auth.OwnerAlternateUserId != "" {
+		groups = append(groups, declarativeconfig.Group{
+			AttributeKey:   "userid",
+			AttributeValue: remoteCentral.Spec.Auth.OwnerAlternateUserId,
+			RoleName:       "Admin",
+		})
+	}
 	return &declarativeconfig.AuthProvider{
 		Name:             authProviderName(remoteCentral),
 		UIEndpoint:       remoteCentral.Spec.UiEndpoint.Host,
 		ExtraUIEndpoints: []string{"localhost:8443"},
-		Groups: []declarativeconfig.Group{
-			{
-				AttributeKey:   "userid",
-				AttributeValue: remoteCentral.Spec.Auth.OwnerUserId,
-				RoleName:       "Admin",
-			},
-			{
-				AttributeKey:   "groups",
-				AttributeValue: "admin:org:all",
-				RoleName:       "Admin",
-			},
-			{
-				AttributeKey:   "rh_is_org_admin",
-				AttributeValue: "true",
-				RoleName:       "Admin",
-			},
-		},
+		Groups:           groups,
 		RequiredAttributes: []declarativeconfig.RequiredAttribute{
 			{
 				AttributeKey:   "rh_org_id",
@@ -786,7 +794,7 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 	}
 
 	// Only report secrets if Central is ready, to ensure we're not trying to get secrets before they are created.
-	// Only report secrets once. Ensures we don't overwrite initial secrets with corrupted secrets
+	// Only report secrets if not all secrets are already stored to ensure we don't overwrite initial secrets with corrupted secrets
 	// from the cluster state.
 	if isRemoteCentralReady(remoteCentral) && !r.areSecretsStored(remoteCentral.Metadata.SecretsStored) {
 		secrets, err := r.collectSecretsEncrypted(ctx, remoteCentral)

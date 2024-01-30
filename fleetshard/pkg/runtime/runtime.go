@@ -20,7 +20,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	fmAPI "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	fleetmanager "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
@@ -50,7 +51,7 @@ var backoff = wait.Backoff{
 // Runtime represents the runtime to reconcile all centrals associated with the given cluster.
 type Runtime struct {
 	config                 *config.Config
-	client                 *fleetmanager.Client
+	client                 *fmAPI.Client
 	clusterID              string
 	reconcilers            reconcilerRegistry
 	k8sClient              ctrlClient.Client

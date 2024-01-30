@@ -353,16 +353,6 @@ parameters:
   description: The domain name to use for Central instances
   value: acs-stage.rhcloud.com
 
-- name: CENTRAL_OPERATOR_OPERATOR_ADDON_ID
-  displayName: Central operator addon ID
-  description: ID of the Central operator addon
-  value: "managed-central-qe"
-
-- name: FLEETSHARD_ADDON_ID
-  displayName: fleetshard addon ID
-  description: ID of the fleetshard addon
-  value: "fleetshard-operator-qe"
-
 - name: ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
@@ -421,6 +411,18 @@ parameters:
   displayName: RHACS Targeted Operator Upgrades
   description: Whether to enable targeted operator upgrades
   value: "false"
+
+- name: ENABLE_LEADER_ELECTION
+  description: Enable leader election
+  value: "true"
+
+- name: OCM_ADDON_SERVICE_URL
+  displayName: The base URL of the OCM API for the addon service
+  value: "https://api.openshift.com"
+
+- name: OCM_ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG
+  description: Sets the provided fleetshard image tag if the addon parameter value is 'inherit'"
+  value: "true"
 
 objects:
   - kind: ConfigMap
@@ -859,87 +861,15 @@ objects:
                 address: 0.0.0.0
                 port_value: 9001
             listener_filters:
-            - name: tls_inspector
-              typed_config:
-                "@type": type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector
             filter_chains:
-            - filter_chain_match:
-                server_names:
-                  - "fleet-manager-active"
-                  - "fleet-manager-active.${NAMESPACE}"
-                  - "fleet-manager-active.${NAMESPACE}.svc"
-                  - "fleet-manager-active.${NAMESPACE}.svc.cluster"
-                  - "fleet-manager-active.${NAMESPACE}.svc.cluster.local"
-                  - "romndkjdq62p7sr.api.integration.openshift.com"
-              transport_socket:
-                name: envoy.transport_sockets.tls
-                typed_config:
-                  "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
-                  full_scan_certs_on_sni_mismatch: true
-                  common_tls_context:
-                    tls_certificates:
-                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
-                      private_key: {filename: "/secrets/active-tls/tls.key"}
-                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
-                      private_key: {filename: "/secrets/active-tls/tls.key"}
-              filters:
-              - name: envoy.filters.network.http_connection_manager
-                typed_config:
-                  "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-                  access_log:
-                  - name: envoy.access_loggers.file
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
-                      path: /dev/stdout
-                  stat_prefix: ingress
-                  route_config:
-                    name: backend
-                    virtual_hosts:
-                    - name: all
-                      domains:
-                      - "*"
-                      routes:
-                      - name: default
-                        match:
-                          prefix: /
-                        route:
-                          cluster: backend
-                        # Add security headers.
-                        typed_per_filter_config:
-                          lua_security_headers:
-                            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
-                            source_code:
-                              inline_string: |
-                                function envoy_on_response(response_handle)
-                                  contentSecurityPolicy = "default-src 'none'; script-src 'self'; img-src 'self'; style-src 'self'; connect-src 'self'";
-                                  response_handle:headers():add("Content-Security-Policy", contentSecurityPolicy);
-                                  response_handle:headers():add("X-Frame-Options", "deny");
-                                  response_handle:headers():add("X-XSS-Protection", "1; mode=block");
-                                  response_handle:headers():add("X-Content-Type-Options", "nosniff");
-                                  response_handle:headers():add("Referrer-Policy", "no-referrer");
-                                  response_handle:headers():add("X-Download-Options", "noopen");
-                                  response_handle:headers():add("X-DNS-Prefetch-Control", "off");
-                                  response_handle:headers():add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-                                end
-                  http_filters:
-                  - name: lua_security_headers
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-                  - name: envoy.filters.http.router
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-
             - transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:
                   "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
-                  full_scan_certs_on_sni_mismatch: true
                   common_tls_context:
                     tls_certificates:
                     - certificate_chain: {filename: "/secrets/tls/tls.crt"}
                       private_key: {filename: "/secrets/tls/tls.key"}
-                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
-                      private_key: {filename: "/secrets/active-tls/tls.key"}
               filters:
               - name: envoy.filters.network.http_connection_manager
                 typed_config:
@@ -1059,6 +989,73 @@ objects:
                   #         href: "/api/rhacs/v1/errors/429"
                   #         code: "CENTRALS-MGMT-429"
                   #         reason: "Too Many Requests"
+
+          # We need a second listener on a different port, because the openshift ingress does
+          # not forward SNI headers, and envoy is not able to determine which certificate to use
+          # for TLS termination. So we need a whole new listener with a different port.
+          # This has the same config as the 9001 listener, but listens on port 9002 and uses
+          # the fleet-manager-active.<ns>.svc certificate.
+          - name: ingress-active
+            address:
+              socket_address:
+                address: 0.0.0.0
+                port_value: 9002
+            listener_filters:
+            filter_chains:
+            - transport_socket:
+                name: envoy.transport_sockets.tls
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                  common_tls_context:
+                    tls_certificates:
+                    - certificate_chain: {filename: "/secrets/active-tls/tls.crt"}
+                      private_key: {filename: "/secrets/active-tls/tls.key"}
+              filters:
+              - name: envoy.filters.network.http_connection_manager
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                  access_log:
+                  - name: envoy.access_loggers.file
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+                      path: /dev/stdout
+                  stat_prefix: ingress
+                  route_config:
+                    name: backend
+                    virtual_hosts:
+                    - name: all
+                      domains:
+                      - "*"
+                      routes:
+                      - name: default
+                        match:
+                          prefix: /
+                        route:
+                          cluster: backend
+                        # Add security headers.
+                        typed_per_filter_config:
+                          lua_security_headers:
+                            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                            source_code:
+                              inline_string: |
+                                function envoy_on_response(response_handle)
+                                  contentSecurityPolicy = "default-src 'none'; script-src 'self'; img-src 'self'; style-src 'self'; connect-src 'self'";
+                                  response_handle:headers():add("Content-Security-Policy", contentSecurityPolicy);
+                                  response_handle:headers():add("X-Frame-Options", "deny");
+                                  response_handle:headers():add("X-XSS-Protection", "1; mode=block");
+                                  response_handle:headers():add("X-Content-Type-Options", "nosniff");
+                                  response_handle:headers():add("Referrer-Policy", "no-referrer");
+                                  response_handle:headers():add("X-Download-Options", "noopen");
+                                  response_handle:headers():add("X-DNS-Prefetch-Control", "off");
+                                  response_handle:headers():add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+                                end
+                  http_filters:
+                  - name: lua_security_headers
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
   - kind: Deployment
     apiVersion: apps/v1
@@ -1315,6 +1312,13 @@ objects:
             - --central-idp-issuer=${CENTRAL_IDP_ISSUER}
             - --ocm-client-id-file=/secrets/fleet-manager-credentials/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/fleet-manager-credentials/ocm-service.clientSecret
+            - --ocm-addon-url=${OCM_ADDON_SERVICE_URL}
+            - --ocm-addon-client-id-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientId
+            - --ocm-addon-client-secret-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientSecret
+            - --ocm-addon-client-secret-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientSecret
+            - --inherit-fleetshard-sync-image-tag=${OCM_ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG}
+            - --addon-self-token-file=/secrets/fleet-manager-credentials/ocm-addon-service.token
+            - --fleetshard-sync-image-tag=${IMAGE_TAG}
             - --sso-base-url=${SSO_BASE_URL}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
             - --sso-debug=${SSO_DEBUG}
@@ -1361,13 +1365,12 @@ objects:
             - --fleetshard-operator-index-image=${FLEETSHARD_OLM_INDEX_IMAGE}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --central-domain-name=${CENTRAL_DOMAIN_NAME}
-            - --central-operator-addon-id=${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}
-            - --fleetshard-addon-id=${FLEETSHARD_ADDON_ID}
             - --alsologtostderr
             - --central-request-expiration-timeout=${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}
             - --central-request-internal-user-agents=${CENTRAL_REQUEST_INTERNAL_USER_AGENTS}
             - --telemetry-endpoint=${TELEMETRY_ENDPONT}
             - --telemetry-storage-key-secret-file=/secrets/fleet-manager-credentials/telemetry.storageKey
+            - --enable-leader-election=${ENABLE_LEADER_ELECTION}
             - -v=${GLOG_V}
             resources:
               requests:
@@ -1409,6 +1412,9 @@ objects:
             - name: api-envoy
               protocol: TCP
               containerPort: 9001
+            - name: api-active
+              protocol: TCP
+              containerPort: 9002
             - name: metrics-envoy
               protocol: TCP
               containerPort: 9000
@@ -1499,7 +1505,7 @@ objects:
       name: fleet-manager-active
       labels:
         app: fleet-manager
-        port: api-envoy
+        port: api-active
       annotations:
         description: Exposes and load balances the fleet-manager pods. Only targets the active fleet-manager pod.
         service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-active-tls
@@ -1508,8 +1514,8 @@ objects:
         app: fleet-manager
         fleet-manager-active: "true"
       ports:
-        - port: 9001
-          targetPort: 9001
+        - port: 9002
+          targetPort: 9002
           protocol: TCP
 
   # Services for diagnostic ports (not part of main service because we

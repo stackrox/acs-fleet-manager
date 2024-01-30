@@ -27,6 +27,7 @@ import (
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	fmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/mocks"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/utils"
@@ -144,7 +145,7 @@ func getClientTrackerAndReconciler(
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t, k8sObjects...)
 	reconciler := NewCentralReconciler(
 		fakeClient,
-		fleetmanager.NewClientMock().Client(),
+		fmMocks.NewClientMock().Client(),
 		centralConfig,
 		managedDBClient,
 		centralDBInitFunc,
@@ -1872,7 +1873,7 @@ func TestRestoreCentralSecrets(t *testing.T) {
 				centralTLSSecretObject(),
 			},
 			buildFMClient: func() *fleetmanager.Client {
-				mockClient := fleetmanager.NewClientMock()
+				mockClient := fmMocks.NewClientMock()
 				mockClient.PrivateAPIMock.GetCentralFunc = func(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error) {
 					return private.ManagedCentral{}, nil, errors.New("test error")
 				}
@@ -1892,7 +1893,7 @@ func TestRestoreCentralSecrets(t *testing.T) {
 				centralTLSSecretObject(),
 			},
 			buildFMClient: func() *fleetmanager.Client {
-				mockClient := fleetmanager.NewClientMock()
+				mockClient := fmMocks.NewClientMock()
 				mockClient.PrivateAPIMock.GetCentralFunc = func(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error) {
 					returnCentral := simpleManagedCentral
 					returnCentral.Metadata.Secrets = map[string]string{"central-db-password": "testpw"}
@@ -1910,7 +1911,7 @@ func TestRestoreCentralSecrets(t *testing.T) {
 				return newCentral
 			},
 			buildFMClient: func() *fleetmanager.Client {
-				mockClient := fleetmanager.NewClientMock()
+				mockClient := fmMocks.NewClientMock()
 				mockClient.PrivateAPIMock.GetCentralFunc = func(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error) {
 					returnCentral := simpleManagedCentral
 					centralTLS := `{"metadata":{"name":"central-tls","namespace":"rhacs-cb45idheg5ip6dq1jo4g","creationTimestamp":null}}`

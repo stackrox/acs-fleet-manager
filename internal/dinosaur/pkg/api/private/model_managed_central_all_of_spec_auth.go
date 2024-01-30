@@ -12,11 +12,12 @@ package private
 
 // ManagedCentralAllOfSpecAuth struct for ManagedCentralAllOfSpecAuth
 type ManagedCentralAllOfSpecAuth struct {
-	ClientSecret string `json:"clientSecret,omitempty"`
-	ClientId     string `json:"clientId,omitempty"`
-	ClientOrigin string `json:"clientOrigin,omitempty"`
-	OwnerUserId  string `json:"ownerUserId,omitempty"`
-	OwnerOrgId   string `json:"ownerOrgId,omitempty"`
-	OwnerOrgName string `json:"ownerOrgName,omitempty"`
-	Issuer       string `json:"issuer,omitempty"`
+	ClientSecret         string `json:"clientSecret,omitempty"`
+	ClientId             string `json:"clientId,omitempty"`
+	ClientOrigin         string `json:"clientOrigin,omitempty"`
+	OwnerUserId          string `json:"ownerUserId,omitempty"`
+	OwnerAlternateUserId string `json:"ownerAlternateUserId,omitempty"`
+	OwnerOrgId           string `json:"ownerOrgId,omitempty"`
+	OwnerOrgName         string `json:"ownerOrgName,omitempty"`
+	Issuer               string `json:"issuer,omitempty"`
 }

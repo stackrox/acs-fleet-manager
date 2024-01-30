@@ -1,6 +1,7 @@
 package gitops
 
 import (
+	"os"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -31,7 +32,11 @@ func NewProvider() ConfigProvider {
 
 	var reader Reader
 	if features.GitOpsCentrals.Enabled() {
-		reader = NewFileReader(configPath)
+		path, exists := os.LookupEnv("GITOPS_CONFIG_PATH")
+		if !exists {
+			path = configPath
+		}
+		reader = NewFileReader(path)
 	} else {
 		reader = NewEmptyReader()
 	}

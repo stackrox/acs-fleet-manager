@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
@@ -29,6 +29,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"enable-https":                        "false",
 		"enable-metrics-https":                "false",
 		"enable-terms-acceptance":             "false",
+		"enable-leader-election":              "false",
 		"ocm-debug":                           "false",
 		"enable-ocm-mock":                     "true",
 		"ocm-mock-mode":                       ocm.MockModeEmulateServer,
@@ -43,8 +44,6 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"quota-type":                          "quota-management-list",
 		"enable-deletion-of-expired-central":  "true",
 		"dataplane-cluster-scaling-type":      "auto", // need to set this to 'auto' for integration environment as some tests rely on this
-		"central-operator-addon-id":           "managed-central-qe",
-		"fleetshard-addon-id":                 "fleetshard-operator-qe",
 	}
 }
 

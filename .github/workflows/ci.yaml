@@ -54,9 +54,7 @@ jobs:
     name: "Verify & Test"
     runs-on: ubuntu-latest
     env:
-      # TODO make sure that the secrets are configured for your repository
       OCM_ENV: integration
-      E2E: "true"
       # Dummy SSO variables
       SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
       SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
@@ -71,8 +69,6 @@ jobs:
       # Dummy Central TLS env variables
       CENTRAL_TLS_CERT: central_tls_cert # pragma: allowlist secret - dummy value
       CENTRAL_TLS_KEY: central_tls_key # pragma: allowlist secret - dummy value
-      # So that OCM secrets are initialised
-      DOCKER_PR_CHECK: true
       TEST_TIMEOUT: 30m
     services:
       postgres:
@@ -108,6 +104,15 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      - name: Go mod tidy
+        run: |
+          go mod tidy
+      - name: Clean and generate files
+        run: |
+          make clean/go-generated && make generate
+      - name: Test that there were no changes
+        run: |
+          git diff --exit-code
       - name: Setup tests secrets
         run: |
           make ocm/setup aws/setup redhatsso/setup centralcert/setup observatorium/setup secrets/touch
@@ -118,7 +123,7 @@ jobs:
           GOPATH=$(go env GOPATH)
           export GOPATH
           export PATH=${PATH}:$GOPATH/bin
-          make verify binary test
+          make verify binary test test/integration
         timeout-minutes: 14
   build-push-images:
     name: "Build and push fleet* images to quay.io"
@@ -138,6 +143,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0 # Critical for correct image detection in Makefile
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Build and push fleet-manager-tools image to quay.io
         if: github.event_name == 'push'
         env:
@@ -146,4 +153,4 @@ jobs:
       - name: Build and push fleetshard-operator image to quay.io
         run: make image/push/fleetshard-operator
       - name: Build and push fleet-manager image to quay.io
-        run: make image/push/fleet-manager
+        run: make image/push/fleet-manager IMAGE_PLATFORM=linux/amd64,linux/arm64

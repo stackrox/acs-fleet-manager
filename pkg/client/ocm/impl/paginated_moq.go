@@ -1,4 +1,4 @@
-package ocm
+package impl
 
 // Here goes implementation of paginatedResponse and paginatedRequest interfaces
 // for testing purposes. They provide paged access to an array of testDataType.
