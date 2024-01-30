@@ -693,8 +693,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
       summary: Returns central trait status.
-    patch:
-      operationId: patchCentralTraits
+    put:
+      operationId: putCentralTrait
       parameters:
       - description: The ID of record
         in: path

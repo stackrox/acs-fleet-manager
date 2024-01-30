@@ -1204,14 +1204,14 @@ func (a *DefaultApiService) GetCentrals(ctx _context.Context, localVarOptionals 
 }
 
 /*
-PatchCentralTraits Adds a trait to a central.
+PutCentralTrait Adds a trait to a central.
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
   - @param trait A central trait
 */
-func (a *DefaultApiService) PatchCentralTraits(ctx _context.Context, id string, trait string) (*_nethttp.Response, error) {
+func (a *DefaultApiService) PutCentralTrait(ctx _context.Context, id string, trait string) (*_nethttp.Response, error) {
 	var (
-		localVarHTTPMethod   = _nethttp.MethodPatch
+		localVarHTTPMethod   = _nethttp.MethodPut
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string

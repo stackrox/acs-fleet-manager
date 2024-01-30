@@ -268,9 +268,9 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminCentralsRouter.HandleFunc("/{id}/traits/{trait}", adminCentralHandler.GetTrait).
 		Name(logger.NewLogEvent("admin-get-trait", "[admin] check existence of a central trait").ToString()).
 		Methods(http.MethodGet)
-	adminCentralsRouter.HandleFunc("/{id}/traits/{trait}", adminCentralHandler.PatchTraits).
-		Name(logger.NewLogEvent("admin-patch-traits", "[admin] set central trait").ToString()).
-		Methods(http.MethodPatch)
+	adminCentralsRouter.HandleFunc("/{id}/traits/{trait}", adminCentralHandler.AddTrait).
+		Name(logger.NewLogEvent("admin-put-trait", "[admin] add a central trait").ToString()).
+		Methods(http.MethodPut)
 	adminCentralsRouter.HandleFunc("/{id}/traits/{trait}", adminCentralHandler.DeleteTrait).
 		Name(logger.NewLogEvent("admin-delete-trait", "[admin] delete central trait").ToString()).
 		Methods(http.MethodDelete)

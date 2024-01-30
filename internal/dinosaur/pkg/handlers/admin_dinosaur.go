@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	validTraitRegexp = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,50}$`)
+	validTraitRegexp = regexp.MustCompile(`^[[:alnum:]_-]{1,50}$`)
 )
 
 // AdminCentralHandler is the interface for the admin central handler
@@ -57,8 +57,8 @@ type AdminCentralHandler interface {
 	ListTraits(w http.ResponseWriter, r *http.Request)
 	// GetTrait tells wheter a central has the trait
 	GetTrait(w http.ResponseWriter, r *http.Request)
-	// PatchTraits adds a trait to the set of central traits
-	PatchTraits(w http.ResponseWriter, r *http.Request)
+	// AddTrait adds a trait to the set of central traits
+	AddTrait(w http.ResponseWriter, r *http.Request)
 	// DeleteTrait deletes a trait from a central
 	DeleteTrait(w http.ResponseWriter, r *http.Request)
 }
@@ -352,17 +352,17 @@ func (h adminCentralHandler) GetTrait(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleGet(w, r, cfg)
 }
 
-func (h adminCentralHandler) PatchTraits(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) AddTrait(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{handlers.ValidateRegex(r, "trait", validTraitRegexp)},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			trait := mux.Vars(r)["trait"]
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
-			if err := h.service.Updates(central, map[string]interface{}{
+			if svcErr := h.service.Updates(central, map[string]interface{}{
 				"traits": gorm.Expr(`(SELECT array_agg(DISTINCT v) FROM unnest(array_append(traits, ?)) AS traits_tmp(v))`, trait),
-			}); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Could not update central traits")
+			}); svcErr != nil {
+				return nil, errors.NewWithCause(svcErr.Code, svcErr, "Could not update central traits")
 			}
 			return nil, nil
 		},
@@ -377,10 +377,10 @@ func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request)
 			id := mux.Vars(r)["id"]
 			trait := mux.Vars(r)["trait"]
 			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
-			if err := h.service.Updates(central, map[string]interface{}{
+			if svcErr := h.service.Updates(central, map[string]interface{}{
 				"traits": gorm.Expr(`array_remove(traits, ?)`, trait),
-			}); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Could not update central traits")
+			}); svcErr != nil {
+				return nil, errors.NewWithCause(svcErr.Code, svcErr, "Could not update central traits")
 			}
 			return nil, nil
 		},

@@ -492,9 +492,9 @@ paths:
             application/json:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
-    patch:
+    put:
       summary: Adds a trait to a central.
-      operationId: patchCentralTraits
+      operationId: putCentralTrait
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
         - $ref: "#/components/parameters/trait"
