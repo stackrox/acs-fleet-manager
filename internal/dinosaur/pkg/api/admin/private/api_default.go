@@ -251,22 +251,13 @@ func (a *DefaultApiService) CentralRotateSecrets(ctx _context.Context, id string
 	return localVarHTTPResponse, nil
 }
 
-// ChangeBillingModelOpts Optional parameters for the method 'ChangeBillingModel'
-type ChangeBillingModelOpts struct {
-	CloudAccountId optional.String
-	CloudProvider  optional.String
-}
-
 /*
 ChangeBillingModel Change central billing model
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
-  - @param model
-  - @param optional nil or *ChangeBillingModelOpts - Optional Parameters:
-  - @param "CloudAccountId" (optional.String) -
-  - @param "CloudProvider" (optional.String) -
+  - @param centralBillingParameters Billing target parameters
 */
-func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, model string, localVarOptionals *ChangeBillingModelOpts) (*_nethttp.Response, error) {
+func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, centralBillingParameters CentralBillingParameters) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
@@ -283,15 +274,8 @@ func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, 
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	localVarQueryParams.Add("model", parameterToString(model, ""))
-	if localVarOptionals != nil && localVarOptionals.CloudAccountId.IsSet() {
-		localVarQueryParams.Add("cloud_account_id", parameterToString(localVarOptionals.CloudAccountId.Value(), ""))
-	}
-	if localVarOptionals != nil && localVarOptionals.CloudProvider.IsSet() {
-		localVarQueryParams.Add("cloud_provider", parameterToString(localVarOptionals.CloudProvider.Value(), ""))
-	}
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -307,6 +291,8 @@ func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, 
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = &centralBillingParameters
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, err

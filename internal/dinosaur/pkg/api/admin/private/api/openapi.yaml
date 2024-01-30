@@ -529,34 +529,13 @@ paths:
         required: true
         schema:
           type: string
-      - explode: true
-        in: query
-        name: model
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CentralBillingParameters'
+        description: Billing target parameters
         required: true
-        schema:
-          enum:
-          - standard
-          - marketplace
-          - marketplace-aws
-          - marketplace-gcp
-          - marketplace-rhm
-          - marketplace-azure
-          type: string
-        style: form
-      - explode: true
-        in: query
-        name: cloud_account_id
-        required: false
-        schema:
-          type: string
-        style: form
-      - explode: true
-        in: query
-        name: cloud_provider
-        required: false
-        schema:
-          type: string
-        style: form
       responses:
         "200":
           description: Billing model changed
@@ -852,6 +831,28 @@ components:
       required:
       - name
       - reason
+      type: object
+    CentralBillingParameters:
+      example:
+        cloud_account_id: cloud_account_id
+        model: standard
+        cloud_provider: cloud_provider
+      properties:
+        model:
+          enum:
+          - standard
+          - marketplace
+          - marketplace-aws
+          - marketplace-gcp
+          - marketplace-rhm
+          - marketplace-azure
+          type: string
+        cloud_account_id:
+          type: string
+        cloud_provider:
+          type: string
+      required:
+      - model
       type: object
     Error:
       allOf:

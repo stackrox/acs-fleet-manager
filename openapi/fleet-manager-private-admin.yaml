@@ -388,28 +388,13 @@ paths:
       operationId: changeBillingModel
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
-        - in: query
-          name: model
-          schema:
-            type: string
-            enum:
-            - standard
-            - marketplace
-            - marketplace-aws
-            - marketplace-gcp
-            - marketplace-rhm
-            - marketplace-azure
-          required: true
-        - in: query
-          name: cloud_account_id
-          schema:
-            type: string
-          required: false
-        - in: query
-          name: cloud_provider
-          schema:
-            type: string
-          required: false
+      requestBody:
+        description: Billing target parameters
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CentralBillingParameters"
+        required: true
       responses:
         "200":
           description: Billing model changed
@@ -721,6 +706,25 @@ components:
         type: string
       in: path
       required: true
+
+    CentralBillingParameters:
+      type: object
+      required:
+        - model
+      properties:
+        model:
+          type: string
+          enum:
+          - standard
+          - marketplace
+          - marketplace-aws
+          - marketplace-gcp
+          - marketplace-rhm
+          - marketplace-azure
+        cloud_account_id:
+          type: string
+        cloud_provider:
+          type: string
 
   securitySchemes:
     Bearer:

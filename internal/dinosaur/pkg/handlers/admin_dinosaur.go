@@ -393,13 +393,12 @@ func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request)
 }
 
 func (h adminCentralHandler) PatchBillingModel(w http.ResponseWriter, r *http.Request) {
+	var request *private.CentralBillingParameters
 	cfg := &handlers.HandlerConfig{
+		MarshalInto: &request,
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			id := mux.Vars(r)["id"]
-			model := r.PostFormValue("model")
-			cloudAccountID := r.PostFormValue("cloud_account_id")
-			cloudProvider := r.PostFormValue("cloud_provider")
-			return nil, h.service.ChangeBillingModel(r.Context(), id, model, cloudAccountID, cloudProvider)
+			return nil, h.service.ChangeBillingModel(r.Context(), mux.Vars(r)["id"],
+				request.Model, request.CloudAccountId, request.CloudProvider)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
