@@ -19,3 +19,8 @@
   roles:
     - "acs-general-engineering"
     - "acs-fleet-manager-admin-full"
+- method: PUT
+  roles:
+    - "acs-general-engineering"           # Will include all of ACS engineering. Available also within staging environment.
+    - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+    - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.

@@ -223,6 +223,11 @@ data:
         - "acs-general-engineering"           # Will include all of ACS engineering. Available also within staging environment.
         - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
         - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
+    - method: PUT
+      roles:
+        - "acs-general-engineering"           # Will include all of ACS engineering. Available also within staging environment.
+        - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+        - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
   admin-authz-roles-prod.yaml: |-
     ---
     - method: GET
@@ -238,6 +243,10 @@ data:
       roles:
         - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
     - method: POST
+      roles:
+        - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+        - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
+    - method: PUT
       roles:
         - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
         - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
