@@ -12,7 +12,7 @@ package private
 
 // CentralBillingParameters struct for CentralBillingParameters
 type CentralBillingParameters struct {
-	Model          string `json:"model"`
+	Model          string `json:"model,omitempty"`
 	CloudAccountId string `json:"cloud_account_id,omitempty"`
 	CloudProvider  string `json:"cloud_provider,omitempty"`
 }

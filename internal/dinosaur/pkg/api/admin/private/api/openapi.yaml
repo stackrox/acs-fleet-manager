@@ -851,8 +851,6 @@ components:
           type: string
         cloud_provider:
           type: string
-      required:
-      - model
       type: object
     Error:
       allOf:
