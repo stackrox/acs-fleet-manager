@@ -20,6 +20,6 @@
 ```
 # To run tests locally run:
 make db/teardown db/setup db/migrate
-make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
+make ocm/setup
 make verify lint binary test test/integration
 ```

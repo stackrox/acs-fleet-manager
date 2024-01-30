@@ -62,8 +62,9 @@ else
 GOBIN=$(shell $(GO) env GOBIN)
 endif
 
-# Used for local builds to support arm64
-goarch=$(shell go env GOARCH)
+ifeq ($(IMAGE_PLATFORM),)
+IMAGE_PLATFORM=linux/$(shell $(GO) env GOARCH)
+endif
 
 LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
 # Add the project-level bin directory into PATH. Needed in order
@@ -496,12 +497,9 @@ docker/login/internal:
 	$(DOCKER) login -u kubeadmin --password-stdin <<< $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
 .PHONY: docker/login/internal
 
-# Build the image using by specifying a specific image target within the Dockerfile.
-image/build: GOARCH?=amd64
-image/build: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
+# Build the image
 image/build:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) --build-arg GOARCH=$(GOARCH) .
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
+	DOCKER_CONFIG=${DOCKER_CONFIG} DOCKER_BUILDKIT=1 $(DOCKER) build -t $(SHORT_IMAGE_REF) .
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 ifeq ("$(CLUSTER_TYPE)","kind")
@@ -536,8 +534,8 @@ image/push: image/push/fleet-manager image/push/probe
 .PHONY: image/push
 
 image/push/fleet-manager: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
-image/push/fleet-manager: image/build
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
+image/push/fleet-manager:
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(IMAGE_REF) --platform $(IMAGE_PLATFORM) --push .
 	@echo
 	@echo "Image was pushed as $(IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(IMAGE_REF)"
@@ -601,6 +599,9 @@ secrets/touch:
           secrets/ocm-service.clientId \
           secrets/ocm-service.clientSecret \
           secrets/ocm-service.token \
+          secrets/ocm-addon-service.clientId \
+          secrets/ocm-addon-service.clientSecret \
+          secrets/ocm-addon-service.token \
           secrets/rhsso-logs.clientId \
           secrets/rhsso-logs.clientSecret \
           secrets/rhsso-metrics.clientId \
@@ -660,22 +661,15 @@ observatorium/token-refresher/setup:
 	@echo The Observatorium token refresher is now running on 'http://localhost:${PORT}'
 .PHONY: observatorium/token-refresher/setup
 
-# OCM login
-ocm/login:
-	@ocm login --url="$(SERVER_URL)" --token="$(OCM_OFFLINE_TOKEN)"
-.PHONY: ocm/login
-
-# Setup OCM_OFFLINE_TOKEN and
-# OCM Client ID and Secret should be set only when running inside docker in integration ENV)
-ocm/setup: OCM_CLIENT_ID ?= badger
-ocm/setup: OCM_CLIENT_SECRET ?= badger
+# Setup dummy OCM_OFFLINE_TOKEN for integration testing
+ocm/setup: OCM_OFFLINE_TOKEN ?= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c" # pragma: allowlist secret
 ocm/setup:
 	@echo -n "$(OCM_OFFLINE_TOKEN)" > secrets/ocm-service.token
+	@echo -n "$(OCM_OFFLINE_TOKEN)" > secrets/ocm-addon-service.token
 	@echo -n "" > secrets/ocm-service.clientId
 	@echo -n "" > secrets/ocm-service.clientSecret
-ifeq ($(OCM_ENV), integration)
-	@if [[ -n "$(DOCKER_PR_CHECK)" ]]; then echo -n "$(OCM_CLIENT_ID)" > secrets/ocm-service.clientId; echo -n "$(OCM_CLIENT_SECRET)" > secrets/ocm-service.clientSecret; fi;
-endif
+	@echo -n "" > secrets/ocm-addon-service.clientId
+	@echo -n "" > secrets/ocm-addon-service.clientSecret
 .PHONY: ocm/setup
 
 # create project where the service will be deployed in an OpenShift cluster
@@ -697,6 +691,9 @@ deploy/secrets:
 		-p OCM_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-service.clientId' ] && [ -z '${OCM_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-service.clientId || echo '${OCM_SERVICE_CLIENT_ID}')" \
 		-p OCM_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-service.clientSecret' ] && [ -z '${OCM_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-service.clientSecret || echo '${OCM_SERVICE_CLIENT_SECRET}')" \
 		-p OCM_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-service.token' ] && [ -z '${OCM_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-service.token || echo '${OCM_SERVICE_TOKEN}')" \
+		-p OCM_ADDON_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-addon-service.clientId' ] && [ -z '${OCM_ADDON_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-addon-service.clientId || echo '${OCM_ADDON_SERVICE_CLIENT_ID}')" \
+		-p OCM_ADDON_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-addon-service.clientSecret' ] && [ -z '${OCM_ADDON_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-addon-service.clientSecret || echo '${OCM_ADDON_SERVICE_CLIENT_SECRET}')" \
+		-p OCM_ADDON_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-addon-service.token' ] && [ -z '${OCM_ADDON_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-addon-service.token || echo '${OCM_ADDON_SERVICE_TOKEN}')" \
 		-p SENTRY_KEY="$(shell ([ -s './secrets/sentry.key' ] && [ -z '${SENTRY_KEY}' ]) && cat ./secrets/sentry.key || echo '${SENTRY_KEY}')" \
 		-p AWS_ACCESS_KEY="$(shell ([ -s './secrets/aws.accesskey' ] && [ -z '${AWS_ACCESS_KEY}' ]) && cat ./secrets/aws.accesskey || echo '${AWS_ACCESS_KEY}')" \
 		-p AWS_ACCOUNT_ID="$(shell ([ -s './secrets/aws.accountid' ] && [ -z '${AWS_ACCOUNT_ID}' ]) && cat ./secrets/aws.accountid || echo '${AWS_ACCOUNT_ID}')" \
@@ -750,8 +747,6 @@ deploy/service: OBSERVABILITY_CONFIG_REPO ?= "https://api.github.com/repos/bf2fc
 deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
 deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
-deploy/service: CENTRAL_OPERATOR_OPERATOR_ADDON_ID ?= "managed-central-qe"
-deploy/service: FLEETSHARD_ADDON_ID ?= "fleetshard-operator-qe"
 deploy/service: CENTRAL_IDP_ISSUER ?= "https://sso.stage.redhat.com/auth/realms/redhat-external"
 deploy/service: CENTRAL_IDP_CLIENT_ID ?= "rhacs-ms-dev"
 deploy/service: CENTRAL_REQUEST_EXPIRATION_TIMEOUT ?= "1h"
@@ -791,8 +786,6 @@ deploy/service: deploy/envoy deploy/route
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
 		-p FLEETSHARD_OLM_INDEX_IMAGE="${FLEETSHARD_OLM_INDEX_IMAGE}" \
 		-p CENTRAL_OPERATOR_OLM_INDEX_IMAGE="${CENTRAL_OPERATOR_OLM_INDEX_IMAGE}" \
-		-p CENTRAL_OPERATOR_OPERATOR_ADDON_ID="${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}" \
-		-p FLEETSHARD_ADDON_ID="${FLEETSHARD_ADDON_ID}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
 		-p CENTRAL_REQUEST_EXPIRATION_TIMEOUT="${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}" \
 		| oc apply -f - -n $(NAMESPACE)
@@ -856,15 +849,12 @@ deploy/bootstrap:
 .PHONY: deploy/bootstrap
 
 # Deploy local images fast for development
-deploy/dev-fast: GOARCH=$(goarch)
 deploy/dev-fast: image/build deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 
-deploy/dev-fast/fleet-manager: GOARCH=$(goarch)
 deploy/dev-fast/fleet-manager: image/build
 	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleet-manager
 
-deploy/dev-fast/fleetshard-sync: GOARCH=$(goarch)
 deploy/dev-fast/fleetshard-sync: image/build
 	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleetshard-sync
@@ -886,3 +876,8 @@ tag:
 full-image-tag:
 	@echo "$(IMAGE_NAME):$(image_tag)"
 .PHONY: full-image-tag
+
+clean/go-generated:
+	@echo "Cleaning generated .go files..."
+	@find . -name '*.go' | xargs grep -l '// Code generated by .*; DO NOT EDIT.$$' | while read -r file; do echo ""$$file""; rm -f "$$file"; done
+.PHONY: clean/go-generated

@@ -292,6 +292,8 @@ components:
                       type: string
                     ownerUserId:
                       type: string
+                    ownerAlternateUserId:
+                      type: string
                     ownerOrgId:
                       type: string
                     ownerOrgName:

@@ -9,7 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/aws"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/telemetry"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
@@ -37,6 +37,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(db.NewDatabaseConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewServerConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(ocm.NewOCMConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(ocm.NewAddonConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(iam.NewIAMConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(acl.NewAccessControlListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(quotamanagement.NewQuotaManagementListConfig, di.As(new(environments.ConfigModule))),

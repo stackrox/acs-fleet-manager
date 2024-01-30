@@ -3,7 +3,7 @@ package quota
 import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"

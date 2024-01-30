@@ -49,6 +49,14 @@ func (c *ACSClaims) GetUserID() (string, error) {
 		tenantUserIDClaim, alternateTenantUserIDClaim)
 }
 
+// GetAlternateUserID ...
+func (c *ACSClaims) GetAlternateUserID() (string, error) {
+	if alternateSub, ok := (*c)[alternateSubClaim].(string); ok {
+		return alternateSub, nil
+	}
+	return "", fmt.Errorf("can't find %q attribute in claims", alternateSubClaim)
+}
+
 // GetOrgID ...
 func (c *ACSClaims) GetOrgID() (string, error) {
 	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil },

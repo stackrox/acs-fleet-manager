@@ -2,7 +2,7 @@ package account
 
 import (
 	"github.com/goava/di"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )

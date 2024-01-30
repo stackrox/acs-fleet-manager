@@ -25,8 +25,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"quota-type":                                      "quota-management-list",
 		"enable-deletion-of-expired-central":              "true",
 		"dataplane-cluster-scaling-type":                  "manual",
-		"central-operator-addon-id":                       "managed-central-qe",
-		"fleetshard-addon-id":                             "fleetshard-operator-qe",
 		"observability-red-hat-sso-auth-server-url":       "https://sso.redhat.com/auth",
 		"observability-red-hat-sso-realm":                 "redhat-external",
 		"observability-red-hat-sso-token-refresher-url":   "http://localhost:8085",
@@ -39,5 +37,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"central-idp-client-id":                           "rhacs-ms-dev",
 		"central-idp-issuer":                              "https://sso.stage.redhat.com/auth/realms/redhat-external",
 		"admin-authz-config-file":                         "config/admin-authz-roles-dev.yaml",
+		"enable-leader-election":                          "false",
 	}
 }

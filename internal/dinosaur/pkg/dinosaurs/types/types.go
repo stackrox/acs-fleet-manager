@@ -1,7 +1,9 @@
 // Package types ...
 package types
 
-import "github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+import (
+	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
+)
 
 // DinosaurInstanceType ...
 type DinosaurInstanceType string

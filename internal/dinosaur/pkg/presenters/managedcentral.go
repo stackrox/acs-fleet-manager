@@ -125,13 +125,14 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 				from.Owner,
 			},
 			Auth: private.ManagedCentralAllOfSpecAuth{
-				ClientId:     from.AuthConfig.ClientID,
-				ClientSecret: from.AuthConfig.ClientSecret, // pragma: allowlist secret
-				ClientOrigin: from.AuthConfig.ClientOrigin,
-				OwnerOrgId:   from.OrganisationID,
-				OwnerOrgName: from.OrganisationName,
-				OwnerUserId:  from.OwnerUserID,
-				Issuer:       from.AuthConfig.Issuer,
+				ClientId:             from.AuthConfig.ClientID,
+				ClientSecret:         from.AuthConfig.ClientSecret, // pragma: allowlist secret
+				ClientOrigin:         from.AuthConfig.ClientOrigin,
+				OwnerOrgId:           from.OrganisationID,
+				OwnerOrgName:         from.OrganisationName,
+				OwnerUserId:          from.OwnerUserID,
+				OwnerAlternateUserId: from.OwnerAlternateUserID,
+				Issuer:               from.AuthConfig.Issuer,
 			},
 			UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
 				Host: from.GetUIHost(),

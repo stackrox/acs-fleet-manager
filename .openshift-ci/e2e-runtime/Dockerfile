@@ -11,7 +11,7 @@ COPY --from=quay.io/operator-framework/operator-sdk:v1.25 /usr/local/bin/operato
 
 ENV GOPATH=/go
 ENV GOROOT=/usr/local/go
-ENV PATH="/usr/local/go/bin:${PATH}"
+ENV PATH="${GOROOT}/bin:${PATH}"
 
 RUN ln -s /usr/bin/oc /usr/bin/kubectl
 

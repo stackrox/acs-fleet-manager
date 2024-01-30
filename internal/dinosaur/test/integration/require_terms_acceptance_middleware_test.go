@@ -7,7 +7,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 
 	. "github.com/onsi/gomega"
