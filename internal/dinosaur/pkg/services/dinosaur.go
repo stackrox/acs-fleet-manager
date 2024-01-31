@@ -262,7 +262,7 @@ func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dba
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
-	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType), bm, product)
+	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest, bm, product)
 	return subscriptionID, err
 }
 
@@ -1049,9 +1049,18 @@ func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID stri
 	originalCloudAccountID := centralRequest.CloudAccountID
 	originalCloudProvider := centralRequest.CloudProvider
 	originalSubscriptionID := centralRequest.SubscriptionID
+	originalInstanceType := centralRequest.InstanceType
+	originalProduct := types.DinosaurInstanceType(centralRequest.InstanceType).GetQuotaType().GetProduct()
 
 	centralRequest.CloudAccountID = cloudAccountID
 	centralRequest.CloudProvider = cloudProvider
+
+	// Changing product is allowed only from RHACSTrial to RHACS today. This
+	// change should also change the instance type.
+	if originalProduct == string(ocm.RHACSTrialProduct) && product == string(ocm.RHACSProduct) {
+		centralRequest.InstanceType = string(types.STANDARD)
+	}
+
 	centralRequest.SubscriptionID, svcErr = k.reserveQuota(ctx, centralRequest, billingModel, product)
 	if svcErr != nil {
 		return svcErr
@@ -1059,7 +1068,8 @@ func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID stri
 
 	if centralRequest.SubscriptionID != originalSubscriptionID ||
 		centralRequest.CloudAccountID != originalCloudAccountID ||
-		centralRequest.CloudProvider != originalCloudProvider {
+		centralRequest.CloudProvider != originalCloudProvider ||
+		centralRequest.InstanceType != originalInstanceType {
 		return k.Update(centralRequest)
 	}
 	return nil

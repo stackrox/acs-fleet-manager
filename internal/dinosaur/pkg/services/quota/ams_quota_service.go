@@ -74,13 +74,13 @@ func (q amsQuotaService) HasQuotaAllowance(central *dbapi.CentralRequest, instan
 	return true, nil
 }
 
-// selectBillingModelFromDinosaurInstanceType select the billing model of a
-// dinosaur instance type by looking at the resource name and product of the
-// instanceType, as well as cloudAccountID and cloudProviderID. Only QuotaCosts that have available quota, or that contain a
+// selectBillingModel select the billing model of a dinosaur instance
+// by looking at the resource name and product, cloudProviderID and
+// cloudAccountID. Only QuotaCosts that have available quota, or that contain a
 // RelatedResource with "cost" 0 are considered. Only
 // "standard" and "marketplace" and "marketplace-aws" billing models are considered.
 // If both marketplace and standard billing models are available, marketplace will be given preference.
-func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloudProviderID, cloudAccountID string, resourceName string, product string) (string, error) {
+func (q amsQuotaService) selectBillingModel(orgID, cloudProviderID, cloudAccountID string, resourceName string, product string) (string, error) {
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgID, resourceName, product)
 	if err != nil {
 		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, product)
@@ -115,7 +115,8 @@ func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloud
 }
 
 // ReserveQuota ...
-func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType, forceBillingModel string, forceProduct string) (string, *errors.ServiceError) {
+func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, forceBillingModel string, forceProduct string) (string, *errors.ServiceError) {
+	instanceType := types.DinosaurInstanceType(dinosaur.InstanceType)
 	dinosaurID := dinosaur.ID
 	rr := newBaseQuotaReservedResourceResourceBuilder()
 
@@ -138,7 +139,7 @@ func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.Centr
 	var bm string
 	if forceBillingModel == "" {
 		resourceName := instanceType.GetQuotaType().GetResourceName()
-		bm, err = q.selectBillingModelFromDinosaurInstanceType(org.ID(), dinosaur.CloudProvider, dinosaur.CloudAccountID, resourceName, product)
+		bm, err = q.selectBillingModel(org.ID(), dinosaur.CloudProvider, dinosaur.CloudAccountID, resourceName, product)
 		if err != nil {
 			svcErr := errors.ToServiceError(err)
 			return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")

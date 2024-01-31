@@ -252,7 +252,7 @@ func Test_dinosaurService_ChangeBillingModel(t *testing.T) {
 		HasQuotaAllowanceFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 			return true, nil
 		},
-		ReserveQuotaFunc: func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType, _ string, _ string) (string, *errors.ServiceError) {
+		ReserveQuotaFunc: func(ctx context.Context, dinosaur *dbapi.CentralRequest, _ string, _ string) (string, *errors.ServiceError) {
 			return dinosaur.SubscriptionID, nil
 		},
 	}
