@@ -1059,6 +1059,7 @@ func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID stri
 	// change should also change the instance type.
 	if originalProduct == string(ocm.RHACSTrialProduct) && product == string(ocm.RHACSProduct) {
 		centralRequest.InstanceType = string(types.STANDARD)
+		glog.Infof("Central %q type is being changed from %q to %q", centralID, originalInstanceType, centralRequest.InstanceType)
 	}
 
 	centralRequest.SubscriptionID, svcErr = k.reserveQuota(ctx, centralRequest, billingModel, product)
