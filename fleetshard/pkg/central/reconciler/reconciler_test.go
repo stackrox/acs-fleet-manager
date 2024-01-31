@@ -359,6 +359,9 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
 	}
+	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
+	r.needsReconcileFunc = r.needsReconcile
+	r.restoreCentralSecretsFunc = r.restoreCentralSecrets //pragma: allowlist secret
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.Error(t, err)
