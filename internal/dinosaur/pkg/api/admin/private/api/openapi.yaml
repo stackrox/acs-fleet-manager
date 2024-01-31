@@ -835,6 +835,7 @@ components:
     CentralBillingParameters:
       example:
         cloud_account_id: cloud_account_id
+        product: RHACS
         model: standard
         cloud_provider: cloud_provider
       properties:
@@ -850,6 +851,10 @@ components:
         cloud_account_id:
           type: string
         cloud_provider:
+          type: string
+        product:
+          enum:
+          - RHACS
           type: string
       type: object
     Error:

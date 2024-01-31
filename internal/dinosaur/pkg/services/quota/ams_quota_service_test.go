@@ -206,7 +206,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 			gomega.Expect(standardAllowance).To(gomega.Equal(tt.args.hasStandardQuota))
 			gomega.Expect(evalAllowance).To(gomega.Equal(tt.args.hasEvalQuota))
 
-			_, err = quotaService.ReserveQuota(emptyCtx, dinosaur, tt.args.dinosaurInstanceType, "")
+			_, err = quotaService.ReserveQuota(emptyCtx, dinosaur, tt.args.dinosaurInstanceType, "", "")
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
@@ -663,7 +663,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				CloudAccountID: tt.args.cloudAccountID,
 				CloudProvider:  utils.IfThenElse(tt.args.cloudProviderID == "", "cloudProviderID", tt.args.cloudProviderID),
 			}
-			subID, err := quotaService.ReserveQuota(emptyCtx, dinosaur, types.STANDARD, "")
+			subID, err := quotaService.ReserveQuota(emptyCtx, dinosaur, types.STANDARD, "", "")
 			gomega.Expect(subID).To(gomega.Equal(tt.want))
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 

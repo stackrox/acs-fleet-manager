@@ -28,7 +28,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			AcceptCentralRequestFunc: func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the AcceptCentralRequest method")
 //			},
-//			ChangeBillingModelFunc: func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError {
+//			ChangeBillingModelFunc: func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
 //				panic("mock out the ChangeBillingModel method")
 //			},
 //			ChangeDinosaurCNAMErecordsFunc: func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
@@ -117,7 +117,7 @@ type DinosaurServiceMock struct {
 	AcceptCentralRequestFunc func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// ChangeBillingModelFunc mocks the ChangeBillingModel method.
-	ChangeBillingModelFunc func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError
+	ChangeBillingModelFunc func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError
 
 	// ChangeDinosaurCNAMErecordsFunc mocks the ChangeDinosaurCNAMErecords method.
 	ChangeDinosaurCNAMErecordsFunc func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
@@ -213,6 +213,8 @@ type DinosaurServiceMock struct {
 			CloudAccountID string
 			// CloudProvider is the cloudProvider argument value.
 			CloudProvider string
+			// Product is the product argument value.
+			Product string
 		}
 		// ChangeDinosaurCNAMErecords holds details about calls to the ChangeDinosaurCNAMErecords method.
 		ChangeDinosaurCNAMErecords []struct {
@@ -418,7 +420,7 @@ func (mock *DinosaurServiceMock) AcceptCentralRequestCalls() []struct {
 }
 
 // ChangeBillingModel calls ChangeBillingModelFunc.
-func (mock *DinosaurServiceMock) ChangeBillingModel(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError {
+func (mock *DinosaurServiceMock) ChangeBillingModel(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
 	if mock.ChangeBillingModelFunc == nil {
 		panic("DinosaurServiceMock.ChangeBillingModelFunc: method is nil but DinosaurService.ChangeBillingModel was just called")
 	}
@@ -428,17 +430,19 @@ func (mock *DinosaurServiceMock) ChangeBillingModel(ctx context.Context, central
 		BillingModel   string
 		CloudAccountID string
 		CloudProvider  string
+		Product        string
 	}{
 		Ctx:            ctx,
 		CentralID:      centralID,
 		BillingModel:   billingModel,
 		CloudAccountID: cloudAccountID,
 		CloudProvider:  cloudProvider,
+		Product:        product,
 	}
 	mock.lockChangeBillingModel.Lock()
 	mock.calls.ChangeBillingModel = append(mock.calls.ChangeBillingModel, callInfo)
 	mock.lockChangeBillingModel.Unlock()
-	return mock.ChangeBillingModelFunc(ctx, centralID, billingModel, cloudAccountID, cloudProvider)
+	return mock.ChangeBillingModelFunc(ctx, centralID, billingModel, cloudAccountID, cloudProvider, product)
 }
 
 // ChangeBillingModelCalls gets all the calls that were made to ChangeBillingModel.
@@ -451,6 +455,7 @@ func (mock *DinosaurServiceMock) ChangeBillingModelCalls() []struct {
 	BillingModel   string
 	CloudAccountID string
 	CloudProvider  string
+	Product        string
 } {
 	var calls []struct {
 		Ctx            context.Context
@@ -458,6 +463,7 @@ func (mock *DinosaurServiceMock) ChangeBillingModelCalls() []struct {
 		BillingModel   string
 		CloudAccountID string
 		CloudProvider  string
+		Product        string
 	}
 	mock.lockChangeBillingModel.RLock()
 	calls = mock.calls.ChangeBillingModel

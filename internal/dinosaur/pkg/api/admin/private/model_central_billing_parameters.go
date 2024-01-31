@@ -15,4 +15,5 @@ type CentralBillingParameters struct {
 	Model          string `json:"model,omitempty"`
 	CloudAccountId string `json:"cloud_account_id,omitempty"`
 	CloudProvider  string `json:"cloud_provider,omitempty"`
+	Product        string `json:"product,omitempty"`
 }

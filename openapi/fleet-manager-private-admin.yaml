@@ -723,7 +723,10 @@ components:
           type: string
         cloud_provider:
           type: string
-
+        product:
+          type: string
+          enum:
+          - RHACS
   securitySchemes:
     Bearer:
       scheme: bearer

@@ -252,7 +252,7 @@ func Test_dinosaurService_ChangeBillingModel(t *testing.T) {
 		HasQuotaAllowanceFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 			return true, nil
 		},
-		ReserveQuotaFunc: func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType, _ string) (string, *errors.ServiceError) {
+		ReserveQuotaFunc: func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType, _ string, _ string) (string, *errors.ServiceError) {
 			return dinosaur.SubscriptionID, nil
 		},
 	}
@@ -286,7 +286,7 @@ func Test_dinosaurService_ChangeBillingModel(t *testing.T) {
 		`WHERE status not IN ($10,$11) AND "central_requests"."deleted_at" IS NULL AND "id" = $12`).
 		OneTime()
 
-	svcErr := k.ChangeBillingModel(context.Background(), central.ID, "marketplace", "aws_account_id", "aws")
+	svcErr := k.ChangeBillingModel(context.Background(), central.ID, "marketplace", "aws_account_id", "aws", "")
 	assert.Nil(t, svcErr)
 
 	assert.True(t, m0.Triggered)

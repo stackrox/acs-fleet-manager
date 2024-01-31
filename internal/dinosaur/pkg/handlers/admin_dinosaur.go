@@ -398,7 +398,7 @@ func (h adminCentralHandler) PatchBillingModel(w http.ResponseWriter, r *http.Re
 		MarshalInto: &request,
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			return nil, h.service.ChangeBillingModel(r.Context(), mux.Vars(r)["id"],
-				request.Model, request.CloudAccountId, request.CloudProvider)
+				request.Model, request.CloudAccountId, request.CloudProvider, request.Product)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
