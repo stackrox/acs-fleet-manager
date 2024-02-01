@@ -40,13 +40,13 @@ var supportedAMSBillingModels = map[string]struct{}{
 }
 
 // HasQuotaAllowance checks if allowed quota is not zero for the given instance type.
-func (q amsQuotaService) HasQuotaAllowance(central *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+func (q amsQuotaService) HasQuotaAllowance(central *dbapi.CentralRequest) (bool, *errors.ServiceError) {
 	org, err := q.amsClient.GetOrganisationFromExternalID(central.OrganisationID)
 	if err != nil {
 		return false, errors.OrganisationNotFound(central.OrganisationID, err)
 	}
 
-	quotaType := instanceType.GetQuotaType()
+	quotaType := types.DinosaurInstanceType(central.InstanceType).GetQuotaType()
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(org.ID(), quotaType.GetResourceName(), quotaType.GetProduct())
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf(
@@ -114,7 +114,8 @@ func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloud
 }
 
 // ReserveQuota ...
-func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest) (string, *errors.ServiceError) {
+	instanceType := types.DinosaurInstanceType(dinosaur.InstanceType)
 	dinosaurID := dinosaur.ID
 	rr := newBaseQuotaReservedResourceResourceBuilder()
 

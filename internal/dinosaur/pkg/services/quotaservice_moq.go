@@ -6,7 +6,6 @@ package services
 import (
 	"context"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"sync"
 )
@@ -24,10 +23,10 @@ var _ QuotaService = &QuotaServiceMock{}
 //			DeleteQuotaFunc: func(subscriptionID string) *serviceError.ServiceError {
 //				panic("mock out the DeleteQuota method")
 //			},
-//			HasQuotaAllowanceFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *serviceError.ServiceError) {
+//			HasQuotaAllowanceFunc: func(dinosaur *dbapi.CentralRequest) (bool, *serviceError.ServiceError) {
 //				panic("mock out the HasQuotaAllowance method")
 //			},
-//			ReserveQuotaFunc: func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError) {
+//			ReserveQuotaFunc: func(ctx context.Context, dinosaur *dbapi.CentralRequest) (string, *serviceError.ServiceError) {
 //				panic("mock out the ReserveQuota method")
 //			},
 //		}
@@ -41,10 +40,10 @@ type QuotaServiceMock struct {
 	DeleteQuotaFunc func(subscriptionID string) *serviceError.ServiceError
 
 	// HasQuotaAllowanceFunc mocks the HasQuotaAllowance method.
-	HasQuotaAllowanceFunc func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *serviceError.ServiceError)
+	HasQuotaAllowanceFunc func(dinosaur *dbapi.CentralRequest) (bool, *serviceError.ServiceError)
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
-	ReserveQuotaFunc func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError)
+	ReserveQuotaFunc func(ctx context.Context, dinosaur *dbapi.CentralRequest) (string, *serviceError.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -57,8 +56,6 @@ type QuotaServiceMock struct {
 		HasQuotaAllowance []struct {
 			// Dinosaur is the dinosaur argument value.
 			Dinosaur *dbapi.CentralRequest
-			// InstanceType is the instanceType argument value.
-			InstanceType types.DinosaurInstanceType
 		}
 		// ReserveQuota holds details about calls to the ReserveQuota method.
 		ReserveQuota []struct {
@@ -66,8 +63,6 @@ type QuotaServiceMock struct {
 			Ctx context.Context
 			// Dinosaur is the dinosaur argument value.
 			Dinosaur *dbapi.CentralRequest
-			// InstanceType is the instanceType argument value.
-			InstanceType types.DinosaurInstanceType
 		}
 	}
 	lockDeleteQuota       sync.RWMutex
@@ -108,21 +103,19 @@ func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
 }
 
 // HasQuotaAllowance calls HasQuotaAllowanceFunc.
-func (mock *QuotaServiceMock) HasQuotaAllowance(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *serviceError.ServiceError) {
+func (mock *QuotaServiceMock) HasQuotaAllowance(dinosaur *dbapi.CentralRequest) (bool, *serviceError.ServiceError) {
 	if mock.HasQuotaAllowanceFunc == nil {
 		panic("QuotaServiceMock.HasQuotaAllowanceFunc: method is nil but QuotaService.HasQuotaAllowance was just called")
 	}
 	callInfo := struct {
-		Dinosaur     *dbapi.CentralRequest
-		InstanceType types.DinosaurInstanceType
+		Dinosaur *dbapi.CentralRequest
 	}{
-		Dinosaur:     dinosaur,
-		InstanceType: instanceType,
+		Dinosaur: dinosaur,
 	}
 	mock.lockHasQuotaAllowance.Lock()
 	mock.calls.HasQuotaAllowance = append(mock.calls.HasQuotaAllowance, callInfo)
 	mock.lockHasQuotaAllowance.Unlock()
-	return mock.HasQuotaAllowanceFunc(dinosaur, instanceType)
+	return mock.HasQuotaAllowanceFunc(dinosaur)
 }
 
 // HasQuotaAllowanceCalls gets all the calls that were made to HasQuotaAllowance.
@@ -130,12 +123,10 @@ func (mock *QuotaServiceMock) HasQuotaAllowance(dinosaur *dbapi.CentralRequest, 
 //
 //	len(mockedQuotaService.HasQuotaAllowanceCalls())
 func (mock *QuotaServiceMock) HasQuotaAllowanceCalls() []struct {
-	Dinosaur     *dbapi.CentralRequest
-	InstanceType types.DinosaurInstanceType
+	Dinosaur *dbapi.CentralRequest
 } {
 	var calls []struct {
-		Dinosaur     *dbapi.CentralRequest
-		InstanceType types.DinosaurInstanceType
+		Dinosaur *dbapi.CentralRequest
 	}
 	mock.lockHasQuotaAllowance.RLock()
 	calls = mock.calls.HasQuotaAllowance
@@ -144,23 +135,21 @@ func (mock *QuotaServiceMock) HasQuotaAllowanceCalls() []struct {
 }
 
 // ReserveQuota calls ReserveQuotaFunc.
-func (mock *QuotaServiceMock) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError) {
+func (mock *QuotaServiceMock) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest) (string, *serviceError.ServiceError) {
 	if mock.ReserveQuotaFunc == nil {
 		panic("QuotaServiceMock.ReserveQuotaFunc: method is nil but QuotaService.ReserveQuota was just called")
 	}
 	callInfo := struct {
-		Ctx          context.Context
-		Dinosaur     *dbapi.CentralRequest
-		InstanceType types.DinosaurInstanceType
+		Ctx      context.Context
+		Dinosaur *dbapi.CentralRequest
 	}{
-		Ctx:          ctx,
-		Dinosaur:     dinosaur,
-		InstanceType: instanceType,
+		Ctx:      ctx,
+		Dinosaur: dinosaur,
 	}
 	mock.lockReserveQuota.Lock()
 	mock.calls.ReserveQuota = append(mock.calls.ReserveQuota, callInfo)
 	mock.lockReserveQuota.Unlock()
-	return mock.ReserveQuotaFunc(ctx, dinosaur, instanceType)
+	return mock.ReserveQuotaFunc(ctx, dinosaur)
 }
 
 // ReserveQuotaCalls gets all the calls that were made to ReserveQuota.
@@ -168,14 +157,12 @@ func (mock *QuotaServiceMock) ReserveQuota(ctx context.Context, dinosaur *dbapi.
 //
 //	len(mockedQuotaService.ReserveQuotaCalls())
 func (mock *QuotaServiceMock) ReserveQuotaCalls() []struct {
-	Ctx          context.Context
-	Dinosaur     *dbapi.CentralRequest
-	InstanceType types.DinosaurInstanceType
+	Ctx      context.Context
+	Dinosaur *dbapi.CentralRequest
 } {
 	var calls []struct {
-		Ctx          context.Context
-		Dinosaur     *dbapi.CentralRequest
-		InstanceType types.DinosaurInstanceType
+		Ctx      context.Context
+		Dinosaur *dbapi.CentralRequest
 	}
 	mock.lockReserveQuota.RLock()
 	calls = mock.calls.ReserveQuota

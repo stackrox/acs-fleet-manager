@@ -9,7 +9,6 @@ import (
 	constants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -96,7 +95,7 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 		active, inCache := quotaCostCache[key]
 		if !inCache {
 			var svcErr *serviceErr.ServiceError
-			active, svcErr = quotaService.HasQuotaAllowance(central, types.DinosaurInstanceType(central.InstanceType))
+			active, svcErr = quotaService.HasQuotaAllowance(central)
 			if svcErr != nil {
 				svcErrors = append(svcErrors, errors.Wrapf(svcErr, "failed to get quota entitlement status of central instance %q", central.ID))
 				continue

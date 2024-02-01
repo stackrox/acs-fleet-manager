@@ -9,9 +9,11 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
@@ -202,4 +204,69 @@ func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 	svcErr = k.DeprovisionExpiredDinosaurs()
 	assert.Nil(t, svcErr)
 	assert.True(t, m.Triggered)
+}
+
+func Test_dinosaurService_DetectInstanceType(t *testing.T) {
+	mockedQuotaService := &QuotaServiceMock{}
+	svc := &dinosaurService{
+		connectionFactory: db.NewMockConnectionFactory(nil),
+		quotaServiceFactory: &QuotaServiceFactoryMock{
+			GetQuotaServiceFunc: func(_ api.QuotaType) (QuotaService, *errors.ServiceError) {
+				return mockedQuotaService, nil
+			},
+		},
+		dinosaurConfig: &config.CentralConfig{
+			Quota: &config.CentralQuotaConfig{Type: "test"},
+		},
+	}
+	tests := map[string]struct {
+		requestedType types.DinosaurInstanceType
+		hasQuota      bool
+		hasError      *errors.ServiceError
+
+		expectedType types.DinosaurInstanceType
+	}{
+		"has standard quota for standard request": {
+			requestedType: types.STANDARD,
+			hasQuota:      true,
+			expectedType:  types.STANDARD,
+		},
+		"has eval quota for eval request": {
+			requestedType: types.EVAL,
+			hasQuota:      true,
+			expectedType:  types.EVAL,
+		},
+		"has no standard quota for standard request": {
+			requestedType: types.STANDARD,
+			hasQuota:      false,
+			expectedType:  types.EVAL,
+		},
+		"has no eval quota for eval request": {
+			requestedType: types.EVAL,
+			hasQuota:      false,
+			expectedType:  types.EVAL,
+		},
+		"has error for standard request": {
+			requestedType: types.STANDARD,
+			hasError:      errors.FailedToCheckQuota("test"),
+			expectedType:  types.EVAL,
+		},
+		"has error for eval request": {
+			requestedType: types.EVAL,
+			hasError:      errors.FailedToCheckQuota("test"),
+			expectedType:  types.EVAL,
+		},
+	}
+	central := buildCentralRequest(nil)
+	for test, args := range tests {
+		t.Run(test, func(tt *testing.T) {
+			central.InstanceType = args.requestedType.String()
+			mockedQuotaService.HasQuotaAllowanceFunc = func(dinosaur *dbapi.CentralRequest) (bool, *errors.ServiceError) {
+				return args.hasQuota, args.hasError
+			}
+			instanceType := svc.DetectInstanceType(central)
+			assert.Equal(tt, args.requestedType.String(), central.InstanceType, "central must not be changed")
+			assert.Equal(tt, args.expectedType, instanceType)
+		})
+	}
 }

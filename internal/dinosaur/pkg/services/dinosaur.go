@@ -212,17 +212,16 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 		return types.EVAL
 	}
 
-	hasQuota, err := quotaService.HasQuotaAllowance(dinosaurRequest, types.STANDARD)
+	hasQuota, err := quotaService.HasQuotaAllowance(dinosaurRequest)
 	if err != nil {
-		glog.Error(errors.NewWithCause(errors.ErrorGeneral, err, "unable to check quota"))
+		glog.Error(errors.NewWithCause(err.Code, err, "unable to check quota"))
 		return types.EVAL
 	}
 	if hasQuota {
-		glog.Infof("Quota detected for central request %s with quota type %s. Granting instance type %s.", dinosaurRequest.ID, quotaType, types.STANDARD)
-		return types.STANDARD
+		glog.Infof("Quota detected for central request %s with quota type %s. Granting instance type %s.", dinosaurRequest.ID, quotaType, dinosaurRequest.InstanceType)
+		return types.DinosaurInstanceType(dinosaurRequest.InstanceType)
 	}
-
-	glog.Infof("No quota detected for central request %s with quota type %s. Granting instance type %s.", dinosaurRequest.ID, quotaType, types.EVAL)
+	glog.Infof("No quota detected for central request %s with quota type %s. Granting instance type %s.", dinosaurRequest.ID, quotaType, dinosaurRequest.InstanceType)
 	return types.EVAL
 }
 
@@ -255,7 +254,7 @@ func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dba
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
-	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType))
+	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest)
 	return subscriptionID, err
 }
 
@@ -274,6 +273,7 @@ func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurReque
 		return errors.TooManyDinosaurInstancesReached(errorMsg)
 	}
 
+	dinosaurRequest.InstanceType = types.STANDARD.String()
 	instanceType := k.DetectInstanceType(dinosaurRequest)
 
 	dinosaurRequest.InstanceType = instanceType.String()
