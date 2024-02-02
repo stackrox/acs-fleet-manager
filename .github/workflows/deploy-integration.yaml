@@ -12,5 +12,5 @@ jobs:
     with:
       acs_environment: integration
       github_environment: integration
-      deploy_clusters: "acs-int-us-01"
+      deploy_clusters: ""
       probe_clusters: "acs-int-us-01"
