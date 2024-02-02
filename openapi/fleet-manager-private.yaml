@@ -269,6 +269,8 @@ components:
                   type: object
                   additionalProperties:
                     type: string
+                expired-at:
+                  type: string
             spec:
               type: object
               properties:

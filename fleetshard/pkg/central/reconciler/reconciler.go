@@ -62,6 +62,7 @@ const (
 	instanceTypeLabelKey      = "rhacs.redhat.com/instance-type"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
+	centralExpiredAtKey       = "rhacs.redhat.com/expired-at"
 
 	auditLogNotifierKey  = "com.redhat.rhacs.auditLogNotifier"
 	auditLogNotifierName = "Platform Audit Logs"
@@ -197,6 +198,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
 		tenantIDLabelKey: remoteCentral.Id,
 	}
+	if remoteCentral.Metadata.ExpiredAt != "" {
+		namespaceLabels[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt
+	}
+
 	namespaceAnnotations := map[string]string{
 		orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
 	}

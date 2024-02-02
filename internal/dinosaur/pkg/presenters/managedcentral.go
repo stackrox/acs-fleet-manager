@@ -153,6 +153,9 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 	if from.DeletionTimestamp != nil {
 		res.Metadata.DeletionTimestamp = from.DeletionTimestamp.Format(time.RFC3339)
 	}
+	if from.ExpiredAt != nil {
+		res.Metadata.ExpiredAt = from.ExpiredAt.Format(time.RFC3339)
+	}
 
 	return res, nil
 }

@@ -17,6 +17,7 @@ import (
 	_nethttp "net/http"
 	_neturl "net/url"
 	"strings"
+	"time"
 )
 
 // Linger please
@@ -885,7 +886,7 @@ UpdateCentralExpiredAtById Update `expired_at` central property
 
 @return Central
 */
-func (a *DefaultApiService) UpdateCentralExpiredAtById(ctx _context.Context, id string, reason string, localVarOptionals *UpdateCentralExpiredAtByIdOpts) (Central, *_nethttp.Response, error) {
+func (a *DefaultApiService) UpdateCentralExpiredAtById(ctx _context.Context, id string, reason time.Time, localVarOptionals *UpdateCentralExpiredAtByIdOpts) (Central, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
