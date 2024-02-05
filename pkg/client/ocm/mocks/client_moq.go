@@ -6,7 +6,6 @@ package mocks
 import (
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
-	addonsmgmtv1 "github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -50,13 +49,13 @@ var _ ocm.Client = &ClientMock{}
 //			FindSubscriptionsFunc: func(query string) (*amsv1.SubscriptionsListResponse, error) {
 //				panic("mock out the FindSubscriptions method")
 //			},
-//			GetAddonFunc: func(addonID string) (*addonsmgmtv1.Addon, error) {
+//			GetAddonFunc: func(addonID string) (*clustersmgmtv1.AddOn, error) {
 //				panic("mock out the GetAddon method")
 //			},
 //			GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *serviceErrors.ServiceError) {
 //				panic("mock out the GetAddonInstallation method")
 //			},
-//			GetAddonVersionFunc: func(addonID string, version string) (*addonsmgmtv1.AddonVersion, error) {
+//			GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
 //				panic("mock out the GetAddonVersion method")
 //			},
 //			GetCloudProvidersFunc: func() (*clustersmgmtv1.CloudProviderList, error) {
@@ -133,13 +132,13 @@ type ClientMock struct {
 	FindSubscriptionsFunc func(query string) (*amsv1.SubscriptionsListResponse, error)
 
 	// GetAddonFunc mocks the GetAddon method.
-	GetAddonFunc func(addonID string) (*addonsmgmtv1.Addon, error)
+	GetAddonFunc func(addonID string) (*clustersmgmtv1.AddOn, error)
 
 	// GetAddonInstallationFunc mocks the GetAddonInstallation method.
 	GetAddonInstallationFunc func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *serviceErrors.ServiceError)
 
 	// GetAddonVersionFunc mocks the GetAddonVersion method.
-	GetAddonVersionFunc func(addonID string, version string) (*addonsmgmtv1.AddonVersion, error)
+	GetAddonVersionFunc func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error)
 
 	// GetCloudProvidersFunc mocks the GetCloudProviders method.
 	GetCloudProvidersFunc func() (*clustersmgmtv1.CloudProviderList, error)
@@ -645,7 +644,7 @@ func (mock *ClientMock) FindSubscriptionsCalls() []struct {
 }
 
 // GetAddon calls GetAddonFunc.
-func (mock *ClientMock) GetAddon(addonID string) (*addonsmgmtv1.Addon, error) {
+func (mock *ClientMock) GetAddon(addonID string) (*clustersmgmtv1.AddOn, error) {
 	if mock.GetAddonFunc == nil {
 		panic("ClientMock.GetAddonFunc: method is nil but Client.GetAddon was just called")
 	}
@@ -713,7 +712,7 @@ func (mock *ClientMock) GetAddonInstallationCalls() []struct {
 }
 
 // GetAddonVersion calls GetAddonVersionFunc.
-func (mock *ClientMock) GetAddonVersion(addonID string, version string) (*addonsmgmtv1.AddonVersion, error) {
+func (mock *ClientMock) GetAddonVersion(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
 	if mock.GetAddonVersionFunc == nil {
 		panic("ClientMock.GetAddonVersionFunc: method is nil but Client.GetAddonVersion was just called")
 	}

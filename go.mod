@@ -150,6 +150,7 @@ require (
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/stackrox/scanner v0.0.0-20230411230651-f2265de65ce4 // indirect
 	github.com/stretchr/objx v0.5.1 // indirect
@@ -191,6 +192,7 @@ replace (
 	github.com/fullsailor/pkcs7 => github.com/stackrox/pkcs7 v0.0.0-20220914154527-cfdb0aa47179
 	github.com/gogo/protobuf => github.com/connorgorman/protobuf v1.2.2-0.20210115205927-b892c1b298f7
 	github.com/heroku/docker-registry-client => github.com/stackrox/docker-registry-client v0.0.0-20230411213734-d75b95d65d28
+	github.com/openshift-online/ocm-sdk-go => github.com/kovayur/ocm-sdk-go v0.0.0-20240205105723-c1851636f634 // TODO(ROX-22237): Contribute upstream - PackageImage is missing in clusters_mgmt
 	github.com/operator-framework/helm-operator-plugins => github.com/stackrox/helm-operator v0.0.12-0.20221003092512-fbf71229411f
 	github.com/stackrox/rox => github.com/stackrox/stackrox v0.0.0-20231019141000-eccb839f2abb
 	go.uber.org/zap => github.com/stackrox/zap v1.15.1-0.20230918235618-2bd149903d0e
