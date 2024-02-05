@@ -217,10 +217,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if err = r.ensureCentralTLSSecretHasOwnerReference(ctx, &remoteCentral, central); err != nil {
-		return nil, err
-	}
-
 	centralTLSSecretFound := true // pragma: allowlist secret
 	if r.useRoutes {
 		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
@@ -235,6 +231,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// Check whether deployment is ready.
 	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral.Metadata.Namespace)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = r.ensureSecretHasOwnerReference(ctx, k8s.CentralTLSSecretName, &remoteCentral, central); err != nil {
 		return nil, err
 	}
 
@@ -639,8 +639,7 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 
 	centralExists := true
 	existingCentral := v1alpha1.Central{}
-	centralKey := ctrlClient.
-		ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}
+	centralKey := ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}
 	err := r.client.Get(ctx, centralKey, &existingCentral)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -910,11 +909,11 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (m
 
 }
 
-// ensureCentralTLSSecretHasOwnerReference is used to make sure the central-tls secret has it's
+// ensureSecretHasOwnerReference is used to make sure the central-tls secret has it's
 // owner reference properly set after a restore operation so that the automatic cert rotation
 // in the operator is working
-func (r *CentralReconciler) ensureCentralTLSSecretHasOwnerReference(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
-	secret, err := r.getSecret(remoteCentral.Metadata.Namespace, k8s.CentralTLSSecretName)
+func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, secretName string, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+	secret, err := r.getSecret(remoteCentral.Metadata.Namespace, secretName)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			// no need to ensure correct owner reference if the secret doesn't exist
