@@ -314,11 +314,11 @@ func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCen
 	r.applyRoutes(central)
 	r.applyProxyConfig(central)
 	r.applyDeclarativeConfig(central)
-	r.applyAnnotations(central)
+	r.applyAnnotations(remoteCentral, central)
 	return nil
 }
 
-func (r *CentralReconciler) applyAnnotations(central *v1alpha1.Central) {
+func (r *CentralReconciler) applyAnnotations(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) {
 	if central.Spec.Customize == nil {
 		central.Spec.Customize = &v1alpha1.CustomizeSpec{}
 	}
@@ -327,6 +327,9 @@ func (r *CentralReconciler) applyAnnotations(central *v1alpha1.Central) {
 	}
 	central.Spec.Customize.Annotations[envAnnotationKey] = r.environment
 	central.Spec.Customize.Annotations[clusterNameAnnotationKey] = r.clusterName
+	if remoteCentral.Metadata.ExpiredAt != nil {
+		central.Spec.Customize.Annotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
+	}
 }
 
 func (r *CentralReconciler) applyDeclarativeConfig(central *v1alpha1.Central) {
