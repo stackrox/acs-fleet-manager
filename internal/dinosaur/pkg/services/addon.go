@@ -6,7 +6,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/hashicorp/go-multierror"
-	addonsmgmtv1 "github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
@@ -235,7 +234,7 @@ func gitOpsConfigDifferent(expectedConfig gitops.AddonConfig, installedInOCM *cl
 	return installedInOCM.AddonVersion().ID() != expectedConfig.Version || !maps.Equal(convertParametersFromOCMAPI(installedInOCM.Parameters()), expectedConfig.Parameters)
 }
 
-func clusterInstallationDifferent(current dbapi.AddonInstallation, addonVersion *addonsmgmtv1.AddonVersion) bool {
+func clusterInstallationDifferent(current dbapi.AddonInstallation, addonVersion *clustersmgmtv1.AddOnVersion) bool {
 	return current.SourceImage != addonVersion.SourceImage() || current.PackageImage != addonVersion.PackageImage()
 }
 
