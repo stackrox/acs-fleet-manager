@@ -31,6 +31,7 @@ import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/random"
+	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -198,14 +199,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
 		tenantIDLabelKey: remoteCentral.Id,
 	}
-
 	namespaceAnnotations := map[string]string{
 		orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
 	}
 	if remoteCentral.Metadata.ExpiredAt != nil {
 		namespaceAnnotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
 	}
-	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels, namespaceAnnotations); err != nil {
+	if err := r.reconcileNamespace(ctx, remoteCentralNamespace, namespaceLabels, namespaceAnnotations); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
@@ -1182,15 +1182,24 @@ func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace
 	return nil
 }
 
-func (r *CentralReconciler) ensureNamespaceExists(name string, labels map[string]string, annotations map[string]string) error {
+func (r *CentralReconciler) reconcileNamespace(ctx context.Context, name string, labels map[string]string, annotations map[string]string) error {
 	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			namespace.Annotations = annotations
 			namespace.Labels = labels
-			return r.createTenantNamespace(context.Background(), namespace)
+			return r.createTenantNamespace(ctx, namespace)
 		}
 		return fmt.Errorf("getting namespace %s: %w", name, err)
+	} else if !maps.Equal(labels, namespace.Labels) ||
+		!maps.Equal(annotations, namespace.Annotations) {
+		namespace.Annotations = annotations
+		namespace.Labels = labels
+		if err = r.client.Update(ctx, namespace, &ctrlClient.UpdateOptions{
+			FieldManager: "fleetshard-sync",
+		}); err != nil {
+			return fmt.Errorf("updating namespace %s: %w", name, err)
+		}
 	}
 	return nil
 }
