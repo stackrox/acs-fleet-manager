@@ -271,6 +271,8 @@ components:
                     type: string
                 expired-at:
                   type: string
+                  format: date-time
+                  nullable: true
             spec:
               type: object
               properties:

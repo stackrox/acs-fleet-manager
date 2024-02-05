@@ -198,12 +198,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
 		tenantIDLabelKey: remoteCentral.Id,
 	}
-	if remoteCentral.Metadata.ExpiredAt != "" {
-		namespaceLabels[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt
-	}
 
 	namespaceAnnotations := map[string]string{
 		orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
+	}
+	if remoteCentral.Metadata.ExpiredAt != nil {
+		namespaceAnnotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
 	}
 	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels, namespaceAnnotations); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
@@ -671,6 +671,13 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 			return errors.Wrapf(err, "unable to check the existence of central %v", centralKey)
 		}
 		centralExists = false
+	}
+
+	if remoteCentral.Metadata.ExpiredAt != nil {
+		if central.GetAnnotations() == nil {
+			central.Annotations = map[string]string{}
+		}
+		central.Annotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
 	}
 
 	if !centralExists {
