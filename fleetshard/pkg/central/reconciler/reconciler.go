@@ -187,7 +187,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
-		return r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
+		status, err := r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
+		shouldUpdateCentralHash = err == nil
+		return status, err
 	}
 
 	namespaceLabels := map[string]string{
