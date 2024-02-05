@@ -29,6 +29,7 @@ RUN yq -i ".fleetshardSync.image.tag = strenv(FLEETSHARD_SYNC_IMAGE_TAG)" rhacs-
 FROM quay.io/operator-framework/helm-operator:v1.33.0
 
 ENV HOME=/opt/helm
+ENV ADDON_NAME=acs-fleetshard
 COPY watches.yaml ${HOME}/watches.yaml
 COPY --from=build ${HOME}/rhacs-terraform ${HOME}/rhacs-terraform
 WORKDIR ${HOME}
