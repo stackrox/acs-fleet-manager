@@ -40,3 +40,14 @@ data:
             - name: TransactionLogsDiskUsage
             - name: Deadlocks
             - name: BufferCacheHitRatio
+        - type: AWS/SES
+          regions:
+            - us-east-1
+          statistics:
+            - Sum
+          metrics:
+            - name: Delivery
+            - name: Send
+            - name: Bounce
+            - name: Reputation.BounceRate
+            - name: Reputation.ComplaintRate
