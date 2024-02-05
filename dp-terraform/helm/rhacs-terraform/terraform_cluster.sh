@@ -11,7 +11,7 @@ source "$ROOT_DIR/scripts/lib/helm.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
-    echo "Known environments: integration stage prod"
+    echo "Known environments: stage prod"
     echo "Cluster typically looks like: acs-{env}-dp-01"
     exit 2
 fi
@@ -31,42 +31,6 @@ PROMETHEUS_MEMORY_LIMIT=${PROMETHEUS_MEMORY_LIMIT:-"20Gi"}
 PROMETHEUS_MEMORY_REQUEST=${PROMETHEUS_MEMORY_REQUEST:-"20Gi"}
 
 case $ENVIRONMENT in
-  dev)
-    FM_ENDPOINT="https://nonexistent.api.stage.openshift.com"
-    OBSERVABILITY_GITHUB_TAG="master"
-    OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.nonexistent.openshift.com"
-    OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
-    OPERATOR_ENABLED="false"
-    OPERATOR_USE_UPSTREAM="false"
-    OPERATOR_CHANNEL="stable"
-    OPERATOR_VERSION="v4.0.2"
-    FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
-    FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"512Mi"}"
-    FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"500m"}"
-    FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"512Mi"}"
-    SECURED_CLUSTER_ENABLED="true"
-    RHACS_GITOPS_ENABLED="true"
-    RHACS_TARGETED_OPERATOR_UPGRADES="true"
-    ;;
-
-  integration)
-    FM_ENDPOINT="https://romndkjdq62p7sr.api.integration.openshift.com"
-    OBSERVABILITY_GITHUB_TAG="master"
-    OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
-    OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
-    OPERATOR_ENABLED="false"
-    OPERATOR_USE_UPSTREAM="false"
-    OPERATOR_CHANNEL="stable"
-    OPERATOR_VERSION="v4.1.0"
-    FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
-    FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
-    FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
-    FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
-    SECURED_CLUSTER_ENABLED="true"
-    RHACS_GITOPS_ENABLED="true"
-    RHACS_TARGETED_OPERATOR_UPGRADES="true"
-    ;;
-
   stage)
     FM_ENDPOINT="https://gbrh0yv9ebhqegl.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="stage"
