@@ -234,6 +234,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
+	if err = r.ensureSecretHasOwnerReference(ctx, k8s.CentralTLSSecretName, &remoteCentral, central); err != nil {
+		return nil, err
+	}
+
 	if !centralDeploymentReady || !centralTLSSecretFound {
 		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
@@ -903,6 +907,39 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (m
 
 	return encryptedSecrets, nil
 
+}
+
+// ensureSecretHasOwnerReference is used to make sure the central-tls secret has it's
+// owner reference properly set after a restore operation so that the automatic cert rotation
+// in the operator is working
+func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, secretName string, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+	secret, err := r.getSecret(remoteCentral.Metadata.Namespace, secretName)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			// no need to ensure correct owner reference if the secret doesn't exist
+			return nil
+		}
+		return err
+	}
+
+	if len(secret.ObjectMeta.OwnerReferences) != 0 {
+		return nil
+	}
+
+	centralCR := &v1alpha1.Central{}
+	if err := r.client.Get(ctx, ctrlClient.ObjectKeyFromObject(central), centralCR); err != nil {
+		return fmt.Errorf("getting current central CR from k8s: %w", err)
+	}
+
+	secret.OwnerReferences = []metav1.OwnerReference{
+		*metav1.NewControllerRef(centralCR, v1alpha1.CentralGVK),
+	}
+
+	if err := r.client.Update(ctx, secret); err != nil {
+		return fmt.Errorf("updating %s secret: %w", k8s.CentralTLSSecretName, err)
+	}
+
+	return nil
 }
 
 func (r *CentralReconciler) ensureDeclarativeConfigurationSecretCleaned(ctx context.Context, remoteCentralNamespace string) error {

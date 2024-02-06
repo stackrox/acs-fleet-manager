@@ -258,6 +258,28 @@ var _ = Describe("Central", Ordered, func() {
 			assertEqualSecrets(actualSecrets, expectedSecrets)
 		})
 
+		It("should set central-tls OwnerReference after restore", func() {
+			centralTLSSecret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      k8s.CentralTLSSecretName,
+					Namespace: namespaceName,
+				},
+			}
+
+			Eventually(func() (err error) {
+				if err := k8sClient.Get(ctx, ctrlClient.ObjectKeyFromObject(centralTLSSecret), centralTLSSecret); err != nil {
+					return err
+				}
+
+				if len(centralTLSSecret.GetObjectMeta().GetOwnerReferences()) == 0 {
+					return fmt.Errorf("OwnerReference for %s is empty", k8s.CentralTLSSecretName)
+				}
+
+				return nil
+			}).WithPolling(time.Second * 10).WithTimeout(defaultTimeout).Should(Succeed())
+
+		})
+
 		It("should delete and recreate secret backup for admin reset API", func() {
 			secretBackup := k8s.NewSecretBackup(k8sClient, false)
 			oldSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
