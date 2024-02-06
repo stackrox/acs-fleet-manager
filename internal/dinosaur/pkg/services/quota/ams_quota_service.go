@@ -67,7 +67,7 @@ func (q amsQuotaService) HasQuotaAllowance(central *dbapi.CentralRequest, instan
 	entitled := standardAccountIsActive || cloudAccountIsActive(quotaCostsByModel, central)
 
 	if !entitled {
-		glog.Infof("Quota no longer entitled for organisation %q", org.ID)
+		glog.Infof("Quota no longer entitled for organisation %q", org.ID())
 		return false, nil
 	}
 	return true, nil
