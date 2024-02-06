@@ -179,6 +179,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	needsReconcile := r.needsReconcileFunc(changed, central, remoteCentral.Metadata.SecretsStored)
 
 	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
+		shouldUpdateCentralHash = true
 		return nil, ErrCentralNotChanged
 	}
 
