@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"reflect"
 	"sort"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -54,12 +55,10 @@ const (
 
 	helmReleaseName = "tenant-resources"
 
-	centralPVCAnnotationKey   = "platform.stackrox.io/obsolete-central-pvc"
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 	envAnnotationKey          = "rhacs.redhat.com/environment"
 	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
 	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
-	instanceTypeLabelKey      = "rhacs.redhat.com/instance-type"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
 
@@ -154,14 +153,16 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
+	namespace := remoteCentral.Metadata.Namespace
+
 	centralHash, err := r.computeCentralHash(remoteCentral)
 	if err != nil {
-		return nil, errors.Wrap(err, "computing central hash")
+		return nil, errors.Wrap(err, "failed to compute central hash")
 	}
 
 	central, err := r.getInstanceConfig(&remoteCentral)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get instance config")
 	}
 
 	shouldUpdateCentralHash := false
@@ -182,11 +183,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, ErrCentralNotChanged
 	}
 
-	glog.Infof("Start reconcile central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
-
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+	r.info("start reconciling")
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
+		r.info("deleting central")
 		status, err := r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
 		shouldUpdateCentralHash = err == nil
 		return status, err
@@ -199,45 +199,43 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	namespaceAnnotations := map[string]string{
 		orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
 	}
-	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels, namespaceAnnotations); err != nil {
-		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
+	if err := r.ensureNamespaceExists(namespace, namespaceLabels, namespaceAnnotations); err != nil {
+		return nil, errors.Wrap(err, "failed ensuring that namespace exists")
 	}
 
 	if len(r.tenantImagePullSecret) > 0 {
-		err = r.ensureImagePullSecretConfigured(ctx, remoteCentralNamespace, tenantImagePullSecretName, r.tenantImagePullSecret)
+		err = r.ensureImagePullSecretConfigured(ctx, namespace, tenantImagePullSecretName, r.tenantImagePullSecret)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed ensuring image pull secret are configured")
 		}
 	}
 
-	err = r.restoreCentralSecretsFunc(ctx, remoteCentral)
-	if err != nil {
-		return nil, err
+	if err = r.restoreCentralSecretsFunc(ctx, remoteCentral); err != nil {
+		return nil, errors.Wrap(err, "failed restoring secrets")
 	}
 
-	err = r.ensureEncryptionKeySecretExists(ctx, remoteCentralNamespace)
-	if err != nil {
-		return nil, err
+	if err = r.ensureEncryptionKeySecretExists(ctx, namespace); err != nil {
+		return nil, errors.Wrap(err, "failed ensuring encryption key secret exists")
 	}
 
 	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
+		return nil, errors.Wrap(err, "failed to install chart resource")
 	}
 
 	if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed reconciling central db config")
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed reconciling declarative configuration data")
 	}
 
 	if err := r.reconcileAdminPasswordGeneration(central); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed reconciling admin password generation")
 	}
 
 	if err = r.reconcileCentral(ctx, &remoteCentral, central); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed reconciling central")
 	}
 
 	centralTLSSecretFound := true // pragma: allowlist secret
@@ -246,7 +244,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			if errors.Is(err, k8s.ErrCentralTLSSecretNotFound) {
 				centralTLSSecretFound = false // pragma: allowlist secret
 			} else {
-				return nil, errors.Wrap(err, "updating routes")
+				return nil, errors.Wrap(err, "failed ensuring routes exist")
 			}
 		}
 	}
@@ -254,14 +252,15 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// Check whether deployment is ready.
 	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral.Metadata.Namespace)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed checking if deployment is ready")
 	}
 
 	if err = r.ensureSecretHasOwnerReference(ctx, k8s.CentralTLSSecretName, &remoteCentral, central); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed ensuring secret %q has owner reference", k8s.CentralTLSSecretName)
 	}
 
 	if !centralDeploymentReady || !centralTLSSecretFound {
+		r.infof("not yet ready, waiting for it to become ready")
 		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
 		}
@@ -270,24 +269,23 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	exists, err := r.ensureAuthProviderExists(ctx, remoteCentral)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed ensuring auth provider exists")
 	}
 	if !exists {
-		glog.Infof("Default auth provider for central %s/%s is not yet ready.",
-			central.GetNamespace(), central.GetName())
+		r.infof("default auth provider is not yet ready")
 		return nil, ErrCentralNotChanged
 	}
 
 	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed collecting reconciliation status")
 	}
 
 	shouldUpdateCentralHash = true
 
 	logStatus := *status
 	logStatus.Secrets = obscureSecrets(status.Secrets)
-	glog.Infof("Returning central status %+v", logStatus)
+	r.infof("returning status %+v", logStatus)
 
 	return status, nil
 }
@@ -390,7 +388,7 @@ func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCen
 	for _, secretName := range remoteCentral.Metadata.SecretsStored { // pragma: allowlist secret
 		exists, err := r.checkSecretExists(ctx, remoteCentral.Metadata.Namespace, secretName)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to check if secret %q exists", secretName)
 		}
 
 		if !exists {
@@ -403,25 +401,25 @@ func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCen
 		return nil
 	}
 
-	glog.Info(fmt.Sprintf("Restore secret for tenant: %s/%s", remoteCentral.Id, r.central.Metadata.Namespace), restoreSecrets)
+	r.info("restoring secrets for tenant", restoreSecrets)
 	central, _, err := r.fleetmanagerClient.PrivateAPI().GetCentral(ctx, remoteCentral.Id)
 	if err != nil {
-		return fmt.Errorf("loading secrets for central %s: %w", remoteCentral.Id, err)
+		return errors.Wrapf(err, "failed to get central %q", remoteCentral.Id)
 	}
 
 	decryptedSecrets, err := r.decryptSecrets(central.Metadata.Secrets)
 	if err != nil {
-		return fmt.Errorf("decrypting secrets for central %s: %w", central.Id, err)
+		return errors.Wrapf(err, "failed to decrypt secrets for central %q", central.Id)
 	}
 
 	for _, secretName := range restoreSecrets { // pragma: allowlist secret
 		secretToRestore, secretFound := decryptedSecrets[secretName]
 		if !secretFound {
-			return fmt.Errorf("finding secret %s in decrypted secret map", secretName)
+			return fmt.Errorf("failed to find secret %q in decrypted secret map", secretName)
 		}
 
 		if err := r.client.Create(ctx, secretToRestore); err != nil {
-			return fmt.Errorf("recreating secret %s for central %s: %w", secretName, central.Id, err)
+			return errors.Wrapf(err, "failed to recreate secret %q for central %q", secretName, central.Id)
 		}
 
 	}
@@ -432,8 +430,7 @@ func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCen
 func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *v1alpha1.Central) error {
 	if !r.wantsAuthProvider {
 		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(false)
-		glog.Infof("No auth provider desired, enabling basic authentication for Central %s/%s",
-			central.GetNamespace(), central.GetName())
+		r.infof("No auth provider desired, enabling basic authentication")
 		return nil
 	}
 	central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
@@ -448,8 +445,7 @@ func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remote
 
 	exists, err := r.verifyAuthProviderFunc(ctx, remoteCentral, r.client)
 	if err != nil {
-		return false, errors.Wrapf(err, "failed to verify that the default auth provider exists within "+
-			"Central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
+		return false, errors.Wrap(err, "failed to verify that the default auth provider exists")
 	}
 	if exists {
 		r.hasAuthProvider = true
@@ -459,12 +455,9 @@ func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remote
 }
 
 func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (*private.DataPlaneCentralStatus, error) {
-	remoteCentralName := remoteCentral.Metadata.Name
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
 	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral, central)
 	if err != nil {
-		return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
+		return nil, errors.Wrap(err, "failed to ensure central is deleted")
 	}
 	if deleted {
 		return deletedStatus(), nil
@@ -488,7 +481,7 @@ func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remote
 
 	centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
 	if err != nil {
-		return fmt.Errorf("getting Central DB connection string: %w", err)
+		return errors.Wrap(err, "failed to get Central DB connection string")
 	}
 
 	central.Spec.Central.DB.ConnectionStringOverride = pointer.String(centralDBConnectionString)
@@ -498,7 +491,7 @@ func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remote
 
 	dbCA, err := postgres.GetDatabaseCACertificates()
 	if err != nil {
-		glog.Warningf("Could not read DB server CA bundle: %v", err)
+		r.warningf("Could not read DB server CA bundle: %v", err)
 	} else {
 		central.Spec.TLS = &v1alpha1.TLSConfig{
 			AdditionalCAs: []v1alpha1.AdditionalCA{
@@ -543,9 +536,9 @@ func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, nam
 		r.auditLogging,
 		namespace,
 	)
-	encodedNotifierConfig, marshalErr := yaml.Marshal(auditLogNotifierConfig)
-	if marshalErr != nil {
-		return fmt.Errorf("marshaling audit log notifier configuration: %w", marshalErr)
+	encodedNotifierConfig, err := yaml.Marshal(auditLogNotifierConfig)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal audit log notifier configuration")
 	}
 	secret.Data[auditLogNotifierKey] = encodedNotifierConfig
 	return nil
@@ -624,7 +617,7 @@ func (r *CentralReconciler) configureAuthProvider(secret *corev1.Secret, remoteC
 
 	rawAuthProviderBytes, err := yaml.Marshal(authProviderConfig)
 	if err != nil {
-		return fmt.Errorf("marshaling auth provider configuration: %w", err)
+		return errors.Wrap(err, "failed to marshal auth provider configuration")
 	}
 	secret.Data[authProviderDeclarativeConfigKey] = rawAuthProviderBytes
 	return nil
@@ -645,9 +638,8 @@ func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Co
 			if err := r.configureAuthProvider(secret, remoteCentral); err != nil {
 				configErrs = multierror.Append(configErrs, err)
 			}
-			return errors.Wrapf(configErrs.ErrorOrNil(),
-				"configuring declarative configurations within secret %s/%s",
-				secret.GetNamespace(), secret.GetName())
+			key := ctrlClient.ObjectKey{Namespace: namespace, Name: sensibleDeclarativeConfigSecretName}
+			return errors.Wrapf(configErrs.ErrorOrNil(), "failed to configure declarative configurations within secret %q", key)
 		},
 	)
 }
@@ -662,7 +654,7 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 	err := r.client.Get(ctx, centralKey, &existingCentral)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return errors.Wrapf(err, "unable to check the existence of central %v", centralKey)
+			return errors.Wrap(err, "failed to check the existence of central")
 		}
 		centralExists = false
 	}
@@ -672,14 +664,14 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 			central.Annotations = map[string]string{}
 		}
 		if err := util.IncrementCentralRevision(central); err != nil {
-			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
+			return errors.Wrap(err, "failed to increment Central revision")
 		}
 
-		glog.Infof("Creating Central %v", centralKey)
+		r.infof("Creating Central")
 		if err := r.client.Create(ctx, central); err != nil {
-			return errors.Wrapf(err, "creating new Central %v", centralKey)
+			return errors.Wrap(err, "failed to create new Central")
 		}
-		glog.Infof("Central %v created", centralKey)
+		r.infof("Central CR created")
 	} else {
 		// perform a dry run to see if the update would change anything.
 		// This would apply the defaults and the mutating webhooks without actually updating the object.
@@ -692,20 +684,20 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 
 		requiresUpdate, err := centralNeedsUpdating(ctx, r.client, &existingCentral, desiredCentral)
 		if err != nil {
-			return errors.Wrapf(err, "checking if Central %v needs to be updated", centralKey)
+			return errors.Wrap(err, "failed to check if Central needs to be updated")
 		}
 
 		if !requiresUpdate {
-			glog.Infof("Central %v is already up to date", centralKey)
+			r.info("Central is already up to date")
 			return nil
 		}
 
 		if err := util.IncrementCentralRevision(desiredCentral); err != nil {
-			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
+			return errors.Wrap(err, "failed to increment Central revision")
 		}
 
 		if err := r.client.Update(context.Background(), desiredCentral); err != nil {
-			return errors.Wrapf(err, "updating Central %v", centralKey)
+			return errors.Wrap(err, "failed to update Central")
 		}
 
 	}
@@ -739,22 +731,22 @@ func centralNeedsUpdating(ctx context.Context, client ctrlClient.Client, existin
 	wouldBeCentral := desired.DeepCopy()
 	centralKey := ctrlClient.ObjectKey{Namespace: existing.Namespace, Name: existing.Name}
 	if err := client.Update(ctx, desired, ctrlClient.DryRunAll); err != nil {
-		return false, errors.Wrapf(err, "dry-run updating Central %v", centralKey)
+		return false, errors.Wrapf(err, "central %q: dry-run updating", centralKey)
 	}
 
 	var shouldUpdate = false
 	if !reflect.DeepEqual(existing.Spec, wouldBeCentral.Spec) {
-		glog.Infof("Detected that Central %v is out of date and needs to be updated", centralKey)
+		glog.Infof("central %q: detected that CR is out of date and needs to be updated", centralKey)
 		shouldUpdate = true
 	}
 
 	if !shouldUpdate && stringMapNeedsUpdating(desired.Annotations, existing.Annotations) {
-		glog.Infof("Detected that Central %v annotations are out of date and needs to be updated", centralKey)
+		glog.Infof("central %q: detected that annotations are out of date and needs to be updated", centralKey)
 		shouldUpdate = true
 	}
 
 	if !shouldUpdate && stringMapNeedsUpdating(desired.Labels, existing.Labels) {
-		glog.Infof("Detected that Central %v labels are out of date and needs to be updated", centralKey)
+		glog.Infof("central %q: detected that labels are out of date and needs to be updated", centralKey)
 		shouldUpdate = true
 	}
 
@@ -784,22 +776,23 @@ func printCentralDiff(desired, actual *v1alpha1.Central) {
 	if !features.PrintCentralUpdateDiff.Enabled() {
 		return
 	}
+	centralKey := ctrlClient.ObjectKey{Namespace: desired.Namespace, Name: desired.Name}
 	desiredBytes, err := json.Marshal(desired.Spec)
 	if err != nil {
-		glog.Warningf("Failed to marshal desired Central %s/%s spec: %v", desired.Namespace, desired.Name, err)
+		glog.Warningf("central %q: Failed to marshal desired spec: %v", centralKey, err)
 		return
 	}
 	actualBytes, err := json.Marshal(actual.Spec)
 	if err != nil {
-		glog.Warningf("Failed to marshal actual Central %s/%s spec: %v", desired.Namespace, desired.Name, err)
+		glog.Warningf("central %q: failed to marshal actual spec: %v", centralKey, err)
 		return
 	}
 	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(actualBytes, desiredBytes, &v1alpha1.CentralSpec{})
 	if err != nil {
-		glog.Warningf("Failed to create Central %s/%s patch: %v", desired.Namespace, desired.Name, err)
+		glog.Warningf("central %q: failed to create patch: %v", centralKey, err)
 		return
 	}
-	glog.Infof("Central %s/%s diff: %s", desired.Namespace, desired.Name, string(patchBytes))
+	glog.Infof("central %q: diff: %s", centralKey, string(patchBytes))
 }
 
 func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
@@ -855,7 +848,7 @@ func (r *CentralReconciler) collectSecrets(ctx context.Context, remoteCentral *p
 	namespace := remoteCentral.Metadata.Namespace
 	secrets, err := r.secretBackup.CollectSecrets(ctx, namespace)
 	if err != nil {
-		return secrets, fmt.Errorf("collecting secrets for namespace %s: %w", namespace, err)
+		return secrets, errors.Wrapf(err, "failed to collect secrets for namespace %q", namespace)
 	}
 
 	// remove ResourceVersion and owner reference as this is only intended to recreate non-existent
@@ -877,7 +870,7 @@ func (r *CentralReconciler) collectSecretsEncrypted(ctx context.Context, remoteC
 
 	encryptedSecrets, err := r.encryptSecrets(secrets)
 	if err != nil {
-		return nil, fmt.Errorf("encrypting secrets for namespace: %s: %w", remoteCentral.Metadata.Namespace, err)
+		return nil, errors.Wrapf(err, "failed to encrypt secrets for namespace %q", remoteCentral.Metadata.Namespace)
 	}
 
 	return encryptedSecrets, nil
@@ -889,17 +882,17 @@ func (r *CentralReconciler) decryptSecrets(secrets map[string]string) (map[strin
 	for secretName, ciphertext := range secrets {
 		decodedCipher, err := base64.StdEncoding.DecodeString(ciphertext)
 		if err != nil {
-			return nil, fmt.Errorf("decoding secret %s: %w", secretName, err)
+			return nil, errors.Wrapf(err, "failed to decode secret %q", secretName)
 		}
 
 		plaintextSecret, err := r.secretCipher.Decrypt(decodedCipher)
 		if err != nil {
-			return nil, fmt.Errorf("decrypting secret %s: %w", secretName, err)
+			return nil, errors.Wrapf(err, "failed to decrypt secret %q", secretName)
 		}
 
 		var secret corev1.Secret
 		if err := json.Unmarshal(plaintextSecret, &secret); err != nil {
-			return nil, fmt.Errorf("unmarshaling secret %s: %w", secretName, err)
+			return nil, errors.Wrapf(err, "failed to unmarshal secret %q", secretName)
 		}
 
 		decryptedSecrets[secretName] = &secret // pragma: allowlist secret
@@ -914,12 +907,12 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (m
 	for key, secret := range secrets { // pragma: allowlist secret
 		secretBytes, err := json.Marshal(secret)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling secret for encryption: %s: %w", key, err)
+			return nil, errors.Wrapf(err, "failed to marshal secret for encryption %q", key)
 		}
 
 		encryptedBytes, err := r.secretCipher.Encrypt(secretBytes)
 		if err != nil {
-			return nil, fmt.Errorf("encrypting secret: %s: %w", key, err)
+			return nil, errors.Wrapf(err, "failed to encrypt secret %q", key)
 		}
 
 		encryptedSecrets[key] = base64.StdEncoding.EncodeToString(encryptedBytes)
@@ -948,7 +941,7 @@ func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, s
 
 	centralCR := &v1alpha1.Central{}
 	if err := r.client.Get(ctx, ctrlClient.ObjectKeyFromObject(central), centralCR); err != nil {
-		return fmt.Errorf("getting current central CR from k8s: %w", err)
+		return errors.Wrap(err, "failed to get current central CR from k8s")
 	}
 
 	secret.OwnerReferences = []metav1.OwnerReference{
@@ -956,7 +949,7 @@ func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, s
 	}
 
 	if err := r.client.Update(ctx, secret); err != nil {
-		return fmt.Errorf("updating %s secret: %w", k8s.CentralTLSSecretName, err)
+		return errors.Wrapf(err, "failed to update secret %q", k8s.CentralTLSSecretName)
 	}
 
 	return nil
@@ -991,11 +984,11 @@ func isRemoteCentralReady(remoteCentral *private.ManagedCentral) bool {
 func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
 	reencryptIngress, err := r.routeService.FindReencryptIngress(ctx, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("obtaining ingress for reencrypt route: %w", err)
+		return nil, errors.Wrap(err, "failed to obtain ingress for reencrypt route")
 	}
 	passthroughIngress, err := r.routeService.FindPassthroughIngress(ctx, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("obtaining ingress for passthrough route: %w", err)
+		return nil, errors.Wrap(err, "failed to obtain ingress for passthrough route")
 	}
 	return []private.DataPlaneCentralStatusRoutes{
 		getRouteStatus(reencryptIngress),
@@ -1041,17 +1034,17 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 
 		databaseID, err := r.getDatabaseID(ctx, remoteCentral.Metadata.Namespace, remoteCentral.Id)
 		if err != nil {
-			return false, fmt.Errorf("getting DB ID: %w", err)
+			return false, errors.Wrap(err, "failed to get DB ID")
 		}
 
 		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(databaseID, skipSnapshot)
 		if err != nil {
 			if errors.Is(err, cloudprovider.ErrDBBackupInProgress) {
-				glog.Infof("Can not delete Central DB for: %s, backup in progress", remoteCentral.Metadata.Namespace)
+				r.infof("cannot delete central DB, backup in progress")
 				return false, nil
 			}
 
-			return false, fmt.Errorf("deprovisioning DB: %v", err)
+			return false, errors.Wrap(err, "failed to deprovision DB")
 		}
 
 		secretDeleted, err := r.ensureCentralDBSecretDeleted(ctx, central.GetNamespace())
@@ -1084,17 +1077,16 @@ func (r *CentralReconciler) getDatabaseID(ctx context.Context, remoteCentralName
 		if apiErrors.IsNotFound(err) {
 			return centralID, nil
 		}
-
-		return centralID, fmt.Errorf("getting central DB ID override ConfigMap: %w", err)
+		return centralID, errors.Wrap(err, "failed to get central DB ID override ConfigMap")
 	}
 
 	overrideValue, exists := configMap.Data["databaseID"]
 	if exists {
-		glog.Infof("The database ID for Central %s is overridden with: %s", centralID, overrideValue)
+		r.infof("database id is overriden with %q", overrideValue)
 		return overrideValue, nil
 	}
 
-	glog.Infof("The %s ConfigMap exists but contains no databaseID field, using default: %s", centralDbOverrideConfigMap, centralID)
+	r.infof("The database id override ConfigMap exists but contains no databaseID field, using default")
 	return centralID, nil
 }
 
@@ -1110,7 +1102,7 @@ func (r *CentralReconciler) setLastCentralHash(currentHash [16]byte) {
 func (r *CentralReconciler) computeCentralHash(central private.ManagedCentral) ([16]byte, error) {
 	hash, err := util.MD5SumFromJSONStruct(&central)
 	if err != nil {
-		return [16]byte{}, fmt.Errorf("calculating MD5 from JSON: %w", err)
+		return [16]byte{}, errors.Wrap(err, "failed to calculate MD5 from JSON")
 	}
 	return hash, nil
 }
@@ -1124,7 +1116,7 @@ func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error)
 	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
 	if err != nil {
 		// Propagate corev1.Namespace to the caller so that the namespace can be easily created
-		return namespace, fmt.Errorf("retrieving resource for namespace %q from Kubernetes: %w", name, err)
+		return namespace, errors.Wrapf(err, "failed retrieving resource for namespace %q from Kubernetes", name)
 	}
 	return namespace, nil
 }
@@ -1135,9 +1127,10 @@ func (r *CentralReconciler) getSecret(namespaceName string, secretName string) (
 			Namespace: namespaceName,
 		},
 	}
-	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Namespace: namespaceName, Name: secretName}, secret)
+	objectKey := ctrlClient.ObjectKey{Namespace: namespaceName, Name: secretName}
+	err := r.client.Get(context.Background(), objectKey, secret)
 	if err != nil {
-		return nil, errors.Wrapf(err, "retrieving secret %s/%s", namespaceName, secretName)
+		return nil, errors.Wrapf(err, "failed to retrieve secret %q", objectKey)
 	}
 	return secret, nil
 }
@@ -1153,9 +1146,10 @@ func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespace
 			".dockerconfigjson": imagePullSecretJSON,
 		},
 	}
+	objectKey := ctrlClient.ObjectKey{Namespace: namespaceName, Name: secretName}
 
 	if err := r.client.Create(ctx, secret); err != nil {
-		return errors.Wrapf(err, "creating image pull secret %s/%s", namespaceName, secretName)
+		return errors.Wrapf(err, "failed to create image pull secret %q", objectKey)
 	}
 
 	return nil
@@ -1164,7 +1158,7 @@ func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespace
 func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace) error {
 	err := r.client.Create(ctx, namespace)
 	if err != nil {
-		return fmt.Errorf("creating namespace %q: %w", namespace.ObjectMeta.Name, err)
+		return errors.Wrapf(err, "failed to create namespace %q", namespace.ObjectMeta.Name)
 	}
 	return nil
 }
@@ -1177,7 +1171,7 @@ func (r *CentralReconciler) ensureNamespaceExists(name string, labels map[string
 			namespace.Labels = labels
 			return r.createTenantNamespace(context.Background(), namespace)
 		}
-		return fmt.Errorf("getting namespace %s: %w", name, err)
+		return errors.Wrapf(err, "failed to get namespace %q", name)
 	}
 	return nil
 }
@@ -1189,12 +1183,13 @@ func (r *CentralReconciler) ensureImagePullSecretConfigured(ctx context.Context,
 		// Secret exists already.
 		return nil
 	}
+	key := ctrlClient.ObjectKey{Namespace: namespaceName, Name: secretName}
 	if !apiErrors.IsNotFound(err) {
 		// Unexpected error.
-		return errors.Wrapf(err, "retrieving secret %s/%s", namespaceName, secretName)
+		return errors.Wrapf(err, "retrieving secret %q", key)
 	}
 	// We have an IsNotFound error.
-	glog.Infof("Creating image pull secret %s/%s", namespaceName, secretName)
+	r.infof("creating image pull secret %q", key)
 	return r.createImagePullSecret(ctx, namespaceName, secretName, imagePullSecret)
 }
 
@@ -1204,15 +1199,15 @@ func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name str
 		if apiErrors.IsNotFound(err) {
 			return true, nil
 		}
-		return false, errors.Wrapf(err, "delete central namespace %s", name)
+		return false, errors.Wrapf(err, "failed to delete central namespace %q", name)
 	}
 	if namespace.Status.Phase == corev1.NamespaceTerminating {
 		return false, nil // Deletion is already in progress, skipping deletion request
 	}
 	if err = r.client.Delete(ctx, namespace); err != nil {
-		return false, errors.Wrapf(err, "delete central namespace %s", name)
+		return false, errors.Wrapf(err, "failed to delete central namespace %q", name)
 	}
-	glog.Infof("Central namespace %s is marked for deletion", name)
+	glog.Infof("Central namespace %q is marked for deletion", name)
 	return false, nil
 }
 
@@ -1230,7 +1225,7 @@ func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) e
 
 	encryptionKey, err := r.encryptionKeyGenerator.Generate()
 	if err != nil {
-		return fmt.Errorf("generating encryption key: %w", err)
+		return errors.Wrap(err, "failed to generate encryption key")
 	}
 
 	b64Key := base64.StdEncoding.EncodeToString(encryptionKey)
@@ -1249,26 +1244,25 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 	// precondition to create this user)
 	if !centralDBUserExists {
 		if err := r.ensureManagedCentralDBInitialized(ctx, remoteCentral); err != nil {
-			return "", fmt.Errorf("initializing managed DB: %w", err)
+			return "", errors.Wrap(err, "failed to initialize managed DB")
 		}
 	}
 
 	databaseID, err := r.getDatabaseID(ctx, remoteCentral.Metadata.Namespace, remoteCentral.Id)
 	if err != nil {
-		return "", fmt.Errorf("getting DB ID: %w", err)
+		return "", errors.Wrap(err, "failed to get DB ID")
 	}
 
 	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(databaseID)
 	if err != nil {
 		if !errors.Is(err, cloudprovider.ErrDBNotFound) {
-			return "", fmt.Errorf("getting RDS DB connection data: %w", err)
+			return "", errors.Wrap(err, "failed to get RDS DB connection data")
 		}
-
-		glog.Infof("expected DB for %s not found, trying to restore...", remoteCentral.Id)
+		r.info("Expected DB not found, trying to restore...")
 		// Using no password because we try to restore from backup
 		err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, remoteCentral.Id, "", remoteCentral.Metadata.Internal)
 		if err != nil {
-			return "", fmt.Errorf("trying to restore DB: %w", err)
+			return "", errors.Wrap(err, "failed to restore DB")
 		}
 	}
 
@@ -1278,7 +1272,7 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 func generateDBPassword() (string, error) {
 	password, err := random.GenerateString(25, random.AlphanumericCharacters)
 	if err != nil {
-		return "", fmt.Errorf("generating DB password: %w", err)
+		return "", errors.Wrap(err, "failed generating DB password")
 	}
 
 	return password, nil
@@ -1295,41 +1289,41 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 	if !centralDBSecretExists {
 		dbMasterPassword, err := generateDBPassword()
 		if err != nil {
-			return fmt.Errorf("generating Central DB master password: %w", err)
+			return errors.Wrap(err, "failed generating Central DB master password")
 		}
 		if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace, dbUserTypeMaster, dbMasterPassword); err != nil {
-			return fmt.Errorf("ensuring that DB secret exists: %w", err)
+			return errors.Wrap(err, "failed ensuring that DB secret exists")
 		}
 	}
 
 	dbMasterPassword, err := r.getDBPasswordFromSecret(ctx, remoteCentralNamespace)
 	if err != nil {
-		return fmt.Errorf("getting DB password from secret: %w", err)
+		return errors.Wrap(err, "getting DB password from secret")
 	}
 
 	databaseID, err := r.getDatabaseID(ctx, remoteCentralNamespace, remoteCentral.Id)
 	if err != nil {
-		return fmt.Errorf("getting DB ID: %w", err)
+		return errors.Wrap(err, "failed to get DB ID")
 	}
 
 	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, databaseID, remoteCentral.Id, dbMasterPassword, remoteCentral.Metadata.Internal)
 	if err != nil {
-		return fmt.Errorf("provisioning RDS DB: %w", err)
+		return errors.Wrapf(err, "failed to ensure DB %q is provisioned", databaseID)
 	}
 
 	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(databaseID)
 	if err != nil {
-		return fmt.Errorf("getting RDS DB connection data: %w", err)
+		return errors.Wrapf(err, "failed to get RDS DB %q connection data", databaseID)
 	}
 
 	dbCentralPassword, err := generateDBPassword()
 	if err != nil {
-		return fmt.Errorf("generating Central DB password: %w", err)
+		return errors.Wrap(err, "failed to generate Central DB password")
 	}
 	err = r.managedDBInitFunc(ctx, dbConnection.WithPassword(dbMasterPassword).WithSSLRootCert(postgres.DatabaseCACertificatePathFleetshard),
 		dbCentralUserName, dbCentralPassword)
 	if err != nil {
-		return fmt.Errorf("initializing managed DB: %w", err)
+		return errors.Wrap(err, "failed to initialize managed DB")
 	}
 
 	// Replace the password stored in the secret. This replaces the master password (the password of the
@@ -1337,7 +1331,7 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 	// the master password anywhere from this point on.
 	err = r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace, dbUserTypeCentral, dbCentralPassword)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to ensure that DB secret exists")
 	}
 
 	return nil
@@ -1363,13 +1357,13 @@ func (r *CentralReconciler) centralDBSecretExists(ctx context.Context, remoteCen
 
 func (r *CentralReconciler) centralDBUserExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
 	secret := &corev1.Secret{}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	objectKey := ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}
+	err := r.client.Get(ctx, objectKey, secret)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return false, nil
 		}
-
-		return false, fmt.Errorf("getting central DB secret: %w", err)
+		return false, errors.Wrapf(err, "failed to get central DB secret %q", objectKey)
 	}
 
 	if secret.Annotations == nil {
@@ -1388,20 +1382,21 @@ func (r *CentralReconciler) centralDBUserExists(ctx context.Context, remoteCentr
 
 func (r *CentralReconciler) ensureCentralDBSecretDeleted(ctx context.Context, remoteCentralNamespace string) (bool, error) {
 	secret := &corev1.Secret{}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	objectKey := ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}
+	err := r.client.Get(ctx, objectKey, secret)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return true, nil
 		}
 
-		return false, fmt.Errorf("deleting Central DB secret: %w", err)
+		return false, errors.Wrapf(err, "failed to delete Central DB secret %q", objectKey)
 	}
 
 	if err := r.client.Delete(ctx, secret); err != nil {
-		return false, fmt.Errorf("deleting central DB secret %s/%s", remoteCentralNamespace, centralDbSecretName)
+		return false, errors.Wrapf(err, "deleting central DB secret %q", objectKey)
 	}
 
-	glog.Infof("Central DB secret %s/%s is marked for deletion", remoteCentralNamespace, centralDbSecretName)
+	glog.Infof("Central DB secret %q is marked for deletion", objectKey)
 	return false, nil
 }
 
@@ -1411,16 +1406,17 @@ func (r *CentralReconciler) getDBPasswordFromSecret(ctx context.Context, central
 			Name: centralDbSecretName,
 		},
 	}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: centralNamespace, Name: centralDbSecretName}, secret)
+	objectKey := ctrlClient.ObjectKey{Namespace: centralNamespace, Name: centralDbSecretName}
+	err := r.client.Get(ctx, objectKey, secret)
 	if err != nil {
-		return "", fmt.Errorf("getting Central DB password from secret: %w", err)
+		return "", errors.Wrapf(err, "failed to get Central DB password from secret %q", objectKey)
 	}
 
 	if dbPassword, ok := secret.Data["password"]; ok {
 		return string(dbPassword), nil
 	}
 
-	return "", fmt.Errorf("central DB secret does not contain password field: %w", err)
+	return "", fmt.Errorf("central DB secret %q does not contain password field", objectKey)
 }
 
 func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
@@ -1436,7 +1432,7 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 			if apiErrors.IsNotFound(err) {
 				return true, nil
 			}
-			return false, errors.Wrapf(err, "failed to get central CR %v", centralKey)
+			return false, errors.Wrap(err, "failed to get central CR")
 		}
 
 		// avoid being stuck in a deprovisioning state due to the pause reconcile annotation
@@ -1445,23 +1441,23 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 		}
 
 		if centralToDelete.GetDeletionTimestamp() == nil {
-			glog.Infof("Marking Central CR %v for deletion", centralKey)
+			r.info("marking Central CR for deletion")
 			if err := r.client.Delete(ctx, &centralToDelete); err != nil {
 				if apiErrors.IsNotFound(err) {
 					return true, nil
 				}
-				return false, errors.Wrapf(err, "failed to delete central CR %v", centralKey)
+				return false, errors.Wrap(err, "failed to mark central CR for deletion")
 			}
 		}
 
-		glog.Infof("Waiting for Central CR %v to be deleted", centralKey)
+		r.info("Waiting for Central CR to be deleted")
 		return false, nil
 	})
 
 	if err != nil {
-		return false, errors.Wrapf(err, "waiting for central CR %v to be deleted", centralKey)
+		return false, errors.Wrap(err, "failed to wait for central CR to be deleted")
 	}
-	glog.Infof("Central CR %v is deleted", centralKey)
+	r.info("Central CR is deleted")
 	return true, nil
 }
 
@@ -1477,7 +1473,7 @@ func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, 
 	central.Annotations[PauseReconcileAnnotation] = "false"
 	err := r.client.Update(ctx, central)
 	if err != nil {
-		return fmt.Errorf("removing pause reconcile annotation: %v", err)
+		return errors.Wrap(err, "failed to remove pause reconcile annotation")
 	}
 
 	return nil
@@ -1486,12 +1482,12 @@ func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, 
 func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	vals, err := r.chartValues(remoteCentral)
 	if err != nil {
-		return fmt.Errorf("obtaining values for resources chart: %w", err)
+		return errors.Wrap(err, "failed to obtain values for resources chart")
 	}
 
 	objs, err := charts.RenderToObjects(helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
 	if err != nil {
-		return fmt.Errorf("rendering resources chart: %w", err)
+		return errors.Wrap(err, "failed to render resources chart")
 	}
 	for _, obj := range objs {
 		if obj.GetNamespace() == "" {
@@ -1499,7 +1495,7 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		}
 		err := charts.InstallOrUpdateChart(ctx, obj, r.client)
 		if err != nil {
-			return fmt.Errorf("failed to update central tenant object %w", err)
+			return errors.Wrap(err, "failed to update central tenant object")
 		}
 	}
 
@@ -1509,12 +1505,12 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, remoteCentral *private.ManagedCentral) (bool, error) {
 	vals, err := r.chartValues(*remoteCentral)
 	if err != nil {
-		return false, fmt.Errorf("obtaining values for resources chart: %w", err)
+		return false, errors.Wrap(err, "failed to obtainin values for resources chart")
 	}
 
 	objs, err := charts.RenderToObjects(helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
 	if err != nil {
-		return false, fmt.Errorf("rendering resources chart: %w", err)
+		return false, errors.Wrap(err, "failed to render resources chart")
 	}
 
 	waitForDelete := false
@@ -1530,7 +1526,7 @@ func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, rem
 			if apiErrors.IsNotFound(err) {
 				continue
 			}
-			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+			return false, errors.Wrapf(err, "failed to retrieve object %q of type %v", key, obj.GroupVersionKind())
 		}
 		if out.GetDeletionTimestamp() != nil {
 			waitForDelete = true
@@ -1538,7 +1534,7 @@ func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, rem
 		}
 		err = r.client.Delete(ctx, &out)
 		if err != nil && !apiErrors.IsNotFound(err) {
-			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+			return false, errors.Wrapf(err, "failed to retrieve object %q of type %v", key, obj.GroupVersionKind())
 		}
 	}
 	return !waitForDelete, nil
@@ -1557,13 +1553,13 @@ func (r *CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remo
 	namespace := remoteCentral.Metadata.Namespace
 	route, err := r.routeService.FindReencryptRoute(ctx, namespace)
 	if err != nil && !apiErrors.IsNotFound(err) {
-		return fmt.Errorf("retrieving reencrypt route for namespace %q: %w", namespace, err)
+		return errors.Wrapf(err, "failed to retrieve reencrypt route for namespace %q", namespace)
 	}
 
 	if apiErrors.IsNotFound(err) {
 		err = r.routeService.CreateReencryptRoute(ctx, remoteCentral)
 		if err != nil {
-			return fmt.Errorf("creating reencrypt route for central %s: %w", remoteCentral.Id, err)
+			return errors.Wrapf(err, "failed to create reencrypt route for central %q", remoteCentral.Id)
 		}
 
 		return nil
@@ -1571,7 +1567,7 @@ func (r *CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remo
 
 	err = r.routeService.UpdateReencryptRoute(ctx, route, remoteCentral)
 	if err != nil {
-		return fmt.Errorf("updating reencrypt route for central %s: %w", remoteCentral.Id, err)
+		return errors.Wrapf(err, "failed to update reencrypt route for central %q", remoteCentral.Id)
 	}
 
 	return nil
@@ -1592,13 +1588,13 @@ func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, re
 	namespace := remoteCentral.Metadata.Namespace
 	route, err := r.routeService.FindPassthroughRoute(ctx, namespace)
 	if err != nil && !apiErrors.IsNotFound(err) {
-		return fmt.Errorf("retrieving passthrough route for namespace %q: %w", namespace, err)
+		return errors.Wrapf(err, "failed to retrieve passthrough route for namespace %q", namespace)
 	}
 
 	if apiErrors.IsNotFound(err) {
 		err = r.routeService.CreatePassthroughRoute(ctx, remoteCentral)
 		if err != nil {
-			return fmt.Errorf("creating passthrough route for central %s: %w", remoteCentral.Id, err)
+			return errors.Wrapf(err, "failed to create passthrough route for central %q", remoteCentral.Id)
 		}
 
 		return nil
@@ -1606,7 +1602,7 @@ func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, re
 
 	err = r.routeService.UpdatePassthroughRoute(ctx, route, remoteCentral)
 	if err != nil {
-		return fmt.Errorf("updating passthrough route for central %s: %w", remoteCentral.Id, err)
+		return errors.Wrapf(err, "failed to update passthrough route for central %q", remoteCentral.Id)
 	}
 
 	return nil
@@ -1621,14 +1617,15 @@ func (r *CentralReconciler) ensurePassthroughRouteDeleted(ctx context.Context, n
 
 func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplier routeSupplierFunc) (bool, error) {
 	route, err := routeSupplier()
+	key := ctrlClient.ObjectKey{Namespace: route.GetNamespace(), Name: route.GetName()}
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return true, nil
 		}
-		return false, errors.Wrapf(err, "get central route %s/%s", route.GetNamespace(), route.GetName())
+		return false, errors.Wrapf(err, "failed to get central route %q", key)
 	}
 	if err := r.client.Delete(ctx, route); err != nil {
-		return false, errors.Wrapf(err, "delete central route %s/%s", route.GetNamespace(), route.GetName())
+		return false, errors.Wrapf(err, "failed to delete central route %q", key)
 	}
 	return false, nil
 }
@@ -1681,13 +1678,13 @@ func (r *CentralReconciler) checkSecretExists(
 	secretName string,
 ) (bool, error) {
 	secret := &corev1.Secret{}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: secretName}, secret)
+	objectKey := ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: secretName}
+	err := r.client.Get(ctx, objectKey, secret)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return false, nil
 		}
-
-		return false, fmt.Errorf("getting secret %s/%s: %w", remoteCentralNamespace, secretName, err)
+		return false, errors.Wrapf(err, "failed to get secret %q", objectKey)
 	}
 
 	return true, nil
@@ -1704,15 +1701,15 @@ func (r *CentralReconciler) ensureSecretExists(
 
 	err := r.client.Get(ctx, secretKey, secret) // pragma: allowlist secret
 	if err != nil && !apiErrors.IsNotFound(err) {
-		return fmt.Errorf("getting %s/%s secret: %w", namespace, secretName, err)
+		return errors.Wrapf(err, "failed to get secret %q", secretKey)
 	}
 	if err == nil {
 		modificationErr := secretModifyFunc(secret)
 		if modificationErr != nil {
-			return fmt.Errorf("updating %s/%s secret content: %w", namespace, secretName, modificationErr)
+			return errors.Wrapf(modificationErr, "failed to update secret %q content", secretKey)
 		}
 		if updateErr := r.client.Update(ctx, secret); updateErr != nil { // pragma: allowlist secret
-			return fmt.Errorf("updating %s/%s secret: %w", namespace, secretName, updateErr)
+			return errors.Wrapf(updateErr, "failed to update secret %q", secretKey)
 		}
 
 		return nil
@@ -1731,12 +1728,56 @@ func (r *CentralReconciler) ensureSecretExists(
 	}
 
 	if modificationErr := secretModifyFunc(secret); modificationErr != nil {
-		return fmt.Errorf("initializing %s/%s secret payload: %w", namespace, secretName, modificationErr)
+		return errors.Wrapf(modificationErr, "failed to initialize secret %q payload", secretKey)
 	}
 	if createErr := r.client.Create(ctx, secret); createErr != nil { // pragma: allowlist secret
-		return fmt.Errorf("creating %s/%s secret: %w", namespace, secretName, createErr)
+		return errors.Wrapf(createErr, "failed to create secret %q", secretKey)
 	}
 	return nil
+}
+
+func (r *CentralReconciler) info(message string, args ...interface{}) {
+	sb := strings.Builder{}
+	sb.WriteString(r.getLogPrefix())
+	sb.WriteString(message)
+	args = append([]interface{}{sb.String()}, args...)
+	glog.Info(args...)
+}
+
+func (r *CentralReconciler) infof(format string, args ...interface{}) {
+	sb := strings.Builder{}
+	sb.WriteString(r.getLogPrefix())
+	sb.WriteString(format)
+	args = append([]interface{}{sb.String()}, args...)
+	glog.Infof("central %s: "+format, args...)
+}
+
+func (r *CentralReconciler) warning(message string, args ...interface{}) {
+	sb := strings.Builder{}
+	sb.WriteString(r.getLogPrefix())
+	sb.WriteString(message)
+	args = append([]interface{}{sb.String()}, args...)
+	glog.Warning(args...)
+}
+
+func (r *CentralReconciler) warningf(format string, args ...interface{}) {
+	sb := strings.Builder{}
+	sb.WriteString(r.getLogPrefix())
+	sb.WriteString(format)
+	args = append([]interface{}{sb.String()}, args...)
+	glog.Warningf("central %s: "+format, args...)
+}
+
+func (r *CentralReconciler) getLogPrefix() string {
+	sb := strings.Builder{}
+	sb.WriteString("central '")
+	sb.WriteString(r.central.Id)
+	sb.WriteString("' (")
+	sb.WriteString(r.central.Metadata.Namespace)
+	sb.WriteString("/")
+	sb.WriteString(r.central.Metadata.Name)
+	sb.WriteString("): ")
+	return sb.String()
 }
 
 // NewCentralReconciler ...
