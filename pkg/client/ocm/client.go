@@ -3,7 +3,6 @@ package ocm
 import (
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
-	addonsmgmtv1 "github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
@@ -22,8 +21,8 @@ type Client interface {
 	CreateAddonInstallation(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error
 	UpdateAddonInstallation(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error
 	DeleteAddonInstallation(clusterID string, addonID string) error
-	GetAddon(addonID string) (*addonsmgmtv1.Addon, error)
-	GetAddonVersion(addonID string, version string) (*addonsmgmtv1.AddonVersion, error)
+	GetAddon(addonID string) (*clustersmgmtv1.AddOn, error)
+	GetAddonVersion(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error)
 	GetClusterDNS(clusterID string) (string, error)
 	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 	DeleteCluster(clusterID string) (int, error)

@@ -8,7 +8,6 @@ import (
 	"github.com/golang/glog"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
-	addonsmgmtv1 "github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift-online/ocm-sdk-go/logging"
@@ -283,12 +282,12 @@ func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmg
 	return regionList, nil
 }
 
-func (c *client) GetAddon(addonID string) (*addonsmgmtv1.Addon, error) {
+func (c *client) GetAddon(addonID string) (*clustersmgmtv1.AddOn, error) {
 	if c.connection == nil {
 		return nil, serviceErrors.InvalidOCMConnection()
 	}
 
-	resp, err := c.connection.AddonsMgmt().V1().Addons().Addon(addonID).Get().Send()
+	resp, err := c.connection.ClustersMgmt().V1().Addons().Addon(addonID).Get().Send()
 	if err != nil {
 		if resp != nil && resp.Status() == http.StatusNotFound {
 			return nil, serviceErrors.NotFound("")
@@ -299,12 +298,12 @@ func (c *client) GetAddon(addonID string) (*addonsmgmtv1.Addon, error) {
 	return resp.Body(), nil
 }
 
-func (c *client) GetAddonVersion(addonID string, versionID string) (*addonsmgmtv1.AddonVersion, error) {
+func (c *client) GetAddonVersion(addonID string, versionID string) (*clustersmgmtv1.AddOnVersion, error) {
 	if c.connection == nil {
 		return nil, serviceErrors.InvalidOCMConnection()
 	}
 
-	resp, err := c.connection.AddonsMgmt().V1().Addons().Addon(addonID).Versions().Version(versionID).Get().Send()
+	resp, err := c.connection.ClustersMgmt().V1().Addons().Addon(addonID).Versions().Version(versionID).Get().Send()
 	if err != nil {
 		if resp != nil && resp.Status() == http.StatusNotFound {
 			return nil, serviceErrors.NotFound("")

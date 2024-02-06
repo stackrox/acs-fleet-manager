@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	addonsmgmtv1 "github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
@@ -201,8 +200,8 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						Expect(err).To(Not(HaveOccurred()))
 						return object, nil
 					},
-					GetAddonVersionFunc: func(addonID string, version string) (*addonsmgmtv1.AddonVersion, error) {
-						return addonsmgmtv1.NewAddonVersion().
+					GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+						return clustersmgmtv1.NewAddOnVersion().
 							ID("0.2.0").
 							SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
 							PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
@@ -251,8 +250,8 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						Expect(err).To(Not(HaveOccurred()))
 						return object, nil
 					},
-					GetAddonVersionFunc: func(addonID string, version string) (*addonsmgmtv1.AddonVersion, error) {
-						return addonsmgmtv1.NewAddonVersion().
+					GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+						return clustersmgmtv1.NewAddOnVersion().
 							ID("0.2.0").
 							SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
 							PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
@@ -299,8 +298,8 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						Expect(err).To(Not(HaveOccurred()))
 						return object, nil
 					},
-					GetAddonVersionFunc: func(addonID string, version string) (*addonsmgmtv1.AddonVersion, error) {
-						return addonsmgmtv1.NewAddonVersion().
+					GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+						return clustersmgmtv1.NewAddOnVersion().
 							ID("0.2.0").
 							SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
 							PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
@@ -352,8 +351,8 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						Expect(err).To(Not(HaveOccurred()))
 						return object, nil
 					},
-					GetAddonVersionFunc: func(addonID string, version string) (*addonsmgmtv1.AddonVersion, error) {
-						return addonsmgmtv1.NewAddonVersion().
+					GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+						return clustersmgmtv1.NewAddOnVersion().
 							ID("0.2.0").
 							SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
 							PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
@@ -405,8 +404,8 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						Expect(err).To(Not(HaveOccurred()))
 						return object, nil
 					},
-					GetAddonVersionFunc: func(addonID string, version string) (*addonsmgmtv1.AddonVersion, error) {
-						return addonsmgmtv1.NewAddonVersion().
+					GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+						return clustersmgmtv1.NewAddOnVersion().
 							ID("0.2.0").
 							SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
 							PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
@@ -458,8 +457,8 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						Expect(err).To(Not(HaveOccurred()))
 						return object, nil
 					},
-					GetAddonVersionFunc: func(addonID string, version string) (*addonsmgmtv1.AddonVersion, error) {
-						return addonsmgmtv1.NewAddonVersion().
+					GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+						return clustersmgmtv1.NewAddOnVersion().
 							ID("0.2.0").
 							SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
 							PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:4e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
@@ -511,8 +510,8 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						Expect(err).To(Not(HaveOccurred()))
 						return object, nil
 					},
-					GetAddonVersionFunc: func(addonID string, version string) (*addonsmgmtv1.AddonVersion, error) {
-						return addonsmgmtv1.NewAddonVersion().
+					GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+						return clustersmgmtv1.NewAddOnVersion().
 							ID("0.2.0").
 							SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
 							PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
@@ -702,8 +701,8 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Upgrade(t *testing
 			Expect(err).To(Not(HaveOccurred()))
 			return object, nil
 		},
-		GetAddonVersionFunc: func(addonID string, version string) (*addonsmgmtv1.AddonVersion, error) {
-			return addonsmgmtv1.NewAddonVersion().
+		GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+			return clustersmgmtv1.NewAddOnVersion().
 				ID("0.2.0").
 				SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
 				PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").

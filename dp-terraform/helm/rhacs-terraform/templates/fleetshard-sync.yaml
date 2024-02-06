@@ -124,6 +124,8 @@ spec:
           value: {{ .Values.fleetshardSync.targetedOperatorUpgrades.enabled | quote }}
         - name: RHACS_ADDON_AUTO_UPGRADE
           value: {{ .Values.fleetshardSync.addonAutoUpgradeEnabled | quote }}
+        - name: FLEETSHARD_ADDON_NAME
+          value: {{ .Values.fleetshardSync.addonName | quote }}
         volumeMounts:
           - mountPath: /var/run/secrets/tokens
             name: aws-token
