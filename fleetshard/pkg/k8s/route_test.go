@@ -203,7 +203,7 @@ func TestPassThroughRouteLifecycle(t *testing.T) {
 var (
 	centralTLSSecret = &coreV1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralTLSSecretName,
+			Name:      CentralTLSSecretName,
 			Namespace: testNamespace,
 		},
 		Data: map[string][]byte{

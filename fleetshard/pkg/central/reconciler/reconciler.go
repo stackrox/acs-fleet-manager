@@ -86,8 +86,10 @@ const (
 	tenantImagePullSecretName = "stackrox" // pragma: allowlist secret
 )
 
-type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral,
-	client ctrlClient.Client) (bool, error)
+type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error)
+type needsReconcileFunc func(changed bool, central *v1alpha1.Central, storedSecrets []string) bool
+type restoreCentralSecretsFunc func(ctx context.Context, remoteCentral private.ManagedCentral) error
+type areSecretsStoredFunc func(secretsStored []string) bool
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
@@ -111,6 +113,7 @@ type CentralReconciler struct {
 	central                private.ManagedCentral
 	status                 *int32
 	lastCentralHash        [16]byte
+	lastCentralHashTime    time.Time
 	useRoutes              bool
 	Resources              bool
 	routeService           *k8s.RouteService
@@ -133,6 +136,11 @@ type CentralReconciler struct {
 	hasAuthProvider        bool
 	verifyAuthProviderFunc verifyAuthProviderExistsFunc
 	tenantImagePullSecret  []byte
+	clock                  clock
+
+	areSecretsStoredFunc      areSecretsStoredFunc
+	needsReconcileFunc        needsReconcileFunc
+	restoreCentralSecretsFunc restoreCentralSecretsFunc
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -146,18 +154,32 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
+	centralHash, err := r.computeCentralHash(remoteCentral)
+	if err != nil {
+		return nil, errors.Wrap(err, "computing central hash")
+	}
+
 	central, err := r.getInstanceConfig(&remoteCentral)
 	if err != nil {
 		return nil, err
 	}
 
-	changed, err := r.centralChanged(remoteCentral)
-	if err != nil {
-		return nil, errors.Wrap(err, "checking if central changed")
-	}
-	needsReconcile := r.needsReconcile(changed, central, remoteCentral.Metadata.SecretsStored)
+	shouldUpdateCentralHash := false
+	defer func() {
+		if shouldUpdateCentralHash {
+			r.lastCentralHash = centralHash
+			r.lastCentralHashTime = time.Now()
+		} else {
+			r.lastCentralHash = [16]byte{}
+		}
+	}()
+
+	changed := r.centralChanged(centralHash)
+
+	needsReconcile := r.needsReconcileFunc(changed, central, remoteCentral.Metadata.SecretsStored)
 
 	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
+		shouldUpdateCentralHash = true
 		return nil, ErrCentralNotChanged
 	}
 
@@ -166,7 +188,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
-		return r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
+		status, err := r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
+		shouldUpdateCentralHash = err == nil
+		return status, err
 	}
 
 	namespaceLabels := map[string]string{
@@ -187,7 +211,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
-	err = r.restoreCentralSecrets(ctx, remoteCentral)
+	err = r.restoreCentralSecretsFunc(ctx, remoteCentral)
 	if err != nil {
 		return nil, err
 	}
@@ -234,6 +258,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
+	if err = r.ensureSecretHasOwnerReference(ctx, k8s.CentralTLSSecretName, &remoteCentral, central); err != nil {
+		return nil, err
+	}
+
 	if !centralDeploymentReady || !centralTLSSecretFound {
 		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
@@ -256,11 +284,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	// Setting the last central hash must always be executed as the last step.
-	// defer can't be used for this call because it is also executed after the reconcile failed.
-	if err := r.setLastCentralHash(remoteCentral); err != nil {
-		return nil, errors.Wrap(err, "setting central reconcilation cache")
-	}
+	shouldUpdateCentralHash = true
 
 	logStatus := *status
 	logStatus.Secrets = obscureSecrets(status.Secrets)
@@ -681,9 +705,10 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
 		}
 
-		if err := r.client.Update(ctx, desiredCentral); err != nil {
+		if err := r.client.Update(context.Background(), desiredCentral); err != nil {
 			return errors.Wrapf(err, "updating Central %v", centralKey)
 		}
+
 	}
 
 	return nil
@@ -905,6 +930,39 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (m
 
 }
 
+// ensureSecretHasOwnerReference is used to make sure the central-tls secret has it's
+// owner reference properly set after a restore operation so that the automatic cert rotation
+// in the operator is working
+func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, secretName string, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+	secret, err := r.getSecret(remoteCentral.Metadata.Namespace, secretName)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			// no need to ensure correct owner reference if the secret doesn't exist
+			return nil
+		}
+		return err
+	}
+
+	if len(secret.ObjectMeta.OwnerReferences) != 0 {
+		return nil
+	}
+
+	centralCR := &v1alpha1.Central{}
+	if err := r.client.Get(ctx, ctrlClient.ObjectKeyFromObject(central), centralCR); err != nil {
+		return fmt.Errorf("getting current central CR from k8s: %w", err)
+	}
+
+	secret.OwnerReferences = []metav1.OwnerReference{
+		*metav1.NewControllerRef(centralCR, v1alpha1.CentralGVK),
+	}
+
+	if err := r.client.Update(ctx, secret); err != nil {
+		return fmt.Errorf("updating %s secret: %w", k8s.CentralTLSSecretName, err)
+	}
+
+	return nil
+}
+
 func (r *CentralReconciler) ensureDeclarativeConfigurationSecretCleaned(ctx context.Context, remoteCentralNamespace string) error {
 	secret := &corev1.Secret{}
 	secretKey := ctrlClient.ObjectKey{ // pragma: allowlist secret
@@ -1042,22 +1100,20 @@ func (r *CentralReconciler) getDatabaseID(ctx context.Context, remoteCentralName
 }
 
 // centralChanged compares the given central to the last central reconciled using a hash
-func (r *CentralReconciler) centralChanged(central private.ManagedCentral) (bool, error) {
-	currentHash, err := util.MD5SumFromJSONStruct(&central)
-	if err != nil {
-		return true, errors.Wrap(err, "hashing central")
-	}
-	return !bytes.Equal(r.lastCentralHash[:], currentHash[:]), nil
+func (r *CentralReconciler) centralChanged(currentHash [16]byte) bool {
+	return !bytes.Equal(r.lastCentralHash[:], currentHash[:])
 }
 
-func (r *CentralReconciler) setLastCentralHash(central private.ManagedCentral) error {
+func (r *CentralReconciler) setLastCentralHash(currentHash [16]byte) {
+	r.lastCentralHash = currentHash
+}
+
+func (r *CentralReconciler) computeCentralHash(central private.ManagedCentral) ([16]byte, error) {
 	hash, err := util.MD5SumFromJSONStruct(&central)
 	if err != nil {
-		return fmt.Errorf("calculating MD5 from JSON: %w", err)
+		return [16]byte{}, fmt.Errorf("calculating MD5 from JSON: %w", err)
 	}
-
-	r.lastCentralHash = hash
-	return nil
+	return hash, nil
 }
 
 func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) {
@@ -1602,11 +1658,15 @@ func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.Managed
 }
 
 func (r *CentralReconciler) needsReconcile(changed bool, central *v1alpha1.Central, storedSecrets []string) bool {
-	if !r.areSecretsStored(storedSecrets) {
+	if !r.areSecretsStoredFunc(storedSecrets) {
 		return true
 	}
 
 	if changed {
+		return true
+	}
+
+	if r.clock.Now().Sub(r.lastCentralHashTime) > time.Minute*15 {
 		return true
 	}
 
@@ -1686,7 +1746,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 	secretCipher cipher.Cipher, encryptionKeyGenerator cipher.KeyGenerator,
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
-	return &CentralReconciler{
+	r := &CentralReconciler{
 		client:                 k8sClient,
 		fleetmanagerClient:     fleetmanagerClient,
 		central:                central,
@@ -1711,7 +1771,13 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		tenantImagePullSecret:  []byte(opts.TenantImagePullSecret),
 
 		resourcesChart: resourcesChart,
+		clock:          realClock{},
 	}
+	r.needsReconcileFunc = r.needsReconcile
+
+	r.restoreCentralSecretsFunc = r.restoreCentralSecrets //pragma: allowlist secret
+	r.areSecretsStoredFunc = r.areSecretsStored           //pragma: allowlist secret
+	return r
 }
 
 func obscureSecrets(secrets map[string]string) map[string]string {
@@ -1722,4 +1788,22 @@ func obscureSecrets(secrets map[string]string) map[string]string {
 	}
 
 	return obscuredSecrets
+}
+
+type clock interface {
+	Now() time.Time
+}
+
+type realClock struct{}
+
+func (realClock) Now() time.Time {
+	return time.Now()
+}
+
+type fakeClock struct {
+	NowTime time.Time
+}
+
+func (f fakeClock) Now() time.Time {
+	return f.NowTime
 }

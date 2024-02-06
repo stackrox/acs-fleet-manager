@@ -62,6 +62,7 @@ fleetshardSync:
       operator: Exists
       effect: NoSchedule
   addonAutoUpgradeEnabled: true
+  addonName: acs-fleetshard
 
 acsOperator:
   enabled: false

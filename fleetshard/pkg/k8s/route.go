@@ -3,6 +3,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/rox/pkg/errox"
 
@@ -152,7 +153,7 @@ func (s *RouteService) configureReencryptRoute(ctx context.Context, route *opens
 	annotatedRoute.Spec.Host = remoteCentral.Spec.UiEndpoint.Host
 
 	namespace := remoteCentral.Metadata.Namespace
-	centralTLSSecret, retrievalErr := getSecret(ctx, s.client, centralTLSSecretName, namespace)
+	centralTLSSecret, retrievalErr := getSecret(ctx, s.client, CentralTLSSecretName, namespace)
 	if retrievalErr != nil {
 		wrappedErr := fmt.Errorf(
 			"getting central-tls secret for tenant %s: %w",
@@ -163,7 +164,7 @@ func (s *RouteService) configureReencryptRoute(ctx context.Context, route *opens
 	}
 	centralCA, ok := centralTLSSecret.Data["ca.pem"]
 	if !ok {
-		return nil, fmt.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
+		return nil, fmt.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", CentralTLSSecretName)
 	}
 
 	if annotatedRoute.Spec.TLS == nil {
