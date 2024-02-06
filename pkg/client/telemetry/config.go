@@ -44,7 +44,6 @@ func NewTelemetryConfig() TelemetryConfig {
 	clientID := getEnv("HOSTNAME", "fleet-manager")
 	return &TelemetryConfigImpl{
 		Config: phonehome.Config{
-			StorageKey: getEnv("ROX_TELEMETRY_STORAGE_KEY_V1", "DISABLED"),
 			ClientID:   clientID,
 			ClientName: "ACS Fleet Manager",
 			BatchSize:  1, // This makes Group and Track to not go in one batch.
