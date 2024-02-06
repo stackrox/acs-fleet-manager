@@ -46,6 +46,7 @@ import (
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	yaml2 "sigs.k8s.io/yaml"
 )
 
 const (
@@ -358,6 +359,9 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
 	}
+	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
+	r.needsReconcileFunc = r.needsReconcile
+	r.restoreCentralSecretsFunc = r.restoreCentralSecrets //pragma: allowlist secret
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.Error(t, err)
@@ -764,12 +768,14 @@ func TestCentralChanged(t *testing.T) {
 			)
 
 			if test.lastCentral != nil {
-				err := reconciler.setLastCentralHash(*test.lastCentral)
+				centralHash, err := reconciler.computeCentralHash(*test.lastCentral)
 				require.NoError(t, err)
+				reconciler.setLastCentralHash(centralHash)
 			}
 
-			got, err := reconciler.centralChanged(test.currentCentral)
+			centralHash, err := reconciler.computeCentralHash(test.currentCentral)
 			require.NoError(t, err)
+			got := reconciler.centralChanged(centralHash)
 			assert.Equal(t, test.want, got)
 		})
 	}
@@ -2265,4 +2271,208 @@ metadata:
 		})
 	}
 
+}
+
+func TestReconciler_needsReconcile(t *testing.T) {
+	tests := []struct {
+		name string
+		// central (hash) has changed
+		changed bool
+		// the central to reconcile
+		central *v1alpha1.Central
+		// mocking the areSecretsStoredFunc
+		secretsStoredFunc areSecretsStoredFunc
+		// how long since the last hash was stored
+		timePassed time.Duration
+		// desired output
+		want bool
+	}{
+		{
+			name:              "no change",
+			changed:           false,
+			central:           &v1alpha1.Central{},
+			secretsStoredFunc: func([]string) bool { return true },
+			timePassed:        0,
+			want:              false,
+		}, {
+			name:              "central changed",
+			changed:           true,
+			central:           &v1alpha1.Central{},
+			secretsStoredFunc: func([]string) bool { return true },
+			timePassed:        0,
+			want:              true,
+		}, {
+			name:              "secrets not stored",
+			changed:           false,
+			central:           &v1alpha1.Central{},
+			secretsStoredFunc: func([]string) bool { return false },
+			timePassed:        0,
+			want:              true,
+		}, {
+			name:              "time passed",
+			changed:           false,
+			central:           &v1alpha1.Central{},
+			secretsStoredFunc: func([]string) bool { return true },
+			timePassed:        1 * time.Hour,
+			want:              true,
+		}, {
+			name:    "force reconcile",
+			changed: false,
+			central: &v1alpha1.Central{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"rhacs.redhat.com/force-reconcile": "true",
+					},
+				},
+			},
+			secretsStoredFunc: func([]string) bool { return true },
+			timePassed:        0,
+			want:              true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, nil, defaultReconcilerOptions)
+			r.areSecretsStoredFunc = tt.secretsStoredFunc //pragma: allowlist secret
+			r.clock = fakeClock{
+				NowTime: time.Now(),
+			}
+			r.lastCentralHashTime = r.clock.Now().Add(-tt.timePassed)
+			got := r.needsReconcile(tt.changed, tt.central, []string{})
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+// TestReconcilerRaceCondition tests that reconciling a central that changes in quick
+// succession will still be able to accurately reconcile the central.
+// The reason for this test is that the reconciler will exit early if the deployment
+// is not ready.
+func TestReconcilerRaceCondition(t *testing.T) {
+	var managedCentral = simpleManagedCentral
+	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
+	// Creating 2 "ready" centrals, with 2 different cpu limit values
+	var central1 = withCpuLimit(t, managedCentral, "100m")
+	var central2 = withCpuLimit(t, managedCentral, "200m")
+
+	cli, _, r := getClientTrackerAndReconciler(t, central1, nil, defaultReconcilerOptions)
+	ctx := context.Background()
+	namespace := central1.Metadata.Namespace
+	name := central1.Metadata.Name
+
+	// we mock the "needsReconcileFunc" to only return true when the hash changes
+	r.needsReconcileFunc = func(changed bool, central *v1alpha1.Central, storedSecrets []string) bool {
+		return changed
+	}
+	// we mock the "restoreCentralSecrets" to always succeed
+	r.restoreCentralSecretsFunc = func(ctx context.Context, remoteCentral private.ManagedCentral) error {
+		return nil
+	}
+
+	// Perform first reconciliation
+	_, err := r.Reconcile(ctx, central1)
+	require.NoError(t, err)
+	printCentralHash(t, r)
+	assertCentralCpuLimit(t, ctx, cli, namespace, name, "100m")
+
+	// Perform second reconciliation
+	_, err = r.Reconcile(ctx, central2)
+	require.NoError(t, err)
+	printCentralHash(t, r)
+	assertCentralCpuLimit(t, ctx, cli, namespace, name, "200m")
+
+	makeDeploymentNotReady(t, ctx, cli, namespace)
+
+	// Reconcile with first central again
+	_, err = r.Reconcile(ctx, central1)
+	require.NoError(t, err)
+	printCentralHash(t, r)
+	assertCentralCpuLimit(t, ctx, cli, namespace, name, "100m")
+
+	// Then reconcile with second central
+	_, err = r.Reconcile(ctx, central2)
+	require.NoError(t, err)
+	printCentralHash(t, r)
+	assertCentralCpuLimit(t, ctx, cli, namespace, name, "200m")
+
+	makeDeploymentReady(t, ctx, cli, namespace)
+
+	// Reconcile with first central again
+	_, err = r.Reconcile(ctx, central1)
+	require.NoError(t, err)
+	printCentralHash(t, r)
+	assertCentralCpuLimit(t, ctx, cli, namespace, name, "100m")
+
+	// Then reconcile with second central
+	_, err = r.Reconcile(ctx, central2)
+	require.NoError(t, err)
+	printCentralHash(t, r)
+	assertCentralCpuLimit(t, ctx, cli, namespace, name, "200m")
+}
+
+func printCentralHash(t *testing.T, reconciler *CentralReconciler) {
+	t.Logf("Last central hash: %x", reconciler.lastCentralHash[:])
+}
+
+func makeDeploymentNotReady(t *testing.T, ctx context.Context, cli client.WithWatch, namespace string) {
+	deployment := &appsv1.Deployment{}
+	require.NoError(t, cli.Get(ctx, client.ObjectKey{Namespace: namespace, Name: centralDeploymentName}, deployment))
+	deployment.Status.AvailableReplicas = 0
+	require.NoError(t, cli.Status().Update(ctx, deployment))
+	// ensure deployment is not ready
+	assertDeploymentNotReady(t, ctx, cli, namespace)
+}
+
+func makeDeploymentReady(t *testing.T, ctx context.Context, cli client.WithWatch, namespace string) {
+	deployment := &appsv1.Deployment{}
+	require.NoError(t, cli.Get(ctx, client.ObjectKey{Namespace: namespace, Name: centralDeploymentName}, deployment))
+	deployment.Status.AvailableReplicas = 1
+	require.NoError(t, cli.Status().Update(ctx, deployment))
+	// ensure deployment is not ready
+	assertDeploymentReady(t, ctx, cli, namespace)
+}
+
+func assertDeploymentReady(t *testing.T, ctx context.Context, cli client.WithWatch, namespace string) {
+	isReady, err := isCentralDeploymentReady(ctx, cli, namespace)
+	require.NoError(t, err)
+	require.True(t, isReady)
+}
+
+func assertDeploymentNotReady(t *testing.T, ctx context.Context, cli client.WithWatch, namespace string) {
+	isReady, err := isCentralDeploymentReady(ctx, cli, namespace)
+	require.NoError(t, err)
+	require.False(t, isReady)
+}
+
+func assertCentralCpuLimit(t *testing.T, ctx context.Context, cli client.WithWatch, namespace, name string, cpuLimit string) {
+	var central v1alpha1.Central
+	require.NoError(t, cli.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, &central))
+	require.NotNil(t, central.Spec.Central)
+	require.NotNil(t, central.Spec.Central.Resources)
+	require.NotNil(t, central.Spec.Central.Resources.Requests)
+	require.NotNil(t, central.Spec.Central.Resources.Requests.Cpu())
+	assert.Equal(t, cpuLimit, central.Spec.Central.Resources.Requests.Cpu().String())
+}
+
+func withCpuLimit(t *testing.T, central private.ManagedCentral, cpuLimit string) private.ManagedCentral {
+	var cr v1alpha1.Central
+	err := yaml2.Unmarshal([]byte(central.Spec.CentralCRYAML), &cr)
+	require.NoError(t, err)
+
+	if cr.Spec.Central == nil {
+		cr.Spec.Central = &v1alpha1.CentralComponentSpec{}
+	}
+	if cr.Spec.Central.Resources == nil {
+		cr.Spec.Central.Resources = &v1.ResourceRequirements{}
+	}
+	if cr.Spec.Central.Resources.Requests == nil {
+		cr.Spec.Central.Resources.Requests = make(v1.ResourceList)
+	}
+	cr.Spec.Central.Resources.Requests["cpu"] = resource.MustParse(cpuLimit)
+	central2Yaml, err := yaml2.Marshal(cr)
+	require.NoError(t, err)
+	var clone private.ManagedCentral = central
+	clone.Spec.CentralCRYAML = string(central2Yaml)
+	return clone
 }
