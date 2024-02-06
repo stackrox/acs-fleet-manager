@@ -61,18 +61,8 @@ func (t *Telemetry) enabled() bool {
 	return t != nil && t.config != nil && t.config.Enabled()
 }
 
-// setTenantProperties emits a group event that captures meta data of the input central instance.
-// Adds the token user to the tenant group.
-func (t *Telemetry) setTenantProperties(ctx context.Context, central *dbapi.CentralRequest) {
-	if !t.enabled() {
-		return
-	}
-
-	user, err := t.auth.getUserFromContext(ctx)
-	if err != nil {
-		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
-		return
-	}
+// getTenantProperties returns the tenant group properties map.
+func (t *Telemetry) getTenantProperties(central *dbapi.CentralRequest) map[string]any {
 	props := map[string]any{
 		"Cloud Account":   central.CloudAccountID,
 		"Cloud Provider":  central.CloudProvider,
@@ -80,13 +70,17 @@ func (t *Telemetry) setTenantProperties(ctx context.Context, central *dbapi.Cent
 		"Organisation ID": central.OrganisationID,
 		"Region":          central.Region,
 		"Tenant ID":       central.ID,
+		"Status":          central.Status,
 	}
-	// Group call will issue a supporting Track event to force group properties
-	// update.
-	t.config.Telemeter().Group(props,
-		telemeter.WithUserID(user),
-		telemeter.WithGroups(TenantGroupName, central.ID),
-	)
+	if central.ExpiredAt != nil {
+		props["Expired At"] = central.ExpiredAt.UTC().Format(time.RFC3339)
+	} else {
+		// An instance may loose its expiration date after quota is granted, so
+		// we need to reset the group property, hence never report nil time, as
+		// nil is not a value on Amplitude.
+		props["Expired At"] = time.Time{}.Format(time.RFC3339)
+	}
+	return props
 }
 
 // trackCreationRequested emits a track event that signals the creation request of a Central instance.
@@ -123,13 +117,36 @@ func (t *Telemetry) trackCreationRequested(ctx context.Context, tenantID string,
 // RegisterTenant initializes the tenant group with the associated properties
 // and issues a following event tracking the central creation request.
 func (t *Telemetry) RegisterTenant(ctx context.Context, convCentral *dbapi.CentralRequest, isAdmin bool, err error) {
-	t.setTenantProperties(ctx, convCentral)
+	user, err := t.auth.getUserFromContext(ctx)
+	if err != nil {
+		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
+		return
+	}
+
+	props := t.getTenantProperties(convCentral)
+	// Adds the token user to the tenant group.
+	// Group call will issue a supporting Track event to force group properties
+	// update.
+	t.config.Telemeter().Group(props,
+		telemeter.WithUserID(user),
+		telemeter.WithGroups(TenantGroupName, convCentral.ID),
+	)
+
 	go func() {
 		// This is to raise the chances for the tenant group properties be
 		// procesed by Segment:
 		time.Sleep(segmentChancesRaiser)
 		t.trackCreationRequested(ctx, convCentral.ID, isAdmin, err)
 	}()
+}
+
+// UpdateTenant updates tenant group properties.
+func (t *Telemetry) UpdateTenantProperties(convCentral *dbapi.CentralRequest) {
+	props := t.getTenantProperties(convCentral)
+	// Update tenant group properties from the name of fleet-manager backend.
+	t.config.Telemeter().Group(props,
+		telemeter.WithGroups(TenantGroupName, convCentral.ID),
+	)
 }
 
 // TrackDeletionRequested emits a track event that signals the deletion request of a Central instance.
