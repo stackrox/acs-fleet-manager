@@ -104,37 +104,36 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 			quotaCostCache[key] = active
 		}
 
-		if err := k.updateExpiredAtBasedOnQuotaEntitlement(central, active); err != nil {
-			svcErrors = append(svcErrors, errors.Wrapf(err, "failed to update expired_at value based on quota entitlement for central instance %q", central.ID))
+		if timestamp, needsChange := k.expiredAtNeedsUpdate(central, active); needsChange {
+			central.ExpiredAt = timestamp
+			if err := k.updateExpiredAtInDB(central); err != nil {
+				svcErrors = append(svcErrors, errors.Wrapf(err,
+					"failed to update expired_at value based on quota entitlement for central instance %q", central.ID))
+			}
 		}
 	}
 
 	return svcErrors
 }
 
-// Updates expired_at field of the given Central instance based on the user/organisation's quota entitlement status
-func (k *ExpirationDateManager) updateExpiredAtBasedOnQuotaEntitlement(central *dbapi.CentralRequest, isQuotaEntitlementActive bool) *serviceErr.ServiceError {
+func (k *ExpirationDateManager) updateExpiredAtInDB(central *dbapi.CentralRequest) *serviceErr.ServiceError {
+	glog.Infof("updating expired_at of central %q to %q", central.ID, central.ExpiredAt)
+	return k.centralService.Updates(&dbapi.CentralRequest{Meta: api.Meta{ID: central.ID}},
+		map[string]interface{}{"expired_at": central.ExpiredAt})
+}
 
-	updateDB := func(id string, timestamp *time.Time) *serviceErr.ServiceError {
-		return k.centralService.Updates(&dbapi.CentralRequest{
-			Meta: api.Meta{ID: id},
-		}, map[string]interface{}{"expired_at": timestamp})
-	}
-
+// Returns whether the expired_at field of the given Central instance needs to be updated.
+func (k *ExpirationDateManager) expiredAtNeedsUpdate(central *dbapi.CentralRequest, isQuotaEntitlementActive bool) (*time.Time, bool) {
 	// if quota entitlement is active, ensure expired_at is set to null.
 	if isQuotaEntitlementActive && central.ExpiredAt != nil {
-		central.ExpiredAt = nil
-		glog.Infof("updating expiration date of central instance %q to NULL", central.ID)
-		return updateDB(central.ID, central.ExpiredAt)
+		return nil, true
 	}
 
 	// if quota entitlement is not active and expired_at is not already set, set
 	// its value to the current time.
 	if !isQuotaEntitlementActive && central.ExpiredAt == nil {
 		now := time.Now()
-		central.ExpiredAt = &now
-		glog.Infof("quota entitlement for central instance %q is no longer active, updating expired_at to %q", central.ID, now.Format(time.RFC1123Z))
-		return updateDB(central.ID, central.ExpiredAt)
+		return &now, true
 	}
-	return nil
+	return nil, false
 }
