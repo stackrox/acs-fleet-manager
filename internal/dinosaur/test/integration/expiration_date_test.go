@@ -9,7 +9,6 @@ import (
 
 	"github.com/antihax/optional"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -49,35 +48,6 @@ func TestDinosaurExpirationManager(t *testing.T) {
 		"org_id": orgID,
 	}
 	ctx := h.NewAuthenticatedContext(account, claims)
-
-	dbFactory := test.TestServices.DBFactory
-	var id string
-
-	// Register a central in the DB
-	{
-		dinosaurCloudProvider := "dummy"
-		// this value is taken from config/quota-management-list-configuration.yaml
-		orgID := "13640203"
-		db := test.TestServices.DBFactory.New()
-
-		dinosaurs := []*dbapi.CentralRequest{{
-			MultiAZ:        false,
-			Owner:          "dummyuser1",
-			Region:         mocks.MockCluster.Region().ID(),
-			CloudProvider:  dinosaurCloudProvider,
-			Name:           "dummy-dinosaur",
-			OrganisationID: orgID,
-			Status:         constants.CentralRequestStatusAccepted.String(),
-			InstanceType:   types.STANDARD.String(),
-		}}
-		if err := db.Create(&dinosaurs).Error; err != nil {
-			Expect(err).NotTo(HaveOccurred())
-			return
-		}
-		id = dinosaurs[0].ID
-		t.Log("central id: ", id)
-	}
-
 	token := h.CreateJWTStringWithClaim(account, claims)
 	privateConfig := private.NewConfiguration()
 	privateConfig.BasePath = fmt.Sprintf("http://%s", test.TestServices.ServerConfig.BindAddress)
@@ -85,6 +55,16 @@ func TestDinosaurExpirationManager(t *testing.T) {
 		"Authorization": "Bearer " + token,
 	}
 	adminAPI := private.NewAPIClient(privateConfig).DefaultApi
+	request, _, err := adminAPI.CreateCentral(ctx, false, private.CentralRequestPayload{
+		CloudProvider: "dummy",
+		MultiAz:       false,
+		Name:          "dummy-dinosaur",
+		Region:        mocks.MockCluster.Region().ID(),
+	})
+	Expect(err).NotTo(HaveOccurred(), "Error creating central:  %v", err)
+
+	id := request.Id
+	defer adminAPI.DeleteCentralById(ctx, id, false)
 
 	getCentral := func() private.Central {
 		central, _, err := adminAPI.GetCentralById(ctx, id)
@@ -105,7 +85,7 @@ func TestDinosaurExpirationManager(t *testing.T) {
 
 	qmlc := quotamanagement.NewQuotaManagementListConfig()
 
-	quotaServiceFactory := quota.NewDefaultQuotaServiceFactory(test.TestServices.OCMClient, dbFactory, qmlc)
+	quotaServiceFactory := quota.NewDefaultQuotaServiceFactory(test.TestServices.OCMClient, test.TestServices.DBFactory, qmlc)
 
 	// Reset expired_at via expiration date manager.
 	var centralConfig *config.CentralConfig
