@@ -1,25 +1,21 @@
 package integration
 
 import (
-	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
 	// TODO(ROX-10709) "github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 
 	"github.com/antihax/optional"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services/quota"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/workers/dinosaurmgrs"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/common"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
@@ -39,7 +35,7 @@ func TestDinosaurExpirationManager(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+	h, _, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
 		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster("expiration-test-cluster", 1)})
 	})
 	defer teardown()
@@ -48,28 +44,30 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	db := test.TestServices.DBFactory
+	dbFactory := test.TestServices.DBFactory
 	var id string
 
-	// Create a central, wait for it to be accepted.
+	// Register a central in the DB
 	{
-		// POST responses per openapi spec: 201, 409, 500
-		k := public.CentralRequestPayload{
-			Region:        mocks.MockCluster.Region().ID(),
-			CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-			Name:          "test-expiration-date",
-			MultiAz:       testMultiAZ,
-		}
-		central, resp, err := common.WaitForDinosaurCreateToBeAccepted(ctx, db, client, k)
-		id = central.Id
-		defer client.DefaultApi.DeleteCentralById(ctx, central.Id, false)
+		dinosaurCloudProvider := "dummy"
+		// this value is taken from config/quota-management-list-configuration.yaml
+		orgID := "13640203"
+		db := test.TestServices.DBFactory.New()
 
-		// dinosaur successfully registered with database
-		Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
-		Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-		Expect(central.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-		Expect(central.Kind).To(Equal(presenters.KindDinosaur))
-		Expect(central.Href).To(Equal(fmt.Sprintf("/api/rhacs/v1/centrals/%s", central.Id)))
+		dinosaurs := []*dbapi.CentralRequest{{
+			MultiAZ:        false,
+			Owner:          "dummyuser1",
+			Region:         mocks.MockCluster.Region().ID(),
+			CloudProvider:  dinosaurCloudProvider,
+			Name:           "dummy-dinosaur",
+			OrganisationID: orgID,
+			Status:         constants.CentralRequestStatusAccepted.String(),
+			InstanceType:   types.STANDARD.String(),
+		}}
+		if err := db.Create(&dinosaurs).Error; err != nil {
+			Expect(err).NotTo(HaveOccurred())
+			return
+		}
 	}
 
 	adminAPI := test.NewAdminPrivateAPIClient(h).DefaultApi
@@ -92,7 +90,7 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	qmlc := quotamanagement.NewQuotaManagementListConfig()
 
 	// Reset expired_at via expiration date manager.
-	qs := quota.NewDefaultQuotaServiceFactory(test.TestServices.OCMClient, db, qmlc)
+	qs := quota.NewDefaultQuotaServiceFactory(test.TestServices.OCMClient, dbFactory, qmlc)
 	cfg := config.NewCentralConfig()
 	mgr := dinosaurmgrs.NewExpirationDateManager(test.TestServices.DinosaurService, qs, cfg)
 	svcErrs := mgr.Reconcile()
