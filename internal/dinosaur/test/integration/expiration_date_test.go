@@ -40,7 +40,7 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
 	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 1)})
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster("expiration-test-cluster", 1)})
 	})
 	defer teardown()
 
@@ -72,22 +72,20 @@ func TestDinosaurExpirationManager(t *testing.T) {
 		Expect(central.Href).To(Equal(fmt.Sprintf("/api/rhacs/v1/centrals/%s", central.Id)))
 	}
 
-	privateConfig := private.NewConfiguration()
-	privateConfig.BasePath = ocmServer.URL
-	admin := private.NewAPIClient(privateConfig)
+	adminAPI := test.NewAdminPrivateAPIClient(h).DefaultApi
 
-	central, _, err := admin.DefaultApi.GetCentralById(ctx, id)
+	central, _, err := adminAPI.GetCentralById(ctx, id)
 	Expect(err).NotTo(HaveOccurred(), "Error getting central:  %v", err)
 	Expect(central.ExpiredAt).To(BeNil())
 
 	// Set expired_at.
 	then := time.Now().Add(time.Hour)
-	admin.DefaultApi.UpdateCentralExpiredAtById(ctx, central.Id, "test",
+	adminAPI.UpdateCentralExpiredAtById(ctx, central.Id, "test",
 		&private.UpdateCentralExpiredAtByIdOpts{
 			Timestamp: optional.NewString(then.Format(time.RFC3339)),
 		})
 
-	central, _, err = admin.DefaultApi.GetCentralById(ctx, id)
+	central, _, err = adminAPI.GetCentralById(ctx, id)
 	Expect(err).NotTo(HaveOccurred(), "Error getting central:  %v", err)
 	Expect(central.ExpiredAt).To(Equal(then))
 
@@ -101,7 +99,7 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	Expect(svcErrs).To(BeEmpty())
 
 	// Check it is reset.
-	central, _, err = admin.DefaultApi.GetCentralById(ctx, id)
+	central, _, err = adminAPI.GetCentralById(ctx, id)
 	Expect(err).NotTo(HaveOccurred(), "Error getting central:  %v", err)
 	Expect(central.ExpiredAt).To(BeNil())
 
@@ -121,7 +119,7 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	Expect(svcErrs).To(BeEmpty())
 
 	// Check the central is expired.
-	central, _, err = admin.DefaultApi.GetCentralById(ctx, id)
+	central, _, err = adminAPI.GetCentralById(ctx, id)
 	Expect(err).NotTo(HaveOccurred(), "Error getting central:  %v", err)
 	Expect(central.ExpiredAt).ToNot(BeNil())
 }
