@@ -47,13 +47,6 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	claims := jwt.MapClaims{
 		"iss":    issuerURL,
 		"org_id": orgID,
-		"realm_access": map[string]any{
-			"roles": []string{
-				"authenticated",
-				"fleet-manager-admin-full",
-			},
-		},
-		"is_org_admin": true,
 	}
 	ctx := h.NewAuthenticatedContext(account, claims)
 
@@ -81,6 +74,8 @@ func TestDinosaurExpirationManager(t *testing.T) {
 			Expect(err).NotTo(HaveOccurred())
 			return
 		}
+		id = dinosaurs[0].ID
+		t.Log("central id: ", id)
 	}
 
 	token := h.CreateJWTStringWithClaim(account, claims)
@@ -91,20 +86,22 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	}
 	adminAPI := private.NewAPIClient(privateConfig).DefaultApi
 
-	central, _, err := adminAPI.GetCentralById(ctx, id)
-	Expect(err).NotTo(HaveOccurred(), "Error getting central:  %v", err)
-	Expect(central.ExpiredAt).To(BeNil())
+	getCentral := func() private.Central {
+		central, _, err := adminAPI.GetCentralById(ctx, id)
+		Expect(err).NotTo(HaveOccurred(), "Error getting central:  %v", err)
+		return central
+	}
+
+	Expect(getCentral().ExpiredAt).To(BeNil())
 
 	// Set expired_at.
 	then := time.Now().Add(time.Hour)
-	adminAPI.UpdateCentralExpiredAtById(ctx, central.Id, "test",
+	adminAPI.UpdateCentralExpiredAtById(ctx, id, "test",
 		&private.UpdateCentralExpiredAtByIdOpts{
 			Timestamp: optional.NewString(then.Format(time.RFC3339)),
 		})
 
-	central, _, err = adminAPI.GetCentralById(ctx, id)
-	Expect(err).NotTo(HaveOccurred(), "Error getting central:  %v", err)
-	Expect(central.ExpiredAt).To(Equal(then))
+	Expect(getCentral().ExpiredAt).To(Equal(then))
 
 	qmlc := quotamanagement.NewQuotaManagementListConfig()
 
@@ -118,9 +115,7 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	Expect(svcErrs).To(BeEmpty())
 
 	// Check it is reset.
-	central, _, err = adminAPI.GetCentralById(ctx, id)
-	Expect(err).NotTo(HaveOccurred(), "Error getting central:  %v", err)
-	Expect(central.ExpiredAt).To(BeNil())
+	Expect(getCentral().ExpiredAt).To(BeNil())
 
 	quotaMock := &services.QuotaServiceFactoryMock{
 		GetQuotaServiceFunc: func(quotaType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
@@ -138,7 +133,5 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	Expect(svcErrs).To(BeEmpty())
 
 	// Check the central is expired.
-	central, _, err = adminAPI.GetCentralById(ctx, id)
-	Expect(err).NotTo(HaveOccurred(), "Error getting central:  %v", err)
-	Expect(central.ExpiredAt).ToNot(BeNil())
+	Expect(getCentral().ExpiredAt).ToNot(BeNil())
 }
