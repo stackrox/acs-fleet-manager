@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -75,7 +76,13 @@ func TestDinosaurExpirationManager(t *testing.T) {
 		}
 	}
 
-	adminAPI := test.NewAdminPrivateAPIClient(h).DefaultApi
+	token := h.CreateJWTStringWithClaim(account, claims)
+	privateConfig := private.NewConfiguration()
+	privateConfig.BasePath = fmt.Sprintf("http://%s", test.TestServices.ServerConfig.BindAddress)
+	privateConfig.DefaultHeader = map[string]string{
+		"Authorization": "Bearer " + token,
+	}
+	adminAPI := private.NewAPIClient(privateConfig).DefaultApi
 
 	central, _, err := adminAPI.GetCentralById(ctx, id)
 	Expect(err).NotTo(HaveOccurred(), "Error getting central:  %v", err)
@@ -94,10 +101,12 @@ func TestDinosaurExpirationManager(t *testing.T) {
 
 	qmlc := quotamanagement.NewQuotaManagementListConfig()
 
+	quotaServiceFactory := quota.NewDefaultQuotaServiceFactory(test.TestServices.OCMClient, dbFactory, qmlc)
+
 	// Reset expired_at via expiration date manager.
-	qs := quota.NewDefaultQuotaServiceFactory(test.TestServices.OCMClient, dbFactory, qmlc)
-	cfg := config.NewCentralConfig()
-	mgr := dinosaurmgrs.NewExpirationDateManager(test.TestServices.DinosaurService, qs, cfg)
+	var centralConfig *config.CentralConfig
+	h.Env.ServiceContainer.Resolve(&centralConfig)
+	mgr := dinosaurmgrs.NewExpirationDateManager(test.TestServices.DinosaurService, quotaServiceFactory, centralConfig)
 	svcErrs := mgr.Reconcile()
 	Expect(svcErrs).To(BeEmpty())
 
@@ -106,7 +115,7 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error getting central:  %v", err)
 	Expect(central.ExpiredAt).To(BeNil())
 
-	m := &services.QuotaServiceFactoryMock{
+	quotaMock := &services.QuotaServiceFactoryMock{
 		GetQuotaServiceFunc: func(quotaType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
 			return &services.QuotaServiceMock{
 				HasQuotaAllowanceFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
@@ -117,7 +126,7 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	}
 
 	// Disable quota.
-	mgr = dinosaurmgrs.NewExpirationDateManager(test.TestServices.DinosaurService, m, cfg)
+	mgr = dinosaurmgrs.NewExpirationDateManager(test.TestServices.DinosaurService, quotaMock, centralConfig)
 	svcErrs = mgr.Reconcile()
 	Expect(svcErrs).To(BeEmpty())
 
