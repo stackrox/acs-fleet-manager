@@ -114,11 +114,18 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 
 // Updates expired_at field of the given Central instance based on the user/organisation's quota entitlement status
 func (k *ExpirationDateManager) updateExpiredAtBasedOnQuotaEntitlement(central *dbapi.CentralRequest, isQuotaEntitlementActive bool) *serviceErr.ServiceError {
+
+	updateDB := func(id string, timestamp *time.Time) *serviceErr.ServiceError {
+		return k.centralService.Updates(&dbapi.CentralRequest{
+			Meta: api.Meta{ID: id},
+		}, map[string]interface{}{"expired_at": timestamp})
+	}
+
 	// if quota entitlement is active, ensure expired_at is set to null.
 	if isQuotaEntitlementActive && central.ExpiredAt != nil {
 		central.ExpiredAt = nil
 		glog.Infof("updating expiration date of central instance %q to NULL", central.ID)
-		return k.centralService.Update(central)
+		return updateDB(central.ID, central.ExpiredAt)
 	}
 
 	// if quota entitlement is not active and expired_at is not already set, set
@@ -127,7 +134,7 @@ func (k *ExpirationDateManager) updateExpiredAtBasedOnQuotaEntitlement(central *
 		now := time.Now()
 		central.ExpiredAt = &now
 		glog.Infof("quota entitlement for central instance %q is no longer active, updating expired_at to %q", central.ID, now.Format(time.RFC1123Z))
-		return k.centralService.Update(central)
+		return updateDB(central.ID, central.ExpiredAt)
 	}
 	return nil
 }
