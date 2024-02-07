@@ -47,6 +47,13 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	claims := jwt.MapClaims{
 		"iss":    issuerURL,
 		"org_id": orgID,
+		"realm_access": map[string]any{
+			"roles": []string{
+				"authenticated",
+				"fleet-manager-admin-full",
+			},
+		},
+		"is_org_admin": true,
 	}
 	ctx := h.NewAuthenticatedContext(account, claims)
 
