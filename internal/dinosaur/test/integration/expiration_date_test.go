@@ -7,6 +7,7 @@ import (
 	// TODO(ROX-10709) "github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 
 	"github.com/antihax/optional"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -41,8 +42,12 @@ func TestDinosaurExpirationManager(t *testing.T) {
 	defer teardown()
 
 	// setup pre-requisites to performing requests
-	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account, nil)
+	account := h.NewAllowedServiceAccount()
+	claims := jwt.MapClaims{
+		"iss":    issuerURL,
+		"org_id": orgID,
+	}
+	ctx := h.NewAuthenticatedContext(account, claims)
 
 	dbFactory := test.TestServices.DBFactory
 	var id string
