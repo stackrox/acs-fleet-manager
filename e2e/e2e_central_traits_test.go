@@ -43,10 +43,16 @@ var _ = Describe("central traits", Ordered, func() {
 		printNotes(notes)
 	})
 
-	It("should", func() {
-		central, _, err := adminAPI.CreateCentral(ctx, false, private.CentralRequestPayload{})
+	It("should manage traits", func() {
+		central, _, err := adminAPI.CreateCentral(ctx, true, private.CentralRequestPayload{})
 		Expect(err).Should(Succeed())
 		id := central.Id
+
+		Eventually(assertCentralRequestProvisioning(ctx, client, id)).
+			WithTimeout(waitTimeout).
+			WithPolling(defaultPolling).
+			Should(Succeed())
+
 		defer adminAPI.DeleteDbCentralById(ctx, id)
 
 		traits, _, err := adminAPI.GetCentralTraits(ctx, id)
@@ -88,8 +94,12 @@ var _ = Describe("central traits", Ordered, func() {
 	})
 
 	It("should preserve preserved", func() {
-		central, _, err := adminAPI.CreateCentral(ctx, false, private.CentralRequestPayload{})
+		central, _, err := adminAPI.CreateCentral(ctx, true, private.CentralRequestPayload{})
 		Expect(err).Should(Succeed())
+		Eventually(assertCentralRequestProvisioning(ctx, client, central.Id)).
+			WithTimeout(waitTimeout).
+			WithPolling(defaultPolling).
+			Should(Succeed())
 		defer adminAPI.DeleteDbCentralById(ctx, central.Id)
 
 		_, err = adminAPI.PutCentralTrait(ctx, central.Id, constants.CentralTraitPreserved)
