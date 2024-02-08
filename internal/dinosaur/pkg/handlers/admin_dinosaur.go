@@ -3,12 +3,15 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
+	"github.com/lib/pq"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -20,6 +23,12 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
+	"gorm.io/gorm"
+)
+
+var (
+	validTraitRegexp = regexp.MustCompile(`^[[:alnum:]_-]{1,50}$`)
 )
 
 // AdminCentralHandler is the interface for the admin central handler
@@ -44,6 +53,14 @@ type AdminCentralHandler interface {
 	// a tenant. In particular, avoid two Central CRs appearing in the same
 	// tenant namespace. This may cause conflicts due to mixed resource ownership.
 	PatchName(w http.ResponseWriter, r *http.Request)
+	// ListTraits returns all central traits
+	ListTraits(w http.ResponseWriter, r *http.Request)
+	// GetTrait tells wheter a central has the trait
+	GetTrait(w http.ResponseWriter, r *http.Request)
+	// AddTrait adds a trait to the set of central traits
+	AddTrait(w http.ResponseWriter, r *http.Request)
+	// DeleteTrait deletes a trait from a central
+	DeleteTrait(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -297,4 +314,76 @@ func (h adminCentralHandler) PatchName(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h adminCentralHandler) ListTraits(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			cr, svcErr := h.service.GetByID(id)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+			if len(cr.Traits) == 0 {
+				return pq.StringArray{}, nil
+			}
+			return cr.Traits, nil
+		},
+	}
+	handlers.HandleGet(w, r, cfg)
+}
+
+func (h adminCentralHandler) GetTrait(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{handlers.ValidateRegex(r, "trait", validTraitRegexp)},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			trait := mux.Vars(r)["trait"]
+			cr, svcErr := h.service.GetByID(id)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+			if !arrays.Contains(cr.Traits, trait) {
+				return nil, errors.NotFound(fmt.Sprintf("Trait %q not found", trait))
+			}
+			return nil, nil
+		},
+	}
+	handlers.HandleGet(w, r, cfg)
+}
+
+func (h adminCentralHandler) AddTrait(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{handlers.ValidateRegex(r, "trait", validTraitRegexp)},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			trait := mux.Vars(r)["trait"]
+			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
+			if svcErr := h.service.Updates(central, map[string]interface{}{
+				"traits": gorm.Expr(`(SELECT array_agg(DISTINCT v) FROM unnest(array_append(traits, ?)) AS traits_tmp(v))`, trait),
+			}); svcErr != nil {
+				return nil, errors.NewWithCause(svcErr.Code, svcErr, "Could not update central traits")
+			}
+			return nil, nil
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{handlers.ValidateRegex(r, "trait", validTraitRegexp)},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			trait := mux.Vars(r)["trait"]
+			central := &dbapi.CentralRequest{Meta: api.Meta{ID: id}}
+			if svcErr := h.service.Updates(central, map[string]interface{}{
+				"traits": gorm.Expr(`array_remove(traits, ?)`, trait),
+			}); svcErr != nil {
+				return nil, errors.NewWithCause(svcErr.Code, svcErr, "Could not update central traits")
+			}
+			return nil, nil
+		},
+	}
+	handlers.HandleDelete(w, r, cfg, http.StatusOK)
 }
