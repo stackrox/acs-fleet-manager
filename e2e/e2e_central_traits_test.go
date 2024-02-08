@@ -59,6 +59,8 @@ func init() {
 			Expect(err).NotTo(HaveOccurred())
 			_, err = admin.PutCentralTrait(ctx, central.Id, constants.CentralTraitPreserved)
 			Expect(err).NotTo(HaveOccurred())
+			_, err = admin.DeleteDbCentralById(ctx, centralID)
+			Expect(err).To(BeEquivalentTo(nil))
 		},
 	}
 }
