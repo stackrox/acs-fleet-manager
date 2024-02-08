@@ -90,6 +90,7 @@ var _ = Describe("central traits", Ordered, func() {
 	It("should preserve preserved", func() {
 		central, _, err := adminAPI.CreateCentral(ctx, false, private.CentralRequestPayload{})
 		Expect(err).Should(Succeed())
+		defer adminAPI.DeleteDbCentralById(ctx, central.Id)
 
 		_, err = adminAPI.PutCentralTrait(ctx, central.Id, constants.CentralTraitPreserved)
 		Expect(err).Should(Succeed())

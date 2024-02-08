@@ -176,7 +176,7 @@ func Test_dinosaurService_Get(t *testing.T) {
 	}
 }
 
-func Test_dinosaurService_Delete_Presered(t *testing.T) {
+func Test_dinosaurService_Delete_Preserved(t *testing.T) {
 	k := &dinosaurService{
 		connectionFactory: db.NewMockConnectionFactory(nil),
 		dinosaurConfig: &config.CentralConfig{
