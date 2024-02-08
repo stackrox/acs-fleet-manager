@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	mocket "github.com/selvatico/go-mocket"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
@@ -173,6 +174,43 @@ func Test_dinosaurService_Get(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_dinosaurService_Delete_Presered(t *testing.T) {
+	k := &dinosaurService{
+		connectionFactory: db.NewMockConnectionFactory(nil),
+		dinosaurConfig: &config.CentralConfig{
+			CentralLifespan: config.NewCentralLifespanConfig(),
+		},
+	}
+	preserved := buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {
+		centralRequest.Traits = append(centralRequest.Traits, constants.CentralTraitPreserved)
+	})
+	svcErr := k.Delete(preserved, false)
+	assert.Equal(t, svcErr.HTTPCode, 400)
+	svcErr = k.Delete(preserved, true)
+	assert.Nil(t, svcErr)
+}
+
+func Test_dinosaurService_DeprovisionDinosaurForUsersQuery(t *testing.T) {
+	k := &dinosaurService{
+		connectionFactory: db.NewMockConnectionFactory(nil),
+		dinosaurConfig: &config.CentralConfig{
+			CentralLifespan: config.NewCentralLifespanConfig(),
+		},
+	}
+
+	m := mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "central_requests" ` +
+		`SET "deletion_timestamp"=$1,"status"=$2,"updated_at"=$3 WHERE ` +
+		`owner IN ($4) AND ` +
+		`status NOT IN ($5,$6) AND ` +
+		`(traits IS NULL OR $7 != ALL (traits)) AND ` +
+		`"central_requests"."deleted_at" IS NULL`).
+		OneTime()
+
+	svcErr := k.DeprovisionDinosaurForUsers([]string{"user1"})
+	assert.Nil(t, svcErr)
+	assert.True(t, m.Triggered)
 }
 
 func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -27,6 +28,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 )
 
 var (
@@ -512,6 +514,7 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 		Model(&dbapi.CentralRequest{}).
 		Where("owner IN (?)", users).
 		Where("status NOT IN (?)", dinosaurDeletionStatuses).
+		Where("traits IS NULL OR ? != ALL (traits)", dinosaurConstants.CentralTraitPreserved).
 		Updates(map[string]interface{}{
 			"status":             dinosaurConstants.CentralRequestStatusDeprovision,
 			"deletion_timestamp": now,
@@ -576,6 +579,10 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs() *errors.ServiceError {
 // If the force flag is true, then any errors prior to the final deletion of the CentralRequest will be logged as warnings
 // but do not interrupt the deletion flow.
 func (k *dinosaurService) Delete(centralRequest *dbapi.CentralRequest, force bool) *errors.ServiceError {
+	if !force && arrays.Contains(centralRequest.Traits, constants.CentralTraitPreserved) {
+		return errors.BadRequest("central %q has %s trait", centralRequest.ID, constants.CentralTraitPreserved)
+	}
+
 	dbConn := k.connectionFactory.New()
 
 	// if the we don't have the clusterID we can only delete the row from the database
