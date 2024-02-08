@@ -105,5 +105,5 @@ var ActiveStatuses = func() []CentralStatus {
 }()
 
 const (
-	CentralTraitPreserved = "preserved" // Never deprovision expired instance.
+	CentralTraitPreserved = "preserved" // Preserve centrals from deletion.
 )
