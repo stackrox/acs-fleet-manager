@@ -88,6 +88,7 @@ type DinosaurService interface {
 	// same as the original status. The error will contain any error encountered when attempting to update or the reason
 	// why no attempt has been done
 	UpdateStatus(id string, status dinosaurConstants.CentralStatus) (bool, *errors.ServiceError)
+	// Update does NOT update nullable fields when they're nil in the request. Use Updates() instead.
 	Update(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// Updates() updates the given fields of a dinosaur. This takes in a map so that even zero-fields can be updated.
 	// Use this only when you want to update the multiple columns that may contain zero-fields, otherwise use the `DinosaurService.Update()` method.
