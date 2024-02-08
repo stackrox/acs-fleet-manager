@@ -37,7 +37,7 @@ type AdminAPI interface {
 
 	GetCentralTraits(ctx context.Context, id string) ([]string, *http.Response, error)
 	GetCentralTrait(ctx context.Context, id string, trait string) (*http.Response, error)
-	PatchCentralTraits(ctx context.Context, id string, trait string) (*http.Response, error)
+	PutCentralTrait(ctx context.Context, id string, trait string) (*http.Response, error)
 	DeleteCentralTrait(ctx context.Context, id string, trait string) (*http.Response, error)
 }
 
