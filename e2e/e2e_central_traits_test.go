@@ -16,7 +16,6 @@ import (
 )
 
 var _ = Describe("central traits", Ordered, func() {
-	SkipIf(!runCentralTests, "Skipping Central tests")
 
 	var client *fleetmanager.Client
 	var adminAPI fleetmanager.AdminAPI
@@ -24,6 +23,7 @@ var _ = Describe("central traits", Ordered, func() {
 	var ctx = context.Background()
 
 	BeforeEach(func() {
+		SkipIf(!runCentralTests, "Skipping Central tests")
 		Expect(restoreDefaultGitopsConfig()).To(Succeed())
 
 		option := fmImpl.OptionFromEnv()
