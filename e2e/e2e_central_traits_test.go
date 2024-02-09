@@ -44,7 +44,12 @@ var _ = Describe("central traits", Ordered, func() {
 	})
 
 	It("should manage traits", func() {
-		central, _, err := adminAPI.CreateCentral(ctx, true, private.CentralRequestPayload{})
+		central, _, err := adminAPI.CreateCentral(ctx, true, private.CentralRequestPayload{
+			CloudProvider: dpCloudProvider,
+			MultiAz:       true,
+			Name:          newCentralName(),
+			Region:        dpRegion,
+		})
 		Expect(err).Should(Succeed())
 		id := central.Id
 
@@ -94,7 +99,12 @@ var _ = Describe("central traits", Ordered, func() {
 	})
 
 	It("should preserve preserved", func() {
-		central, _, err := adminAPI.CreateCentral(ctx, true, private.CentralRequestPayload{})
+		central, _, err := adminAPI.CreateCentral(ctx, true, private.CentralRequestPayload{
+			CloudProvider: dpCloudProvider,
+			MultiAz:       true,
+			Name:          newCentralName(),
+			Region:        dpRegion,
+		})
 		Expect(err).Should(Succeed())
 		Eventually(assertCentralRequestProvisioning(ctx, client, central.Id)).
 			WithTimeout(waitTimeout).
