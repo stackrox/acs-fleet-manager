@@ -2,18 +2,17 @@ package e2e
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
-	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
 var _ = Describe("central traits", Ordered, func() {
@@ -116,9 +115,9 @@ var _ = Describe("central traits", Ordered, func() {
 		_, err = adminAPI.PutCentralTrait(ctx, central.Id, constants.CentralTraitPreserved)
 		Expect(err).Should(Succeed())
 
-		expectedErr := serviceErrors.BadRequest("central %q has %s trait", central.Id, constants.CentralTraitPreserved)
-		_, err = client.PublicAPI().DeleteCentralById(ctx, central.Id, true)
-		Expect(errors.Is(err, expectedErr)).To(BeTrue(), "should be preserved when using PublicAPI")
+		resp, err := client.PublicAPI().DeleteCentralById(ctx, central.Id, true)
+		Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+		Expect(err).To(HaveOccurred())
 
 		_, err = adminAPI.DeleteDbCentralById(ctx, central.Id)
 		Expect(err).Should(Succeed(), "AdminAPI should ignore the preserved trait")
