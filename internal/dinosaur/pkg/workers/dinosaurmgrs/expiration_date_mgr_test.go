@@ -34,7 +34,10 @@ func TestExpirationDateManager(t *testing.T) {
 			ListByStatusFunc: func(status ...constants.CentralStatus) ([]*dbapi.CentralRequest, *errors.ServiceError) {
 				return centrals, nil
 			},
-			UpdateFunc: func(centralRequest *dbapi.CentralRequest) *errors.ServiceError {
+			UpdatesFunc: func(centralRequest *dbapi.CentralRequest, fields map[string]any) *errors.ServiceError {
+				if _, ok := fields["expired_at"]; !ok {
+					return errors.GeneralError("bad fields")
+				}
 				return nil
 			},
 		}
@@ -50,7 +53,7 @@ func TestExpirationDateManager(t *testing.T) {
 		errs := mgr.Reconcile()
 		require.Empty(t, errs)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
-		assert.Empty(t, centralService.UpdateCalls())
+		assert.Empty(t, centralService.UpdatesCalls())
 		assert.Empty(t, quotaSvc.HasQuotaAllowanceCalls())
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
@@ -66,7 +69,7 @@ func TestExpirationDateManager(t *testing.T) {
 		assert.Nil(t, central.ExpiredAt)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
 		assert.Len(t, quotaSvc.HasQuotaAllowanceCalls(), 1)
-		assert.Len(t, centralService.UpdateCalls(), 1)
+		assert.Len(t, centralService.UpdatesCalls(), 1)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
 
@@ -82,7 +85,7 @@ func TestExpirationDateManager(t *testing.T) {
 		assert.Less(t, now, *central.ExpiredAt)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
 		assert.Len(t, quotaSvc.HasQuotaAllowanceCalls(), 1)
-		assert.Len(t, centralService.UpdateCalls(), 1)
+		assert.Len(t, centralService.UpdatesCalls(), 1)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
 
@@ -105,7 +108,7 @@ func TestExpirationDateManager(t *testing.T) {
 		assert.Nil(t, centralE.ExpiredAt)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
 		assert.Len(t, quotaSvc.HasQuotaAllowanceCalls(), 3)
-		assert.Len(t, centralService.UpdateCalls(), 5)
+		assert.Len(t, centralService.UpdatesCalls(), 5)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
 }

@@ -119,6 +119,7 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 			},
 			Internal:      from.Internal,
 			SecretsStored: getSecretNames(from), // pragma: allowlist secret
+			ExpiredAt:     from.ExpiredAt,
 		},
 		Spec: private.ManagedCentralAllOfSpec{
 			Owners: []string{

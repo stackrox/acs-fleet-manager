@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"gorm.io/gorm"
 )
@@ -90,6 +91,10 @@ type CentralRequest struct {
 	// ExpiredAt contains the timestamp of when a Central instance's quota allowance was found to be expired.
 	// After a grace period, the Central instance will be marked for deletion, its status will be set to 'deprovision'.
 	ExpiredAt *time.Time `json:"expired_at"`
+
+	// Traits is a set of random strings assigned to an instance. Some traits
+	// can be hardcoded, and change some processing parameters.
+	Traits pq.StringArray `json:"traits" gorm:"type:text[]"`
 }
 
 // CentralList ...

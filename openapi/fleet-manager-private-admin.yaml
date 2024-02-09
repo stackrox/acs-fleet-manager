@@ -222,6 +222,7 @@ paths:
           name: reason
           schema:
             type: string
+            format: date-time
           required: true
       security:
         - Bearer: [ ]
@@ -418,6 +419,146 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
 
+  '/api/rhacs/v1/admin/centrals/{id}/traits':
+    get:
+      summary: Returns a list of central traits.
+      operationId: getCentralTraits
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+          description: Central traits
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "404":
+          description: No Central found with the specified ID
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+
+  '/api/rhacs/v1/admin/centrals/{id}/traits/{trait}':
+    get:
+      summary: Returns central trait status.
+      operationId: getCentralTrait
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/trait"
+      responses:
+        "200":
+          description: Trait exists.
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "404":
+          description: No Central found with the specified ID or no such trait.
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+    put:
+      summary: Adds a trait to a central.
+      operationId: putCentralTrait
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/trait"
+      responses:
+        "200":
+          description: Trait has been added or already exists.
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "404":
+          description: No Central found with the specified ID
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+    delete:
+      summary: Deletes the central trait.
+      operationId: deleteCentralTrait
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/trait"
+      responses:
+        "200":
+          description: Central trait deleted
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "404":
+          description: No Central found with the specified ID
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
 components:
   schemas:
     Central:
@@ -485,6 +626,10 @@ components:
               type: string
             namespace:
               type: string
+            traits:
+              type: array
+              items:
+                type: string
     CentralList:
       allOf:
         - $ref: "fleet-manager.yaml#/components/schemas/List"
@@ -514,6 +659,14 @@ components:
           type: string
         reason:
           type: string
+  parameters:
+    trait:
+      name: trait
+      description: A central trait
+      schema:
+        type: string
+      in: path
+      required: true
 
   securitySchemes:
     Bearer:

@@ -444,6 +444,10 @@ components:
           additionalProperties:
             type: string
           type: object
+        expired-at:
+          format: date-time
+          nullable: true
+          type: string
     ManagedCentral_allOf_spec_auth:
       properties:
         clientSecret:

@@ -110,6 +110,7 @@ func NewAPIServer(options ServerOptions) *APIServer {
 			http.MethodGet,
 			http.MethodPatch,
 			http.MethodPost,
+			http.MethodPut,
 		}),
 		gorillahandlers.AllowedHeaders([]string{
 			"Authorization",
