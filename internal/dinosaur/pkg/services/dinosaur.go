@@ -62,6 +62,10 @@ type CNameRecordStatus struct {
 	Status *string
 }
 
+var errPreservedCentral = func(id string) *errors.ServiceError {
+	return errors.BadRequest("central %q has %s trait", id, constants.CentralTraitPreserved)
+}
+
 // DinosaurService ...
 //
 //go:generate moq -out dinosaurservice_moq.go . DinosaurService
@@ -494,6 +498,10 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 	}
 	metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
 
+	if arrays.Contains(dinosaurRequest.Traits, constants.CentralTraitPreserved) {
+		return errPreservedCentral(id)
+	}
+
 	deprovisionStatus := dinosaurConstants.CentralRequestStatusDeprovision
 
 	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
@@ -580,7 +588,7 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs() *errors.ServiceError {
 // but do not interrupt the deletion flow.
 func (k *dinosaurService) Delete(centralRequest *dbapi.CentralRequest, force bool) *errors.ServiceError {
 	if !force && arrays.Contains(centralRequest.Traits, constants.CentralTraitPreserved) {
-		return errors.BadRequest("central %q has %s trait", centralRequest.ID, constants.CentralTraitPreserved)
+		return errPreservedCentral(centralRequest.ID)
 	}
 
 	dbConn := k.connectionFactory.New()

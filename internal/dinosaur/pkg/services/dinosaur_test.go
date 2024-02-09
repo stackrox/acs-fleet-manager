@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"net/http"
 	"reflect"
 	"testing"
 
@@ -187,7 +188,33 @@ func Test_dinosaurService_Delete_Preserved(t *testing.T) {
 		centralRequest.Traits = append(centralRequest.Traits, constants.CentralTraitPreserved)
 	})
 	svcErr := k.Delete(preserved, false)
-	assert.Equal(t, svcErr.HTTPCode, 400)
+	assert.Equal(t, http.StatusBadRequest, svcErr.HTTPCode)
+	{
+		authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
+		if err != nil {
+			t.Fatalf("failed to create auth helper: %s", err.Error())
+		}
+		account, err := authHelper.NewAccount(testUser, "", "", "")
+		if err != nil {
+			t.Fatal("failed to build a new account")
+		}
+
+		jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+		if err != nil {
+			t.Fatalf("failed to create jwt: %s", err.Error())
+		}
+		ctx := context.TODO()
+		authenticatedCtx := auth.SetTokenInContext(ctx, jwt)
+
+		mocket.Catcher.Reset().
+			NewMock().
+			WithQuery(`SELECT * FROM "central_requests" WHERE id = $1 AND owner = $2`).
+			WithArgs(testID, testUser).
+			WithReply(converters.ConvertDinosaurRequest(preserved))
+
+		svcErr = k.RegisterDinosaurDeprovisionJob(authenticatedCtx, preserved.ID)
+		assert.Equal(t, http.StatusBadRequest, svcErr.HTTPCode)
+	}
 	svcErr = k.Delete(preserved, true)
 	assert.Nil(t, svcErr)
 }

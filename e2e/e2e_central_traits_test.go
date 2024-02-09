@@ -110,7 +110,6 @@ var _ = Describe("central traits", Ordered, func() {
 			WithTimeout(waitTimeout).
 			WithPolling(defaultPolling).
 			Should(Succeed())
-		defer adminAPI.DeleteDbCentralById(ctx, central.Id)
 
 		_, err = adminAPI.PutCentralTrait(ctx, central.Id, constants.CentralTraitPreserved)
 		Expect(err).Should(Succeed())
