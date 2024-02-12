@@ -31,6 +31,7 @@ import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/random"
+	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -62,6 +63,7 @@ const (
 	instanceTypeLabelKey      = "rhacs.redhat.com/instance-type"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
+	centralExpiredAtKey       = "rhacs.redhat.com/expired-at"
 
 	auditLogNotifierKey  = "com.redhat.rhacs.auditLogNotifier"
 	auditLogNotifierName = "Platform Audit Logs"
@@ -200,7 +202,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	namespaceAnnotations := map[string]string{
 		orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
 	}
-	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels, namespaceAnnotations); err != nil {
+	if remoteCentral.Metadata.ExpiredAt != nil {
+		namespaceAnnotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
+	}
+	if err := r.reconcileNamespace(ctx, remoteCentralNamespace, namespaceLabels, namespaceAnnotations); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
@@ -309,11 +314,11 @@ func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCen
 	r.applyRoutes(central)
 	r.applyProxyConfig(central)
 	r.applyDeclarativeConfig(central)
-	r.applyAnnotations(central)
+	r.applyAnnotations(remoteCentral, central)
 	return nil
 }
 
-func (r *CentralReconciler) applyAnnotations(central *v1alpha1.Central) {
+func (r *CentralReconciler) applyAnnotations(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) {
 	if central.Spec.Customize == nil {
 		central.Spec.Customize = &v1alpha1.CustomizeSpec{}
 	}
@@ -322,6 +327,9 @@ func (r *CentralReconciler) applyAnnotations(central *v1alpha1.Central) {
 	}
 	central.Spec.Customize.Annotations[envAnnotationKey] = r.environment
 	central.Spec.Customize.Annotations[clusterNameAnnotationKey] = r.clusterName
+	if remoteCentral.Metadata.ExpiredAt != nil {
+		central.Spec.Customize.Annotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
+	}
 }
 
 func (r *CentralReconciler) applyDeclarativeConfig(central *v1alpha1.Central) {
@@ -666,6 +674,13 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 			return errors.Wrapf(err, "unable to check the existence of central %v", centralKey)
 		}
 		centralExists = false
+	}
+
+	if remoteCentral.Metadata.ExpiredAt != nil {
+		if central.GetAnnotations() == nil {
+			central.Annotations = map[string]string{}
+		}
+		central.Annotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
 	}
 
 	if !centralExists {
@@ -1170,15 +1185,24 @@ func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace
 	return nil
 }
 
-func (r *CentralReconciler) ensureNamespaceExists(name string, labels map[string]string, annotations map[string]string) error {
+func (r *CentralReconciler) reconcileNamespace(ctx context.Context, name string, labels map[string]string, annotations map[string]string) error {
 	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			namespace.Annotations = annotations
 			namespace.Labels = labels
-			return r.createTenantNamespace(context.Background(), namespace)
+			return r.createTenantNamespace(ctx, namespace)
 		}
 		return fmt.Errorf("getting namespace %s: %w", name, err)
+	} else if !maps.Equal(labels, namespace.Labels) ||
+		!maps.Equal(annotations, namespace.Annotations) {
+		namespace.Annotations = annotations
+		namespace.Labels = labels
+		if err = r.client.Update(ctx, namespace, &ctrlClient.UpdateOptions{
+			FieldManager: "fleetshard-sync",
+		}); err != nil {
+			return fmt.Errorf("updating namespace %s: %w", name, err)
+		}
 	}
 	return nil
 }

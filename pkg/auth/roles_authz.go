@@ -81,7 +81,7 @@ func readRoleAuthZConfigFile(file string, val *RoleConfig) error {
 	return nil
 }
 
-var allowedHTTPMethods = []string{http.MethodGet, http.MethodPatch, http.MethodDelete, http.MethodPost}
+var allowedHTTPMethods = []string{http.MethodGet, http.MethodPatch, http.MethodDelete, http.MethodPost, http.MethodPut}
 
 func validateRolesConfiguration(configs []RolesConfiguration) error {
 	for _, config := range configs {

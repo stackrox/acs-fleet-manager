@@ -665,6 +665,10 @@ components:
               type: string
             instance_type:
               type: string
+            traits:
+              type: array
+              items:
+                type: string
           example:
             $ref: "#/components/examples/CentralRequestExample"
     CentralRequestList:

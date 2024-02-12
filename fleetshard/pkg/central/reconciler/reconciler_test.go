@@ -2153,11 +2153,18 @@ func TestReconciler_applyAnnotations(t *testing.T) {
 			},
 		},
 	}
-	r.applyAnnotations(c)
+	date := time.Date(2024, 01, 01, 0, 0, 0, 0, time.UTC)
+	rc := &private.ManagedCentral{
+		Metadata: private.ManagedCentralAllOfMetadata{
+			ExpiredAt: &date,
+		},
+	}
+	r.applyAnnotations(rc, c)
 	assert.Equal(t, map[string]string{
 		"rhacs.redhat.com/environment":  "test",
 		"rhacs.redhat.com/cluster-name": "test",
 		"foo":                           "bar",
+		"rhacs.redhat.com/expired-at":   "2024-01-01T00:00:00Z",
 	}, c.Spec.Customize.Annotations)
 }
 

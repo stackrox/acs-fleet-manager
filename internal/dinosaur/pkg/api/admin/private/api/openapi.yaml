@@ -342,6 +342,7 @@ paths:
         name: reason
         required: true
         schema:
+          format: date-time
           type: string
         style: form
       responses:
@@ -558,7 +559,197 @@ paths:
       security:
       - Bearer: []
       summary: Delete a Central directly in the Database by ID
+  /api/rhacs/v1/admin/centrals/{id}/traits:
+    get:
+      operationId: getCentralTraits
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  type: string
+                type: array
+          description: Central traits
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Returns a list of central traits.
+  /api/rhacs/v1/admin/centrals/{id}/traits/{trait}:
+    delete:
+      operationId: deleteCentralTrait
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: A central trait
+        explode: false
+        in: path
+        name: trait
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Central trait deleted
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Deletes the central trait.
+    get:
+      operationId: getCentralTrait
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: A central trait
+        explode: false
+        in: path
+        name: trait
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Trait exists.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID or no such trait.
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Returns central trait status.
+    put:
+      operationId: putCentralTrait
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: A central trait
+        explode: false
+        in: path
+        name: trait
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Trait has been added or already exists.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Adds a trait to a central.
 components:
+  parameters:
+    trait:
+      description: A central trait
+      explode: false
+      in: path
+      name: trait
+      required: true
+      schema:
+        type: string
+      style: simple
   schemas:
     Central:
       allOf:
@@ -721,6 +912,10 @@ components:
           type: string
         namespace:
           type: string
+        traits:
+          items:
+            type: string
+          type: array
     CentralList_allOf:
       properties:
         items:
@@ -775,6 +970,10 @@ components:
           type: string
         instance_type:
           type: string
+        traits:
+          items:
+            type: string
+          type: array
       required:
       - multi_az
   securitySchemes:

@@ -28,5 +28,6 @@ func PresentDinosaurRequestAdminEndpoint(request *dbapi.CentralRequest, _ accoun
 		ExpiredAt:     request.ExpiredAt,
 		FailedReason:  request.FailedReason,
 		InstanceType:  request.InstanceType,
+		Traits:        request.Traits,
 	}, nil
 }
