@@ -41,9 +41,19 @@ make -C "$GITROOT" deploy/db
 wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleet-manager-db" "postgresql"
 log "Database is ready."
 
-# Deploy MS components.
+# Deploy Cloud Service components.
 log "Deploying secrets"
 make -C "$GITROOT" deploy/secrets
+
+if ! is_openshift_cluster "$CLUSTER_TYPE"; then
+    # These secrets are created in OpenShift by service-ca-operator
+    # search for service.alpha.openshift.io/serving-cert-secret-name annotation.
+    # We need at least empty secrets because they are referenced in the service template
+    # but TLS is disabled for non-openshift clusters
+    $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-tls 2> /dev/null || true
+    $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-envoy-tls 2> /dev/null || true
+    $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-active-tls 2> /dev/null || true
+fi
 
 log "Deploying fleet-manager"
 make -C "$GITROOT" deploy/service
