@@ -115,7 +115,7 @@ var _ = Describe("central traits", Ordered, func() {
 		Expect(err).Should(Succeed())
 
 		resp, err := client.PublicAPI().DeleteCentralById(ctx, central.Id, true)
-		Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+		Expect(resp.StatusCode).To(Equal(http.StatusConflict))
 		Expect(err).To(HaveOccurred())
 
 		_, err = adminAPI.DeleteDbCentralById(ctx, central.Id)
