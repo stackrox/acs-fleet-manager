@@ -10,12 +10,12 @@ import (
 
 func TestQuotaCostPrintWrapper(t *testing.T) {
 	qc := makeStandardTestQuotaCost("resource", "orgID", 1, 2, t)
-	w := (*quotaCostPrintWrapper)(qc)
+	w := (*quotaCostStringWrapper)(qc)
 	assert.Equal(t, `{orgID: "orgID", quotaID: "", allowed: 1, consumed: 2, accounts: [], resources: map[standard:[{provider: "", product: "RHACS"}]]}`,
 		w.String())
 
 	qc = makeCloudTestQuotaCost("resource", "orgID", 1, 2, t)
-	w = (*quotaCostPrintWrapper)(qc)
+	w = (*quotaCostStringWrapper)(qc)
 	assert.Equal(t, `{orgID: "orgID", quotaID: "", allowed: 1, consumed: 2, accounts: [{accountID: "cloudAccountID", provider: "aws"}], resources: map[marketplace-aws:[{provider: "", product: "RHACS"}]]}`,
 		w.String())
 
@@ -35,5 +35,5 @@ func TestQuotaCostPrintWrapper(t *testing.T) {
 	ca, _ := v1.NewCloudAccount().CloudAccountID("id").CloudProviderID("provider").Contracts(
 		v1.NewContract().StartDate(time.Time{}).EndDate(time.Time{}.Add(24 * time.Hour)),
 	).Build()
-	assert.Equal(t, `{accountID: "id", provider: "provider", contracts: [{0001-01-01 00:00:00 +0000 UTC -- 0001-01-02 00:00:00 +0000 UTC}]}`, (*cloudAccountWrapper)(ca).String())
+	assert.Equal(t, `{accountID: "id", provider: "provider", contracts: [{0001-01-01 00:00:00 +0000 UTC -- 0001-01-02 00:00:00 +0000 UTC}]}`, (*cloudAccountStringWrapper)(ca).String())
 }
