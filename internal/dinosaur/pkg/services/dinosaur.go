@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -63,7 +64,8 @@ type CNameRecordStatus struct {
 }
 
 var errPreservedCentral = func(id string) *errors.ServiceError {
-	return errors.BadRequest("central %q has %s trait", id, constants.CentralTraitPreserved)
+	return errors.NewErrorFromHTTPStatusCode(http.StatusConflict,
+		"central %q has %s trait, remove the trait to enable deletion", id, constants.CentralTraitPreserved)
 }
 
 // DinosaurService ...
@@ -588,7 +590,8 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs() *errors.ServiceError {
 // but do not interrupt the deletion flow.
 func (k *dinosaurService) Delete(centralRequest *dbapi.CentralRequest, force bool) *errors.ServiceError {
 	if !force && arrays.Contains(centralRequest.Traits, constants.CentralTraitPreserved) {
-		return errPreservedCentral(centralRequest.ID)
+		err := errPreservedCentral(centralRequest.ID)
+		return errors.NewWithCause(err.Code, err, "cannot delete preserved central with no force")
 	}
 
 	dbConn := k.connectionFactory.New()

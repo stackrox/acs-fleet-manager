@@ -188,7 +188,7 @@ func Test_dinosaurService_Delete_Preserved(t *testing.T) {
 		centralRequest.Traits = append(centralRequest.Traits, constants.CentralTraitPreserved)
 	})
 	svcErr := k.Delete(preserved, false)
-	assert.Equal(t, http.StatusBadRequest, svcErr.HTTPCode)
+	assert.Equal(t, http.StatusConflict, svcErr.HTTPCode)
 	{
 		authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
 		if err != nil {
@@ -213,7 +213,7 @@ func Test_dinosaurService_Delete_Preserved(t *testing.T) {
 			WithReply(converters.ConvertDinosaurRequest(preserved))
 
 		svcErr = k.RegisterDinosaurDeprovisionJob(authenticatedCtx, preserved.ID)
-		assert.Equal(t, http.StatusBadRequest, svcErr.HTTPCode)
+		assert.Equal(t, http.StatusConflict, svcErr.HTTPCode)
 	}
 	svcErr = k.Delete(preserved, true)
 	assert.Nil(t, svcErr)
