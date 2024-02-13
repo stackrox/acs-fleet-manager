@@ -23,6 +23,7 @@ GINKGO_FLAGS ?= -v
 # cluster will not pull the new image from the internal registry:
 version:=$(shell date +%s)
 
+NAMESPACE = rhacs
 IMAGE_NAME = fleet-manager
 PROBE_IMAGE_NAME = probe
 IMAGE_TARGET = standard
@@ -45,7 +46,6 @@ DOCKER ?= docker
 DOCKER_CONFIG ?= "${HOME}/.docker"
 
 # Default Variables
-NAMESPACE ?= rhacs
 ENABLE_OCM_MOCK ?= true
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
