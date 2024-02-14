@@ -213,6 +213,15 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
+
+		It("delete central", func() {
+			Expect(deleteCentralByID(ctx, client, createdCentral.Id)).
+				To(Succeed())
+			Eventually(assertCentralRequestDeprovisioning(ctx, client, createdCentral.Id)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+		})
 	})
 })
 
