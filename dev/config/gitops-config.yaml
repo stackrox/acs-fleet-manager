@@ -19,26 +19,34 @@ centrals:
             rhacs.redhat.com/version-selector: "4.3.4"
         # Adjust centrals for development environment
         spec:
+          monitoring:
+            openshift:
+              enabled: false
           central:
-            monitoring:
-              openshift:
-                enabled: false
+            db:
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 500Mi
+                requests:
+                  cpu: 100m
+                  memory: 100Mi
             resources:
               limits:
                 cpu: 500m
-                memory: 1Gi
+                memory: 500Mi
               requests:
                 cpu: 100m
-                memory: 200Mi
+                memory: 100Mi
           scanner:
             analyzer:
               resources:
                 limits:
-                  cpu: 500m
-                  memory: 1Gi
+                  cpu: 1000m
+                  memory: 1000Mi
                 requests:
-                  cpu: 200m
-                  memory: 300Mi
+                  cpu: 100m
+                  memory: 100Mi
               scaling:
                 autoScaling: "Disabled"
                 replicas: 1
@@ -48,5 +56,5 @@ centrals:
                   cpu: 10000m
                   memory: 20Gi
                 requests:
-                  cpu: 200m
-                  memory: 200Mi
+                  cpu: 100m
+                  memory: 100Mi
