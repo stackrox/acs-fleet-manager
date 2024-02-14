@@ -28,9 +28,9 @@ import (
 
 const (
 	namespace              = "rhacs"
-	gitopsConfigmapName    = "fleet-manager-gitops-config"
+	gitopsConfigmapName    = "gitops-config"
 	gitopsConfigmapDataKey = "config.yaml"
-	operatorVersion1       = "4.2.0-428-g318762a66d" // should be in sync with dev/config/gitops-config.yaml
+	operatorVersion1       = "4.2.0-428-g318762a66d"
 	operatorVersion2       = "4.2.0-427-gd49519f172"
 )
 
@@ -555,5 +555,9 @@ spec:
 }
 
 func restoreDefaultGitopsConfig() error {
-	return putGitopsConfig(context.Background(), defaultGitopsConfig())
+	defaultConfig, err := gitops.NewProvider().Get()
+	if err != nil {
+		defaultConfig = defaultGitopsConfig()
+	}
+	return putGitopsConfig(context.Background(), defaultConfig)
 }
