@@ -2,12 +2,14 @@ package e2e
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
@@ -94,5 +96,29 @@ var _ = Describe("central traits", Ordered, func() {
 		traits, _, err = adminAPI.GetCentralTraits(ctx, id)
 		Expect(err).ToNot(HaveOccurred(), "no error on retreiving traits")
 		Expect(traits).To(BeEquivalentTo([]string{"test-trait-1"}), "should have only one trait now")
+	})
+
+	It("should preserve perpetual", func() {
+		central, _, err := adminAPI.CreateCentral(ctx, true, private.CentralRequestPayload{
+			CloudProvider: dpCloudProvider,
+			MultiAz:       true,
+			Name:          newCentralName(),
+			Region:        dpRegion,
+		})
+		Expect(err).Should(Succeed())
+		Eventually(assertCentralRequestProvisioning(ctx, client, central.Id)).
+			WithTimeout(waitTimeout).
+			WithPolling(defaultPolling).
+			Should(Succeed())
+
+		_, err = adminAPI.PutCentralTrait(ctx, central.Id, constants.CentralTraitPerpetual)
+		Expect(err).Should(Succeed())
+
+		resp, err := client.PublicAPI().DeleteCentralById(ctx, central.Id, true)
+		Expect(resp.StatusCode).To(Equal(http.StatusConflict))
+		Expect(err).To(HaveOccurred())
+
+		_, err = adminAPI.DeleteDbCentralById(ctx, central.Id)
+		Expect(err).Should(Succeed(), "AdminAPI should ignore the perpetual trait")
 	})
 })

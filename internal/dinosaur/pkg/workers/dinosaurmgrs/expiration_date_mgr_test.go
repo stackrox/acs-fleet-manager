@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -111,4 +112,43 @@ func TestExpirationDateManager(t *testing.T) {
 		assert.Len(t, centralService.UpdatesCalls(), 5)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
+
+	t.Run("cannot set expired_at with perpetual trait", func(t *testing.T) {
+		central := &dbapi.CentralRequest{
+			Traits: pq.StringArray{constants.CentralTraitPerpetual},
+		}
+		centralService := withCentrals(central)
+		quotaSvc, quotaFactory := withEntitlement(false)
+		gpm := NewExpirationDateManager(centralService, quotaFactory, defaultCfg)
+		errs := gpm.Reconcile()
+		require.Empty(t, errs)
+		require.Nil(t, central.ExpiredAt)
+		assert.Len(t, centralService.ListByStatusCalls(), 1)
+		assert.Len(t, quotaSvc.HasQuotaAllowanceCalls(), 1)
+		assert.Len(t, centralService.UpdatesCalls(), 0)
+		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
+	})
+
+	t.Run("setting perpetual trait removes expired_at", func(t *testing.T) {
+		now := time.Now()
+		central := &dbapi.CentralRequest{}
+		centralService := withCentrals(central)
+		quotaSvc, quotaFactory := withEntitlement(false)
+		gpm := NewExpirationDateManager(centralService, quotaFactory, defaultCfg)
+		errs := gpm.Reconcile()
+		require.Empty(t, errs)
+		require.NotNil(t, central.ExpiredAt)
+		assert.Less(t, now, *central.ExpiredAt)
+
+		central.Traits = pq.StringArray{constants.CentralTraitPerpetual}
+		errs = gpm.Reconcile()
+		require.Empty(t, errs)
+		require.Nil(t, central.ExpiredAt)
+
+		assert.Len(t, centralService.ListByStatusCalls(), 2)
+		assert.Len(t, quotaSvc.HasQuotaAllowanceCalls(), 2)
+		assert.Len(t, centralService.UpdatesCalls(), 2)
+		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 2)
+	})
+
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
@@ -104,6 +105,9 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 			quotaCostCache[key] = active
 		}
 
+		// Perpetual centrals are always active. If a non-perpetual central
+		// expires, next worker cycle will remove the expiration timestamp.
+		active = active || arrays.Contains(central.Traits, constants.CentralTraitPerpetual)
 		if timestamp, needsChange := k.expiredAtNeedsUpdate(central, active); needsChange {
 			central.ExpiredAt = timestamp
 			if err := k.updateExpiredAtInDB(central); err != nil {

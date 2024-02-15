@@ -103,3 +103,7 @@ var ActiveStatuses = func() []CentralStatus {
 	}
 	return active
 }()
+
+const (
+	CentralTraitPerpetual = "perpetual" // Preserves a central from expiration.
+)
