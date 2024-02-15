@@ -2,8 +2,10 @@ package services
 
 import (
 	"context"
+	"database/sql/driver"
 	"reflect"
 	"testing"
+	"time"
 
 	mocket "github.com/selvatico/go-mocket"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -202,4 +204,40 @@ func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 	svcErr = k.DeprovisionExpiredDinosaurs()
 	assert.Nil(t, svcErr)
 	assert.True(t, m.Triggered)
+}
+
+func Test_dinosaurService_RestoreExpiredDinosaurs(t *testing.T) {
+	dbcf := db.NewMockConnectionFactory(nil)
+
+	k := &dinosaurService{
+		connectionFactory: dbcf,
+		dinosaurConfig: &config.CentralConfig{
+			CentralLifespan:            config.NewCentralLifespanConfig(),
+			CentralRetentionPeriodDays: 2,
+		},
+	}
+
+	now := time.Now()
+	yesterday := now.Add(-24 * time.Hour)
+
+	m := mocket.Catcher.Reset().NewMock()
+	selectQuery := m.WithQuery(`SELECT`).
+		WithReply([]map[string]interface{}{{
+			"id":         "test-id",
+			"deleted_at": gorm.DeletedAt{Time: yesterday, Valid: true}.Time,
+			"expired_at": yesterday,
+		}}).OneTime()
+
+	m1 := mocket.Catcher.NewMock()
+	updateQuery := m1.WithQuery(`UPDATE`).WithCallback(
+		func(s string, nv []driver.NamedValue) {
+			expiredAt, _ := (nv[11].Value).(time.Time)
+			assert.False(t, expiredAt.Before(now))   // expired_at >= now
+			assert.Equal(t, "test-id", nv[12].Value) // id
+		})
+
+	svcErr := k.Restore(context.Background(), "test-id")
+	assert.Nil(t, svcErr)
+	assert.True(t, selectQuery.Triggered)
+	assert.True(t, updateQuery.Triggered)
 }
