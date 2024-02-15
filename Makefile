@@ -54,6 +54,7 @@ SSO_REALM ?="rhoas" # update your realm here
 GITOPS_CONFIG_FILE ?= ${PROJECT_PATH}/dev/config/gitops-config.yaml
 DATAPLANE_CLUSTER_CONFIG_FILE ?= ${PROJECT_PATH}/dev/config/dataplane-cluster-configuration.yaml
 PROVIDERS_CONFIG_FILE ?= ${PROJECT_PATH}/dev/config/provider-configuration.yaml
+QUOTA_MANAGEMENT_LIST_CONFIG_FILE ?= ${PROJECT_PATH}/dev/config/quota-management-list-configuration.yaml
 
 GO := go
 GOFMT := gofmt
@@ -827,6 +828,7 @@ endif
 		-p MEMORY_LIMIT="$(MEMORY_LIMIT)" \
 		-p CENTRAL_DOMAIN_NAME="$(CENTRAL_DOMAIN_NAME)" \
 		-p SUPPORTED_CLOUD_PROVIDERS='$(shell yq .supported_providers $(PROVIDERS_CONFIG_FILE) -r -o=j -I=0)' \
+		-p REGISTERED_USERS_PER_ORGANISATION='$(shell yq .registered_users_per_organisation $(QUOTA_MANAGEMENT_LIST_CONFIG_FILE) -r -o=j -I=0)' \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
