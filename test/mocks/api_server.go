@@ -103,11 +103,7 @@ const (
 	// MockIngressListening default mock ingress listening used in the mock ocm server
 	MockIngressListening = clustersmgmtv1.ListeningMethodExternal
 	// MockClusterAddonID default mock cluster addon ID
-	MockClusterAddonID = "managed-central-qe"
-	// MockFleetshardAddonID default mock ID for the Fleetshard Operator
-	MockFleetshardAddonID = "fleetshard-operator-qe"
-	// MockClusterLoggingOperatorAddonID default mock ID for the Cluster Logging Operator
-	MockClusterLoggingOperatorAddonID = "cluster-logging-operator"
+	MockClusterAddonID = "acs-fleetshard-dev"
 	// MockClusterAddonState default mock cluster addon state
 	MockClusterAddonState = clustersmgmtv1.AddOnInstallationStateReady
 	// MockClusterAddonDescription default mock cluster addon description
@@ -174,25 +170,23 @@ var (
 // to override these values, do not set them directly e.g. mocks.MockSyncset = ...
 // instead use the Set*Response functions provided by MockConfigurableServerBuilder e.g. SetClusterGetResponse(...)
 var (
-	MockIdentityProvider                        *clustersmgmtv1.IdentityProvider
-	MockSyncset                                 *clustersmgmtv1.Syncset
-	MockIngressList                             *clustersmgmtv1.IngressList
-	MockCloudProvider                           *clustersmgmtv1.CloudProvider
-	MockCloudProviderList                       *clustersmgmtv1.CloudProviderList
-	MockCloudProviderRegion                     *clustersmgmtv1.CloudRegion
-	MockCloudProviderRegionList                 *clustersmgmtv1.CloudRegionList
-	MockClusterStatus                           *clustersmgmtv1.ClusterStatus
-	MockClusterAddonInstallation                *clustersmgmtv1.AddOnInstallation
-	MockClusterAddonInstallationList            *clustersmgmtv1.AddOnInstallationList
-	MockFleetshardOperatorAddonInstallation     *clustersmgmtv1.AddOnInstallation
-	MockClusterLoggingOperatorAddonInstallation *clustersmgmtv1.AddOnInstallation
-	MockMachinePoolList                         *clustersmgmtv1.MachinePoolList
-	MockMachinePool                             *clustersmgmtv1.MachinePool
-	MockCluster                                 *clustersmgmtv1.Cluster
-	MockClusterAuthorization                    *amsv1.ClusterAuthorizationResponse
-	MockSubscription                            *amsv1.Subscription
-	MockSubscriptionSearch                      []*amsv1.Subscription
-	MockTermsReview                             *authorizationsv1.TermsReviewResponse
+	MockIdentityProvider             *clustersmgmtv1.IdentityProvider
+	MockSyncset                      *clustersmgmtv1.Syncset
+	MockIngressList                  *clustersmgmtv1.IngressList
+	MockCloudProvider                *clustersmgmtv1.CloudProvider
+	MockCloudProviderList            *clustersmgmtv1.CloudProviderList
+	MockCloudProviderRegion          *clustersmgmtv1.CloudRegion
+	MockCloudProviderRegionList      *clustersmgmtv1.CloudRegionList
+	MockClusterStatus                *clustersmgmtv1.ClusterStatus
+	MockClusterAddonInstallation     *clustersmgmtv1.AddOnInstallation
+	MockClusterAddonInstallationList *clustersmgmtv1.AddOnInstallationList
+	MockMachinePoolList              *clustersmgmtv1.MachinePoolList
+	MockMachinePool                  *clustersmgmtv1.MachinePool
+	MockCluster                      *clustersmgmtv1.Cluster
+	MockClusterAuthorization         *amsv1.ClusterAuthorizationResponse
+	MockSubscription                 *amsv1.Subscription
+	MockSubscriptionSearch           []*amsv1.Subscription
+	MockTermsReview                  *authorizationsv1.TermsReviewResponse
 )
 
 // routerSwapper is an http.Handler that allows you to swap mux routers.
@@ -476,42 +470,36 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 	// define a list of default endpoints and handlers in the mock ocm api server, when new endpoints are used in the
 	// managed-services-api service, a default ocm response should also be added here
 	return HandlerRegister{
-		EndpointClusterGet:                                   buildMockRequestHandler(MockCluster, nil),
-		EndpointClusterPatch:                                 buildMockRequestHandler(MockCluster, nil),
-		EndpointDinosaurDelete:                               buildMockRequestHandler(MockSyncset, nil),
-		EndpointClustersGet:                                  buildMockRequestHandler(MockCluster, nil),
-		EndpointClustersPost:                                 buildMockRequestHandler(MockCluster, nil),
-		EndpointClusterDelete:                                buildMockRequestHandler(MockCluster, ocmErrors.NotFound("setting this to not found to mimick a successul deletion")),
-		EndpointClusterSyncsetsPost:                          buildMockRequestHandler(MockSyncset, nil),
-		EndpointClusterSyncsetGet:                            buildMockRequestHandler(MockSyncset, nil),
-		EndpointClusterSyncsetPatch:                          buildMockRequestHandler(MockSyncset, nil),
-		EndpointClusterIngressGet:                            buildMockRequestHandler(MockIngressList, nil),
-		EndpointCloudProvidersGet:                            buildMockRequestHandler(MockCloudProviderList, nil),
-		EndpointCloudProviderGet:                             buildMockRequestHandler(MockCloudProvider, nil),
-		EndpointCloudProviderRegionsGet:                      buildMockRequestHandler(MockCloudProviderRegionList, nil),
-		EndpointCloudProviderRegionGet:                       buildMockRequestHandler(MockCloudProviderRegion, nil),
-		EndpointClusterStatusGet:                             buildMockRequestHandler(MockClusterStatus, nil),
-		EndpointClusterAddonsGet:                             buildMockRequestHandler(MockClusterAddonInstallationList, nil),
-		EndpointClusterAddonPost:                             buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointMachinePoolsGet:                              buildMockRequestHandler(MockMachinePoolList, nil),
-		EndpointMachinePoolGet:                               buildMockRequestHandler(MockMachinePool, nil),
-		EndpointMachinePoolPatch:                             buildMockRequestHandler(MockMachinePool, nil),
-		EndpointMachinePoolPost:                              buildMockRequestHandler(MockMachinePool, nil),
-		EndpointIdentityProviderPatch:                        buildMockRequestHandler(MockIdentityProvider, nil),
-		EndpointIdentityProviderPost:                         buildMockRequestHandler(MockIdentityProvider, nil),
-		EndpointAddonInstallationsPost:                       buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointAddonInstallationGet:                         buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointAddonInstallationPatch:                       buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointFleetshardOperatorAddonInstallationGet:       buildMockRequestHandler(MockFleetshardOperatorAddonInstallation, nil),
-		EndpointFleetshardOperatorAddonInstallationPatch:     buildMockRequestHandler(MockFleetshardOperatorAddonInstallation, nil),
-		EndpointFleetshardOperatorAddonInstallationPost:      buildMockRequestHandler(MockFleetshardOperatorAddonInstallation, nil),
-		EndpointClusterLoggingOperatorAddonInstallationGet:   buildMockRequestHandler(MockClusterLoggingOperatorAddonInstallation, nil),
-		EndpointClusterLoggingOperatorAddonInstallationPatch: buildMockRequestHandler(MockClusterLoggingOperatorAddonInstallation, nil),
-		EndpointClusterLoggingOperatorAddonInstallationPost:  buildMockRequestHandler(MockClusterLoggingOperatorAddonInstallation, nil),
-		EndpointClusterAuthorizationPost:                     buildMockRequestHandler(MockClusterAuthorization, nil),
-		EndpointSubscriptionDelete:                           buildMockRequestHandler(MockSubscription, nil),
-		EndpointSubscriptionSearch:                           buildMockRequestHandler(MockSubscriptionSearch, nil),
-		EndpointTermsReviewPost:                              buildMockRequestHandler(MockTermsReview, nil),
+		EndpointClusterGet:               buildMockRequestHandler(MockCluster, nil),
+		EndpointClusterPatch:             buildMockRequestHandler(MockCluster, nil),
+		EndpointDinosaurDelete:           buildMockRequestHandler(MockSyncset, nil),
+		EndpointClustersGet:              buildMockRequestHandler(MockCluster, nil),
+		EndpointClustersPost:             buildMockRequestHandler(MockCluster, nil),
+		EndpointClusterDelete:            buildMockRequestHandler(MockCluster, ocmErrors.NotFound("setting this to not found to mimick a successul deletion")),
+		EndpointClusterSyncsetsPost:      buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterSyncsetGet:        buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterSyncsetPatch:      buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterIngressGet:        buildMockRequestHandler(MockIngressList, nil),
+		EndpointCloudProvidersGet:        buildMockRequestHandler(MockCloudProviderList, nil),
+		EndpointCloudProviderGet:         buildMockRequestHandler(MockCloudProvider, nil),
+		EndpointCloudProviderRegionsGet:  buildMockRequestHandler(MockCloudProviderRegionList, nil),
+		EndpointCloudProviderRegionGet:   buildMockRequestHandler(MockCloudProviderRegion, nil),
+		EndpointClusterStatusGet:         buildMockRequestHandler(MockClusterStatus, nil),
+		EndpointClusterAddonsGet:         buildMockRequestHandler(MockClusterAddonInstallationList, nil),
+		EndpointClusterAddonPost:         buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointMachinePoolsGet:          buildMockRequestHandler(MockMachinePoolList, nil),
+		EndpointMachinePoolGet:           buildMockRequestHandler(MockMachinePool, nil),
+		EndpointMachinePoolPatch:         buildMockRequestHandler(MockMachinePool, nil),
+		EndpointMachinePoolPost:          buildMockRequestHandler(MockMachinePool, nil),
+		EndpointIdentityProviderPatch:    buildMockRequestHandler(MockIdentityProvider, nil),
+		EndpointIdentityProviderPost:     buildMockRequestHandler(MockIdentityProvider, nil),
+		EndpointAddonInstallationsPost:   buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointAddonInstallationGet:     buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointAddonInstallationPatch:   buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointClusterAuthorizationPost: buildMockRequestHandler(MockClusterAuthorization, nil),
+		EndpointSubscriptionDelete:       buildMockRequestHandler(MockSubscription, nil),
+		EndpointSubscriptionSearch:       buildMockRequestHandler(MockSubscriptionSearch, nil),
+		EndpointTermsReviewPost:          buildMockRequestHandler(MockTermsReview, nil),
 	}, nil
 }
 
@@ -852,14 +840,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	MockFleetshardOperatorAddonInstallation, err = GetMockClusterAddonInstallation(nil, MockFleetshardAddonID)
-	if err != nil {
-		panic(err)
-	}
-	MockClusterLoggingOperatorAddonInstallation, err = GetMockClusterAddonInstallation(nil, MockClusterLoggingOperatorAddonID)
-	if err != nil {
-		panic(err)
-	}
 	MockCluster, err = GetMockCluster(nil)
 	if err != nil {
 		panic(err)
@@ -1117,9 +1097,7 @@ func GetMockClusterAddonInstallation(modifyFn func(*clustersmgmtv1.AddOnInstalla
 // GetMockClusterAddonInstallationList for emulated OCM server
 func GetMockClusterAddonInstallationList(modifyFn func(*clustersmgmtv1.AddOnInstallationList, error)) (*clustersmgmtv1.AddOnInstallationList, error) {
 	list, err := clustersmgmtv1.NewAddOnInstallationList().Items(
-		GetMockClusterAddonInstallationBuilder(nil, MockClusterAddonID),
-		GetMockClusterAddonInstallationBuilder(nil, MockClusterLoggingOperatorAddonID),
-		GetMockClusterAddonInstallationBuilder(nil, MockFleetshardAddonID)).
+		GetMockClusterAddonInstallationBuilder(nil, MockClusterAddonID)).
 		Build()
 	if modifyFn != nil {
 		modifyFn(list, err)

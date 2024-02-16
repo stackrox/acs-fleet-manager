@@ -50,8 +50,6 @@ ACSCS_NAMESPACE ?= acscs
 ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
-SSO_BASE_URL ?="https://identity.api.stage.openshift.com"
-SSO_REALM ?="rhoas" # update your realm here
 
 GO := go
 GOFMT := gofmt
@@ -732,17 +730,12 @@ deploy/service: ENABLE_CENTRAL_EXTERNAL_CERTIFICATE ?= "false"
 deploy/service: ENABLE_CENTRAL_LIFE_SPAN ?= "false"
 deploy/service: CENTRAL_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
-deploy/service: SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
-deploy/service: SSO_REALM ?= "rhoas"
-deploy/service: MAX_LIMIT_FOR_SSO_GET_CLIENTS ?= "100"
 deploy/service: TOKEN_ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
 deploy/service: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
 deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
 deploy/service: ENABLE_DENY_LIST ?= "false"
 deploy/service: ALLOW_EVALUATOR_INSTANCE ?= "true"
 deploy/service: QUOTA_TYPE ?= "quota-management-list"
-deploy/service: CENTRAL_OPERATOR_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-central:production-82b42db"
-deploy/service: FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/fleetshard-operator:production-82b42db"
 deploy/service: OBSERVABILITY_CONFIG_REPO ?= "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents"
 deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
 deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
@@ -769,9 +762,6 @@ deploy/service: deploy/envoy deploy/route
 		-p OCM_URL="$(OCM_URL)" \
 		-p AMS_URL="${AMS_URL}" \
 		-p JWKS_URL="$(JWKS_URL)" \
-		-p SSO_BASE_URL="$(SSO_BASE_URL)" \
-		-p SSO_REALM="$(SSO_REALM)" \
-		-p MAX_LIMIT_FOR_SSO_GET_CLIENTS="${MAX_LIMIT_FOR_SSO_GET_CLIENTS}" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
 		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
 		-p OBSERVATORIUM_RHSSO_GATEWAY="${OBSERVATORIUM_RHSSO_GATEWAY}" \
@@ -784,8 +774,6 @@ deploy/service: deploy/envoy deploy/route
 		-p ENABLE_TERMS_ACCEPTANCE="${ENABLE_TERMS_ACCEPTANCE}" \
 		-p ALLOW_EVALUATOR_INSTANCE="${ALLOW_EVALUATOR_INSTANCE}" \
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
-		-p FLEETSHARD_OLM_INDEX_IMAGE="${FLEETSHARD_OLM_INDEX_IMAGE}" \
-		-p CENTRAL_OPERATOR_OLM_INDEX_IMAGE="${CENTRAL_OPERATOR_OLM_INDEX_IMAGE}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
 		-p CENTRAL_REQUEST_EXPIRATION_TIMEOUT="${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}" \
 		| oc apply -f - -n $(NAMESPACE)

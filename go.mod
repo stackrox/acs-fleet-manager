@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.1
-	github.com/Nerzal/gocloak/v11 v11.2.0
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware/v2 v2.2.0
 	github.com/aws/aws-sdk-go v1.50.10
@@ -17,7 +16,6 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-gormigrate/gormigrate/v2 v2.1.1
 	github.com/go-logr/logr v1.4.1
-	github.com/go-resty/resty/v2 v2.11.0
 	github.com/goava/di v1.11.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang-jwt/jwt/v4 v4.5.0
@@ -134,14 +132,12 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/openshift/client-go v0.0.0-20230926161409-848405da69e1 // indirect
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rhobs/obo-prometheus-operator/pkg/apis/monitoring v0.66.0-rhobs1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/segmentio/analytics-go/v3 v3.3.0 // indirect
 	github.com/segmentio/backo-go v1.0.1 // indirect
-	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
