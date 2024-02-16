@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"time"
 
@@ -82,8 +83,11 @@ var _ = Describe("central traits", Ordered, func() {
 		_, err = adminAPI.GetCentralTrait(ctx, id, "test-trait")
 		Expect(err).ToNot(HaveOccurred(), "no error on checking for existing trait")
 
-		_, err = adminAPI.GetCentralTrait(ctx, id, "test-trait-2")
+		resp, err := adminAPI.GetCentralTrait(ctx, id, "test-trait-2")
 		Expect(err).To(HaveOccurred(), "error on checking for non-existing trait")
+		if Expect(resp).NotTo(BeNil()) {
+			Expect(resp.StatusCode == http.StatusNotFound).To(BeTrue())
+		}
 
 		_, err = adminAPI.DeleteCentralTrait(ctx, id, "test-trait")
 		Expect(err).ToNot(HaveOccurred(), "no error on deleting test-trait")
