@@ -31,8 +31,8 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/onsi/ginkgo/v2 v2.13.2
-	github.com/onsi/gomega v1.29.0
+	github.com/onsi/ginkgo/v2 v2.14.0
+	github.com/onsi/gomega v1.30.0
 	github.com/openshift-online/ocm-sdk-go v0.1.401
 	github.com/openshift/addon-operator/apis v0.0.0-20231110045543-dd01f2f5c184
 	github.com/openshift/api v0.0.0-20230502160752-c71432710382
@@ -68,7 +68,7 @@ require (
 	k8s.io/apimachinery v0.29.1
 	k8s.io/client-go v0.29.1
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
-	sigs.k8s.io/controller-runtime v0.16.3
+	sigs.k8s.io/controller-runtime v0.17.2
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -89,7 +89,7 @@ require (
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch v5.7.0+incompatible // indirect
-	github.com/evanphx/json-patch/v5 v5.7.0 // indirect
+	github.com/evanphx/json-patch/v5 v5.8.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
