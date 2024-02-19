@@ -62,7 +62,7 @@ func wantCentralForDummyParams(p *CentralParams) *v1alpha1.Central {
 			},
 			Scanner: &v1alpha1.ScannerComponentSpec{
 				Analyzer: &v1alpha1.ScannerAnalyzerComponent{
-					Scaling: &v1alpha1.ScannerAnalyzerScaling{
+					Scaling: &v1alpha1.ScannerComponentScaling{
 						AutoScaling: &autoScalingEnabled,
 						MaxReplicas: pointers.Int32(3),
 						MinReplicas: pointers.Int32(1),
