@@ -188,6 +188,7 @@ replace (
 	github.com/operator-framework/helm-operator-plugins => github.com/stackrox/helm-operator v0.0.12-0.20221003092512-fbf71229411f
 	github.com/stackrox/rox => github.com/stackrox/stackrox v0.0.0-20240219070612-190983eddb0a
 	go.uber.org/zap => github.com/stackrox/zap v1.15.1-0.20230918235618-2bd149903d0e
+	// Drop replace once https://github.com/go-gorm/gorm/issues/6812 is fixed in the version 1.25.6+
 	gorm.io/gorm => gorm.io/gorm v1.25.5
 )
 
