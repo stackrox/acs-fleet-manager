@@ -62,7 +62,7 @@ require (
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.4
-	gorm.io/gorm v1.25.5
+	gorm.io/gorm v1.25.6
 	helm.sh/helm/v3 v3.14.1
 	k8s.io/api v0.29.1
 	k8s.io/apimachinery v0.29.1
@@ -188,6 +188,7 @@ replace (
 	github.com/operator-framework/helm-operator-plugins => github.com/stackrox/helm-operator v0.0.12-0.20221003092512-fbf71229411f
 	github.com/stackrox/rox => github.com/stackrox/stackrox v0.0.0-20240219070612-190983eddb0a
 	go.uber.org/zap => github.com/stackrox/zap v1.15.1-0.20230918235618-2bd149903d0e
+	gorm.io/gorm => gorm.io/gorm v1.25.5
 )
 
 exclude k8s.io/client-go v12.0.0+incompatible
