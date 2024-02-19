@@ -837,21 +837,17 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 		"ClientOrigin",
 		"ClientSecret",
 		"CreatedAt",
+		// reset expired_at to null: it may later be updated by the next run
+		// of the expiration manager.
 		"ExpiredAt",
 	}
-
-	now := time.Now()
 
 	// use a new central request, so that unset field for columnsToReset will automatically be set to the zero value
 	// this Update only changes columns listed in columnsToReset
 	resetRequest := &dbapi.CentralRequest{}
 	resetRequest.ID = centralRequest.ID
 	resetRequest.Status = dinosaurConstants.CentralRequestStatusPreparing.String()
-	resetRequest.CreatedAt = now
-
-	if centralRequest.ExpiredAt != nil && centralRequest.ExpiredAt.Before(now) {
-		resetRequest.ExpiredAt = &now // starts the grace period.
-	}
+	resetRequest.CreatedAt = time.Now()
 
 	if err := dbConn.Unscoped().Model(resetRequest).Select(columnsToReset).Updates(resetRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset CentralRequest status")

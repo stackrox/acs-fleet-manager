@@ -231,8 +231,8 @@ func Test_dinosaurService_RestoreExpiredDinosaurs(t *testing.T) {
 	m1 := mocket.Catcher.NewMock()
 	updateQuery := m1.WithQuery(`UPDATE`).WithCallback(
 		func(s string, nv []driver.NamedValue) {
-			expiredAt, _ := (nv[11].Value).(time.Time)
-			assert.False(t, expiredAt.Before(now))   // expired_at >= now
+			expiredAt, _ := (nv[11].Value).(*time.Time)
+			assert.Nil(t, expiredAt)
 			assert.Equal(t, "test-id", nv[12].Value) // id
 		})
 
