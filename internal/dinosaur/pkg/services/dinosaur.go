@@ -838,7 +838,8 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 		"ClientSecret",
 		"CreatedAt",
 		// reset expired_at to null: it may later be updated by the next run
-		// of the expiration manager.
+		// of the expiration manager. If there is still no quota, the grace
+		// period will start over.
 		"ExpiredAt",
 	}
 

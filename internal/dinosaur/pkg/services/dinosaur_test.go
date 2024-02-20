@@ -207,10 +207,10 @@ func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 }
 
 func Test_dinosaurService_RestoreExpiredDinosaurs(t *testing.T) {
-	dbcf := db.NewMockConnectionFactory(nil)
+	dbConnectionFactory := db.NewMockConnectionFactory(nil)
 
-	k := &dinosaurService{
-		connectionFactory: dbcf,
+	centralService := &dinosaurService{
+		connectionFactory: dbConnectionFactory,
 		dinosaurConfig: &config.CentralConfig{
 			CentralLifespan:            config.NewCentralLifespanConfig(),
 			CentralRetentionPeriodDays: 2,
@@ -224,20 +224,22 @@ func Test_dinosaurService_RestoreExpiredDinosaurs(t *testing.T) {
 	selectQuery := m.WithQuery(`SELECT`).
 		WithReply([]map[string]interface{}{{
 			"id":         "test-id",
-			"deleted_at": gorm.DeletedAt{Time: yesterday, Valid: true}.Time,
+			"deleted_at": yesterday,
 			"expired_at": yesterday,
 		}}).OneTime()
 
 	m1 := mocket.Catcher.NewMock()
+	expiredChecked := false
 	updateQuery := m1.WithQuery(`UPDATE`).WithCallback(
 		func(s string, nv []driver.NamedValue) {
 			expiredAt, _ := (nv[11].Value).(*time.Time)
 			assert.Nil(t, expiredAt)
-			assert.Equal(t, "test-id", nv[12].Value) // id
+			assert.Equal(t, "test-id", nv[12].Value)
+			expiredChecked = true
 		})
-
-	svcErr := k.Restore(context.Background(), "test-id")
+	svcErr := centralService.Restore(context.Background(), "test-id")
 	assert.Nil(t, svcErr)
 	assert.True(t, selectQuery.Triggered)
 	assert.True(t, updateQuery.Triggered)
+	assert.True(t, expiredChecked)
 }
