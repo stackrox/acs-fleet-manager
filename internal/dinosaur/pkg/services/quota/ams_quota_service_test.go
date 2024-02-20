@@ -7,6 +7,7 @@ import (
 
 	"github.com/stackrox/rox/pkg/utils"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -1172,4 +1173,168 @@ func makeCloudTestQuotaCost(resourceName string, organizationID string, allowed 
 func makeOrganizationFromExternalID(externalId string) (*v1.Organization, error) {
 	org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 	return org, nil
+}
+
+func TestMapAllowedQuotaCosts(t *testing.T) {
+	var nilStringArray []string
+
+	type testCase struct {
+		quotaCostBuilders   []*v1.QuotaCostBuilder
+		expectedAllowed     map[v1.BillingModel]int
+		expectedUnsupported []string
+	}
+
+	for name, testcase := range map[string]testCase{
+		"empty": {
+			quotaCostBuilders:   []*v1.QuotaCostBuilder{},
+			expectedAllowed:     map[v1.BillingModel]int{},
+			expectedUnsupported: nilStringArray,
+		},
+		"one allowed": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{v1.NewQuotaCost().Allowed(1).RelatedResources(
+				v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
+			)},
+			expectedAllowed:     map[v1.BillingModel]int{v1.BillingModelStandard: 1},
+			expectedUnsupported: nilStringArray,
+		},
+		"one allowed and one unsupported": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{
+				v1.NewQuotaCost().Allowed(1).RelatedResources(
+					v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
+					v1.NewRelatedResource().BillingModel("unsupported"),
+				),
+			},
+			expectedAllowed:     map[v1.BillingModel]int{v1.BillingModelStandard: 1},
+			expectedUnsupported: []string{"unsupported"},
+		},
+		"one zero allowed and one 10 allowed": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{
+				v1.NewQuotaCost().Allowed(0).RelatedResources(
+					v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
+				),
+				v1.NewQuotaCost().Allowed(10).RelatedResources(
+					v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplaceAWS)),
+				),
+			},
+			expectedAllowed:     map[v1.BillingModel]int{v1.BillingModelMarketplaceAWS: 10},
+			expectedUnsupported: nilStringArray,
+		},
+		"zero allowed and one unsupported": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{
+				v1.NewQuotaCost().Allowed(0).RelatedResources(
+					v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
+				),
+				v1.NewQuotaCost().Allowed(1).RelatedResources(
+					v1.NewRelatedResource().BillingModel("unsupported"),
+				),
+			}, expectedAllowed: map[v1.BillingModel]int{},
+			expectedUnsupported: []string{"unsupported"},
+		},
+		"no allowed and one unsupported": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{
+				v1.NewQuotaCost().Allowed(1).RelatedResources(
+					v1.NewRelatedResource().BillingModel("unsupported"),
+				),
+			},
+			expectedAllowed:     map[v1.BillingModel]int{},
+			expectedUnsupported: []string{"unsupported"},
+		},
+		"many allowed and many unsupported": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{
+				v1.NewQuotaCost().Allowed(10).RelatedResources(
+					v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
+					v1.NewRelatedResource().BillingModel("unsupported1"),
+				),
+				v1.NewQuotaCost().Allowed(1).RelatedResources(
+					v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
+					v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplaceAWS)),
+					v1.NewRelatedResource().BillingModel("unsupported2"),
+					v1.NewRelatedResource().BillingModel("unsupported3"),
+				),
+			},
+			expectedAllowed: map[v1.BillingModel]int{
+				v1.BillingModelStandard:       11,
+				v1.BillingModelMarketplaceAWS: 1,
+			},
+			expectedUnsupported: []string{"unsupported1", "unsupported2", "unsupported3"},
+		},
+	} {
+		t.Run(name, func(tt *testing.T) {
+			var quotaCosts []*v1.QuotaCost = make([]*v1.QuotaCost, len(testcase.quotaCostBuilders))
+			for _, qc := range testcase.quotaCostBuilders {
+				q, _ := qc.Build()
+				quotaCosts = append(quotaCosts, q)
+			}
+			allowed, unsupported := mapAllowedQuotaCosts(quotaCosts)
+			assert.Equal(tt, len(testcase.expectedAllowed), len(allowed))
+			for model, costs := range allowed {
+				var n int
+				for _, cost := range costs {
+					n += cost.Allowed()
+				}
+				assert.Equal(tt, testcase.expectedAllowed[model], n)
+			}
+			assert.Equal(tt, testcase.expectedUnsupported, unsupported)
+		})
+	}
+}
+
+func TestCloudAccountIsActive(t *testing.T) {
+
+	type testCase struct {
+		quotaCostBuilders []*v1.QuotaCostBuilder
+		central           *dbapi.CentralRequest
+		expectedActive    bool
+	}
+
+	testAWSQuotaCostBuilder := v1.NewQuotaCost().Allowed(1).CloudAccounts(
+		v1.NewCloudAccount().CloudAccountID("test-id").CloudProviderID("test-provider"),
+	).RelatedResources(v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplaceAWS)))
+
+	for name, testcase := range map[string]testCase{
+		"no cloud account, no cost": {
+			central:        &dbapi.CentralRequest{},
+			expectedActive: false,
+		},
+		"no cloud account, yes cost": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{testAWSQuotaCostBuilder},
+			central:           &dbapi.CentralRequest{},
+			expectedActive:    false,
+		},
+		"yes cloud account, yes cost": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{testAWSQuotaCostBuilder},
+			central: &dbapi.CentralRequest{
+				CloudAccountID: "test-id",
+				CloudProvider:  "test-provider",
+			},
+			expectedActive: true,
+		},
+		"wrong cloud account": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{testAWSQuotaCostBuilder},
+			central: &dbapi.CentralRequest{
+				CloudAccountID: "test-id-1",
+				CloudProvider:  "test-provider",
+			},
+			expectedActive: false,
+		},
+		"wrong cloud provider": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{testAWSQuotaCostBuilder},
+			central: &dbapi.CentralRequest{
+				CloudAccountID: "test-id",
+				CloudProvider:  "test-provider-1",
+			},
+			expectedActive: false,
+		},
+	} {
+		t.Run(name, func(tt *testing.T) {
+			var quotaCosts []*v1.QuotaCost = make([]*v1.QuotaCost, len(testcase.quotaCostBuilders))
+			for _, qc := range testcase.quotaCostBuilders {
+				q, _ := qc.Build()
+				quotaCosts = append(quotaCosts, q)
+			}
+			allowed, _ := mapAllowedQuotaCosts(quotaCosts)
+			active := cloudAccountIsActive(allowed, testcase.central)
+			assert.Equal(tt, testcase.expectedActive, active)
+		})
+	}
 }
