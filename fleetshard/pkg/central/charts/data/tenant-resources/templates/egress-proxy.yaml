@@ -109,6 +109,12 @@ spec:
     - podSelector:
         matchLabels:
           app: scanner
+    - podSelector:
+        matchLabels:
+          app: scanner-v4-matcher
+    - podSelector:
+        matchLabels:
+          app: scanner-v4-indexer
     ports:
     - port: 3128
       protocol: TCP
