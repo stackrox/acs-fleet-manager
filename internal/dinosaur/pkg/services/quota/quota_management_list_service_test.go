@@ -148,8 +148,9 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 			dinosaur := &dbapi.CentralRequest{
 				Owner:          "username",
 				OrganisationID: "org-id",
+				InstanceType:   tt.args.instanceType.String(),
 			}
-			allowed, _ := quotaService.HasQuotaAllowance(dinosaur, tt.args.instanceType)
+			allowed, _ := quotaService.HasQuotaAllowance(dinosaur)
 			gomega.Expect(tt.want).To(gomega.Equal(allowed))
 		})
 	}
@@ -370,8 +371,9 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			dinosaur := &dbapi.CentralRequest{
 				Owner:          "username",
 				OrganisationID: "org-id",
+				InstanceType:   string(tt.args.instanceType),
 			}
-			_, err := quotaService.ReserveQuota(context.Background(), dinosaur, tt.args.instanceType)
+			_, err := quotaService.ReserveQuota(context.Background(), dinosaur)
 			gomega.Expect(tt.wantErr).To(gomega.Equal(err))
 		})
 	}

@@ -10,7 +10,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -19,7 +18,7 @@ import (
 func TestExpirationDateManager(t *testing.T) {
 	withEntitlement := func(e bool) (*services.QuotaServiceMock, *services.QuotaServiceFactoryMock) {
 		qs := &services.QuotaServiceMock{
-			HasQuotaAllowanceFunc: func(central *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+			HasQuotaAllowanceFunc: func(central *dbapi.CentralRequest) (bool, *errors.ServiceError) {
 				return e, nil
 			},
 		}

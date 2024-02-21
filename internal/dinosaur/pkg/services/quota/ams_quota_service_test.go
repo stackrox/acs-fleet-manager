@@ -199,14 +199,18 @@ func Test_AMSCheckQuota(t *testing.T) {
 				},
 				Owner: tt.args.owner,
 			}
-			standardAllowance, err := quotaService.HasQuotaAllowance(dinosaur, types.STANDARD)
+			dinosaur.InstanceType = types.STANDARD.String()
+			standardAllowance, err := quotaService.HasQuotaAllowance(dinosaur)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
-			evalAllowance, err := quotaService.HasQuotaAllowance(dinosaur, types.EVAL)
+
+			dinosaur.InstanceType = types.EVAL.String()
+			evalAllowance, err := quotaService.HasQuotaAllowance(dinosaur)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			gomega.Expect(standardAllowance).To(gomega.Equal(tt.args.hasStandardQuota))
 			gomega.Expect(evalAllowance).To(gomega.Equal(tt.args.hasEvalQuota))
 
-			_, err = quotaService.ReserveQuota(emptyCtx, dinosaur, tt.args.dinosaurInstanceType)
+			dinosaur.InstanceType = tt.args.dinosaurInstanceType.String()
+			_, err = quotaService.ReserveQuota(emptyCtx, dinosaur)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
@@ -661,8 +665,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 				Owner:          tt.args.owner,
 				CloudAccountID: tt.args.cloudAccountID,
 				CloudProvider:  utils.IfThenElse(tt.args.cloudProviderID == "", "cloudProviderID", tt.args.cloudProviderID),
+				InstanceType:   string(types.STANDARD),
 			}
-			subID, err := quotaService.ReserveQuota(emptyCtx, dinosaur, types.STANDARD)
+			subID, err := quotaService.ReserveQuota(emptyCtx, dinosaur)
 			gomega.Expect(subID).To(gomega.Equal(tt.want))
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 
@@ -753,17 +758,13 @@ func Test_Delete_Quota(t *testing.T) {
 }
 
 func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
-	type args struct {
-		dinosaurRequest      *dbapi.CentralRequest
-		dinosaurInstanceType types.DinosaurInstanceType
-	}
 
 	tests := []struct {
-		name      string
-		ocmClient ocm.Client
-		args      args
-		want      bool
-		wantErr   bool
+		name            string
+		ocmClient       ocm.Client
+		dinosaurRequest *dbapi.CentralRequest
+		want            bool
+		wantErr         bool
 	}{
 		{
 			name: "returns false if no quota cost exists for the dinosaur's organization",
@@ -776,9 +777,9 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 					return []*v1.QuotaCost{}, nil
 				},
 			},
-			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
-				dinosaurInstanceType: types.STANDARD,
+			dinosaurRequest: &dbapi.CentralRequest{
+				OrganisationID: "dinosaur-org-1",
+				InstanceType:   types.STANDARD.String(),
 			},
 			want:    false,
 			wantErr: false,
@@ -800,9 +801,10 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 					return []*v1.QuotaCost{qcb}, nil
 				},
 			},
-			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
-				dinosaurInstanceType: types.STANDARD,
+
+			dinosaurRequest: &dbapi.CentralRequest{
+				OrganisationID: "dinosaur-org-1",
+				InstanceType:   types.STANDARD.String(),
 			},
 			want:    false,
 			wantErr: true,
@@ -824,9 +826,9 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 					return []*v1.QuotaCost{qcb}, nil
 				},
 			},
-			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
-				dinosaurInstanceType: types.STANDARD,
+			dinosaurRequest: &dbapi.CentralRequest{
+				OrganisationID: "dinosaur-org-1",
+				InstanceType:   types.STANDARD.String(),
 			},
 			want:    true,
 			wantErr: false,
@@ -854,12 +856,11 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 					return []*v1.QuotaCost{qcb, qcb2}, nil
 				},
 			},
-			args: args{
-				dinosaurRequest: &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1",
-					CloudProvider:  awsCloudProvider,
-					CloudAccountID: "cloudAccountID",
-				},
-				dinosaurInstanceType: types.STANDARD,
+			dinosaurRequest: &dbapi.CentralRequest{
+				OrganisationID: "dinosaur-org-1",
+				CloudProvider:  awsCloudProvider,
+				CloudAccountID: "cloudAccountID",
+				InstanceType:   types.STANDARD.String(),
 			},
 			want:    true,
 			wantErr: false,
@@ -885,9 +886,9 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 					return []*v1.QuotaCost{qcb, qcb2}, nil
 				},
 			},
-			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
-				dinosaurInstanceType: types.STANDARD,
+			dinosaurRequest: &dbapi.CentralRequest{
+				OrganisationID: "dinosaur-org-1",
+				InstanceType:   types.STANDARD.String(),
 			},
 			want:    false,
 			wantErr: false,
@@ -902,9 +903,9 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 					return []*v1.QuotaCost{}, nil
 				},
 			},
-			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
-				dinosaurInstanceType: types.STANDARD,
+			dinosaurRequest: &dbapi.CentralRequest{
+				OrganisationID: "dinosaur-org-1",
+				InstanceType:   types.STANDARD.String(),
 			},
 			wantErr: true,
 		},
@@ -919,9 +920,9 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 					return []*v1.QuotaCost{}, fmt.Errorf("error getting quota costs")
 				},
 			},
-			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
-				dinosaurInstanceType: types.STANDARD,
+			dinosaurRequest: &dbapi.CentralRequest{
+				OrganisationID: "dinosaur-org-1",
+				InstanceType:   types.STANDARD.String(),
 			},
 			wantErr: true,
 		},
@@ -932,7 +933,7 @@ func Test_amsQuotaService_HasQuotaAllowance(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
-			res, err := quotaService.HasQuotaAllowance(tt.args.dinosaurRequest, tt.args.dinosaurInstanceType)
+			res, err := quotaService.HasQuotaAllowance(tt.dinosaurRequest)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			gomega.Expect(res).To(gomega.Equal(tt.want))
 		})
@@ -1145,7 +1146,7 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			quotaServiceFactory := NewDefaultQuotaServiceFactory(amsClient, nil, nil)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
 
-			got, err := quotaService.HasQuotaAllowance(tt.central, types.DinosaurInstanceType(tt.central.InstanceType))
+			got, err := quotaService.HasQuotaAllowance(tt.central)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if tt.wantErr {
 				g.Expect(err.Error()).To(gomega.Equal(tt.wantErrMsg), err.Error())

@@ -19,7 +19,7 @@ type QuotaManagementListService struct {
 }
 
 // HasQuotaAllowance ...
-func (q QuotaManagementListService) HasQuotaAllowance(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+func (q QuotaManagementListService) HasQuotaAllowance(dinosaur *dbapi.CentralRequest) (bool, *errors.ServiceError) {
 	username := dinosaur.Owner
 	orgID := dinosaur.OrganisationID
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetByID(orgID)
@@ -33,7 +33,7 @@ func (q QuotaManagementListService) HasQuotaAllowance(dinosaur *dbapi.CentralReq
 		userIsRegistered = userFound
 		allowed = user.GetMaxAllowedInstances() > 0
 	}
-
+	instanceType := types.DinosaurInstanceType(dinosaur.InstanceType)
 	// allow user defined in quota list to create standard instances, and
 	// allow user who are not in quota list to create eval instances.
 	if userIsRegistered && instanceType == types.STANDARD ||
@@ -45,7 +45,8 @@ func (q QuotaManagementListService) HasQuotaAllowance(dinosaur *dbapi.CentralReq
 }
 
 // ReserveQuota ...
-func (q QuotaManagementListService) ReserveQuota(_ context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+func (q QuotaManagementListService) ReserveQuota(_ context.Context, dinosaur *dbapi.CentralRequest) (string, *errors.ServiceError) {
+	instanceType := types.DinosaurInstanceType(dinosaur.InstanceType)
 	if !q.quotaManagementList.EnableInstanceLimitControl {
 		return "", nil
 	}
