@@ -43,6 +43,9 @@ const (
 	ClusterOperationsTotalCount = "cluster_operations_total_count"
 	labelOperation              = "operation"
 
+	// CentralExpirationSetCount - name of the metric for the count of central expiration timestamp non-null updates
+	CentralExpirationSetCount = "central_expiration_set_count"
+
 	ReconcilerDuration     = "reconciler_duration_in_seconds"
 	ReconcilerSuccessCount = "reconciler_success_count"
 	ReconcilerFailureCount = "reconciler_failure_count"
@@ -324,6 +327,20 @@ func UpdateCentralPerClusterCountMetric(clusterID string, clusterExternalID stri
 		LabelClusterExternalID: clusterExternalID,
 	}
 	centralPerClusterCountMetric.With(labels).Set(float64(count))
+}
+
+// create a new counterVec for when expiration timestamp is set to a central
+var centralExpirationSetCountMetric = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: FleetManager,
+		Name:      CentralExpirationSetCount,
+		Help:      "number of expiration timestamps set",
+	},
+	[]string{"id"},
+)
+
+func CentralExpirationSet(centralID string) {
+	centralExpirationSetCountMetric.WithLabelValues(centralID).Inc()
 }
 
 // #### Metrics for Dataplane clusters - End ####
