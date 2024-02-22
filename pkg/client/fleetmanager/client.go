@@ -34,6 +34,11 @@ type AdminAPI interface {
 	DeleteDbCentralById(ctx context.Context, id string) (*http.Response, error)
 	CentralRotateSecrets(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error)
 	UpdateCentralNameById(ctx context.Context, id string, centralUpdateNameRequest admin.CentralUpdateNameRequest) (admin.Central, *http.Response, error)
+
+	GetCentralTraits(ctx context.Context, id string) ([]string, *http.Response, error)
+	GetCentralTrait(ctx context.Context, id string, trait string) (*http.Response, error)
+	PutCentralTrait(ctx context.Context, id string, trait string) (*http.Response, error)
+	DeleteCentralTrait(ctx context.Context, id string, trait string) (*http.Response, error)
 }
 
 // Client is a helper struct that wraps around the API clients generated from

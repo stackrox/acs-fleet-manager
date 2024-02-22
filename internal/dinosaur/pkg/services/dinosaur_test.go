@@ -2,10 +2,12 @@ package services
 
 import (
 	"context"
+	"net/http"
 	"reflect"
 	"testing"
 
 	mocket "github.com/selvatico/go-mocket"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
@@ -175,6 +177,69 @@ func Test_dinosaurService_Get(t *testing.T) {
 	}
 }
 
+func Test_dinosaurService_Delete_Preserved(t *testing.T) {
+	k := &dinosaurService{
+		connectionFactory: db.NewMockConnectionFactory(nil),
+		dinosaurConfig: &config.CentralConfig{
+			CentralLifespan: config.NewCentralLifespanConfig(),
+		},
+	}
+	preserved := buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {
+		centralRequest.Traits = append(centralRequest.Traits, constants.CentralTraitPreserved)
+	})
+	svcErr := k.Delete(preserved, false)
+	assert.Equal(t, http.StatusConflict, svcErr.HTTPCode)
+	{
+		authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
+		if err != nil {
+			t.Fatalf("failed to create auth helper: %s", err.Error())
+		}
+		account, err := authHelper.NewAccount(testUser, "", "", "")
+		if err != nil {
+			t.Fatal("failed to build a new account")
+		}
+
+		jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+		if err != nil {
+			t.Fatalf("failed to create jwt: %s", err.Error())
+		}
+		ctx := context.TODO()
+		authenticatedCtx := auth.SetTokenInContext(ctx, jwt)
+
+		mocket.Catcher.Reset().
+			NewMock().
+			WithQuery(`SELECT * FROM "central_requests" WHERE id = $1 AND owner = $2`).
+			WithArgs(testID, testUser).
+			WithReply(converters.ConvertDinosaurRequest(preserved))
+
+		svcErr = k.RegisterDinosaurDeprovisionJob(authenticatedCtx, preserved.ID)
+		assert.Equal(t, http.StatusConflict, svcErr.HTTPCode)
+	}
+	svcErr = k.Delete(preserved, true)
+	assert.Nil(t, svcErr)
+}
+
+func Test_dinosaurService_DeprovisionDinosaurForUsersQuery(t *testing.T) {
+	k := &dinosaurService{
+		connectionFactory: db.NewMockConnectionFactory(nil),
+		dinosaurConfig: &config.CentralConfig{
+			CentralLifespan: config.NewCentralLifespanConfig(),
+		},
+	}
+
+	m := mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "central_requests" ` +
+		`SET "deletion_timestamp"=$1,"status"=$2,"updated_at"=$3 WHERE ` +
+		`owner IN ($4) AND ` +
+		`status NOT IN ($5,$6) AND ` +
+		`(traits IS NULL OR $7 != ALL (traits)) AND ` +
+		`"central_requests"."deleted_at" IS NULL`).
+		OneTime()
+
+	svcErr := k.DeprovisionDinosaurForUsers([]string{"user1"})
+	assert.Nil(t, svcErr)
+	assert.True(t, m.Triggered)
+}
+
 func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 	k := &dinosaurService{
 		connectionFactory: db.NewMockConnectionFactory(nil),
@@ -186,7 +251,8 @@ func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 	m := mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "central_requests" ` +
 		`SET "deletion_timestamp"=$1,"status"=$2,"updated_at"=$3 WHERE ` +
 		`(expired_at IS NOT NULL AND expired_at < $4 OR instance_type = $5 AND created_at <= $6) ` +
-		`AND status NOT IN ($7,$8) AND "central_requests"."deleted_at" IS NULL`).
+		`AND status NOT IN ($7,$8) AND (traits IS NULL OR $9 != ALL (traits)) ` +
+		`AND "central_requests"."deleted_at" IS NULL`).
 		OneTime()
 
 	svcErr := k.DeprovisionExpiredDinosaurs()
@@ -196,7 +262,8 @@ func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 	m = mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "central_requests" ` +
 		`SET "deletion_timestamp"=$1,"status"=$2,"updated_at"=$3 WHERE ` +
 		`expired_at IS NOT NULL AND expired_at < $4 ` +
-		`AND status NOT IN ($5,$6) AND "central_requests"."deleted_at" IS NULL`).
+		`AND status NOT IN ($5,$6) AND (traits IS NULL OR $7 != ALL (traits)) ` +
+		`AND "central_requests"."deleted_at" IS NULL`).
 		OneTime()
 	k.dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral = false
 	svcErr = k.DeprovisionExpiredDinosaurs()

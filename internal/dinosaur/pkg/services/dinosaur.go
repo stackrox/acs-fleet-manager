@@ -3,11 +3,13 @@ package services
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -27,6 +29,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 )
 
 var (
@@ -58,6 +61,11 @@ const gracePeriod = 14 * 24 * time.Hour
 type CNameRecordStatus struct {
 	ID     *string
 	Status *string
+}
+
+var errPreservedCentral = func(id string) *errors.ServiceError {
+	return errors.NewErrorFromHTTPStatusCode(http.StatusConflict,
+		"central %q has %s trait, remove the trait to enable deletion", id, constants.CentralTraitPreserved)
 }
 
 // DinosaurService ...
@@ -493,6 +501,10 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 	}
 	metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
 
+	if arrays.Contains(dinosaurRequest.Traits, constants.CentralTraitPreserved) {
+		return errPreservedCentral(id)
+	}
+
 	deprovisionStatus := dinosaurConstants.CentralRequestStatusDeprovision
 
 	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
@@ -513,6 +525,7 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 		Model(&dbapi.CentralRequest{}).
 		Where("owner IN (?)", users).
 		Where("status NOT IN (?)", dinosaurDeletionStatuses).
+		Where("traits IS NULL OR ? != ALL (traits)", dinosaurConstants.CentralTraitPreserved).
 		Updates(map[string]interface{}{
 			"status":             dinosaurConstants.CentralRequestStatusDeprovision,
 			"deletion_timestamp": now,
@@ -549,6 +562,7 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs() *errors.ServiceError {
 	}
 
 	dbConn = dbConn.Where("status NOT IN (?)", dinosaurDeletionStatuses)
+	dbConn.Where("traits IS NULL OR ? != ALL (traits)", dinosaurConstants.CentralTraitPreserved)
 
 	db := dbConn.Updates(map[string]interface{}{
 		"status":             dinosaurConstants.CentralRequestStatusDeprovision,
@@ -576,6 +590,11 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs() *errors.ServiceError {
 // If the force flag is true, then any errors prior to the final deletion of the CentralRequest will be logged as warnings
 // but do not interrupt the deletion flow.
 func (k *dinosaurService) Delete(centralRequest *dbapi.CentralRequest, force bool) *errors.ServiceError {
+	if !force && arrays.Contains(centralRequest.Traits, constants.CentralTraitPreserved) {
+		err := errPreservedCentral(centralRequest.ID)
+		return errors.NewWithCause(err.Code, err, "cannot delete preserved central with no force")
+	}
+
 	dbConn := k.connectionFactory.New()
 
 	// if the we don't have the clusterID we can only delete the row from the database
