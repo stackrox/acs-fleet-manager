@@ -205,8 +205,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if remoteCentral.Metadata.ExpiredAt != nil {
 		namespaceAnnotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
 	}
-	if err := r.ensureNamespaceExists(namespace, namespaceLabels, namespaceAnnotations); err != nil {
-		return nil, errors.Wrap(err, "failed ensuring that namespace exists")
+	if err := r.reconcileNamespace(ctx, namespace, namespaceLabels, namespaceAnnotations); err != nil {
+		return nil, errors.Wrap(err, "failed to reconcile namespace")
 	}
 
 	if len(r.tenantImagePullSecret) > 0 {
@@ -1183,6 +1183,7 @@ func (r *CentralReconciler) reconcileNamespace(ctx context.Context, name string,
 	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
+			r.infof("creating namespace %q", name)
 			namespace.Annotations = annotations
 			namespace.Labels = labels
 			return r.createTenantNamespace(ctx, namespace)
@@ -1190,6 +1191,7 @@ func (r *CentralReconciler) reconcileNamespace(ctx context.Context, name string,
 		return errors.Wrapf(err, "failed to get namespace %q", name)
 	} else if !maps.Equal(labels, namespace.Labels) ||
 		!maps.Equal(annotations, namespace.Annotations) {
+		r.infof("updating namespace %q", name)
 		namespace.Annotations = annotations
 		namespace.Labels = labels
 		if err = r.client.Update(ctx, namespace, &ctrlClient.UpdateOptions{
