@@ -120,7 +120,7 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 func (k *ExpirationDateManager) updateExpiredAtInDB(central *dbapi.CentralRequest) *serviceErr.ServiceError {
 	glog.Infof("updating expired_at of central %q to %q", central.ID, central.ExpiredAt)
 	if central.ExpiredAt != nil {
-		metrics.CentralExpirationSet(central.ID)
+		metrics.CentralExpirationSet(central.OrganisationID, central.ID)
 	}
 	return k.centralService.Updates(&dbapi.CentralRequest{Meta: api.Meta{ID: central.ID}},
 		map[string]interface{}{"expired_at": central.ExpiredAt})

@@ -27,6 +27,7 @@ const (
 	LabelStatus            = "status"
 	LabelClusterID         = "cluster_id"
 	LabelClusterExternalID = "external_id"
+	LabelOrganisationID    = "organisation_id"
 
 	// CentralOperationsSuccessCount - name of the metric for Central-related successful operations
 	CentralOperationsSuccessCount = "central_operations_success_count"
@@ -336,11 +337,11 @@ var centralExpirationSetCountMetric = prometheus.NewCounterVec(
 		Name:      CentralExpirationSetCount,
 		Help:      "number of expiration timestamps set",
 	},
-	[]string{"id"},
+	[]string{LabelOrganisationID, LabelID},
 )
 
-func CentralExpirationSet(centralID string) {
-	centralExpirationSetCountMetric.WithLabelValues(centralID).Inc()
+func CentralExpirationSet(organisationID string, centralID string) {
+	centralExpirationSetCountMetric.WithLabelValues(organisationID, centralID).Inc()
 }
 
 // #### Metrics for Dataplane clusters - End ####
