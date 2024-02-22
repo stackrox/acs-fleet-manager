@@ -740,6 +740,7 @@ func init() {
 	prometheus.MustRegister(centralOperationsTotalCountMetric)
 	prometheus.MustRegister(centralStatusSinceCreatedMetric)
 	prometheus.MustRegister(CentralStatusCountMetric)
+	prometheus.MustRegister(centralExpirationSetCountMetric)
 
 	// metrics for reconcilers
 	prometheus.MustRegister(reconcilerDurationMetric)
@@ -808,6 +809,7 @@ func Reset() {
 	centralOperationsTotalCountMetric.Reset()
 	centralStatusSinceCreatedMetric.Reset()
 	CentralStatusCountMetric.Reset()
+	centralExpirationSetCountMetric.Reset()
 
 	reconcilerDurationMetric.Reset()
 	reconcilerSuccessCountMetric.Reset()
