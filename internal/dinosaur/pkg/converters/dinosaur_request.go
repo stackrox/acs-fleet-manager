@@ -6,6 +6,7 @@ import (
 
 // ConvertDinosaurRequest ...
 func ConvertDinosaurRequest(request *dbapi.CentralRequest) []map[string]interface{} {
+	traits, _ := request.Traits.Value()
 	return []map[string]interface{}{
 		{
 			"id":             request.ID,
@@ -20,6 +21,7 @@ func ConvertDinosaurRequest(request *dbapi.CentralRequest) []map[string]interfac
 			"created_at":     request.Meta.CreatedAt,
 			"updated_at":     request.Meta.UpdatedAt,
 			"deleted_at":     request.Meta.DeletedAt.Time,
+			"traits":         traits,
 		},
 	}
 }

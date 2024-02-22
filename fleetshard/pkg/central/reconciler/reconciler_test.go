@@ -2117,11 +2117,11 @@ func TestReconciler_applyProxyConfig(t *testing.T) {
 		},
 		{
 			Name:  "no_proxy",
-			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
+			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner-v4-db.namespace.svc:5432,scanner-v4-db.namespace:5432,scanner-v4-db:5432,scanner-v4-indexer.namespace.svc:8443,scanner-v4-indexer.namespace:8443,scanner-v4-indexer:8443,scanner-v4-matcher.namespace.svc:8443,scanner-v4-matcher.namespace:8443,scanner-v4-matcher:8443,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
 		},
 		{
 			Name:  "NO_PROXY",
-			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
+			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner-v4-db.namespace.svc:5432,scanner-v4-db.namespace:5432,scanner-v4-db:5432,scanner-v4-indexer.namespace.svc:8443,scanner-v4-indexer.namespace:8443,scanner-v4-indexer:8443,scanner-v4-matcher.namespace.svc:8443,scanner-v4-matcher.namespace:8443,scanner-v4-matcher:8443,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
 		},
 	})
 }
@@ -2153,11 +2153,18 @@ func TestReconciler_applyAnnotations(t *testing.T) {
 			},
 		},
 	}
-	r.applyAnnotations(c)
+	date := time.Date(2024, 01, 01, 0, 0, 0, 0, time.UTC)
+	rc := &private.ManagedCentral{
+		Metadata: private.ManagedCentralAllOfMetadata{
+			ExpiredAt: &date,
+		},
+	}
+	r.applyAnnotations(rc, c)
 	assert.Equal(t, map[string]string{
 		"rhacs.redhat.com/environment":  "test",
 		"rhacs.redhat.com/cluster-name": "test",
 		"foo":                           "bar",
+		"rhacs.redhat.com/expired-at":   "2024-01-01T00:00:00Z",
 	}, c.Spec.Customize.Annotations)
 }
 
@@ -2241,10 +2248,10 @@ metadata:
 								Value: "http://egress-proxy.rhacs.svc:3128",
 							}, {
 								Name:  "no_proxy",
-								Value: ":0,central.rhacs.svc:443,central.rhacs:443,central:443,kubernetes.default.svc.cluster.local.:443,scanner-db.rhacs.svc:5432,scanner-db.rhacs:5432,scanner-db:5432,scanner.rhacs.svc:8080,scanner.rhacs.svc:8443,scanner.rhacs:8080,scanner.rhacs:8443,scanner:8080,scanner:8443",
+								Value: ":0,central.rhacs.svc:443,central.rhacs:443,central:443,kubernetes.default.svc.cluster.local.:443,scanner-db.rhacs.svc:5432,scanner-db.rhacs:5432,scanner-db:5432,scanner-v4-db.rhacs.svc:5432,scanner-v4-db.rhacs:5432,scanner-v4-db:5432,scanner-v4-indexer.rhacs.svc:8443,scanner-v4-indexer.rhacs:8443,scanner-v4-indexer:8443,scanner-v4-matcher.rhacs.svc:8443,scanner-v4-matcher.rhacs:8443,scanner-v4-matcher:8443,scanner.rhacs.svc:8080,scanner.rhacs.svc:8443,scanner.rhacs:8080,scanner.rhacs:8443,scanner:8080,scanner:8443",
 							}, {
 								Name:  "NO_PROXY",
-								Value: ":0,central.rhacs.svc:443,central.rhacs:443,central:443,kubernetes.default.svc.cluster.local.:443,scanner-db.rhacs.svc:5432,scanner-db.rhacs:5432,scanner-db:5432,scanner.rhacs.svc:8080,scanner.rhacs.svc:8443,scanner.rhacs:8080,scanner.rhacs:8443,scanner:8080,scanner:8443",
+								Value: ":0,central.rhacs.svc:443,central.rhacs:443,central:443,kubernetes.default.svc.cluster.local.:443,scanner-db.rhacs.svc:5432,scanner-db.rhacs:5432,scanner-db:5432,scanner-v4-db.rhacs.svc:5432,scanner-v4-db.rhacs:5432,scanner-v4-db:5432,scanner-v4-indexer.rhacs.svc:8443,scanner-v4-indexer.rhacs:8443,scanner-v4-indexer:8443,scanner-v4-matcher.rhacs.svc:8443,scanner-v4-matcher.rhacs:8443,scanner-v4-matcher:8443,scanner.rhacs.svc:8080,scanner.rhacs.svc:8443,scanner.rhacs:8080,scanner.rhacs:8443,scanner:8080,scanner:8443",
 							},
 						},
 					},

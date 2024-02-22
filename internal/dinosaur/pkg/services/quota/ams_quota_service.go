@@ -67,7 +67,8 @@ func (q amsQuotaService) HasQuotaAllowance(central *dbapi.CentralRequest, instan
 	entitled := standardAccountIsActive || cloudAccountIsActive(quotaCostsByModel, central)
 
 	if !entitled {
-		glog.Infof("Quota no longer entitled for organisation %q", org.ID)
+		glog.Infof("Quota no longer entitled for organisation %q for cloud account %q. Quota Cost: %s",
+			org.ID(), central.CloudAccountID, printQuotaCostMap(quotaCostsByModel))
 		return false, nil
 	}
 	return true, nil
@@ -134,7 +135,7 @@ func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.Centr
 		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
 	}
 	rr.BillingModel(amsv1.BillingModel(bm))
-	glog.Infof("Billing model of Central request %s with quota type %s has been set to %s.", dinosaur.ID, instanceType.GetQuotaType(), bm)
+	glog.Infof("Billing model of Central request %q with quota type %q has been set to %q.", dinosaur.ID, instanceType.GetQuotaType(), bm)
 
 	if bm != string(amsv1.BillingModelStandard) {
 		if err := q.verifyCloudAccountInAMS(dinosaur, org.ID()); err != nil {
@@ -238,7 +239,6 @@ func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel
 			} else {
 				foundUnsupportedBillingModels = append(foundUnsupportedBillingModels, rr.BillingModel())
 			}
-
 		}
 	}
 	return costsMap, foundUnsupportedBillingModels

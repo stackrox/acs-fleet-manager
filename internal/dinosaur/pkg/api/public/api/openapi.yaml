@@ -1485,6 +1485,10 @@ components:
           type: string
         instance_type:
           type: string
+        traits:
+          items:
+            type: string
+          type: array
       required:
       - multi_az
     CentralRequestList_allOf:

@@ -16,10 +16,10 @@ admissionControl:
 collector:
   resources:
     requests:
-      memory: 200Mi
+      memory: 350Mi
       cpu: 10m
     limits:
-      memory: 200Mi
+      memory: 350Mi
   collection: "CORE_BPF"
 compliance:
   resources:

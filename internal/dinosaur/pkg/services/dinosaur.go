@@ -88,6 +88,7 @@ type DinosaurService interface {
 	// same as the original status. The error will contain any error encountered when attempting to update or the reason
 	// why no attempt has been done
 	UpdateStatus(id string, status dinosaurConstants.CentralStatus) (bool, *errors.ServiceError)
+	// Update does NOT update nullable fields when they're nil in the request. Use Updates() instead.
 	Update(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// Updates() updates the given fields of a dinosaur. This takes in a map so that even zero-fields can be updated.
 	// Use this only when you want to update the multiple columns that may contain zero-fields, otherwise use the `DinosaurService.Update()` method.
@@ -129,13 +130,14 @@ type dinosaurService struct {
 	amsClient                ocm.AMSClient
 	iamConfig                *iam.IAMConfig
 	rhSSODynamicClientsAPI   *dynamicClientAPI.AcsTenantsApiService
+	telemetry                *Telemetry
 }
 
 // NewDinosaurService ...
 func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService,
 	iamConfig *iam.IAMConfig, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
 	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory,
-	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient) DinosaurService {
+	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, telemetry *Telemetry) DinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
@@ -148,6 +150,7 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		clusterPlacementStrategy: clusterPlacementStrategy,
 		amsClient:                amsClient,
 		rhSSODynamicClientsAPI:   dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm),
+		telemetry:                telemetry,
 	}
 }
 
@@ -689,7 +692,7 @@ func (k *dinosaurService) Update(dinosaurRequest *dbapi.CentralRequest) *errors.
 	if err := dbConn.Updates(dinosaurRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update central")
 	}
-
+	k.telemetry.UpdateTenantProperties(dinosaurRequest)
 	return nil
 }
 
@@ -702,7 +705,10 @@ func (k *dinosaurService) Updates(dinosaurRequest *dbapi.CentralRequest, fields 
 	if err := dbConn.Updates(fields).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update central")
 	}
-
+	// Get all request properties, not only the ones provided with fields.
+	if dinosaurRequest, svcErr := k.GetByID(dinosaurRequest.ID); svcErr == nil {
+		k.telemetry.UpdateTenantProperties(dinosaurRequest)
+	}
 	return nil
 }
 
@@ -750,7 +756,7 @@ func (k *dinosaurService) UpdateStatus(id string, status dinosaurConstants.Centr
 	if err := dbConn.Model(&dbapi.CentralRequest{Meta: api.Meta{ID: id}}).Updates(update).Error; err != nil {
 		return true, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update central status")
 	}
-
+	k.telemetry.UpdateTenantProperties(dinosaur)
 	return true, nil
 }
 
