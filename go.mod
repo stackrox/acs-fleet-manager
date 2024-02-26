@@ -56,7 +56,7 @@ require (
 	github.com/zgalor/weberr v0.8.2
 	golang.org/x/exp v0.0.0-20240110193028-0dcbfd608b1e
 	golang.org/x/net v0.21.0
-	golang.org/x/oauth2 v0.16.0
+	golang.org/x/oauth2 v0.17.0
 	golang.org/x/sync v0.6.0
 	golang.org/x/sys v0.17.0
 	gopkg.in/resty.v1 v1.12.0
