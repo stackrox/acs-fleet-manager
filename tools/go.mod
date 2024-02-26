@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/go-bindata/go-bindata/v3 v3.1.4-0.20210427095211-26949cc13d95
-	github.com/matryer/moq v0.3.3
+	github.com/matryer/moq v0.3.4
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/segmentio/chamber/v2 v2.13.6
 	gotest.tools/gotestsum v1.11.0
@@ -35,11 +35,11 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/sync v0.5.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.16.1 // indirect
+	golang.org/x/tools v0.17.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
