@@ -43,6 +43,8 @@ const (
 	ClusterOperationsTotalCount = "cluster_operations_total_count"
 	labelOperation              = "operation"
 
+	expiredCentralsCount = "expired_centrals_count"
+
 	ReconcilerDuration     = "reconciler_duration_in_seconds"
 	ReconcilerSuccessCount = "reconciler_success_count"
 	ReconcilerFailureCount = "reconciler_failure_count"
@@ -324,6 +326,20 @@ func UpdateCentralPerClusterCountMetric(clusterID string, clusterExternalID stri
 		LabelClusterExternalID: clusterExternalID,
 	}
 	centralPerClusterCountMetric.With(labels).Set(float64(count))
+}
+
+// create a new gaugeVec with the total number of expired centrals
+var expiredCentralsMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: FleetManager,
+		Name:      expiredCentralsCount,
+		Help:      "total number of expired centrals",
+	},
+	[]string{},
+)
+
+func UpdateCentralsExpiredMetric(n float64) {
+	expiredCentralsMetric.WithLabelValues().Set(n)
 }
 
 // #### Metrics for Dataplane clusters - End ####
@@ -723,6 +739,7 @@ func init() {
 	prometheus.MustRegister(centralOperationsTotalCountMetric)
 	prometheus.MustRegister(centralStatusSinceCreatedMetric)
 	prometheus.MustRegister(CentralStatusCountMetric)
+	prometheus.MustRegister(expiredCentralsMetric)
 
 	// metrics for reconcilers
 	prometheus.MustRegister(reconcilerDurationMetric)
@@ -791,6 +808,7 @@ func Reset() {
 	centralOperationsTotalCountMetric.Reset()
 	centralStatusSinceCreatedMetric.Reset()
 	CentralStatusCountMetric.Reset()
+	expiredCentralsMetric.Reset()
 
 	reconcilerDurationMetric.Reset()
 	reconcilerSuccessCountMetric.Reset()
