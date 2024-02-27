@@ -27,7 +27,6 @@ const (
 	LabelStatus            = "status"
 	LabelClusterID         = "cluster_id"
 	LabelClusterExternalID = "external_id"
-	LabelOrganisationID    = "organisation_id"
 
 	// CentralOperationsSuccessCount - name of the metric for Central-related successful operations
 	CentralOperationsSuccessCount = "central_operations_success_count"
@@ -44,8 +43,7 @@ const (
 	ClusterOperationsTotalCount = "cluster_operations_total_count"
 	labelOperation              = "operation"
 
-	// CentralExpirationSetCount - name of the metric for the count of central expiration timestamp non-null updates
-	CentralExpirationSetCount = "central_expiration_set_count"
+	expiredCentralsCount = "expired_centrals_count"
 
 	ReconcilerDuration     = "reconciler_duration_in_seconds"
 	ReconcilerSuccessCount = "reconciler_success_count"
@@ -330,18 +328,18 @@ func UpdateCentralPerClusterCountMetric(clusterID string, clusterExternalID stri
 	centralPerClusterCountMetric.With(labels).Set(float64(count))
 }
 
-// create a new counterVec for when expiration timestamp is set to a central
-var centralExpirationSetCountMetric = prometheus.NewCounterVec(
-	prometheus.CounterOpts{
+// create a new gaugeVec with the total number of expired centrals
+var expiredCentralsMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
 		Subsystem: FleetManager,
-		Name:      CentralExpirationSetCount,
-		Help:      "number of expiration timestamps set",
+		Name:      expiredCentralsCount,
+		Help:      "total number of expired centrals",
 	},
-	[]string{LabelOrganisationID, LabelID},
+	[]string{},
 )
 
-func CentralExpirationSet(organisationID string, centralID string) {
-	centralExpirationSetCountMetric.WithLabelValues(organisationID, centralID).Inc()
+func UpdateCentralsExpiredMetric(n float64) {
+	expiredCentralsMetric.WithLabelValues().Set(n)
 }
 
 // #### Metrics for Dataplane clusters - End ####
@@ -741,7 +739,7 @@ func init() {
 	prometheus.MustRegister(centralOperationsTotalCountMetric)
 	prometheus.MustRegister(centralStatusSinceCreatedMetric)
 	prometheus.MustRegister(CentralStatusCountMetric)
-	prometheus.MustRegister(centralExpirationSetCountMetric)
+	prometheus.MustRegister(expiredCentralsMetric)
 
 	// metrics for reconcilers
 	prometheus.MustRegister(reconcilerDurationMetric)
@@ -810,7 +808,7 @@ func Reset() {
 	centralOperationsTotalCountMetric.Reset()
 	centralStatusSinceCreatedMetric.Reset()
 	CentralStatusCountMetric.Reset()
-	centralExpirationSetCountMetric.Reset()
+	expiredCentralsMetric.Reset()
 
 	reconcilerDurationMetric.Reset()
 	reconcilerSuccessCountMetric.Reset()
