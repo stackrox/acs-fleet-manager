@@ -13,6 +13,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -125,4 +126,15 @@ func validateResourceName(name corev1.ResourceName) (corev1.ResourceName, bool) 
 		}
 	}
 	return "", false
+}
+
+func ValidateDinosaurTraits(dinosaurRequestPayload *public.CentralRequestPayload, dinosaurRequest *dbapi.CentralRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		for _, trait := range dinosaurRequestPayload.Traits {
+			if !arrays.Contains(dinosaurRequest.Traits, trait) {
+				dinosaurRequest.Traits = append(dinosaurRequest.Traits, trait)
+			}
+		}
+		return nil
+	}
 }
