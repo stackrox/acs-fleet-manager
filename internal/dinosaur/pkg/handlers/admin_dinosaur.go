@@ -103,6 +103,7 @@ func (h adminCentralHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateDinosaurClaims(ctx, &centralRequest, &convCentral),
 			ValidateCloudProvider(&h.service, &convCentral, h.providerConfig, "creating central requests"),
 			handlers.ValidateMultiAZEnabled(&centralRequest.MultiAz, "creating central requests"),
+			ValidateDinosaurTraits(&centralRequest, &convCentral),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(ctx, &convCentral)
