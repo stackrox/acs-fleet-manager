@@ -255,9 +255,9 @@ func (a *DefaultApiService) CentralRotateSecrets(ctx _context.Context, id string
 ChangeBillingModel Change central billing model
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
-  - @param centralBillingParameters Billing target parameters
+  - @param centralBillingChangeRequest Billing target parameters
 */
-func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, centralBillingParameters CentralBillingParameters) (*_nethttp.Response, error) {
+func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, centralBillingChangeRequest CentralBillingChangeRequest) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
@@ -292,7 +292,7 @@ func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, 
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &centralBillingParameters
+	localVarPostBody = &centralBillingChangeRequest
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, err

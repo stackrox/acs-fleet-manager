@@ -393,7 +393,7 @@ func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request)
 }
 
 func (h adminCentralHandler) PatchBillingModel(w http.ResponseWriter, r *http.Request) {
-	var request *private.CentralBillingParameters
+	var request *private.CentralBillingChangeRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &request,
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {

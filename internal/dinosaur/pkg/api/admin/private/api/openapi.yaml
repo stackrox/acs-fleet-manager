@@ -533,7 +533,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CentralBillingParameters'
+              $ref: '#/components/schemas/CentralBillingChangeRequest'
         description: Billing target parameters
         required: true
       responses:
@@ -832,7 +832,7 @@ components:
       - name
       - reason
       type: object
-    CentralBillingParameters:
+    CentralBillingChangeRequest:
       example:
         cloud_account_id: cloud_account_id
         product: RHACS

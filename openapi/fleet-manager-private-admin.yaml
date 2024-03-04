@@ -393,7 +393,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CentralBillingParameters"
+              $ref: "#/components/schemas/CentralBillingChangeRequest"
         required: true
       responses:
         "200":
@@ -698,16 +698,8 @@ components:
           type: string
         reason:
           type: string
-  parameters:
-    trait:
-      name: trait
-      description: A central trait
-      schema:
-        type: string
-      in: path
-      required: true
 
-    CentralBillingParameters:
+    CentralBillingChangeRequest:
       type: object
       properties:
         model:
@@ -727,6 +719,15 @@ components:
           type: string
           enum:
           - RHACS
+
+  parameters:
+    trait:
+      name: trait
+      description: A central trait
+      schema:
+        type: string
+      in: path
+      required: true
   securitySchemes:
     Bearer:
       scheme: bearer
