@@ -150,7 +150,7 @@ func ValidateRegex(r *http.Request, field string, regex *regexp.Regexp) Validate
 	return func() *errors.ServiceError {
 		value := mux.Vars(r)[field]
 		if !regex.MatchString(value) {
-			return errors.MalformedServiceAccountName("%s %q does not match %s", field, value, regex.String())
+			return errors.FailedToParseQueryParms("%s %q does not match %s", field, value, regex.String())
 		}
 		return nil
 	}

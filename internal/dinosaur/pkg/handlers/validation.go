@@ -131,6 +131,9 @@ func validateResourceName(name corev1.ResourceName) (corev1.ResourceName, bool) 
 func ValidateDinosaurTraits(dinosaurRequestPayload *public.CentralRequestPayload, dinosaurRequest *dbapi.CentralRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		for _, trait := range dinosaurRequestPayload.Traits {
+			if !validTraitRegexp.MatchString(trait) {
+				return errors.FailedToParseQueryParms("bad trait %q", trait)
+			}
 			if !arrays.Contains(dinosaurRequest.Traits, trait) {
 				dinosaurRequest.Traits = append(dinosaurRequest.Traits, trait)
 			}
