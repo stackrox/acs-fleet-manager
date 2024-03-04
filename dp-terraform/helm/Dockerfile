@@ -26,7 +26,7 @@ RUN microdnf install gzip tar && \
 ARG FLEETSHARD_SYNC_IMAGE_TAG=main
 RUN yq -i ".fleetshardSync.image.tag = strenv(FLEETSHARD_SYNC_IMAGE_TAG)" rhacs-terraform/values.yaml
 
-FROM quay.io/operator-framework/helm-operator:v1.33.0
+FROM quay.io/operator-framework/helm-operator:v1.34.0
 
 ENV HOME=/opt/helm
 ENV ADDON_NAME=acs-fleetshard
