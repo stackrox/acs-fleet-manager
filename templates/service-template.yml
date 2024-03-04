@@ -53,20 +53,36 @@ parameters:
   value: "10"
 
 - name: MEMORY_REQUEST
-  description: Memory request for the API pods.
+  description: Memory request for the fleet manager container.
   value: "512Mi"
 
 - name: MEMORY_LIMIT
-  description: Memory limit for the API pods.
+  description: Memory limit for the fleet manager container.
   value: "1Gi"
 
 - name: CPU_REQUEST
-  description: CPU request for the API pods.
+  description: CPU request for the fleet manager container.
   value: "200m"
 
 - name: CPU_LIMIT
-  description: CPU limit for the API pods.
+  description: CPU limit for the fleet manager container.
   value: "1"
+
+- name: ENVOY_MEMORY_REQUEST
+  description: Memory request for the envoy sidecar container.
+  value: "256Mi"
+
+- name: ENVOY_MEMORY_LIMIT
+  description: Memory limit for the envoy sidecar container.
+  value: "512Mi"
+
+- name: ENVOY_CPU_REQUEST
+  description: CPU request for the envoy sidecar container.
+  value: "250m"
+
+- name: ENVOY_CPU_LIMIT
+  description: CPU limit for the envoy sidecar container.
+  value: "500m"
 
 - name: JWKS_URL
   displayName: JWK Token Certificate URL
@@ -1447,11 +1463,11 @@ objects:
               failureThreshold: 10
             resources:
               requests:
-                memory: 256Mi
-                cpu: 250m
+                memory: ${ENVOY_MEMORY_REQUEST}
+                cpu: ${ENVOY_CPU_REQUEST}
               limits:
-                memory: 512Mi
-                cpu: 500m
+                memory: ${ENVOY_MEMORY_LIMIT}
+                cpu: ${ENVOY_CPU_LIMIT}
 
   - kind: PodDisruptionBudget
     apiVersion: policy/v1
