@@ -145,6 +145,10 @@ jobs:
           fetch-depth: 0 # Critical for correct image detection in Makefile
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Set up Go 1.20
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.20"
       - name: Build and push fleet-manager-tools image to quay.io
         if: github.event_name == 'push'
         env:
