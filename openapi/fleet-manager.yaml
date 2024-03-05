@@ -743,6 +743,11 @@ components:
         region:
           description: The region where the Central component cluster will be created in
           type: string
+        traits:
+          description: Set of central traits
+          type: array
+          items:
+            type: string
     CloudProviderList:
       allOf:
         - $ref: "#/components/schemas/List"

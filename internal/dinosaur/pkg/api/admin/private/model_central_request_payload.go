@@ -22,4 +22,6 @@ type CentralRequestPayload struct {
 	Name string `json:"name"`
 	// The region where the Central component cluster will be created in
 	Region string `json:"region,omitempty"`
+	// Set of central traits
+	Traits []string `json:"traits,omitempty"`
 }

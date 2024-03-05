@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/lib/pq"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 
 	"github.com/onsi/gomega"
@@ -332,6 +333,42 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 				gomega.Expect(tt.arg.dinosaurRequest.Region).To(gomega.Equal(tt.want.dinosaurRequest.Region))
 			}
 
+		})
+	}
+}
+
+func Test_Validations_validateDinosaurTraits(t *testing.T) {
+	tests := map[string]struct {
+		traits         []string
+		expectedTraits pq.StringArray
+		expectedError  *errors.ServiceError
+	}{
+		"no traits": {},
+		"some traits": {
+			[]string{"test"},
+			pq.StringArray{"test"},
+			nil,
+		},
+		"bad trait": {
+			[]string{"good_trait", "bad/trait", "another_trait"},
+			pq.StringArray{"good_trait"},
+			errors.FailedToParseQueryParms(`bad trait "bad/trait"`),
+		},
+		"more traits": {
+			[]string{"test1", "test2", "test1"},
+			pq.StringArray{"test1", "test2"},
+			nil,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+
+			output := dbapi.CentralRequest{}
+			validateFn := ValidateDinosaurTraits(&public.CentralRequestPayload{Traits: test.traits}, &output)
+			svcErr := validateFn()
+			gomega.Expect(svcErr).To(gomega.BeEquivalentTo(test.expectedError))
+			gomega.Expect(output.Traits).To(gomega.Equal(test.expectedTraits))
 		})
 	}
 }

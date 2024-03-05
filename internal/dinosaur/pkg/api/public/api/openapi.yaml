@@ -1286,6 +1286,9 @@ components:
       description: Schema for the request body sent to /centrals POST
       example:
         cloud_account_id: cloud_account_id
+        traits:
+        - traits
+        - traits
         multi_az: true
         name: name
         cloud_provider: cloud_provider
@@ -1310,6 +1313,11 @@ components:
           description: The region where the Central component cluster will be created
             in
           type: string
+        traits:
+          description: Set of central traits
+          items:
+            type: string
+          type: array
       required:
       - name
       type: object
