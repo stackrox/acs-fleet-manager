@@ -1090,7 +1090,7 @@ func (k *dinosaurService) ChangeBillingParameters(ctx context.Context, centralID
 		}
 		glog.Infof("Central %q billing parameters has been changed from %v to %v", centralID, original, updated)
 	} else {
-		glog.Infof("Central %q type has no change in billing parameters")
+		glog.Infof("Central %q has no change in billing parameters")
 	}
 	return nil
 }
