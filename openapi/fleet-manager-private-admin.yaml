@@ -382,10 +382,10 @@ paths:
             application/json:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
-  '/api/rhacs/v1/admin/centrals/{id}/billing-model':
+  '/api/rhacs/v1/admin/centrals/{id}/billing':
     patch:
-      summary: Change central billing model
-      operationId: changeBillingModel
+      summary: Change central billing parameters
+      operationId: changeBillingParameters
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       requestBody:
@@ -397,7 +397,7 @@ paths:
         required: true
       responses:
         "200":
-          description: Billing model changed
+          description: Billing parameters changed
         "401":
           description: Auth token is invalid
           content:

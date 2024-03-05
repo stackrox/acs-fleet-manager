@@ -247,7 +247,7 @@ func Test_dinosaurService_RestoreExpiredDinosaurs(t *testing.T) {
 	assert.True(t, expiredChecked)
 }
 
-func Test_dinosaurService_ChangeBillingModel(t *testing.T) {
+func Test_dinosaurService_ChangeBillingParameters(t *testing.T) {
 	quotaService := &QuotaServiceMock{
 		HasQuotaAllowanceFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 			return true, nil
@@ -286,7 +286,7 @@ func Test_dinosaurService_ChangeBillingModel(t *testing.T) {
 		`WHERE status not IN ($10,$11) AND "central_requests"."deleted_at" IS NULL AND "id" = $12`).
 		OneTime()
 
-	svcErr := k.ChangeBillingModel(context.Background(), central.ID, "marketplace", "aws_account_id", "aws", "")
+	svcErr := k.ChangeBillingParameters(context.Background(), central.ID, "marketplace", "aws_account_id", "aws", "")
 	assert.Nil(t, svcErr)
 
 	assert.True(t, m0.Triggered)

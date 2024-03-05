@@ -252,12 +252,12 @@ func (a *DefaultApiService) CentralRotateSecrets(ctx _context.Context, id string
 }
 
 /*
-ChangeBillingModel Change central billing model
+ChangeBillingParameters Change central billing parameters
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
   - @param centralBillingChangeRequest Billing target parameters
 */
-func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, centralBillingChangeRequest CentralBillingChangeRequest) (*_nethttp.Response, error) {
+func (a *DefaultApiService) ChangeBillingParameters(ctx _context.Context, id string, centralBillingChangeRequest CentralBillingChangeRequest) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
@@ -267,7 +267,7 @@ func (a *DefaultApiService) ChangeBillingModel(ctx _context.Context, id string, 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/centrals/{id}/billing-model"
+	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/centrals/{id}/billing"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)

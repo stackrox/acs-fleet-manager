@@ -259,8 +259,8 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminCentralsRouter.HandleFunc("/{id}/name", adminCentralHandler.PatchName).
 		Name(logger.NewLogEvent("admin-name", "[admin] set `name` central property").ToString()).
 		Methods(http.MethodPatch)
-	adminCentralsRouter.HandleFunc("/{id}/billing-model", adminCentralHandler.PatchBillingModel).
-		Name(logger.NewLogEvent("admin-billing-model", "[admin] change central billing model").ToString()).
+	adminCentralsRouter.HandleFunc("/{id}/billing", adminCentralHandler.PatchBillingParameters).
+		Name(logger.NewLogEvent("admin-billing", "[admin] change central billing parameters").ToString()).
 		Methods(http.MethodPatch)
 
 	adminCentralsRouter.HandleFunc("/{id}/traits", adminCentralHandler.ListTraits).

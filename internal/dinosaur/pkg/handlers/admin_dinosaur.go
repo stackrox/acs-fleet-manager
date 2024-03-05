@@ -63,8 +63,8 @@ type AdminCentralHandler interface {
 	// DeleteTrait deletes a trait from a central
 	DeleteTrait(w http.ResponseWriter, r *http.Request)
 
-	// PatchBillingModel changes the billing model of a central
-	PatchBillingModel(w http.ResponseWriter, r *http.Request)
+	// PatchBillingParameters changes the billing model of a central
+	PatchBillingParameters(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -392,12 +392,12 @@ func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request)
 	handlers.HandleDelete(w, r, cfg, http.StatusOK)
 }
 
-func (h adminCentralHandler) PatchBillingModel(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) PatchBillingParameters(w http.ResponseWriter, r *http.Request) {
 	var request *private.CentralBillingChangeRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &request,
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			return nil, h.service.ChangeBillingModel(r.Context(), mux.Vars(r)["id"],
+			return nil, h.service.ChangeBillingParameters(r.Context(), mux.Vars(r)["id"],
 				request.Model, request.CloudAccountId, request.CloudProvider, request.Product)
 		},
 	}

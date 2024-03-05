@@ -519,9 +519,9 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
       summary: Restore a central tenant that was already deleted
-  /api/rhacs/v1/admin/centrals/{id}/billing-model:
+  /api/rhacs/v1/admin/centrals/{id}/billing:
     patch:
-      operationId: changeBillingModel
+      operationId: changeBillingParameters
       parameters:
       - description: The ID of record
         in: path
@@ -538,7 +538,7 @@ paths:
         required: true
       responses:
         "200":
-          description: Billing model changed
+          description: Billing parameters changed
         "401":
           content:
             application/json:
@@ -564,7 +564,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
-      summary: Change central billing model
+      summary: Change central billing parameters
   /api/rhacs/v1/admin/centrals/db/{id}:
     delete:
       operationId: deleteDbCentralById

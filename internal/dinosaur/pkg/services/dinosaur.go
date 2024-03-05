@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -114,7 +115,7 @@ type DinosaurService interface {
 	// This is currently the only way to update secret backups, an automatic approach should be implemented
 	// to accomated for regular processes like central TLS cert rotation.
 	ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
-	ChangeBillingModel(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *errors.ServiceError
+	ChangeBillingParameters(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -1040,38 +1041,56 @@ func convertCentralRequestToString(req *dbapi.CentralRequest) string {
 	return fmt.Sprintf("%+v", requestAsMap)
 }
 
-func (k *dinosaurService) ChangeBillingModel(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *errors.ServiceError {
+type billingParameters struct {
+	cloudAccountID string
+	cloudProvider  string
+	subscriptionID string
+	instanceType   string
+	product        string
+}
+
+func makeBillingParameters(central *dbapi.CentralRequest) *billingParameters {
+	return &billingParameters{
+		cloudAccountID: central.CloudAccountID,
+		cloudProvider:  central.CloudProvider,
+		subscriptionID: central.SubscriptionID,
+		instanceType:   central.InstanceType,
+		product:        types.DinosaurInstanceType(central.InstanceType).GetQuotaType().GetProduct(),
+	}
+}
+
+func (k *dinosaurService) ChangeBillingParameters(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *errors.ServiceError {
 	centralRequest, svcErr := k.GetByID(centralID)
 	if svcErr != nil {
 		return svcErr
 	}
 
-	originalCloudAccountID := centralRequest.CloudAccountID
-	originalCloudProvider := centralRequest.CloudProvider
-	originalSubscriptionID := centralRequest.SubscriptionID
-	originalInstanceType := centralRequest.InstanceType
-	originalProduct := types.DinosaurInstanceType(centralRequest.InstanceType).GetQuotaType().GetProduct()
+	original := makeBillingParameters(centralRequest)
 
 	centralRequest.CloudAccountID = cloudAccountID
 	centralRequest.CloudProvider = cloudProvider
 
-	// Changing product is allowed only from RHACSTrial to RHACS today. This
-	// change should also change the instance type.
-	if originalProduct == string(ocm.RHACSTrialProduct) && product == string(ocm.RHACSProduct) {
+	// Changing product is allowed (by OCM) only from RHACSTrial to RHACS today.
+	// This change should also change the instance type.
+	if original.product == string(ocm.RHACSTrialProduct) && product == string(ocm.RHACSProduct) {
 		centralRequest.InstanceType = string(types.STANDARD)
-		glog.Infof("Central %q type is being changed from %q to %q", centralID, originalInstanceType, centralRequest.InstanceType)
 	}
 
 	centralRequest.SubscriptionID, svcErr = k.reserveQuota(ctx, centralRequest, billingModel, product)
+	updated := makeBillingParameters(centralRequest)
 	if svcErr != nil {
+		glog.Errorf("Failed to reserve quota with updated billing parameters (%v): %v", updated, svcErr)
 		return svcErr
 	}
 
-	if centralRequest.SubscriptionID != originalSubscriptionID ||
-		centralRequest.CloudAccountID != originalCloudAccountID ||
-		centralRequest.CloudProvider != originalCloudProvider ||
-		centralRequest.InstanceType != originalInstanceType {
-		return k.Update(centralRequest)
+	if !reflect.DeepEqual(original, updated) {
+		if svcErr = k.Update(centralRequest); svcErr == nil {
+			glog.Errorf("Failed to update central %q record with updated billing parameters (%v): %v", centralID, updated, svcErr)
+			return svcErr
+		}
+		glog.Infof("Central %q billing parameters has been changed from %v to %v", centralID, original, updated)
+	} else {
+		glog.Infof("Central %q type has no change in billing parameters")
 	}
 	return nil
 }

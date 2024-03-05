@@ -28,8 +28,8 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			AcceptCentralRequestFunc: func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the AcceptCentralRequest method")
 //			},
-//			ChangeBillingModelFunc: func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
-//				panic("mock out the ChangeBillingModel method")
+//			ChangeBillingParametersFunc: func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
+//				panic("mock out the ChangeBillingParameters method")
 //			},
 //			ChangeDinosaurCNAMErecordsFunc: func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
 //				panic("mock out the ChangeDinosaurCNAMErecords method")
@@ -116,8 +116,8 @@ type DinosaurServiceMock struct {
 	// AcceptCentralRequestFunc mocks the AcceptCentralRequest method.
 	AcceptCentralRequestFunc func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
-	// ChangeBillingModelFunc mocks the ChangeBillingModel method.
-	ChangeBillingModelFunc func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError
+	// ChangeBillingParametersFunc mocks the ChangeBillingParameters method.
+	ChangeBillingParametersFunc func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError
 
 	// ChangeDinosaurCNAMErecordsFunc mocks the ChangeDinosaurCNAMErecords method.
 	ChangeDinosaurCNAMErecordsFunc func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
@@ -201,8 +201,8 @@ type DinosaurServiceMock struct {
 			// CentralRequest is the centralRequest argument value.
 			CentralRequest *dbapi.CentralRequest
 		}
-		// ChangeBillingModel holds details about calls to the ChangeBillingModel method.
-		ChangeBillingModel []struct {
+		// ChangeBillingParameters holds details about calls to the ChangeBillingParameters method.
+		ChangeBillingParameters []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// CentralID is the centralID argument value.
@@ -359,7 +359,7 @@ type DinosaurServiceMock struct {
 		}
 	}
 	lockAcceptCentralRequest              sync.RWMutex
-	lockChangeBillingModel                sync.RWMutex
+	lockChangeBillingParameters           sync.RWMutex
 	lockChangeDinosaurCNAMErecords        sync.RWMutex
 	lockCountByRegionAndInstanceType      sync.RWMutex
 	lockCountByStatus                     sync.RWMutex
@@ -419,10 +419,10 @@ func (mock *DinosaurServiceMock) AcceptCentralRequestCalls() []struct {
 	return calls
 }
 
-// ChangeBillingModel calls ChangeBillingModelFunc.
-func (mock *DinosaurServiceMock) ChangeBillingModel(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
-	if mock.ChangeBillingModelFunc == nil {
-		panic("DinosaurServiceMock.ChangeBillingModelFunc: method is nil but DinosaurService.ChangeBillingModel was just called")
+// ChangeBillingParameters calls ChangeBillingParametersFunc.
+func (mock *DinosaurServiceMock) ChangeBillingParameters(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
+	if mock.ChangeBillingParametersFunc == nil {
+		panic("DinosaurServiceMock.ChangeBillingParametersFunc: method is nil but DinosaurService.ChangeBillingParameters was just called")
 	}
 	callInfo := struct {
 		Ctx            context.Context
@@ -439,17 +439,17 @@ func (mock *DinosaurServiceMock) ChangeBillingModel(ctx context.Context, central
 		CloudProvider:  cloudProvider,
 		Product:        product,
 	}
-	mock.lockChangeBillingModel.Lock()
-	mock.calls.ChangeBillingModel = append(mock.calls.ChangeBillingModel, callInfo)
-	mock.lockChangeBillingModel.Unlock()
-	return mock.ChangeBillingModelFunc(ctx, centralID, billingModel, cloudAccountID, cloudProvider, product)
+	mock.lockChangeBillingParameters.Lock()
+	mock.calls.ChangeBillingParameters = append(mock.calls.ChangeBillingParameters, callInfo)
+	mock.lockChangeBillingParameters.Unlock()
+	return mock.ChangeBillingParametersFunc(ctx, centralID, billingModel, cloudAccountID, cloudProvider, product)
 }
 
-// ChangeBillingModelCalls gets all the calls that were made to ChangeBillingModel.
+// ChangeBillingParametersCalls gets all the calls that were made to ChangeBillingParameters.
 // Check the length with:
 //
-//	len(mockedDinosaurService.ChangeBillingModelCalls())
-func (mock *DinosaurServiceMock) ChangeBillingModelCalls() []struct {
+//	len(mockedDinosaurService.ChangeBillingParametersCalls())
+func (mock *DinosaurServiceMock) ChangeBillingParametersCalls() []struct {
 	Ctx            context.Context
 	CentralID      string
 	BillingModel   string
@@ -465,9 +465,9 @@ func (mock *DinosaurServiceMock) ChangeBillingModelCalls() []struct {
 		CloudProvider  string
 		Product        string
 	}
-	mock.lockChangeBillingModel.RLock()
-	calls = mock.calls.ChangeBillingModel
-	mock.lockChangeBillingModel.RUnlock()
+	mock.lockChangeBillingParameters.RLock()
+	calls = mock.calls.ChangeBillingParameters
+	mock.lockChangeBillingParameters.RUnlock()
 	return calls
 }
 
