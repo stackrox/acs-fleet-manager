@@ -728,6 +728,7 @@ components:
         type: string
       in: path
       required: true
+
   securitySchemes:
     Bearer:
       scheme: bearer
