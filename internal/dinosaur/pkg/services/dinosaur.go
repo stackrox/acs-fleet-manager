@@ -1084,7 +1084,7 @@ func (k *dinosaurService) ChangeBillingParameters(ctx context.Context, centralID
 	}
 
 	if !reflect.DeepEqual(original, updated) {
-		if svcErr = k.Update(centralRequest); svcErr == nil {
+		if svcErr = k.Update(centralRequest); svcErr != nil {
 			glog.Errorf("Failed to update central %q record with updated billing parameters (%v): %v", centralID, updated, svcErr)
 			return svcErr
 		}
