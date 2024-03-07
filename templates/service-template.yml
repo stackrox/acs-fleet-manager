@@ -1331,7 +1331,6 @@ objects:
             - --ocm-addon-url=${OCM_ADDON_SERVICE_URL}
             - --ocm-addon-client-id-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientId
             - --ocm-addon-client-secret-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientSecret
-            - --ocm-addon-client-secret-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientSecret
             - --inherit-fleetshard-sync-image-tag=${OCM_ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG}
             - --addon-self-token-file=/secrets/fleet-manager-credentials/ocm-addon-service.token
             - --fleetshard-sync-image-tag=${IMAGE_TAG}
