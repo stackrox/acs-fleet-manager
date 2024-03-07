@@ -54,9 +54,6 @@ $QUAY_TOKEN
 EOF
         fi
     fi
-
-    log "Ensuring operator images exist from dev GitOps config"
-    ensure_operator_image_exists.sh
 fi
 
 log
