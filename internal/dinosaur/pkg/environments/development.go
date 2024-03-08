@@ -18,7 +18,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"enable-sentry":                                   "false",
 		"enable-deny-list":                                "true",
 		"enable-instance-limit-control":                   "false",
-		"sso-base-url":                                    "https://sso.redhat.com",
 		"enable-central-external-certificate":             "false",
 		"cluster-compute-machine-type":                    "m5.2xlarge",
 		"allow-evaluator-instance":                        "true",
