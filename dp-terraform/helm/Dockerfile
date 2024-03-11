@@ -21,7 +21,7 @@ RUN microdnf install gzip tar && \
         chmod +x /usr/local/bin/yq && \
         rm /tmp/yq_linux_amd64.tar.gz && \
     cd rhacs-terraform/charts && for filename in *.tgz; do tar -xf "$filename" && rm -f "$filename"; done && \
-    yq -i 'del(.securityContext.runAsUser) | del(.webhook.securityContext.runAsUser) | del(.certController.securityContext.runAsUser)' external-secrets/values.yaml
+    yq -i 'del(.securityContext.runAsUser)' external-secrets/values.yaml
 
 ARG FLEETSHARD_SYNC_IMAGE_TAG=main
 RUN yq -i ".fleetshardSync.image.tag = strenv(FLEETSHARD_SYNC_IMAGE_TAG)" rhacs-terraform/values.yaml
