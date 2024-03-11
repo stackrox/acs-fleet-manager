@@ -200,7 +200,7 @@ secured-cluster:
       nodeSelector:
         node-role.kubernetes.io/acscs-infra: ""
   scannerV4:
-    scannerComponent: Enabled
+    scannerComponent: AutoSense
     db:
       tolerations:
         - key: node-role.kubernetes.io/acscs-infra
