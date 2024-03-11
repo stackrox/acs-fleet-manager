@@ -225,17 +225,9 @@ external-secrets:
   securityContext:
     runAsUser: null
   webhook:
-    securityContext:
-      runAsUser: null
-    image:
-      repository: quay.io/app-sre/external-secrets
-      tag: v0.9.5
+    create: false
   certController:
-    securityContext:
-      runAsUser: null
-    image:
-      repository: quay.io/app-sre/external-secrets
-      tag: v0.9.5
+    create: false
   tolerations:
     - key: node-role.kubernetes.io/acscs-infra
       operator: Exists
