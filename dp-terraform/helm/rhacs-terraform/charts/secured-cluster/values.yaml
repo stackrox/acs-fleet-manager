@@ -51,6 +51,15 @@ scanner:
       requests:
         memory: 100Mi
         cpu: 100m
+scannerV4:
+  scannerComponent: null
+  indexer:
+    tolerations: []
+    nodeSelector: {}
+    scaling: null
+  db:
+    tolerations: []
+    nodeSelector: {}
 sensor:
   resources:
     requests:

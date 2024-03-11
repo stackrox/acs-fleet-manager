@@ -76,3 +76,32 @@ spec:
       {{- if .Values.scanner.db.nodeSelector }}
       nodeSelector: {{ toYaml .Values.scanner.db.nodeSelector | nindent 8 }}
       {{- end }}
+
+  scannerV4:
+    {{- if .Values.scannerV4.scannerComponent }}
+    scannerComponent: {{ .Values.scannerV4.scannerComponent }}
+    {{- end }}
+    indexer:
+      {{- if .Values.scannerV4.indexer.resources }}
+      resources: {{ toYaml .Values.scannerV4.indexer.resources | nindent 8 }}
+      {{- end }}
+      {{- if .Values.scannerV4.indexer.tolerations }}
+      tolerations: {{ toYaml .Values.scannerV4.indexer.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.scannerV4.indexer.nodeSelector }}
+      nodeSelector: {{ toYaml .Values.scannerV4.indexer.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.scannerV4.indexer.scaling }}
+      scaling: {{ toYaml .Values.scannerV4.indexer.scaling | nindent 8 }}
+      {{- end }}
+
+    db:
+      {{- if .Values.scannerV4.db.resources }}
+      resources: {{ toYaml .Values.scannerV4.db.resources | nindent 8 }}
+      {{- end }}
+      {{- if .Values.scannerV4.db.tolerations }}
+      tolerations: {{ toYaml .Values.scannerV4.db.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.scannerV4.db.nodeSelector }}
+      nodeSelector: {{ toYaml .Values.scannerV4.db.nodeSelector | nindent 8 }}
+      {{- end }}
