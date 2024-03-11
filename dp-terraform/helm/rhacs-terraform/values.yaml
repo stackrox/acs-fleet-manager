@@ -184,7 +184,37 @@ secured-cluster:
     nodeSelector:
       node-role.kubernetes.io/acscs-infra: ""
   scanner:
-    scannerComponent: Disabled
+    scannerComponent: Enabled
+    db:
+      tolerations:
+        - key: node-role.kubernetes.io/acscs-infra
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/acscs-infra: ""
+    analyzer:
+      tolerations:
+        - key: node-role.kubernetes.io/acscs-infra
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/acscs-infra: ""
+  scannerV4:
+    scannerComponent: Enabled
+    db:
+      tolerations:
+        - key: node-role.kubernetes.io/acscs-infra
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/acscs-infra: ""
+    indexer:
+      tolerations:
+        - key: node-role.kubernetes.io/acscs-infra
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/acscs-infra: ""
 
 external-secrets:
   fullnameOverride: rhacs-external-secrets
