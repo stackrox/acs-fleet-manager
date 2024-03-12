@@ -694,7 +694,7 @@ func (k *dinosaurService) Update(dinosaurRequest *dbapi.CentralRequest) *errors.
 		Model(dinosaurRequest).
 		Where("status not IN (?)", dinosaurDeletionStatuses) // ignore updates of dinosaur under deletion
 
-	logStateChange("delete request", dinosaurRequest.ID, dinosaurRequest)
+	logStateChange("updates", dinosaurRequest.ID, dinosaurRequest)
 
 	if err := dbConn.Updates(dinosaurRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update central")
