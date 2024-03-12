@@ -18,18 +18,11 @@ import (
 
 // IAMConfig ...
 type IAMConfig struct {
-	BaseURL                                    string                `json:"base_url"`
-	SsoBaseURL                                 string                `json:"sso_base_url"`
-	InternalSsoBaseURL                         string                `json:"internal_sso_base_url"`
-	Debug                                      bool                  `json:"debug"`
-	InsecureSkipVerify                         bool                  `json:"insecure-skip-verify"`
-	RedhatSSORealm                             *IAMRealmConfig       `json:"redhat_sso_config"`
-	InternalSSORealm                           *IAMRealmConfig       `json:"internal_sso_config"`
-	MaxAllowedServiceAccounts                  int                   `json:"max_allowed_service_accounts"`
-	MaxLimitForGetClients                      int                   `json:"max_limit_for_get_clients"`
-	ServiceAccounttLimitCheckSkipOrgIDListFile string                `json:"-"`
-	ServiceAccounttLimitCheckSkipOrgIDList     []string              `json:"-"`
-	AdditionalSSOIssuers                       *AdditionalSSOIssuers `json:"-"`
+	SsoBaseURL           string                `json:"sso_base_url"`
+	InternalSsoBaseURL   string                `json:"internal_sso_base_url"`
+	RedhatSSORealm       *IAMRealmConfig       `json:"redhat_sso_config"`
+	InternalSSORealm     *IAMRealmConfig       `json:"internal_sso_config"`
+	AdditionalSSOIssuers *AdditionalSSOIssuers `json:"-"`
 }
 
 // AdditionalSSOIssuers ...
@@ -101,10 +94,7 @@ func (c *IAMRealmConfig) validateConfiguration() error {
 // NewIAMConfig ...
 func NewIAMConfig() *IAMConfig {
 	kc := &IAMConfig{
-		SsoBaseURL:            "https://sso.redhat.com",
-		Debug:                 false,
-		InsecureSkipVerify:    false,
-		MaxLimitForGetClients: 100,
+		SsoBaseURL: "https://sso.redhat.com",
 		RedhatSSORealm: &IAMRealmConfig{
 			APIEndpointURI:   "/auth/realms/redhat-external",
 			Realm:            "redhat-external",
@@ -116,25 +106,17 @@ func NewIAMConfig() *IAMConfig {
 			APIEndpointURI: "/auth/realms/EmployeeIDP",
 			Realm:          "EmployeeIDP",
 		},
-		InternalSsoBaseURL:                         "https://auth.redhat.com",
-		MaxAllowedServiceAccounts:                  50,
-		ServiceAccounttLimitCheckSkipOrgIDListFile: "config/service-account-limits-check-skip-org-id-list.yaml",
-		AdditionalSSOIssuers:                       &AdditionalSSOIssuers{},
+		InternalSsoBaseURL:   "https://auth.redhat.com",
+		AdditionalSSOIssuers: &AdditionalSSOIssuers{},
 	}
 	return kc
 }
 
 // AddFlags ...
 func (ic *IAMConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&ic.BaseURL, "sso-base-url", ic.BaseURL, "The base URL of the sso, integration by default")
-	fs.BoolVar(&ic.Debug, "sso-debug", ic.Debug, "Debug flag for IAM API")
-	fs.BoolVar(&ic.InsecureSkipVerify, "sso-insecure", ic.InsecureSkipVerify, "Disable tls verification with sso")
-	fs.IntVar(&ic.MaxAllowedServiceAccounts, "max-allowed-service-accounts", ic.MaxAllowedServiceAccounts, "Max allowed service accounts per org")
-	fs.IntVar(&ic.MaxLimitForGetClients, "max-limit-for-sso-get-clients", ic.MaxLimitForGetClients, "Max limits for SSO get clients")
 	fs.StringVar(&ic.RedhatSSORealm.ClientIDFile, "redhat-sso-client-id-file", ic.RedhatSSORealm.ClientIDFile, "File containing IAM privileged account client-id that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&ic.RedhatSSORealm.ClientSecretFile, "redhat-sso-client-secret-file", ic.RedhatSSORealm.ClientSecretFile, "File containing IAM privileged account client-secret that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&ic.SsoBaseURL, "redhat-sso-base-url", ic.SsoBaseURL, "The base URL of the SSO, integration by default")
-	fs.StringVar(&ic.ServiceAccounttLimitCheckSkipOrgIDListFile, "service-account-limits-check-skip-org-id-list-file", ic.ServiceAccounttLimitCheckSkipOrgIDListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
 	fs.BoolVar(&ic.AdditionalSSOIssuers.Enabled, "enable-additional-sso-issuers", ic.AdditionalSSOIssuers.Enabled, "Enable additional SSO issuer URIs for verifying tokens")
 	fs.StringVar(&ic.AdditionalSSOIssuers.File, "additional-sso-issuers-file", ic.AdditionalSSOIssuers.File, "File containing a list of SSO issuer URIs to include for verifying tokens")
 	fs.StringVar(&ic.InternalSsoBaseURL, "internal-sso-base-url", ic.InternalSsoBaseURL, "The base URL of the internal SSO, production by default")
@@ -149,16 +131,6 @@ func (ic *IAMConfig) ReadFiles() error {
 	err = shared.ReadFileValueString(ic.RedhatSSORealm.ClientSecretFile, &ic.RedhatSSORealm.ClientSecret)
 	if err != nil {
 		return fmt.Errorf("reading Red Hat SSO Real Client secret file %q: %w", ic.RedhatSSORealm.ClientSecretFile, err)
-	}
-
-	// Read the service account limits check skip org ID yaml file
-	err = shared.ReadYamlFile(ic.ServiceAccounttLimitCheckSkipOrgIDListFile, &ic.ServiceAccounttLimitCheckSkipOrgIDList)
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			glog.V(10).Infof("Specified service account limits skip org IDs  file %q does not exist. Proceeding as if no service account org ID skip list was provided", ic.ServiceAccounttLimitCheckSkipOrgIDListFile)
-		} else {
-			return fmt.Errorf("reading the service account limits check skip org ID yaml file %q: %w", ic.ServiceAccounttLimitCheckSkipOrgIDListFile, err)
-		}
 	}
 
 	ic.RedhatSSORealm.setDefaultURIs(ic.SsoBaseURL)

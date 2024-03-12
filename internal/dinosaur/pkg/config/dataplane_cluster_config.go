@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/constants"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
 	userv1 "github.com/openshift/api/user/v1"
@@ -25,19 +24,8 @@ type DataplaneClusterConfig struct {
 	DataPlaneClusterConfigFile            string `json:"dataplane_cluster_config_file"`
 	ReadOnlyUserList                      userv1.OptionalNames
 	ReadOnlyUserListFile                  string
-	ClusterConfig                         *ClusterConfig             `json:"clusters_config"`
-	EnableReadyDataPlaneClustersReconcile bool                       `json:"enable_ready_dataplane_clusters_reconcile"`
-	CentralOperatorOLMConfig              OperatorInstallationConfig `json:"dinosaur_operator_olm_config"`
-	FleetshardOperatorOLMConfig           OperatorInstallationConfig `json:"fleetshard_operator_olm_config"`
-}
-
-// OperatorInstallationConfig ...
-type OperatorInstallationConfig struct {
-	Namespace              string `json:"namespace"`
-	IndexImage             string `json:"index_image"`
-	CatalogSourceNamespace string `json:"catalog_source_namespace"`
-	Package                string `json:"package"`
-	SubscriptionChannel    string `json:"subscription_channel"`
+	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
+	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 }
 
 // ManualScaling ...
@@ -60,20 +48,6 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 		DataPlaneClusterScalingType:           ManualScaling,
 		ClusterConfig:                         &ClusterConfig{},
 		EnableReadyDataPlaneClustersReconcile: true,
-		CentralOperatorOLMConfig: OperatorInstallationConfig{
-			IndexImage:             "quay.io/osd-addons/managed-central:production-82b42db",
-			CatalogSourceNamespace: "openshift-marketplace",
-			Namespace:              constants.CentralOperatorNamespace,
-			SubscriptionChannel:    "alpha",
-			Package:                "managed-central",
-		},
-		FleetshardOperatorOLMConfig: OperatorInstallationConfig{
-			IndexImage:             "quay.io/osd-addons/fleetshard-operator:production-82b42db",
-			CatalogSourceNamespace: "openshift-marketplace",
-			Namespace:              constants.FleetShardOperatorNamespace,
-			SubscriptionChannel:    "alpha",
-			Package:                "fleetshard-operator",
-		},
 	}
 }
 
@@ -264,16 +238,6 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", c.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
-	fs.StringVar(&c.CentralOperatorOLMConfig.CatalogSourceNamespace, "central-operator-cs-namespace", c.CentralOperatorOLMConfig.CatalogSourceNamespace, "Central operator catalog source namespace.")
-	fs.StringVar(&c.CentralOperatorOLMConfig.IndexImage, "central-operator-index-image", c.CentralOperatorOLMConfig.IndexImage, "Central operator index image")
-	fs.StringVar(&c.CentralOperatorOLMConfig.Namespace, "central-operator-namespace", c.CentralOperatorOLMConfig.Namespace, "Central operator namespace")
-	fs.StringVar(&c.CentralOperatorOLMConfig.Package, "central-operator-package", c.CentralOperatorOLMConfig.Package, "Central operator package")
-	fs.StringVar(&c.CentralOperatorOLMConfig.SubscriptionChannel, "central-operator-sub-channel", c.CentralOperatorOLMConfig.SubscriptionChannel, "Central operator subscription channel")
-	fs.StringVar(&c.FleetshardOperatorOLMConfig.CatalogSourceNamespace, "fleetshard-operator-cs-namespace", c.FleetshardOperatorOLMConfig.CatalogSourceNamespace, "fleetshard operator catalog source namespace.")
-	fs.StringVar(&c.FleetshardOperatorOLMConfig.IndexImage, "fleetshard-operator-index-image", c.FleetshardOperatorOLMConfig.IndexImage, "fleetshard operator index image")
-	fs.StringVar(&c.FleetshardOperatorOLMConfig.Namespace, "fleetshard-operator-namespace", c.FleetshardOperatorOLMConfig.Namespace, "fleetshard operator namespace")
-	fs.StringVar(&c.FleetshardOperatorOLMConfig.Package, "fleetshard-operator-package", c.FleetshardOperatorOLMConfig.Package, "fleetshard operator package")
-	fs.StringVar(&c.FleetshardOperatorOLMConfig.SubscriptionChannel, "fleetshard-operator-sub-channel", c.FleetshardOperatorOLMConfig.SubscriptionChannel, "fleetshard operator subscription channel")
 }
 
 // ReadFiles ...

@@ -22,7 +22,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 )
 
 // CoreConfigProviders ...
@@ -92,9 +91,6 @@ func ServiceProviders() di.Option {
 
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
-		di.Provide(func(c *iam.IAMConfig) sso.IAMService {
-			return sso.NewIAMService(c)
-		}),
 		di.Provide(services.NewTelemetryAuth),
 
 		// Types registered as a BootService are started when the env is started

@@ -837,6 +837,10 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 		"ClientOrigin",
 		"ClientSecret",
 		"CreatedAt",
+		// reset expired_at to null: it may later be updated by the next run
+		// of the expiration manager. If there is still no quota, the grace
+		// period will start over.
+		"ExpiredAt",
 	}
 
 	// use a new central request, so that unset field for columnsToReset will automatically be set to the zero value

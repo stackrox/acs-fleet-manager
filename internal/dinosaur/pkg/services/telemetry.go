@@ -117,6 +117,9 @@ func (t *Telemetry) trackCreationRequested(ctx context.Context, tenantID string,
 // RegisterTenant initializes the tenant group with the associated properties
 // and issues a following event tracking the central creation request.
 func (t *Telemetry) RegisterTenant(ctx context.Context, convCentral *dbapi.CentralRequest, isAdmin bool, err error) {
+	if !t.enabled() {
+		return
+	}
 	user, err := t.auth.getUserFromContext(ctx)
 	if err != nil {
 		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
@@ -142,6 +145,9 @@ func (t *Telemetry) RegisterTenant(ctx context.Context, convCentral *dbapi.Centr
 
 // UpdateTenant updates tenant group properties.
 func (t *Telemetry) UpdateTenantProperties(convCentral *dbapi.CentralRequest) {
+	if !t.enabled() {
+		return
+	}
 	props := t.getTenantProperties(convCentral)
 	// Update tenant group properties from the name of fleet-manager backend.
 	t.config.Telemeter().Group(props,

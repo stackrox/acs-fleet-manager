@@ -29,7 +29,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
@@ -45,7 +44,6 @@ type options struct {
 	Central                 services.DinosaurService
 	CloudProviders          services.CloudProvidersService
 	Observatorium           services.ObservatoriumService
-	IAM                     sso.IAMService
 	DataPlaneCluster        services.DataPlaneClusterService
 	DataPlaneCentralService services.DataPlaneCentralService
 	AccountService          account.AccountService
