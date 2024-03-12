@@ -68,11 +68,8 @@ This lists the feature flags and their sub-configurations to enable/disable and 
     - If this is set to `ams`, quotas will be managed via OCM's accounts management service (AMS).
 
 ## IAM
-- **sso-debug** [Optional] Enables IAM debug logging.
-- **sso-base-url** [Required]: The base URL of the IAM instance.
 - **redhat-sso-client-id-file** [Required]: The path to the file containing a RedHat SSO account client ID that has access to the ACS service accounts (default: `'secrets/redhatsso-service.clientId'`).
 - **redhat-sso-client-secret-file** [Required]: The path to the file containing a RedHat SSO account client secret that has access to the ACS service accounts (default: `'secrets/redhatsso-service.clientSecret'`).
-- **sso-insecure** [Optional]: Disables IAM TLS verification
 
 ## Metrics Server
 - **enable-metrics-https**: Enables HTTPS for the metrics server.
@@ -117,16 +114,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
         - `providers-config-file` [Required]: The path to the file containing a list of supported cloud providers that the service can provision dataplane clusters to (default: `'config/provider-configuration.yaml'`, example: [provider-configuration.yaml](../config/provider-configuration.yaml)).
         - `cluster-compute-machine-type` [Optional]: The compute machine type to be used for provisioning a new dataplane cluster (default: `m5.2xlarge`).
         - `cluster-openshift-version` [Optional]: The OpenShift version to be installed on the dataplane cluster (default: `""`, empty string indicates that the latest stable version will be used).
-- **central-operator-cs-namespace**: Central operator catalog source namespace.
-- **central-operator-index-image**: Central operator index image name
-- **central-operator-namespace**: Central operator namespace
-- **central-operator-package**: Central operator package name
-- **central-operator-sub-channel**: Central operator subscription channel
-- **fleetshard-operator-cs-namespace**: fleetshard operator catalog source namespace
-- **fleetshard-operator-index-image**: fleetshard operator index image name
-- **fleetshard-operator-namespace**: fleetshard operator namespace
-- **fleetshard-operator-package**: fleetshard operator package name
-- **fleetshard-operator-sub-channel**: fleetshard operator subscription channel
 
 ## Sentry
 - **enable-sentry**: Enables Sentry error reporting.

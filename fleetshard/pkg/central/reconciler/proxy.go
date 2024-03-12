@@ -21,9 +21,12 @@ func getProxyEnvVars(namespace string, additionalNoProxyTargets ...url.URL) []co
 	}
 
 	directServicesAndPorts := map[string][]int{
-		"central":    {443},
-		"scanner":    {8080, 8443},
-		"scanner-db": {5432},
+		"central":            {443},
+		"scanner":            {8080, 8443},
+		"scanner-db":         {5432},
+		"scanner-v4-db":      {5432},
+		"scanner-v4-indexer": {8443},
+		"scanner-v4-matcher": {8443},
 	}
 	var noProxyTargets []string
 	for svcName, ports := range directServicesAndPorts {

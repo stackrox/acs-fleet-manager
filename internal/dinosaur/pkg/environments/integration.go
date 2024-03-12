@@ -37,7 +37,6 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"enable-deny-list":                    "true",
 		"enable-instance-limit-control":       "true",
 		"max-allowed-instances":               "1",
-		"sso-base-url":                        "https://sso.redhat.com",
 		"enable-central-external-certificate": "false",
 		"cluster-compute-machine-type":        "m5.xlarge",
 		"allow-evaluator-instance":            "true",

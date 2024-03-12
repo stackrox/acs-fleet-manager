@@ -64,16 +64,6 @@ fleetshardSync:
   addonAutoUpgradeEnabled: true
   addonName: acs-fleetshard
 
-acsOperator:
-  enabled: false
-  channel: latest
-  repository: quay.io/rhacs-eng
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-  version: v3.70.0
-  # This setting specifies whether to use a upstream operator to test unreleased versions of ACS.
-  upstream: false
-
 # See available parameters in charts/cloudwatch/values.yaml
 # - enabled flag is used to completely enable/disable cloudwatch sub-chart
 cloudwatch:
@@ -194,7 +184,37 @@ secured-cluster:
     nodeSelector:
       node-role.kubernetes.io/acscs-infra: ""
   scanner:
-    scannerComponent: Disabled
+    scannerComponent: AutoSense
+    db:
+      tolerations:
+        - key: node-role.kubernetes.io/acscs-infra
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/acscs-infra: ""
+    analyzer:
+      tolerations:
+        - key: node-role.kubernetes.io/acscs-infra
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/acscs-infra: ""
+  scannerV4:
+    scannerComponent: AutoSense
+    db:
+      tolerations:
+        - key: node-role.kubernetes.io/acscs-infra
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/acscs-infra: ""
+    indexer:
+      tolerations:
+        - key: node-role.kubernetes.io/acscs-infra
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/acscs-infra: ""
 
 external-secrets:
   fullnameOverride: rhacs-external-secrets
@@ -205,17 +225,9 @@ external-secrets:
   securityContext:
     runAsUser: null
   webhook:
-    securityContext:
-      runAsUser: null
-    image:
-      repository: quay.io/app-sre/external-secrets
-      tag: v0.9.5
+    create: false
   certController:
-    securityContext:
-      runAsUser: null
-    image:
-      repository: quay.io/app-sre/external-secrets
-      tag: v0.9.5
+    create: false
   tolerations:
     - key: node-role.kubernetes.io/acscs-infra
       operator: Exists

@@ -53,20 +53,36 @@ parameters:
   value: "10"
 
 - name: MEMORY_REQUEST
-  description: Memory request for the API pods.
+  description: Memory request for the fleet manager container.
   value: "512Mi"
 
 - name: MEMORY_LIMIT
-  description: Memory limit for the API pods.
+  description: Memory limit for the fleet manager container.
   value: "1Gi"
 
 - name: CPU_REQUEST
-  description: CPU request for the API pods.
+  description: CPU request for the fleet manager container.
   value: "200m"
 
 - name: CPU_LIMIT
-  description: CPU limit for the API pods.
+  description: CPU limit for the fleet manager container.
   value: "1"
+
+- name: ENVOY_MEMORY_REQUEST
+  description: Memory request for the envoy sidecar container.
+  value: "256Mi"
+
+- name: ENVOY_MEMORY_LIMIT
+  description: Memory limit for the envoy sidecar container.
+  value: "512Mi"
+
+- name: ENVOY_CPU_REQUEST
+  description: CPU request for the envoy sidecar container.
+  value: "250m"
+
+- name: ENVOY_CPU_LIMIT
+  description: CPU limit for the envoy sidecar container.
+  value: "500m"
 
 - name: JWKS_URL
   displayName: JWK Token Certificate URL
@@ -233,11 +249,6 @@ parameters:
   description: The default value of maximum number of instances that can be created by users.
   value: "1"
 
-- name: MAX_LIMIT_FOR_SSO_GET_CLIENTS
-  displayName: Max clients fetch by get clients
-  description: The default value of maximum number of clients fetch from sso.
-  value: "100"
-
 - name: REGISTERED_SERVICE_ACCOUNTS
   displayName: A list of service accounts
   description: A list of service accounts that are allowed to create standard CENTRAL instances without requiring an organisation to do so in a yaml format.
@@ -257,19 +268,6 @@ parameters:
   displayName: A list of read only users given by their usernames
   description: A list of read only users. A user is identified by its username.
   value: "[]"
-
-- name: SSO_DEBUG
-  displayName: SSO API Debug mode
-  description: Debug mode for SSO API client
-  value: "false"
-
-- name: SSO_BASE_URL
-  displayName: SSO Host Url
-  description: SSO Host url
-
-- name: SSO_REALM
-  displayName: SSO REALM for Central SSO Clients and Service Accounts
-  description: SSO realm for Central SSO Clients and Service Accounts
 
 - name: CLUSTER_OPENSHIFT_VERSION
   displayName: The version of openshift
@@ -356,16 +354,6 @@ parameters:
 - name: ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
-
-- name: CENTRAL_OPERATOR_OLM_INDEX_IMAGE
-  displayName: Central operator OLM index image
-  description: Central operator OLM index image
-  value: "quay.io/osd-addons/managed-central:production-82b42db"
-
-- name: FLEETSHARD_OLM_INDEX_IMAGE
-  displayName: fleetshard operator OLM index image
-  description: fleetshard operator OLM index image
-  value: "quay.io/osd-addons/fleetshard-operator:production-82b42db"
 
 - name: IMAGE_PULL_POLICY
   displayName: image pull policy
@@ -1315,13 +1303,9 @@ objects:
             - --ocm-addon-url=${OCM_ADDON_SERVICE_URL}
             - --ocm-addon-client-id-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientId
             - --ocm-addon-client-secret-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientSecret
-            - --ocm-addon-client-secret-file=/secrets/fleet-manager-credentials/ocm-addon-service.clientSecret
             - --inherit-fleetshard-sync-image-tag=${OCM_ADDON_SERVICE_INHERIT_FLEETSHARD_SYNC_IMAGE_TAG}
             - --addon-self-token-file=/secrets/fleet-manager-credentials/ocm-addon-service.token
             - --fleetshard-sync-image-tag=${IMAGE_TAG}
-            - --sso-base-url=${SSO_BASE_URL}
-            - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
-            - --sso-debug=${SSO_DEBUG}
             - --self-token-file=/secrets/service/ocm-service.token
             - --ocm-base-url=${OCM_URL}
             - --ams-base-url=${AMS_URL}
@@ -1361,8 +1345,6 @@ objects:
             - --observability-config-access-token-file=/secrets/service/observability-config-access.token
             - --observability-config-tag=${OBSERVABILITY_CONFIG_TAG}
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
-            - --central-operator-index-image=${CENTRAL_OPERATOR_OLM_INDEX_IMAGE}
-            - --fleetshard-operator-index-image=${FLEETSHARD_OLM_INDEX_IMAGE}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --central-domain-name=${CENTRAL_DOMAIN_NAME}
             - --alsologtostderr
@@ -1447,11 +1429,11 @@ objects:
               failureThreshold: 10
             resources:
               requests:
-                memory: 256Mi
-                cpu: 250m
+                memory: ${ENVOY_MEMORY_REQUEST}
+                cpu: ${ENVOY_CPU_REQUEST}
               limits:
-                memory: 512Mi
-                cpu: 500m
+                memory: ${ENVOY_MEMORY_LIMIT}
+                cpu: ${ENVOY_CPU_LIMIT}
 
   - kind: PodDisruptionBudget
     apiVersion: policy/v1

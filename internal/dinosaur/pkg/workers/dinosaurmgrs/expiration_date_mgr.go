@@ -13,6 +13,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
@@ -112,7 +113,13 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 			}
 		}
 	}
-
+	expiredInstances := 0
+	for _, central := range centrals {
+		if central.ExpiredAt != nil {
+			expiredInstances++
+		}
+	}
+	metrics.UpdateCentralsExpiredMetric(float64(expiredInstances))
 	return svcErrors
 }
 

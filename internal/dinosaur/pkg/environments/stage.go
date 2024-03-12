@@ -10,7 +10,6 @@ func NewStageEnvLoader() environments.EnvLoader {
 		"enable-ocm-mock":                     "false",
 		"enable-deny-list":                    "true",
 		"max-allowed-instances":               "1",
-		"sso-base-url":                        "https://sso.redhat.com",
 		"enable-central-external-certificate": "true",
 		"cluster-compute-machine-type":        "m5.2xlarge",
 		"enable-additional-sso-issuers":       "true",

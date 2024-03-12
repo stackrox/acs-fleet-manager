@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 413,
-      "iteration": 1664186027385,
+      "iteration": 1664186027399,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -190,7 +190,7 @@ data:
           },
           "gridPos": {
             "h": 8,
-            "w": 24,
+            "w": 16,
             "x": 0,
             "y": 8
           },
@@ -236,6 +236,31 @@ data:
           ],
           "title": "Requests rate",
           "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 8
+          },
+          "id": 13,
+          "options": {
+            "code": {
+              "language": "plaintext",
+              "showLineNumbers": false,
+              "showMiniMap": false
+            },
+            "content": "* The jagged pattern for outbound requests rate\nis expected. Every ~6h, fleet manager sends\na number of requests (one per each organization)\nto AMS to check whether organizations still\nhave entitlement.",
+            "mode": "markdown"
+          },
+          "pluginVersion": "9.3.8",
+          "title": "Requests rate: Legend",
+          "type": "text"
         },
         {
           "datasource": {
@@ -608,7 +633,7 @@ data:
           "type": "timeseries"
         }
       ],
-      "schemaVersion": 36,
+      "schemaVersion": 37,
       "style": "dark",
       "tags": [],
       "templating": {
@@ -667,7 +692,7 @@ data:
         ]
       },
       "time": {
-        "from": "now-12h",
+        "from": "now-14d",
         "to": "now"
       },
       "timepicker": {},
