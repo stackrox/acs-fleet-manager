@@ -1139,9 +1139,8 @@ objects:
               name: fleet-manager-admin-authz-config
           - name: envoy-config
             configMap:
-              # Temporarily use a minimum version of the configmap deployed from this file
-              # (-cd for Continuous Deployment).
-              name: fleet-manager-envoy-config-cd
+              # ConfigMap from app-interface
+              name: fleet-manager-envoy-config
           - name: envoy-tls
             secret:
               secretName: fleet-manager-envoy-tls # pragma: allowlist secret
