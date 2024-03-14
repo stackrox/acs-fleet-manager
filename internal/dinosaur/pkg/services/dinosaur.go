@@ -709,7 +709,7 @@ func (k *dinosaurService) Updates(dinosaurRequest *dbapi.CentralRequest, fields 
 		Model(dinosaurRequest).
 		Where("status not IN (?)", dinosaurDeletionStatuses) // ignore updates of dinosaur under deletion
 
-	glog.Infof("instance %q state change: %+v", dinosaurRequest.ID, fields)
+	glog.Infof("instance state change: id=%q: fields=%+v", dinosaurRequest.ID, fields)
 
 	if err := dbConn.Updates(fields).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update central")
