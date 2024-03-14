@@ -181,6 +181,8 @@ func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralR
 func (k *dinosaurService) ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	centralRequest.Secrets = nil // pragma: allowlist secret
 
+	logStateChange("reset secrets", centralRequest.ID, nil)
+
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Model(centralRequest).Select("secrets").Updates(centralRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset secrets for central request")
@@ -302,6 +304,9 @@ func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurReque
 	// the API is restarted this time changing the --quota-type flag to quota-management-list, when dinosaur A is deleted at this point,
 	// we want to use the correct quota to perform the deletion.
 	dinosaurRequest.QuotaType = k.dinosaurConfig.Quota.Type
+
+	logStateChange("register dinosaur job", dinosaurRequest.ID, dinosaurRequest)
+
 	if err := dbConn.Create(dinosaurRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create central request") // hide the db error to http caller
 	}
@@ -599,12 +604,12 @@ func (k *dinosaurService) Delete(centralRequest *dbapi.CentralRequest, force boo
 		}
 	}
 
+	logStateChange("delete request", centralRequest.ID, nil)
 	// soft delete the dinosaur request
 	if err := dbConn.Delete(centralRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete central request with id %s", centralRequest.ID)
 	}
 
-	glog.Infof("Successfully deleted Central tenant %q in the database.", centralRequest.ID)
 	if force {
 		glog.Infof("Make sure any other resources belonging to the Central tenant %q are manually deleted.", centralRequest.ID)
 	}
@@ -689,6 +694,8 @@ func (k *dinosaurService) Update(dinosaurRequest *dbapi.CentralRequest) *errors.
 		Model(dinosaurRequest).
 		Where("status not IN (?)", dinosaurDeletionStatuses) // ignore updates of dinosaur under deletion
 
+	logStateChange("updates", dinosaurRequest.ID, dinosaurRequest)
+
 	if err := dbConn.Updates(dinosaurRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update central")
 	}
@@ -701,6 +708,8 @@ func (k *dinosaurService) Updates(dinosaurRequest *dbapi.CentralRequest, fields 
 	dbConn := k.connectionFactory.New().
 		Model(dinosaurRequest).
 		Where("status not IN (?)", dinosaurDeletionStatuses) // ignore updates of dinosaur under deletion
+
+	glog.Infof("instance state change: id=%q: fields=%+v", dinosaurRequest.ID, fields)
 
 	if err := dbConn.Updates(fields).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update central")
@@ -752,6 +761,8 @@ func (k *dinosaurService) UpdateStatus(id string, status dinosaurConstants.Centr
 		now := time.Now()
 		update.DeletionTimestamp = &now
 	}
+
+	logStateChange(fmt.Sprintf("change status to %q", status.String()), id, nil)
 
 	if err := dbConn.Model(&dbapi.CentralRequest{Meta: api.Meta{ID: id}}).Updates(update).Error; err != nil {
 		return true, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update central status")
@@ -849,6 +860,8 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 	resetRequest.ID = centralRequest.ID
 	resetRequest.Status = dinosaurConstants.CentralRequestStatusPreparing.String()
 	resetRequest.CreatedAt = time.Now()
+
+	logStateChange("restore", resetRequest.ID, resetRequest)
 
 	if err := dbConn.Unscoped().Model(resetRequest).Select(columnsToReset).Updates(resetRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset CentralRequest status")
@@ -976,4 +989,51 @@ func buildResourceRecordChange(recordName string, clusterIngress string, action 
 	}
 
 	return resourceRecordChange
+}
+
+func logStateChange(msg, id string, req *dbapi.CentralRequest) {
+	if req != nil {
+		glog.Infof("instance state change: id=%q: message=%s: request=%+v", id, msg, convertCentralRequestToString(req))
+	} else {
+		glog.Infof("instance state change: id=%q: message=%s", id, msg)
+	}
+}
+
+func convertCentralRequestToString(req *dbapi.CentralRequest) string {
+	traits, _ := req.Traits.Value()
+	requestAsMap := map[string]interface{}{
+		"id":                      req.ID,
+		"created_at":              req.CreatedAt,
+		"updated_at":              req.UpdatedAt,
+		"deleted_at":              req.DeletedAt,
+		"region":                  req.Region,
+		"cluster_id":              req.ClusterID,
+		"cloud_provider":          req.CloudProvider,
+		"cloud_account_id":        req.CloudAccountID,
+		"multi_az":                req.MultiAZ,
+		"name":                    req.Name,
+		"status":                  req.Status,
+		"subscription_id":         req.SubscriptionID,
+		"owner":                   req.Owner,
+		"owner_account_id":        req.OwnerAccountID,
+		"owner_user_id":           req.OwnerUserID,
+		"owner_alternate_user_id": req.OwnerAlternateUserID,
+		"host":                    req.Host,
+		"organisation_id":         req.OrganisationID,
+		"organisation_name":       req.OrganisationName,
+		"failed_reason":           req.FailedReason,
+		"placement_id":            req.PlacementID,
+		"instance_type":           req.InstanceType,
+		"qouta_type":              req.QuotaType,
+		"routes_created":          req.RoutesCreated,
+		"namespace":               req.Namespace,
+		"routes_creation_id":      req.RoutesCreationID,
+		"deletion_timestamp":      req.DeletionTimestamp,
+		"internal":                req.Internal,
+		"expired_at":              req.ExpiredAt,
+		"traits":                  traits,
+		"issuer":                  req.Issuer,
+		"client_origin":           req.ClientOrigin,
+	}
+	return fmt.Sprintf("%+v", requestAsMap)
 }
