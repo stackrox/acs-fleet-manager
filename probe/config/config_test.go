@@ -65,8 +65,8 @@ func TestGetConfig_CentralSpecDefault(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, CentralSpecs{
 		{
-			CloudProvider: "aws",
-			Region:        "us-east-1",
+			CloudProvider: "standalone",
+			Region:        "standalone",
 		},
 	}, cfg.CentralSpecs)
 }

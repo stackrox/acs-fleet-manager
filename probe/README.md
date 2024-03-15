@@ -38,3 +38,37 @@ make probe
 # or run an endless loop of probes
 ./probe/bin/probe start
 ```
+
+
+## Run probe on a dev cluster
+##### Prerequisites
+1. Switch kubectl context to the local cluster, e.g.
+```
+kubectl config use-context colima
+```
+2. Deploy fleet-manager
+```
+make deploy/bootstrap deploy/dev
+```
+For more details, see the root [README.md](../README.md) file
+##### Steps
+
+1. Build the probe image
+```
+make image/build/probe
+```
+2. Deploy on the cluster
+```
+make deploy/probe
+```
+To deploy the probe service with a custom tag:
+```
+# For example: Mark the image built for the previous commit as latest
+docker tag quay.io/rhacs-eng/probe:$(git rev-parse --short=7 HEAD^) quay.io/rhacs-eng/probe:latest
+# Deploy probe with latest tag
+make deploy/probe IMAGE_TAG=latest
+```
+##### Cleanup
+```
+make undeploy/probe
+```
