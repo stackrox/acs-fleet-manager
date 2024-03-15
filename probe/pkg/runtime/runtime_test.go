@@ -19,6 +19,12 @@ var testConfig = &config.Config{
 	ProbeRunWaitPeriod:  10 * time.Millisecond,
 	ProbeName:           "probe",
 	RHSSOClientID:       "client",
+	CentralSpecs: []config.CentralSpec{
+		{
+			CloudProvider: "aws",
+			Region:        "us-east-1",
+		},
+	},
 }
 
 func TestRunSingle(t *testing.T) {
@@ -32,7 +38,7 @@ func TestRunSingle(t *testing.T) {
 				CleanUpFunc: func(ctx context.Context) error {
 					return nil
 				},
-				ExecuteFunc: func(ctx context.Context) error {
+				ExecuteFunc: func(ctx context.Context, spec config.CentralSpec) error {
 					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeRunTimeout)
 					return ctx.Err()
 				},
@@ -45,7 +51,7 @@ func TestRunSingle(t *testing.T) {
 					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeCleanUpTimeout)
 					return ctx.Err()
 				},
-				ExecuteFunc: func(ctx context.Context) error {
+				ExecuteFunc: func(ctx context.Context, spec config.CentralSpec) error {
 					return nil
 				},
 			},
@@ -54,6 +60,7 @@ func TestRunSingle(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
+
 			runtime, err := New(testConfig, tc.mockProbe)
 			require.NoError(t, err, "failed to create runtime")
 			ctx, cancel := context.WithTimeout(context.TODO(), testConfig.ProbeRunTimeout)
@@ -78,7 +85,7 @@ func TestCanceledContextStillCleansUp(t *testing.T) {
 				CleanUpFunc: func(ctx context.Context) error {
 					return ctx.Err()
 				},
-				ExecuteFunc: func(ctx context.Context) error {
+				ExecuteFunc: func(ctx context.Context, spec config.CentralSpec) error {
 					concurrency.WaitWithTimeout(ctx, 10*time.Millisecond)
 					return ctx.Err()
 				},
@@ -99,7 +106,7 @@ func TestCanceledContextStillCleansUp(t *testing.T) {
 			}()
 			err = runtime.RunSingle(ctx)
 
-			assert.NotContains(t, err.Error(), errCleanupFailed.Error())
+			assert.NotContains(t, err.Error(), "cleanup failed")
 			assert.Equal(t, 1, len(tc.mockProbe.CleanUpCalls()), "must clean up centrals")
 		})
 	}

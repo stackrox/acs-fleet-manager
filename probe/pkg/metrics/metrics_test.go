@@ -7,11 +7,22 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	io_prometheus_client "github.com/prometheus/client_model/go"
+	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var regionValue = "us-east-1"
+var (
+	regionValue = "us-east-1"
+	cfg         = &config.Config{
+		MetricsAddress: ":8081",
+		CentralSpecs: []config.CentralSpec{
+			{
+				Region: regionValue,
+			},
+		},
+	}
+)
 
 func getMetricSeries(t *testing.T, registry *prometheus.Registry, name string) *io_prometheus_client.Metric {
 	metrics := serveMetrics(t, registry)
@@ -52,7 +63,7 @@ func TestCounterIncrements(t *testing.T) {
 		tc := tc
 		t.Run(tc.metricName, func(t *testing.T) {
 			m := newMetrics()
-			registry := initPrometheus(m, regionValue)
+			registry := initPrometheus(m, cfg)
 			tc.callIncrementFunc(m)
 
 			targetSeries := getMetricSeries(t, registry, tc.metricName)
@@ -96,7 +107,7 @@ func TestTimestampGauges(t *testing.T) {
 		tc := tc
 		t.Run(tc.metricName, func(t *testing.T) {
 			m := newMetrics()
-			registry := initPrometheus(m, regionValue)
+			registry := initPrometheus(m, cfg)
 			lowerBound := time.Now().Unix()
 
 			targetSeries := getMetricSeries(t, registry, tc.metricName)
@@ -133,7 +144,7 @@ func TestHistograms(t *testing.T) {
 		tc := tc
 		t.Run(tc.metricName, func(t *testing.T) {
 			m := newMetrics()
-			registry := initPrometheus(m, regionValue)
+			registry := initPrometheus(m, cfg)
 			expectedCount := uint64(2)
 			expectedSum := 480.0
 			tc.callObserveFunc(m)
