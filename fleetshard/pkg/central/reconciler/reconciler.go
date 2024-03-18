@@ -1833,11 +1833,13 @@ func (r *CentralReconciler) ensureSecretExists(
 }
 
 func (r *CentralReconciler) configureAdditionalAuthProvider(secret *corev1.Secret, central private.ManagedCentral) error {
+	authProviderConfig := getAdditionalAuthProvider(central)
+	if authProviderConfig == nil {
+		return nil
+	}
 	if secret.Data == nil {
 		secret.Data = make(map[string][]byte)
 	}
-
-	authProviderConfig := getAdditionalAuthProvider(central)
 
 	rawAuthProviderBytes, err := yaml.Marshal(authProviderConfig)
 	if err != nil {
