@@ -49,7 +49,7 @@ require (
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
 	github.com/spyzhov/ajson v0.9.0
 	github.com/stackrox/rox v0.0.0-20230323083409-e83503a98fb4
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zgalor/weberr v0.8.2
 	golang.org/x/exp v0.0.0-20240110193028-0dcbfd608b1e
@@ -143,7 +143,6 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/stackrox/scanner v0.0.0-20240110222630-351caa1e0024 // indirect
-	github.com/stretchr/objx v0.5.1 // indirect
 	github.com/tkuchiki/go-timezone v0.2.2 // indirect
 	github.com/weppos/publicsuffix-go v0.30.1-0.20230620154423-38c92ad2d5c6 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
