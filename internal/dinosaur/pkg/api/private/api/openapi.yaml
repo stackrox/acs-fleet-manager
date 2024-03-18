@@ -466,6 +466,52 @@ components:
           type: string
         issuer:
           type: string
+    ManagedCentral_allOf_spec_additionalAuth_groups:
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+        role:
+          type: string
+    ManagedCentral_allOf_spec_additionalAuth_requiredAttributes:
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ManagedCentral_allOf_spec_additionalAuth_oidc:
+      properties:
+        issuer:
+          type: string
+        callbackMode:
+          type: string
+        clientID:
+          type: string
+        clientSecret:
+          type: string
+        disableOfflineAccessScope:
+          type: boolean
+    ManagedCentral_allOf_spec_additionalAuth:
+      properties:
+        name:
+          type: string
+        minimumRoleName:
+          type: string
+        groups:
+          items:
+            $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuth_groups'
+          type: array
+        requiredAttributes:
+          items:
+            $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuth_requiredAttributes'
+          type: array
+        claimMappings:
+          items:
+            $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuth_requiredAttributes'
+          type: array
+        oidc:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuth_oidc'
     ManagedCentral_allOf_spec_uiEndpoint_tls:
       properties:
         cert:
@@ -499,6 +545,8 @@ components:
           type: array
         auth:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_auth'
+        additionalAuth:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuth'
         uiEndpoint:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint'
         dataEndpoint:
