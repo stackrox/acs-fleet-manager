@@ -13,10 +13,58 @@ type Config struct {
 	DataPlaneClusters []DataPlaneClusterConfig `json:"dataPlaneClusters"`
 }
 
+// AuthProviderAddition represents tenant's additional auth provider gitops configuration
+type AuthProviderAddition struct {
+	InstanceID   string        `json:"instanceId"`
+	AuthProvider *AuthProvider `json:"authProvider"`
+}
+
+// AuthProvider represents auth provider configuration
+type AuthProvider struct {
+	Name               string              `json:"name,omitempty"`
+	MinimumRoleName    string              `json:"minimumRole,omitempty"`
+	Groups             []Group             `json:"groups,omitempty"`
+	RequiredAttributes []RequiredAttribute `json:"requiredAttributes,omitempty"`
+	ClaimMappings      []ClaimMapping      `json:"claimMappings,omitempty"`
+	OIDCConfig         *OIDCConfig         `json:"oidc,omitempty"`
+}
+
+// RequiredAttribute is representation of storage.AuthProvider_RequiredAttribute that supports transformation from YAML.
+type RequiredAttribute struct {
+	AttributeKey   string `json:"key,omitempty"`
+	AttributeValue string `json:"value,omitempty"`
+}
+
+// ClaimMapping represents a single entry in "claim_mappings" field in auth provider proto.
+type ClaimMapping struct {
+	Path string `json:"path,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
+// Group is representation of storage.Group that supports transformation from YAML.
+type Group struct {
+	AttributeKey   string `json:"key,omitempty"`
+	AttributeValue string `json:"value,omitempty"`
+	RoleName       string `json:"role,omitempty"`
+}
+
+// OIDCConfig contains config values for OIDC auth provider.
+type OIDCConfig struct {
+	Issuer string `json:"issuer,omitempty"`
+	// Depending on callback mode, different OAuth 2.0 would be preferred.
+	// Possible values are: auto, post, query, fragment.
+	CallbackMode string `json:"mode,omitempty"`
+	ClientID     string `json:"clientID,omitempty"`
+	ClientSecret string `json:"clientSecret,omitempty"`
+	// Disables request for "offline_access" scope from OIDC identity provider.
+	DisableOfflineAccessScope bool `json:"disableOfflineAccessScope,omitempty"`
+}
+
 // CentralsConfig represents the declarative configuration for Central instances defaults and overrides.
 type CentralsConfig struct {
 	// Overrides are the overrides for Central instances.
-	Overrides []CentralOverride `json:"overrides"`
+	Overrides               []CentralOverride      `json:"overrides"`
+	AdditionalAuthProviders []AuthProviderAddition `json:"additionalAuthProviders"`
 }
 
 // CentralOverride represents the configuration for a Central instance override. The override

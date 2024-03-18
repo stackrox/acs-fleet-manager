@@ -88,6 +88,7 @@ const (
 	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
 
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
+	additionalAuthProviderConfigKey  = "additional-auth-provider"
 
 	tenantImagePullSecretName = "stackrox" // pragma: allowlist secret
 )
@@ -646,6 +647,9 @@ func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Co
 				configErrs = multierror.Append(configErrs, err)
 			}
 			if err := r.configureAuthProvider(secret, remoteCentral); err != nil {
+				configErrs = multierror.Append(configErrs, err)
+			}
+			if err := r.configureAdditionalAuthProvider(secret, remoteCentral); err != nil {
 				configErrs = multierror.Append(configErrs, err)
 			}
 			return errors.Wrapf(configErrs.ErrorOrNil(),
@@ -1826,6 +1830,69 @@ func (r *CentralReconciler) ensureSecretExists(
 		return fmt.Errorf("creating %s/%s secret: %w", namespace, secretName, createErr)
 	}
 	return nil
+}
+
+func (r *CentralReconciler) configureAdditionalAuthProvider(secret *corev1.Secret, central private.ManagedCentral) error {
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
+	}
+
+	authProviderConfig := getAdditionalAuthProvider(central)
+
+	rawAuthProviderBytes, err := yaml.Marshal(authProviderConfig)
+	if err != nil {
+		return fmt.Errorf("marshaling additional auth provider configuration: %w", err)
+	}
+	secret.Data[additionalAuthProviderConfigKey] = rawAuthProviderBytes
+	return nil
+}
+
+func getAdditionalAuthProvider(central private.ManagedCentral) *declarativeconfig.AuthProvider {
+	auth := central.Spec.AdditionalAuth
+	// Assume that if name is not specified, no additional auth provider is configured.
+	if auth.Name == "" {
+		return nil
+	}
+	groups := make([]declarativeconfig.Group, 0, len(auth.Groups))
+	for _, group := range auth.Groups {
+		groups = append(groups, declarativeconfig.Group{
+			AttributeKey:   group.Key,
+			AttributeValue: group.Value,
+			RoleName:       group.Role,
+		})
+	}
+
+	requiredAttributes := make([]declarativeconfig.RequiredAttribute, 0, len(auth.RequiredAttributes))
+	for _, requiredAttribute := range auth.RequiredAttributes {
+		requiredAttributes = append(requiredAttributes, declarativeconfig.RequiredAttribute{
+			AttributeKey:   requiredAttribute.Key,
+			AttributeValue: requiredAttribute.Value,
+		})
+	}
+
+	claimMappings := make([]declarativeconfig.ClaimMapping, 0, len(auth.ClaimMappings))
+	for _, claimMapping := range auth.ClaimMappings {
+		claimMappings = append(claimMappings, declarativeconfig.ClaimMapping{
+			Path: claimMapping.Key,
+			Name: claimMapping.Value,
+		})
+	}
+
+	return &declarativeconfig.AuthProvider{
+		Name:               auth.Name,
+		UIEndpoint:         central.Spec.UiEndpoint.Host,
+		ExtraUIEndpoints:   []string{"localhost:8443"},
+		Groups:             groups,
+		RequiredAttributes: requiredAttributes,
+		ClaimMappings:      claimMappings,
+		OIDCConfig: &declarativeconfig.OIDCConfig{
+			Issuer:                    auth.Oidc.Issuer,
+			CallbackMode:              auth.Oidc.CallbackMode,
+			ClientID:                  auth.Oidc.ClientID,
+			ClientSecret:              auth.Oidc.ClientSecret, // pragma: allowlist secret
+			DisableOfflineAccessScope: auth.Oidc.DisableOfflineAccessScope,
+		},
+	}
 }
 
 // NewCentralReconciler ...

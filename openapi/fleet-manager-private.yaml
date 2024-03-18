@@ -304,6 +304,55 @@ components:
                       type: string
                     issuer:
                       type: string
+                additionalAuth:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    minimumRoleName:
+                      type: string
+                    groups:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          key:
+                            type: string
+                          value:
+                            type: string
+                          role:
+                            type: string
+                    requiredAttributes:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          key:
+                            type: string
+                          value:
+                            type: string
+                    claimMappings:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          key:
+                            type: string
+                          value:
+                            type: string
+                    oidc:
+                      type: object
+                      properties:
+                        issuer:
+                          type: string
+                        callbackMode:
+                          type: string
+                        clientID:
+                          type: string
+                        clientSecret:
+                          type: string
+                        disableOfflineAccessScope:
+                          type: boolean
                 uiEndpoint:
                   type: object
                   description: 'Handles GUI/CLI/API connections'
