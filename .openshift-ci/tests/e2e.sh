@@ -11,8 +11,6 @@ source "${GITROOT}/dev/env/scripts/lib.sh"
 
 export RUN_AUTH_E2E_DEFAULT="false"
 export RUN_CENTRAL_E2E_DEFAULT="true"
-export RHACS_GITOPS_ENABLED="true"
-export RHACS_TARGETED_OPERATOR_UPGRADES="true"
 
 if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     # We are running in an OpenShift CI context, configure accordingly.
@@ -201,6 +199,6 @@ port-forwarding stop db 5432 || true
 port-forwarding stop fleet-manager 8000 || true
 
 log "Killing oc processes forcefully"
-pkill -9 oc || true
+pkill -9 '^oc$' || true
 
 exit $FAIL

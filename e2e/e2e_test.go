@@ -149,7 +149,7 @@ var _ = Describe("Central", Ordered, func() {
 
 		It("should transition central request state to ready", func() {
 			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
-				WithTimeout(waitTimeout).
+				WithTimeout(extendedWaitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})

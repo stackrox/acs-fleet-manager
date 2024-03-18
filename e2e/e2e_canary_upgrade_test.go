@@ -27,17 +27,17 @@ import (
 )
 
 const (
-	namespace              = "acscs"
-	gitopsConfigmapName    = "fleet-manager-gitops-config"
+	namespace              = "rhacs"
+	gitopsConfigmapName    = "gitops-config"
 	gitopsConfigmapDataKey = "config.yaml"
-	operatorVersion1       = "4.2.0-428-g318762a66d"
-	operatorVersion2       = "4.2.0-427-gd49519f172"
+	operatorVersion1       = "4.3.3"
+	operatorVersion2       = "4.3.4"
 )
 
 var (
 	defaultCRDUrls = []string{
-		"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
-		"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
+		"https://raw.githubusercontent.com/stackrox/stackrox/4.3.4/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
+		"https://raw.githubusercontent.com/stackrox/stackrox/4.3.4/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
 	}
 	operatorConfig1         = operatorConfigForVersion(operatorVersion1)
 	operatorConfig2         = operatorConfigForVersion(operatorVersion2)
@@ -181,9 +181,9 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				Region:        dpRegion,
 			}
 			resp, _, err := client.PublicAPI().CreateCentral(ctx, true, request)
-			Expect(err).To(BeNil())
+			Expect(err).To(Not(HaveOccurred()))
 			createdCentral = &resp
-			Expect(err).To(BeNil())
+			Expect(err).To(Not(HaveOccurred()))
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 			centralNamespace, err = services.FormatNamespace(createdCentral.Id)
 
@@ -194,7 +194,6 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 		})
 
 		It("upgrade central", func() {
-			Skip("Re-enable once https://github.com/stackrox/stackrox/pull/8156 is released with ACS/StackRox 4.3")
 			config := gitops.Config{
 				RHACSOperators: operator.OperatorConfigs{
 					CRDURLs: defaultCRDUrls,
@@ -209,6 +208,15 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			}
 			Expect(putGitopsConfig(ctx, config)).To(Succeed())
 			Eventually(assertCentralLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion2)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+		})
+
+		It("delete central", func() {
+			Expect(deleteCentralByID(ctx, client, createdCentral.Id)).
+				To(Succeed())
+			Eventually(assertCentralRequestDeprovisioning(ctx, client, createdCentral.Id)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -395,13 +403,6 @@ func overrideAllCentralsToUseMinimalResources() gitops.CentralOverride {
 	return overrideAllCentralsWithPatch(minimalCentralResourcesPatch())
 }
 
-func overrideOneCentralToBeReconciledByOperator(central *public.CentralRequest, operatorConfig operator.OperatorConfig) gitops.CentralOverride {
-	return gitops.CentralOverride{
-		InstanceIDs: []string{central.Id},
-		Patch:       reconciledByOperatorPatch(operatorConfig),
-	}
-}
-
 func overrideAllCentralsWithPatch(patch string) gitops.CentralOverride {
 	return gitops.CentralOverride{
 		InstanceIDs: []string{"*"},
@@ -483,15 +484,12 @@ metadata:
 func defaultGitopsConfig() gitops.Config {
 	return gitops.Config{
 		RHACSOperators: operator.OperatorConfigs{
-			CRDURLs: []string{
-				"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
-				"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
-			},
+			CRDURLs: defaultCRDUrls,
 			Configs: []operator.OperatorConfig{
 				{
-					"deploymentName":                  "rhacs-operator-4.2.2-rc.0",
-					"image":                           "quay.io/rhacs-eng/stackrox-operator:4.2.2-rc.0",
-					"centralLabelSelector":            "rhacs.redhat.com/version-selector=4.2.2-rc.0",
+					"deploymentName":                  "rhacs-operator-4.3.4",
+					"image":                           "quay.io/rhacs-eng/stackrox-operator:4.3.4",
+					"centralLabelSelector":            "rhacs.redhat.com/version-selector=4.3.4",
 					"securedClusterReconcilerEnabled": false,
 				},
 			},
@@ -503,7 +501,7 @@ func defaultGitopsConfig() gitops.Config {
 					Patch: `
 metadata:
   labels:
-    rhacs.redhat.com/version-selector: "4.2.2-rc.0"`,
+    rhacs.redhat.com/version-selector: "4.3.4"`,
 				}, {
 					InstanceIDs: []string{"*"},
 					Patch: `
@@ -555,5 +553,9 @@ spec:
 }
 
 func restoreDefaultGitopsConfig() error {
-	return putGitopsConfig(context.Background(), defaultGitopsConfig())
+	defaultConfig, err := gitops.NewProvider().Get()
+	if err != nil {
+		defaultConfig = defaultGitopsConfig()
+	}
+	return putGitopsConfig(context.Background(), defaultConfig)
 }

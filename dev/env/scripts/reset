@@ -9,18 +9,18 @@ init
 log "Resetting state of control-plane and data-plane..."
 
 port-forwarding start fleet-manager 8000 8000
-port-forwarding start db 5432 5432
-$KUBECTL -n "$ACSCS_NAMESPACE" exec -it deploy/db -- psql -h localhost -U "$DATABASE_USER" -p "$DATABASE_PORT" -d "$DATABASE_NAME" -c "DELETE FROM central_requests;"
+port-forwarding start fleet-manager-db 5432 5432
+$KUBECTL -n "$ACSCS_NAMESPACE" exec -it deploy/fleet-manager-db -- psql -h localhost -U "$DATABASE_USER" -p "$DATABASE_PORT" -d "$DATABASE_NAME" -c "DELETE FROM central_requests;"
 sleep 1
 
 delete_tenant_namespaces
 
-log "Clean ACS operator namespace..."
-$KUBECTL delete namespace "$STACKROX_OPERATOR_NAMESPACE" || true
+log "Clean ACS operator deployment"
+$KUBECTL -n "${STACKROX_OPERATOR_NAMESPACE}" delete deploy -l app=rhacs-operator || true
 
 log "Apply default gitops..."
-apply "${GITROOT}/dev/env/manifests/fleet-manager/04-gitops-config.yaml"
+make -C "${GITROOT}" deploy/gitops
 
-$KUBECTL -n acscs delete pod -l application=fleetshard-sync
+$KUBECTL -n "${ACSCS_NAMESPACE}" delete pod -l application=fleetshard-sync
 
 log "Resetting complete."
