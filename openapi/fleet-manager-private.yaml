@@ -304,7 +304,7 @@ components:
                       type: string
                     issuer:
                       type: string
-                additionalAuth:
+                additionalAuthProvider:
                   type: object
                   properties:
                     name:
