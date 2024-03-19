@@ -21,35 +21,35 @@ type AuthProviderAddition struct {
 
 // AuthProvider represents auth provider configuration
 type AuthProvider struct {
-	Name               string              `json:"name,omitempty"`
-	MinimumRoleName    string              `json:"minimumRole,omitempty"`
-	Groups             []Group             `json:"groups,omitempty"`
-	RequiredAttributes []RequiredAttribute `json:"requiredAttributes,omitempty"`
-	ClaimMappings      []ClaimMapping      `json:"claimMappings,omitempty"`
-	OIDCConfig         *OIDCConfig         `json:"oidc,omitempty"`
+	Name               string                          `json:"name,omitempty"`
+	MinimumRoleName    string                          `json:"minimumRole,omitempty"`
+	Groups             []AuthProviderGroup             `json:"groups,omitempty"`
+	RequiredAttributes []AuthProviderRequiredAttribute `json:"requiredAttributes,omitempty"`
+	ClaimMappings      []AuthProviderClaimMapping      `json:"claimMappings,omitempty"`
+	OIDCConfig         *AuthProviderOIDCConfig         `json:"oidc,omitempty"`
 }
 
-// RequiredAttribute is representation of storage.AuthProvider_RequiredAttribute that supports transformation from YAML.
-type RequiredAttribute struct {
+// AuthProviderRequiredAttribute is representation of storage.AuthProvider_RequiredAttribute that supports transformation from YAML.
+type AuthProviderRequiredAttribute struct {
 	AttributeKey   string `json:"key,omitempty"`
 	AttributeValue string `json:"value,omitempty"`
 }
 
-// ClaimMapping represents a single entry in "claim_mappings" field in auth provider proto.
-type ClaimMapping struct {
+// AuthProviderClaimMapping represents a single entry in "claim_mappings" field in auth provider proto.
+type AuthProviderClaimMapping struct {
 	Path string `json:"path,omitempty"`
 	Name string `json:"name,omitempty"`
 }
 
-// Group is representation of storage.Group that supports transformation from YAML.
-type Group struct {
+// AuthProviderGroup is representation of storage.AuthProviderGroup that supports transformation from YAML.
+type AuthProviderGroup struct {
 	AttributeKey   string `json:"key,omitempty"`
 	AttributeValue string `json:"value,omitempty"`
 	RoleName       string `json:"role,omitempty"`
 }
 
-// OIDCConfig contains config values for OIDC auth provider.
-type OIDCConfig struct {
+// AuthProviderOIDCConfig contains config values for OIDC auth provider.
+type AuthProviderOIDCConfig struct {
 	Issuer string `json:"issuer,omitempty"`
 	// Depending on callback mode, different OAuth 2.0 would be preferred.
 	// Possible values are: auto, post, query, fragment.

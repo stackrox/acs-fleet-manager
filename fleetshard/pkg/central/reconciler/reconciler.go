@@ -1850,13 +1850,13 @@ func (r *CentralReconciler) configureAdditionalAuthProvider(secret *corev1.Secre
 }
 
 func getAdditionalAuthProvider(central private.ManagedCentral) *declarativeconfig.AuthProvider {
-	auth := central.Spec.AdditionalAuth
+	authProvider := central.Spec.AdditionalAuthProvider
 	// Assume that if name is not specified, no additional auth provider is configured.
-	if auth.Name == "" {
+	if authProvider.Name == "" {
 		return nil
 	}
-	groups := make([]declarativeconfig.Group, 0, len(auth.Groups))
-	for _, group := range auth.Groups {
+	groups := make([]declarativeconfig.Group, 0, len(authProvider.Groups))
+	for _, group := range authProvider.Groups {
 		groups = append(groups, declarativeconfig.Group{
 			AttributeKey:   group.Key,
 			AttributeValue: group.Value,
@@ -1864,16 +1864,16 @@ func getAdditionalAuthProvider(central private.ManagedCentral) *declarativeconfi
 		})
 	}
 
-	requiredAttributes := make([]declarativeconfig.RequiredAttribute, 0, len(auth.RequiredAttributes))
-	for _, requiredAttribute := range auth.RequiredAttributes {
+	requiredAttributes := make([]declarativeconfig.RequiredAttribute, 0, len(authProvider.RequiredAttributes))
+	for _, requiredAttribute := range authProvider.RequiredAttributes {
 		requiredAttributes = append(requiredAttributes, declarativeconfig.RequiredAttribute{
 			AttributeKey:   requiredAttribute.Key,
 			AttributeValue: requiredAttribute.Value,
 		})
 	}
 
-	claimMappings := make([]declarativeconfig.ClaimMapping, 0, len(auth.ClaimMappings))
-	for _, claimMapping := range auth.ClaimMappings {
+	claimMappings := make([]declarativeconfig.ClaimMapping, 0, len(authProvider.ClaimMappings))
+	for _, claimMapping := range authProvider.ClaimMappings {
 		claimMappings = append(claimMappings, declarativeconfig.ClaimMapping{
 			Path: claimMapping.Key,
 			Name: claimMapping.Value,
@@ -1881,18 +1881,18 @@ func getAdditionalAuthProvider(central private.ManagedCentral) *declarativeconfi
 	}
 
 	return &declarativeconfig.AuthProvider{
-		Name:               auth.Name,
+		Name:               authProvider.Name,
 		UIEndpoint:         central.Spec.UiEndpoint.Host,
 		ExtraUIEndpoints:   []string{"localhost:8443"},
 		Groups:             groups,
 		RequiredAttributes: requiredAttributes,
 		ClaimMappings:      claimMappings,
 		OIDCConfig: &declarativeconfig.OIDCConfig{
-			Issuer:                    auth.Oidc.Issuer,
-			CallbackMode:              auth.Oidc.CallbackMode,
-			ClientID:                  auth.Oidc.ClientID,
-			ClientSecret:              auth.Oidc.ClientSecret, // pragma: allowlist secret
-			DisableOfflineAccessScope: auth.Oidc.DisableOfflineAccessScope,
+			Issuer:                    authProvider.Oidc.Issuer,
+			CallbackMode:              authProvider.Oidc.CallbackMode,
+			ClientID:                  authProvider.Oidc.ClientID,
+			ClientSecret:              authProvider.Oidc.ClientSecret, // pragma: allowlist secret
+			DisableOfflineAccessScope: authProvider.Oidc.DisableOfflineAccessScope,
 		},
 	}
 }
