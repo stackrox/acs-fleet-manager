@@ -107,7 +107,7 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 		return private.ManagedCentral{}, errors.Wrap(err, "failed to get Central YAML")
 	}
 	authProvider := findAdditionalAuthProvider(gitopsConfig, from)
-	additionalAuth := constructAdditionalAuthProvider(authProvider, from)
+	additionalAuthProvider := constructAdditionalAuthProvider(authProvider, from)
 	res := private.ManagedCentral{
 		Id:   from.ID,
 		Kind: "ManagedCentral",
@@ -136,7 +136,7 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 				OwnerAlternateUserId: from.OwnerAlternateUserID,
 				Issuer:               from.AuthConfig.Issuer,
 			},
-			AdditionalAuth: additionalAuth,
+			AdditionalAuthProvider: additionalAuthProvider,
 			UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
 				Host: from.GetUIHost(),
 				Tls: private.ManagedCentralAllOfSpecUiEndpointTls{
@@ -160,37 +160,37 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 	return res, nil
 }
 
-func constructAdditionalAuthProvider(authProvider *gitops.AuthProvider, from *dbapi.CentralRequest) private.ManagedCentralAllOfSpecAdditionalAuth {
+func constructAdditionalAuthProvider(authProvider *gitops.AuthProvider, from *dbapi.CentralRequest) private.ManagedCentralAllOfSpecAdditionalAuthProvider {
 	if authProvider == nil {
-		return private.ManagedCentralAllOfSpecAdditionalAuth{}
+		return private.ManagedCentralAllOfSpecAdditionalAuthProvider{}
 	}
 	oidcConfig := constructAdditionalOidcConfig(authProvider, from)
 
-	groups := make([]private.ManagedCentralAllOfSpecAdditionalAuthGroups, 0, len(authProvider.Groups))
+	groups := make([]private.ManagedCentralAllOfSpecAdditionalAuthProviderGroups, 0, len(authProvider.Groups))
 	for _, group := range authProvider.Groups {
-		groups = append(groups, private.ManagedCentralAllOfSpecAdditionalAuthGroups{
+		groups = append(groups, private.ManagedCentralAllOfSpecAdditionalAuthProviderGroups{
 			Key:   group.AttributeKey,
 			Value: group.AttributeValue,
 			Role:  group.RoleName,
 		})
 	}
 
-	requiredAttributes := make([]private.ManagedCentralAllOfSpecAdditionalAuthRequiredAttributes, 0, len(authProvider.RequiredAttributes))
+	requiredAttributes := make([]private.ManagedCentralAllOfSpecAdditionalAuthProviderRequiredAttributes, 0, len(authProvider.RequiredAttributes))
 	for _, requiredAttribute := range authProvider.RequiredAttributes {
-		requiredAttributes = append(requiredAttributes, private.ManagedCentralAllOfSpecAdditionalAuthRequiredAttributes{
+		requiredAttributes = append(requiredAttributes, private.ManagedCentralAllOfSpecAdditionalAuthProviderRequiredAttributes{
 			Key:   requiredAttribute.AttributeKey,
 			Value: requiredAttribute.AttributeValue,
 		})
 	}
 
-	claimMappings := make([]private.ManagedCentralAllOfSpecAdditionalAuthRequiredAttributes, 0, len(authProvider.ClaimMappings))
+	claimMappings := make([]private.ManagedCentralAllOfSpecAdditionalAuthProviderRequiredAttributes, 0, len(authProvider.ClaimMappings))
 	for _, claimMapping := range authProvider.ClaimMappings {
-		claimMappings = append(claimMappings, private.ManagedCentralAllOfSpecAdditionalAuthRequiredAttributes{
+		claimMappings = append(claimMappings, private.ManagedCentralAllOfSpecAdditionalAuthProviderRequiredAttributes{
 			Key:   claimMapping.Path,
 			Value: claimMapping.Name,
 		})
 	}
-	return private.ManagedCentralAllOfSpecAdditionalAuth{
+	return private.ManagedCentralAllOfSpecAdditionalAuthProvider{
 		Name:               authProvider.Name,
 		MinimumRoleName:    authProvider.MinimumRoleName,
 		Groups:             groups,
@@ -200,8 +200,8 @@ func constructAdditionalAuthProvider(authProvider *gitops.AuthProvider, from *db
 	}
 }
 
-func constructAdditionalOidcConfig(authProvider *gitops.AuthProvider, from *dbapi.CentralRequest) private.ManagedCentralAllOfSpecAdditionalAuthOidc {
-	oidcConfig := private.ManagedCentralAllOfSpecAdditionalAuthOidc{}
+func constructAdditionalOidcConfig(authProvider *gitops.AuthProvider, from *dbapi.CentralRequest) private.ManagedCentralAllOfSpecAdditionalAuthProviderOidc {
+	oidcConfig := private.ManagedCentralAllOfSpecAdditionalAuthProviderOidc{}
 	if authProvider.OIDCConfig != nil && authProvider.OIDCConfig.ClientID != "" {
 		oidcConfig.ClientID = authProvider.OIDCConfig.ClientID
 		oidcConfig.ClientSecret = authProvider.OIDCConfig.ClientSecret

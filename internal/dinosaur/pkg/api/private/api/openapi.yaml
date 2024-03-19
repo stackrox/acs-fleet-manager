@@ -466,7 +466,7 @@ components:
           type: string
         issuer:
           type: string
-    ManagedCentral_allOf_spec_additionalAuth_groups:
+    ManagedCentral_allOf_spec_additionalAuthProvider_groups:
       properties:
         key:
           type: string
@@ -474,13 +474,13 @@ components:
           type: string
         role:
           type: string
-    ManagedCentral_allOf_spec_additionalAuth_requiredAttributes:
+    ManagedCentral_allOf_spec_additionalAuthProvider_requiredAttributes:
       properties:
         key:
           type: string
         value:
           type: string
-    ManagedCentral_allOf_spec_additionalAuth_oidc:
+    ManagedCentral_allOf_spec_additionalAuthProvider_oidc:
       properties:
         issuer:
           type: string
@@ -492,7 +492,7 @@ components:
           type: string
         disableOfflineAccessScope:
           type: boolean
-    ManagedCentral_allOf_spec_additionalAuth:
+    ManagedCentral_allOf_spec_additionalAuthProvider:
       properties:
         name:
           type: string
@@ -500,18 +500,18 @@ components:
           type: string
         groups:
           items:
-            $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuth_groups'
+            $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuthProvider_groups'
           type: array
         requiredAttributes:
           items:
-            $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuth_requiredAttributes'
+            $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuthProvider_requiredAttributes'
           type: array
         claimMappings:
           items:
-            $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuth_requiredAttributes'
+            $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuthProvider_requiredAttributes'
           type: array
         oidc:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuth_oidc'
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuthProvider_oidc'
     ManagedCentral_allOf_spec_uiEndpoint_tls:
       properties:
         cert:
@@ -545,8 +545,8 @@ components:
           type: array
         auth:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_auth'
-        additionalAuth:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuth'
+        additionalAuthProvider:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuthProvider'
         uiEndpoint:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint'
         dataEndpoint:
