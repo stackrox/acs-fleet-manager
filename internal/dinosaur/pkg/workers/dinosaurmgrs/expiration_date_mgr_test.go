@@ -1,6 +1,7 @@
 package dinosaurmgrs
 
 import (
+	"database/sql"
 	"testing"
 	"time"
 
@@ -60,7 +61,7 @@ func TestExpirationDateManager(t *testing.T) {
 
 	t.Run("unset expired_at", func(t *testing.T) {
 		now := time.Now()
-		central := &dbapi.CentralRequest{ExpiredAt: &now}
+		central := &dbapi.CentralRequest{ExpiredAt: sql.NullTime{Time: now, Valid: true}}
 		centralService := withCentrals(central)
 		quotaSvc, quotaFactory := withEntitlement(true)
 		gpm := NewExpirationDateManager(centralService, quotaFactory, defaultCfg)
@@ -81,8 +82,8 @@ func TestExpirationDateManager(t *testing.T) {
 		gpm := NewExpirationDateManager(centralService, quotaFactory, defaultCfg)
 		errs := gpm.Reconcile()
 		require.Empty(t, errs)
-		require.NotNil(t, central.ExpiredAt)
-		assert.Less(t, now, *central.ExpiredAt)
+		require.True(t, central.ExpiredAt.Valid)
+		assert.Less(t, now, *dbapi.NullTimeToTimePtr(central.ExpiredAt))
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
 		assert.Len(t, quotaSvc.HasQuotaAllowanceCalls(), 1)
 		assert.Len(t, centralService.UpdatesCalls(), 1)
@@ -90,12 +91,12 @@ func TestExpirationDateManager(t *testing.T) {
 	})
 
 	t.Run("quota cost cache in use", func(t *testing.T) {
-		now := time.Now()
-		centralA := &dbapi.CentralRequest{ExpiredAt: &now, OrganisationID: "one"}
-		centralB := &dbapi.CentralRequest{ExpiredAt: &now, OrganisationID: "one"}
-		centralC := &dbapi.CentralRequest{ExpiredAt: &now, OrganisationID: "another"}
-		centralD := &dbapi.CentralRequest{ExpiredAt: &now, OrganisationID: "another"}
-		centralE := &dbapi.CentralRequest{ExpiredAt: &now, OrganisationID: "another", CloudAccountID: "Zeus"}
+		now := sql.NullTime{Time: time.Now(), Valid: true}
+		centralA := &dbapi.CentralRequest{ExpiredAt: now, OrganisationID: "one"}
+		centralB := &dbapi.CentralRequest{ExpiredAt: now, OrganisationID: "one"}
+		centralC := &dbapi.CentralRequest{ExpiredAt: now, OrganisationID: "another"}
+		centralD := &dbapi.CentralRequest{ExpiredAt: now, OrganisationID: "another"}
+		centralE := &dbapi.CentralRequest{ExpiredAt: now, OrganisationID: "another", CloudAccountID: "Zeus"}
 		centralService := withCentrals(centralA, centralB, centralC, centralD, centralE)
 		quotaSvc, quotaFactory := withEntitlement(true)
 		gpm := NewExpirationDateManager(centralService, quotaFactory, defaultCfg)

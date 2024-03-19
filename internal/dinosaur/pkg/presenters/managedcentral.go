@@ -119,7 +119,7 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 			},
 			Internal:      from.Internal,
 			SecretsStored: getSecretNames(from), // pragma: allowlist secret
-			ExpiredAt:     from.ExpiredAt,
+			ExpiredAt:     dbapi.NullTimeToTimePtr(from.ExpiredAt),
 		},
 		Spec: private.ManagedCentralAllOfSpec{
 			Owners: []string{
@@ -151,8 +151,8 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 		RequestStatus: from.Status,
 	}
 
-	if from.DeletionTimestamp != nil {
-		res.Metadata.DeletionTimestamp = from.DeletionTimestamp.Format(time.RFC3339)
+	if from.DeletionTimestamp.Valid {
+		res.Metadata.DeletionTimestamp = from.DeletionTimestamp.Time.Format(time.RFC3339)
 	}
 
 	return res, nil

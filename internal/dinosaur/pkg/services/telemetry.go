@@ -72,8 +72,8 @@ func (t *Telemetry) getTenantProperties(central *dbapi.CentralRequest) map[strin
 		"Tenant ID":       central.ID,
 		"Status":          central.Status,
 	}
-	if central.ExpiredAt != nil {
-		props["Expired At"] = central.ExpiredAt.UTC().Format(time.RFC3339)
+	if central.ExpiredAt.Valid {
+		props["Expired At"] = central.ExpiredAt.Time.UTC().Format(time.RFC3339)
 	} else {
 		// An instance may loose its expiration date after quota is granted, so
 		// we need to reset the group property, hence never report nil time, as
