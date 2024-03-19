@@ -174,6 +174,7 @@ func (k *CentralRequest) GetDataHost() string {
 	return fmt.Sprintf("acs-data-%s.%s", k.ID, k.Host)
 }
 
+// NullTimeToTimePtr converts sql.NullTime to *time.Time.
 func NullTimeToTimePtr(t sql.NullTime) *time.Time {
 	if t.Valid {
 		return &t.Time
@@ -181,6 +182,7 @@ func NullTimeToTimePtr(t sql.NullTime) *time.Time {
 	return nil
 }
 
+// TimePtrToNullTime converts *time.Time to sql.NullTime.
 func TimePtrToNullTime(t *time.Time) sql.NullTime {
 	if t != nil {
 		return sql.NullTime{Time: *t, Valid: true}
