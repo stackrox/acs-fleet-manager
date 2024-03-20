@@ -88,9 +88,9 @@ type DinosaurService interface {
 	// same as the original status. The error will contain any error encountered when attempting to update or the reason
 	// why no attempt has been done
 	UpdateStatus(id string, status dinosaurConstants.CentralStatus) (bool, *errors.ServiceError)
-	// Update does NOT update nullable fields when they're nil in the request. Use Updates() instead.
-	Update(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
-	// Updates() updates the given fields of a dinosaur. This takes in a map so that even zero-fields can be updated.
+	// UpdateIgnoreNils does NOT update nullable fields when they're nil in the request. Use Updates() instead.
+	UpdateIgnoreNils(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
+	// Updates changes the given fields of a dinosaur. This takes in a map so that even zero-fields can be updated.
 	// Use this only when you want to update the multiple columns that may contain zero-fields, otherwise use the `DinosaurService.Update()` method.
 	// See https://gorm.io/docs/update.html#Updates-multiple-columns for more info
 	Updates(dinosaurRequest *dbapi.CentralRequest, values map[string]interface{}) *errors.ServiceError
@@ -167,7 +167,7 @@ func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralR
 	if err := rhsso.AugmentWithDynamicAuthConfig(ctx, centralRequest, k.iamConfig.RedhatSSORealm, k.rhSSODynamicClientsAPI); err != nil {
 		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to augment auth config")
 	}
-	if err := k.Update(centralRequest); err != nil {
+	if err := k.UpdateIgnoreNils(centralRequest); err != nil {
 		glog.Errorf("Rotating RHSSO client failed: created new RHSSO dynamic client, but failed to update central record, client ID is %s", centralRequest.AuthConfig.ClientID)
 		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to update database record")
 	}
@@ -338,7 +338,7 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 		centralRequest.Host = clusterDNS
 	}
 
-	// Update the fields of the CentralRequest record in the database.
+	// UpdateIgnoreNils the fields of the CentralRequest record in the database.
 	updatedDinosaurRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: centralRequest.ID,
@@ -348,7 +348,7 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 		Status:      dinosaurConstants.CentralRequestStatusPreparing.String(),
 		Namespace:   centralRequest.Namespace,
 	}
-	if err := k.Update(updatedDinosaurRequest); err != nil {
+	if err := k.UpdateIgnoreNils(updatedDinosaurRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update central request")
 	}
 
@@ -381,7 +381,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		return errors.OrganisationNameInvalid(dinosaurRequest.OrganisationID, orgName)
 	}
 
-	// Update the fields of the CentralRequest record in the database.
+	// UpdateIgnoreNils the fields of the CentralRequest record in the database.
 	updatedCentralRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
@@ -389,7 +389,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		OrganisationName: orgName,
 		Status:           dinosaurConstants.CentralRequestStatusProvisioning.String(),
 	}
-	if err := k.Update(updatedCentralRequest); err != nil {
+	if err := k.UpdateIgnoreNils(updatedCentralRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update central request")
 	}
 
@@ -689,7 +689,7 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 }
 
 // Update ...
-func (k *dinosaurService) Update(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+func (k *dinosaurService) UpdateIgnoreNils(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(dinosaurRequest).
 		Where("status not IN (?)", dinosaurDeletionStatuses) // ignore updates of dinosaur under deletion
@@ -735,7 +735,7 @@ func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dino
 		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for central %s", dinosaurRequest.ID))
 	}
 
-	return k.Update(dinosaurRequest)
+	return k.UpdateIgnoreNils(dinosaurRequest)
 }
 
 // UpdateStatus ...
@@ -855,7 +855,7 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 	}
 
 	// use a new central request, so that unset field for columnsToReset will automatically be set to the zero value
-	// this Update only changes columns listed in columnsToReset
+	// this UpdateIgnoreNils only changes columns listed in columnsToReset
 	resetRequest := &dbapi.CentralRequest{}
 	resetRequest.ID = centralRequest.ID
 	resetRequest.Status = dinosaurConstants.CentralRequestStatusPreparing.String()

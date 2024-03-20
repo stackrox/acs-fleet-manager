@@ -100,7 +100,7 @@ func (k *PreparingDinosaurManager) handleDinosaurRequestCreationError(dinosaurRe
 			metrics.IncreaseCentralTotalOperationsCountMetric(constants2.CentralOperationCreate)
 			dinosaurRequest.Status = string(constants2.CentralRequestStatusFailed)
 			dinosaurRequest.FailedReason = err.Reason
-			updateErr := k.dinosaurService.Update(dinosaurRequest)
+			updateErr := k.dinosaurService.UpdateIgnoreNils(dinosaurRequest)
 			if updateErr != nil {
 				return errors.Wrapf(updateErr, "Failed to update central %s in failed state. Central failed reason %s", dinosaurRequest.ID, dinosaurRequest.FailedReason)
 			}
@@ -111,7 +111,7 @@ func (k *PreparingDinosaurManager) handleDinosaurRequestCreationError(dinosaurRe
 		metrics.IncreaseCentralTotalOperationsCountMetric(constants2.CentralOperationCreate)
 		dinosaurRequest.Status = string(constants2.CentralRequestStatusFailed)
 		dinosaurRequest.FailedReason = err.Reason
-		updateErr := k.dinosaurService.Update(dinosaurRequest)
+		updateErr := k.dinosaurService.UpdateIgnoreNils(dinosaurRequest)
 		if updateErr != nil {
 			return errors.Wrapf(err, "Failed to update central %s in failed state", dinosaurRequest.ID)
 		}

@@ -91,8 +91,8 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			RotateCentralRHSSOClientFunc: func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the RotateCentralRHSSOClient method")
 //			},
-//			UpdateFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
-//				panic("mock out the Update method")
+//			UpdateIgnoreNilsFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+//				panic("mock out the UpdateIgnoreNils method")
 //			},
 //			UpdateStatusFunc: func(id string, status dinosaurConstants.CentralStatus) (bool, *serviceError.ServiceError) {
 //				panic("mock out the UpdateStatus method")
@@ -176,8 +176,8 @@ type DinosaurServiceMock struct {
 	// RotateCentralRHSSOClientFunc mocks the RotateCentralRHSSOClient method.
 	RotateCentralRHSSOClientFunc func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
-	// UpdateFunc mocks the Update method.
-	UpdateFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
+	// UpdateIgnoreNilsFunc mocks the UpdateIgnoreNils method.
+	UpdateIgnoreNilsFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(id string, status dinosaurConstants.CentralStatus) (bool, *serviceError.ServiceError)
@@ -310,8 +310,8 @@ type DinosaurServiceMock struct {
 			// CentralRequest is the centralRequest argument value.
 			CentralRequest *dbapi.CentralRequest
 		}
-		// Update holds details about calls to the Update method.
-		Update []struct {
+		// UpdateIgnoreNils holds details about calls to the UpdateIgnoreNils method.
+		UpdateIgnoreNils []struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 		}
@@ -359,7 +359,7 @@ type DinosaurServiceMock struct {
 	lockResetCentralSecretBackup          sync.RWMutex
 	lockRestore                           sync.RWMutex
 	lockRotateCentralRHSSOClient          sync.RWMutex
-	lockUpdate                            sync.RWMutex
+	lockUpdateIgnoreNils                  sync.RWMutex
 	lockUpdateStatus                      sync.RWMutex
 	lockUpdates                           sync.RWMutex
 	lockVerifyAndUpdateDinosaurAdmin      sync.RWMutex
@@ -1085,35 +1085,35 @@ func (mock *DinosaurServiceMock) RotateCentralRHSSOClientCalls() []struct {
 	return calls
 }
 
-// Update calls UpdateFunc.
-func (mock *DinosaurServiceMock) Update(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
-	if mock.UpdateFunc == nil {
-		panic("DinosaurServiceMock.UpdateFunc: method is nil but DinosaurService.Update was just called")
+// UpdateIgnoreNils calls UpdateIgnoreNilsFunc.
+func (mock *DinosaurServiceMock) UpdateIgnoreNils(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+	if mock.UpdateIgnoreNilsFunc == nil {
+		panic("DinosaurServiceMock.UpdateIgnoreNilsFunc: method is nil but DinosaurService.UpdateIgnoreNils was just called")
 	}
 	callInfo := struct {
 		DinosaurRequest *dbapi.CentralRequest
 	}{
 		DinosaurRequest: dinosaurRequest,
 	}
-	mock.lockUpdate.Lock()
-	mock.calls.Update = append(mock.calls.Update, callInfo)
-	mock.lockUpdate.Unlock()
-	return mock.UpdateFunc(dinosaurRequest)
+	mock.lockUpdateIgnoreNils.Lock()
+	mock.calls.UpdateIgnoreNils = append(mock.calls.UpdateIgnoreNils, callInfo)
+	mock.lockUpdateIgnoreNils.Unlock()
+	return mock.UpdateIgnoreNilsFunc(dinosaurRequest)
 }
 
-// UpdateCalls gets all the calls that were made to Update.
+// UpdateIgnoreNilsCalls gets all the calls that were made to UpdateIgnoreNils.
 // Check the length with:
 //
-//	len(mockedDinosaurService.UpdateCalls())
-func (mock *DinosaurServiceMock) UpdateCalls() []struct {
+//	len(mockedDinosaurService.UpdateIgnoreNilsCalls())
+func (mock *DinosaurServiceMock) UpdateIgnoreNilsCalls() []struct {
 	DinosaurRequest *dbapi.CentralRequest
 } {
 	var calls []struct {
 		DinosaurRequest *dbapi.CentralRequest
 	}
-	mock.lockUpdate.RLock()
-	calls = mock.calls.Update
-	mock.lockUpdate.RUnlock()
+	mock.lockUpdateIgnoreNils.RLock()
+	calls = mock.calls.UpdateIgnoreNils
+	mock.lockUpdateIgnoreNils.RUnlock()
 	return calls
 }
 
