@@ -63,10 +63,8 @@ make deploy/probe
 ```
 To deploy the probe service with a custom tag:
 ```
-# For example: Mark the image built for the previous commit as latest
-docker tag quay.io/rhacs-eng/probe:$(git rev-parse --short=7 HEAD^) quay.io/rhacs-eng/probe:latest
-# Deploy probe with latest tag
-make deploy/probe IMAGE_TAG=latest
+# Deploy probe with the label created from the previous commit
+make deploy/probe IMAGE_TAG=$(git rev-parse --short=7 HEAD^)
 ```
 ##### Cleanup
 ```
