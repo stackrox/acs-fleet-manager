@@ -1249,7 +1249,7 @@ func (r *CentralReconciler) ensureEncryptionKeySecretExists(ctx context.Context,
 func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) error {
 	const encryptionKeyChainFile = "key-chain.yaml"
 
-	if secret.StringData != nil {
+	if secret.Data != nil {
 		if _, ok := secret.Data[encryptionKeyChainFile]; ok {
 			// secret already populated with encryption key skip operation
 			return nil
@@ -1266,7 +1266,8 @@ func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) e
 	if err != nil {
 		return err
 	}
-	secret.StringData = map[string]string{encryptionKeyChainFile: keyChainFile}
+	b64KeyChainFile := base64.StdEncoding.EncodeToString([]byte(keyChainFile))
+	secret.Data = map[string][]byte{encryptionKeyChainFile: []byte(b64KeyChainFile)}
 	return nil
 }
 
