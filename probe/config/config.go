@@ -15,7 +15,7 @@ import (
 // Config contains this application's runtime configuration.
 type Config struct {
 	AuthType                string        `env:"AUTH_TYPE" envDefault:"RHSSO"`
-	CentralSpecs            CentralSpecs  `env:"CENTRAL_SPECS" envDefault:"[{ \"cloudProvider\": \"aws\", \"region\": \"us-east-1\" }]"`
+	CentralSpecs            CentralSpecs  `env:"CENTRAL_SPECS" envDefault:"[{ \"cloudProvider\": \"standalone\", \"region\": \"standalone\" }]"`
 	FleetManagerEndpoint    string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
 	MetricsAddress          string        `env:"METRICS_ADDRESS" envDefault:":7070"`
 	RHSSOClientID           string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`

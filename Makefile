@@ -24,6 +24,7 @@ GINKGO_FLAGS ?= -v
 version:=$(shell date +%s)
 
 NAMESPACE = rhacs
+PROBE_NAMESPACE = rhacs-probe
 IMAGE_NAME = fleet-manager
 PROBE_IMAGE_NAME = probe
 IMAGE_TARGET = standard
@@ -883,6 +884,35 @@ deploy/dev-fast/fleet-manager: image/build
 deploy/dev-fast/fleetshard-sync: image/build
 	kubectl -n $(NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
 	kubectl -n $(NAMESPACE) delete pod -l application=fleetshard-sync
+
+deploy/probe: IMAGE_REGISTRY?="$(external_image_registry)"
+deploy/probe: IMAGE_REPOSITORY?="$(probe_image_repository)"
+deploy/probe: IMAGE_TAG?="$(image_tag)"
+deploy/probe:
+	@oc create namespace $(PROBE_NAMESPACE) --dry-run=client -o yaml | oc apply -f -
+	@oc create secret generic probe-credentials \
+             --save-config \
+             --dry-run=client \
+             --from-literal=OCM_USERNAME=${USER} \
+             --from-literal=OCM_TOKEN='$(shell ocm token --refresh)' \
+             -o yaml | oc apply -n $(PROBE_NAMESPACE) -f -
+	@oc process -f ./templates/probe-template.yml --local \
+		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
+		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
+		-p IMAGE_TAG=$(IMAGE_TAG) \
+		| oc apply -f - -n $(PROBE_NAMESPACE)
+.PHONY: deploy/probe
+
+undeploy/probe: IMAGE_REGISTRY="$(external_image_registry)"
+undeploy/probe: IMAGE_REPOSITORY="$(probe_image_repository)"
+undeploy/probe:
+	@oc process -f ./templates/probe-template.yml --local \
+		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
+		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
+			| oc delete -f - -n $(PROBE_NAMESPACE) --ignore-not-found
+	@oc delete secret probe-credentials --ignore-not-found
+	@oc delete namespace $(PROBE_NAMESPACE) --ignore-not-found
+.PHONY: undeploy/probe
 
 tag:
 	@echo "$(image_tag)"

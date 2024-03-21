@@ -38,3 +38,35 @@ make probe
 # or run an endless loop of probes
 ./probe/bin/probe start
 ```
+
+
+## Run probe on a dev cluster
+##### Prerequisites
+1. Switch kubectl context to the local cluster, e.g.
+```
+kubectl config use-context colima
+```
+2. Deploy fleet-manager
+```
+make deploy/bootstrap deploy/dev
+```
+For more details, see the root [README.md](../README.md) file
+##### Steps
+
+1. Build the probe image
+```
+make image/build/probe
+```
+2. Deploy on the cluster
+```
+make deploy/probe
+```
+To deploy the probe service with a custom tag:
+```
+# Deploy probe with the label created from the previous commit
+make deploy/probe IMAGE_TAG=$(git rev-parse --short=7 HEAD^)
+```
+##### Cleanup
+```
+make undeploy/probe
+```
