@@ -8,8 +8,6 @@ metadata:
     description: ACS Services Fleet Manager Probe
     tags: golang
     iconClass: icon-shadowman
-    template.openshift.io/provider-display-name: Red Hat, Inc.
-    template.openshift.io/documentation-url: https://gitlab.cee.redhat.com/service/
 labels:
   template: fleet-manager-probe
 parameters:
