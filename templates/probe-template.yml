@@ -59,7 +59,7 @@ objects:
         spec:
           containers:
             - name: probe
-              image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+              image: "${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}"
               imagePullPolicy: IfNotPresent
               env:
                 - name: FLEET_MANAGER_ENDPOINT
