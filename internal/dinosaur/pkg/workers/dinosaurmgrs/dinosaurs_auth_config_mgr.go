@@ -113,7 +113,7 @@ func (k *CentralAuthConfigManager) reconcileCentralRequest(cr *dbapi.CentralRequ
 	cr.AuthConfig.ClientOrigin = ternary.String(k.centralConfig.HasStaticAuth(),
 		dbapi.AuthConfigStaticClientOrigin, dbapi.AuthConfigDynamicClientOrigin)
 
-	if err := k.centralService.Update(cr); err != nil {
+	if err := k.centralService.UpdateIgnoreNils(cr); err != nil {
 		return errors.Wrapf(err, "failed to update central request %s", cr.ID)
 	}
 

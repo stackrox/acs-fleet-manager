@@ -93,7 +93,7 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 			dinosaur.RoutesCreated = true
 		}
 
-		if err := k.dinosaurService.Update(dinosaur); err != nil {
+		if err := k.dinosaurService.UpdateIgnoreNils(dinosaur); err != nil {
 			errs = append(errs, err)
 			continue
 		}
