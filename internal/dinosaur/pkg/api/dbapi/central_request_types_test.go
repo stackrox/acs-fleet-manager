@@ -29,6 +29,10 @@ func TestNullTimeToTimePtr(t *testing.T) {
 			nullTime: sql.NullTime{Time: testTime, Valid: false},
 			want:     nil,
 		},
+		"zero": {
+			nullTime: sql.NullTime{Time: time.Time{}, Valid: true},
+			want:     nil,
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -42,21 +46,25 @@ func TestTimePtrToNullTime(t *testing.T) {
 	testTime := time.Unix(123456, 0)
 
 	tests := map[string]struct {
-		nullTime *time.Time
-		want     sql.NullTime
+		timePtr *time.Time
+		want    sql.NullTime
 	}{
 		"nil": {
-			nullTime: nil,
-			want:     sql.NullTime{},
+			timePtr: nil,
+			want:    sql.NullTime{},
 		},
 		"not nil": {
-			nullTime: &testTime,
-			want:     sql.NullTime{Time: testTime, Valid: true},
+			timePtr: &testTime,
+			want:    sql.NullTime{Time: testTime, Valid: true},
+		},
+		"zero": {
+			timePtr: &time.Time{},
+			want:    sql.NullTime{},
 		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			got := TimePtrToNullTime(test.nullTime)
+			got := TimePtrToNullTime(test.timePtr)
 			assert.Equal(t, test.want, got)
 		})
 	}

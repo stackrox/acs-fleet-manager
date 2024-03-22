@@ -176,7 +176,7 @@ func (k *CentralRequest) GetDataHost() string {
 
 // NullTimeToTimePtr converts sql.NullTime to *time.Time.
 func NullTimeToTimePtr(t sql.NullTime) *time.Time {
-	if t.Valid {
+	if t.Valid && !t.Time.IsZero() {
 		return &t.Time
 	}
 	return nil
@@ -184,7 +184,7 @@ func NullTimeToTimePtr(t sql.NullTime) *time.Time {
 
 // TimePtrToNullTime converts *time.Time to sql.NullTime.
 func TimePtrToNullTime(t *time.Time) sql.NullTime {
-	if t != nil {
+	if t != nil && !t.IsZero() {
 		return sql.NullTime{Time: *t, Valid: true}
 	}
 	return sql.NullTime{}
