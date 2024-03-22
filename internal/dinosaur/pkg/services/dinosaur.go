@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sync"
 	"time"
@@ -759,7 +760,7 @@ func (k *dinosaurService) UpdateStatus(id string, status dinosaurConstants.Centr
 	update := &dbapi.CentralRequest{Status: status.String()}
 	if status.String() == dinosaurConstants.CentralRequestStatusDeprovision.String() {
 		now := time.Now()
-		update.DeletionTimestamp = &now
+		update.DeletionTimestamp = sql.NullTime{Time: now, Valid: true}
 	}
 
 	logStateChange(fmt.Sprintf("change status to %q", status.String()), id, nil)

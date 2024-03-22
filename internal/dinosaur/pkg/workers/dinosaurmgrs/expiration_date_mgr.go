@@ -106,7 +106,7 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 		}
 
 		if timestamp, needsChange := k.expiredAtNeedsUpdate(central, active); needsChange {
-			central.ExpiredAt = timestamp
+			central.ExpiredAt = dbapi.TimePtrToNullTime(timestamp)
 			if err := k.updateExpiredAtInDB(central); err != nil {
 				svcErrors = append(svcErrors, errors.Wrapf(err,
 					"failed to update expired_at value based on quota entitlement for central instance %q", central.ID))
@@ -115,7 +115,7 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 	}
 	expiredInstances := 0
 	for _, central := range centrals {
-		if central.ExpiredAt != nil {
+		if central.ExpiredAt.Valid {
 			expiredInstances++
 		}
 	}
@@ -132,13 +132,13 @@ func (k *ExpirationDateManager) updateExpiredAtInDB(central *dbapi.CentralReques
 // Returns whether the expired_at field of the given Central instance needs to be updated.
 func (k *ExpirationDateManager) expiredAtNeedsUpdate(central *dbapi.CentralRequest, isQuotaEntitlementActive bool) (*time.Time, bool) {
 	// if quota entitlement is active, ensure expired_at is set to null.
-	if isQuotaEntitlementActive && central.ExpiredAt != nil {
+	if isQuotaEntitlementActive && central.ExpiredAt.Valid {
 		return nil, true
 	}
 
 	// if quota entitlement is not active and expired_at is not already set, set
 	// its value to the current time.
-	if !isQuotaEntitlementActive && central.ExpiredAt == nil {
+	if !isQuotaEntitlementActive && !central.ExpiredAt.Valid {
 		now := time.Now()
 		return &now, true
 	}
