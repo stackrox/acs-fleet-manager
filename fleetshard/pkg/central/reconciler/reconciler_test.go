@@ -1885,7 +1885,7 @@ func TestRestoreCentralSecrets(t *testing.T) {
 				}
 				return mockClient.Client()
 			},
-			expectedErrorMsgContains: "loading secrets for central cb45idheg5ip6dq1jo4g: test error",
+			expectedErrorMsgContains: `failed to get central "cb45idheg5ip6dq1jo4g": test error`,
 		},
 		{
 			// force encrypt error by using non base64 value for central-db-password
@@ -1907,7 +1907,7 @@ func TestRestoreCentralSecrets(t *testing.T) {
 				}
 				return mockClient.Client()
 			},
-			expectedErrorMsgContains: "decrypting secrets for central",
+			expectedErrorMsgContains: `failed to decrypt secrets for central "cb45idheg5ip6dq1jo4g": failed to decode secret "central-db-password"`,
 		},
 		{
 			name: "expect secrets to exist after secret restore",
