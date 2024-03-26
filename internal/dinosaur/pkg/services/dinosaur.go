@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -114,6 +115,7 @@ type DinosaurService interface {
 	// This is currently the only way to update secret backups, an automatic approach should be implemented
 	// to accomated for regular processes like central TLS cert rotation.
 	ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
+	ChangeBillingParameters(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -233,7 +235,7 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 }
 
 // reserveQuota - reserves quota for the given dinosaur request. If a RHACS quota has been assigned, it will try to reserve RHACS quota, otherwise it will try with RHACSTrial
-func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) (subscriptionID string, err *errors.ServiceError) {
+func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dbapi.CentralRequest, bm string, product string) (subscriptionID string, err *errors.ServiceError) {
 	if dinosaurRequest.InstanceType == types.EVAL.String() &&
 		!(environments.GetEnvironmentStrFromEnv() == environments.DevelopmentEnv || environments.GetEnvironmentStrFromEnv() == environments.TestingEnv) {
 		if !k.dinosaurConfig.Quota.AllowEvaluatorInstance {
@@ -261,7 +263,7 @@ func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dba
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
-	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType))
+	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest, bm, product)
 	return subscriptionID, err
 }
 
@@ -291,7 +293,7 @@ func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurReque
 		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", dinosaurRequest.Region, dinosaurRequest.InstanceType))
 	}
 	dinosaurRequest.ClusterID = cluster.ClusterID
-	subscriptionID, err := k.reserveQuota(ctx, dinosaurRequest)
+	subscriptionID, err := k.reserveQuota(ctx, dinosaurRequest, "", "")
 	if err != nil {
 		return err
 	}
@@ -1037,4 +1039,59 @@ func convertCentralRequestToString(req *dbapi.CentralRequest) string {
 		"client_origin":           req.ClientOrigin,
 	}
 	return fmt.Sprintf("%+v", requestAsMap)
+}
+
+type billingParameters struct {
+	cloudAccountID string
+	cloudProvider  string
+	subscriptionID string
+	instanceType   string
+	product        string
+}
+
+func makeBillingParameters(central *dbapi.CentralRequest) *billingParameters {
+	return &billingParameters{
+		cloudAccountID: central.CloudAccountID,
+		cloudProvider:  central.CloudProvider,
+		subscriptionID: central.SubscriptionID,
+		instanceType:   central.InstanceType,
+		product:        types.DinosaurInstanceType(central.InstanceType).GetQuotaType().GetProduct(),
+	}
+}
+
+func (k *dinosaurService) ChangeBillingParameters(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *errors.ServiceError {
+	centralRequest, svcErr := k.GetByID(centralID)
+	if svcErr != nil {
+		return svcErr
+	}
+
+	original := makeBillingParameters(centralRequest)
+
+	centralRequest.CloudAccountID = cloudAccountID
+	centralRequest.CloudProvider = cloudProvider
+
+	// Changing product is allowed (by OCM) only from RHACSTrial to RHACS today.
+	// This change should also change the instance type.
+	if original.product == string(ocm.RHACSTrialProduct) && product == string(ocm.RHACSProduct) {
+		centralRequest.InstanceType = string(types.STANDARD)
+	}
+
+	newSubscriptionID, svcErr := k.reserveQuota(ctx, centralRequest, billingModel, product)
+	updated := makeBillingParameters(centralRequest)
+	if svcErr != nil {
+		glog.Errorf("Failed to reserve quota with updated billing parameters (%+v): %v", updated, svcErr)
+		return svcErr
+	}
+	updated.subscriptionID = newSubscriptionID
+
+	if !reflect.DeepEqual(original, updated) {
+		if svcErr = k.UpdateIgnoreNils(centralRequest); svcErr != nil {
+			glog.Errorf("Failed to update central %q record with updated billing parameters (%v): %v", centralID, updated, svcErr)
+			return svcErr
+		}
+		glog.Infof("Central %q billing parameters have been changed from %v to %v", centralID, original, updated)
+	} else {
+		glog.Infof("Central %q has no change in billing parameters")
+	}
+	return nil
 }

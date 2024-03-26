@@ -74,16 +74,17 @@ func (q amsQuotaService) HasQuotaAllowance(central *dbapi.CentralRequest, instan
 	return true, nil
 }
 
-// selectBillingModelFromDinosaurInstanceType select the billing model of a
-// dinosaur instance type by looking at the resource name and product of the
-// instanceType, as well as cloudAccountID and cloudProviderID. Only QuotaCosts that have available quota, or that contain a
-// RelatedResource with "cost" 0 are considered. Only
-// "standard" and "marketplace" and "marketplace-aws" billing models are considered.
-// If both marketplace and standard billing models are available, marketplace will be given preference.
-func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloudProviderID, cloudAccountID string, instanceType types.DinosaurInstanceType) (string, error) {
-	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgID, instanceType.GetQuotaType().GetResourceName(), instanceType.GetQuotaType().GetProduct())
+// selectBillingModel selects the billing model of an instance by looking
+// at the resource name and product, cloudProviderID and cloudAccountID.
+// Only QuotaCosts that have available quota, or that contain a RelatedResource
+// with "cost" 0 are considered.
+// Only "standard", "marketplace" and "marketplace-aws" billing models are
+// considered. If both "marketplace" and "standard" billing models are
+// available, "marketplace" will be given preference.
+func (q amsQuotaService) selectBillingModel(orgID, cloudProviderID, cloudAccountID string, resourceName string, product string) (string, error) {
+	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgID, resourceName, product)
 	if err != nil {
-		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, instanceType.GetQuotaType().GetProduct())
+		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, product)
 	}
 
 	hasBillingModelMarketplace := false
@@ -114,8 +115,10 @@ func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloud
 	return "", errors.InsufficientQuotaError("No available billing model found")
 }
 
-// ReserveQuota ...
-func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+// ReserveQuota calls AMS to reserve quota for the central request. It computes
+// the central billing parameters if they're not forced.
+func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, forcedBillingModel string, forcedProduct string) (string, *errors.ServiceError) {
+	instanceType := types.DinosaurInstanceType(dinosaur.InstanceType)
 	dinosaurID := dinosaur.ID
 	rr := newBaseQuotaReservedResourceResourceBuilder()
 
@@ -129,10 +132,22 @@ func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.Centr
 	if err != nil {
 		return "", errors.OrganisationNotFound(dinosaur.OrganisationID, err)
 	}
-	bm, err := q.selectBillingModelFromDinosaurInstanceType(org.ID(), dinosaur.CloudProvider, dinosaur.CloudAccountID, instanceType)
-	if err != nil {
-		svcErr := errors.ToServiceError(err)
-		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
+
+	product := instanceType.GetQuotaType().GetProduct()
+	if forcedProduct != "" {
+		product = forcedProduct
+	}
+
+	var bm string
+	if forcedBillingModel == "" {
+		resourceName := instanceType.GetQuotaType().GetResourceName()
+		bm, err = q.selectBillingModel(org.ID(), dinosaur.CloudProvider, dinosaur.CloudAccountID, resourceName, product)
+		if err != nil {
+			svcErr := errors.ToServiceError(err)
+			return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
+		}
+	} else {
+		bm = forcedBillingModel
 	}
 	rr.BillingModel(amsv1.BillingModel(bm))
 	glog.Infof("Billing model of Central request %q with quota type %q has been set to %q.", dinosaur.ID, instanceType.GetQuotaType(), bm)
@@ -141,13 +156,16 @@ func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.Centr
 		if err := q.verifyCloudAccountInAMS(dinosaur, org.ID()); err != nil {
 			return "", err
 		}
-		rr.BillingMarketplaceAccount(dinosaur.CloudAccountID)
+		if bm != string(amsv1.BillingModelMarketplace) &&
+			bm != string(amsv1.BillingModelMarketplaceRHM) {
+			rr.BillingMarketplaceAccount(dinosaur.CloudAccountID)
+		}
 	}
 
 	requestBuilder := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(dinosaur.Owner).
 		CloudProviderID(dinosaur.CloudProvider).
-		ProductID(instanceType.GetQuotaType().GetProduct()).
+		ProductID(product).
 		Managed(true).
 		ClusterID(dinosaurID).
 		ExternalClusterID(dinosaurID).
