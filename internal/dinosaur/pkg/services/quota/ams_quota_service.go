@@ -115,7 +115,8 @@ func (q amsQuotaService) selectBillingModel(orgID, cloudProviderID, cloudAccount
 	return "", errors.InsufficientQuotaError("No available billing model found")
 }
 
-// ReserveQuota ...
+// ReserveQuota calls AMS to reserve quota for the central request. It computes
+// the central billing parameters if they're not forced.
 func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, forcedBillingModel string, forcedProduct string) (string, *errors.ServiceError) {
 	instanceType := types.DinosaurInstanceType(dinosaur.InstanceType)
 	dinosaurID := dinosaur.ID

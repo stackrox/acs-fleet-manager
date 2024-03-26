@@ -1076,19 +1076,20 @@ func (k *dinosaurService) ChangeBillingParameters(ctx context.Context, centralID
 		centralRequest.InstanceType = string(types.STANDARD)
 	}
 
-	centralRequest.SubscriptionID, svcErr = k.reserveQuota(ctx, centralRequest, billingModel, product)
+	newSubscriptionID, svcErr := k.reserveQuota(ctx, centralRequest, billingModel, product)
 	updated := makeBillingParameters(centralRequest)
 	if svcErr != nil {
-		glog.Errorf("Failed to reserve quota with updated billing parameters (%v): %v", updated, svcErr)
+		glog.Errorf("Failed to reserve quota with updated billing parameters (%+v): %v", updated, svcErr)
 		return svcErr
 	}
+	updated.subscriptionID = newSubscriptionID
 
 	if !reflect.DeepEqual(original, updated) {
 		if svcErr = k.UpdateIgnoreNils(centralRequest); svcErr != nil {
 			glog.Errorf("Failed to update central %q record with updated billing parameters (%v): %v", centralID, updated, svcErr)
 			return svcErr
 		}
-		glog.Infof("Central %q billing parameters has been changed from %v to %v", centralID, original, updated)
+		glog.Infof("Central %q billing parameters have been changed from %v to %v", centralID, original, updated)
 	} else {
 		glog.Infof("Central %q has no change in billing parameters")
 	}
