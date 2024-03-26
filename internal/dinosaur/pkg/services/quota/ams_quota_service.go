@@ -74,12 +74,13 @@ func (q amsQuotaService) HasQuotaAllowance(central *dbapi.CentralRequest, instan
 	return true, nil
 }
 
-// selectBillingModel select the billing model of a dinosaur instance
-// by looking at the resource name and product, cloudProviderID and
-// cloudAccountID. Only QuotaCosts that have available quota, or that contain a
-// RelatedResource with "cost" 0 are considered. Only
-// "standard" and "marketplace" and "marketplace-aws" billing models are considered.
-// If both marketplace and standard billing models are available, marketplace will be given preference.
+// selectBillingModel selects the billing model of an instance by looking
+// at the resource name and product, cloudProviderID and cloudAccountID.
+// Only QuotaCosts that have available quota, or that contain a RelatedResource
+// with "cost" 0 are considered.
+// Only "standard", "marketplace" and "marketplace-aws" billing models are
+// considered. If both "marketplace" and "standard" billing models are
+// available, "marketplace" will be given preference.
 func (q amsQuotaService) selectBillingModel(orgID, cloudProviderID, cloudAccountID string, resourceName string, product string) (string, error) {
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgID, resourceName, product)
 	if err != nil {
