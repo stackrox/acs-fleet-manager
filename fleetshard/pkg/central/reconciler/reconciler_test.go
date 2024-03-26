@@ -28,6 +28,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/mocks"
+	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/utils"
@@ -876,11 +877,20 @@ func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
 	key := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: centralEncryptionKeySecretName}
 	err = fakeClient.Get(context.TODO(), key, &centralEncryptionSecret)
 	require.NoError(t, err)
-	require.Contains(t, centralEncryptionSecret.Data, "encryption-key")
+	require.Contains(t, centralEncryptionSecret.Data, "key-chain.yaml")
 
-	encKey, err := base64.StdEncoding.DecodeString(string(centralEncryptionSecret.Data["encryption-key"]))
+	keyChainFileContents, err := base64.StdEncoding.DecodeString(string(centralEncryptionSecret.Data["key-chain.yaml"]))
 	require.NoError(t, err)
-	expectedKeyLen := len(encKey)
+
+	var keyChain centralNotifierUtils.KeyChain
+	err = yaml.Unmarshal(keyChainFileContents, &keyChain)
+	require.NoError(t, err)
+	require.Equal(t, 0, keyChain.ActiveKeyIndex)
+	require.Equal(t, 1, len(keyChain.KeyMap))
+
+	encKey, err := base64.StdEncoding.DecodeString(keyChain.KeyMap[keyChain.ActiveKeyIndex])
+	require.NoError(t, err)
+	expectedKeyLen := 32 // 256 bits key
 	require.Equal(t, expectedKeyLen, len(encKey))
 }
 

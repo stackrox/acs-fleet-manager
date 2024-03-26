@@ -28,6 +28,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
+	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/random"
@@ -78,7 +79,7 @@ const (
 	centralDbOverrideConfigMap = "central-db-override"
 	centralDeletePollInterval  = 5 * time.Second
 
-	centralEncryptionKeySecretName = "central-encryption-key" // pragma: allowlist secret
+	centralEncryptionKeySecretName = "central-encryption-key-chain" // pragma: allowlist secret
 
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
 	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
@@ -1246,8 +1247,10 @@ func (r *CentralReconciler) ensureEncryptionKeySecretExists(ctx context.Context,
 }
 
 func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) error {
+	const encryptionKeyChainFile = "key-chain.yaml"
+
 	if secret.Data != nil {
-		if _, ok := secret.Data["encryption-key"]; ok {
+		if _, ok := secret.Data[encryptionKeyChainFile]; ok {
 			// secret already populated with encryption key skip operation
 			return nil
 		}
@@ -1259,8 +1262,30 @@ func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) e
 	}
 
 	b64Key := base64.StdEncoding.EncodeToString(encryptionKey)
-	secret.Data = map[string][]byte{"encryption-key": []byte(b64Key)}
+	keyChainFile, err := generateNewKeyChainFile(b64Key)
+	if err != nil {
+		return err
+	}
+	b64KeyChainFile := base64.StdEncoding.EncodeToString(keyChainFile)
+	secret.Data = map[string][]byte{encryptionKeyChainFile: []byte(b64KeyChainFile)}
 	return nil
+}
+
+func generateNewKeyChainFile(b64Key string) ([]byte, error) {
+	keyMap := make(map[int]string)
+	keyMap[0] = b64Key
+
+	keyChain := centralNotifierUtils.KeyChain{
+		KeyMap:         keyMap,
+		ActiveKeyIndex: 0,
+	}
+
+	yamlBytes, err := yaml.Marshal(keyChain)
+	if err != nil {
+		return []byte{}, fmt.Errorf("generating key-chain file: %w", err)
+	}
+
+	return yamlBytes, nil
 }
 
 func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral *private.ManagedCentral) (string, error) {
