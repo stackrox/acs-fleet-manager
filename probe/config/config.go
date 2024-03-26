@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stackrox/rox/pkg/errorhelpers"
+	"sigs.k8s.io/yaml"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/pkg/errors"
@@ -14,8 +15,7 @@ import (
 // Config contains this application's runtime configuration.
 type Config struct {
 	AuthType                string        `env:"AUTH_TYPE" envDefault:"RHSSO"`
-	DataCloudProvider       string        `env:"DATA_PLANE_CLOUD_PROVIDER" envDefault:"aws"`
-	DataPlaneRegion         string        `env:"DATA_PLANE_REGION" envDefault:"us-east-1"`
+	CentralSpecs            CentralSpecs  `env:"CENTRAL_SPECS" envDefault:"[{ \"cloudProvider\": \"standalone\", \"region\": \"standalone\" }]"`
 	FleetManagerEndpoint    string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
 	MetricsAddress          string        `env:"METRICS_ADDRESS" envDefault:":7070"`
 	RHSSOClientID           string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
@@ -28,6 +28,25 @@ type Config struct {
 	ProbeRunWaitPeriod      time.Duration `env:"PROBE_RUN_WAIT_PERIOD" envDefault:"30s"`
 
 	ProbeUsername string
+}
+
+// CentralSpecs container for the CentralSpec slice
+type CentralSpecs []CentralSpec
+
+// CentralSpec the desired central configuration
+type CentralSpec struct {
+	CloudProvider string `json:"cloudProvider"`
+	Region        string `json:"region"`
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler so that CentralSpec can be parsed by env.Parse
+func (s *CentralSpecs) UnmarshalText(text []byte) error {
+	var specs []CentralSpec
+	if err := yaml.Unmarshal(text, &specs); err != nil {
+		return fmt.Errorf("unmarshal central spec: %w", err)
+	}
+	*s = specs
+	return nil
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.

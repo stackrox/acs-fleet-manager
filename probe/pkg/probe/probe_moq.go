@@ -5,6 +5,7 @@ package probe
 
 import (
 	"context"
+	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ var _ Probe = &ProbeMock{}
 //			CleanUpFunc: func(ctx context.Context) error {
 //				panic("mock out the CleanUp method")
 //			},
-//			ExecuteFunc: func(ctx context.Context) error {
+//			ExecuteFunc: func(ctx context.Context, spec config.CentralSpec) error {
 //				panic("mock out the Execute method")
 //			},
 //		}
@@ -35,7 +36,7 @@ type ProbeMock struct {
 	CleanUpFunc func(ctx context.Context) error
 
 	// ExecuteFunc mocks the Execute method.
-	ExecuteFunc func(ctx context.Context) error
+	ExecuteFunc func(ctx context.Context, spec config.CentralSpec) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -48,6 +49,8 @@ type ProbeMock struct {
 		Execute []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// Spec is the spec argument value.
+			Spec config.CentralSpec
 		}
 	}
 	lockCleanUp sync.RWMutex
@@ -87,19 +90,21 @@ func (mock *ProbeMock) CleanUpCalls() []struct {
 }
 
 // Execute calls ExecuteFunc.
-func (mock *ProbeMock) Execute(ctx context.Context) error {
+func (mock *ProbeMock) Execute(ctx context.Context, spec config.CentralSpec) error {
 	if mock.ExecuteFunc == nil {
 		panic("ProbeMock.ExecuteFunc: method is nil but Probe.Execute was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
+		Ctx  context.Context
+		Spec config.CentralSpec
 	}{
-		Ctx: ctx,
+		Ctx:  ctx,
+		Spec: spec,
 	}
 	mock.lockExecute.Lock()
 	mock.calls.Execute = append(mock.calls.Execute, callInfo)
 	mock.lockExecute.Unlock()
-	return mock.ExecuteFunc(ctx)
+	return mock.ExecuteFunc(ctx, spec)
 }
 
 // ExecuteCalls gets all the calls that were made to Execute.
@@ -107,10 +112,12 @@ func (mock *ProbeMock) Execute(ctx context.Context) error {
 //
 //	len(mockedProbe.ExecuteCalls())
 func (mock *ProbeMock) ExecuteCalls() []struct {
-	Ctx context.Context
+	Ctx  context.Context
+	Spec config.CentralSpec
 } {
 	var calls []struct {
-		Ctx context.Context
+		Ctx  context.Context
+		Spec config.CentralSpec
 	}
 	mock.lockExecute.RLock()
 	calls = mock.calls.Execute

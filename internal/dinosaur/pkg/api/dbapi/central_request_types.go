@@ -2,6 +2,7 @@
 package dbapi
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -77,7 +78,7 @@ type CentralRequest struct {
 	Namespace        string   `json:"namespace"`
 	RoutesCreationID string   `json:"routes_creation_id"`
 	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource.
-	DeletionTimestamp *time.Time `json:"deletionTimestamp"`
+	DeletionTimestamp sql.NullTime `json:"deletionTimestamp"`
 
 	// Internal will be set for instances created by internal services, such as the probe service.
 	// If Internal is set to true, telemetry will be disabled for this particular instance.
@@ -90,7 +91,7 @@ type CentralRequest struct {
 
 	// ExpiredAt contains the timestamp of when a Central instance's quota allowance was found to be expired.
 	// After a grace period, the Central instance will be marked for deletion, its status will be set to 'deprovision'.
-	ExpiredAt *time.Time `json:"expired_at"`
+	ExpiredAt sql.NullTime `json:"expired_at"`
 
 	// Traits is a set of random strings assigned to an instance. Some traits
 	// can be hardcoded, and change some processing parameters.
@@ -171,4 +172,20 @@ func (k *CentralRequest) GetDataHost() string {
 		return ""
 	}
 	return fmt.Sprintf("acs-data-%s.%s", k.ID, k.Host)
+}
+
+// NullTimeToTimePtr converts sql.NullTime to *time.Time.
+func NullTimeToTimePtr(t sql.NullTime) *time.Time {
+	if t.Valid && !t.Time.IsZero() {
+		return &t.Time
+	}
+	return nil
+}
+
+// TimePtrToNullTime converts *time.Time to sql.NullTime.
+func TimePtrToNullTime(t *time.Time) sql.NullTime {
+	if t != nil && !t.IsZero() {
+		return sql.NullTime{Time: *t, Valid: true}
+	}
+	return sql.NullTime{}
 }

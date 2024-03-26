@@ -1,5 +1,4 @@
 ---
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -55,13 +54,16 @@ data:
                     address: 127.0.0.1
                     port_value: 8000 # Fleet Manager port
         transport_socket:
-          name: envoy.transport_sockets.tls
+          name: envoy.transport_sockets.internal_upstream
           typed_config:
-            "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-            common_tls_context:
-              validation_context:
-                trusted_ca:
-                  filename: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+            "@type": type.googleapis.com/envoy.extensions.transport_sockets.internal_upstream.v3.InternalUpstreamTransport
+            passthrough_metadata:
+              - name: tunnel
+                kind: { host: {}}
+            transport_socket:
+              name: envoy.transport_sockets.raw_buffer
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.transport_sockets.raw_buffer.v3.RawBuffer
 
       # This cluster is used to send request to the rate limiting service.
       - name: limiter
@@ -114,6 +116,8 @@ data:
                       prefix_rewrite: /stats/prometheus
               http_filters:
               - name: envoy.filters.http.router
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
       # This listener is used to accept inbound API requests.
       - name: ingress
@@ -122,16 +126,6 @@ data:
             address: 0.0.0.0
             port_value: 9001
         filter_chains:
-        - transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
-              common_tls_context:
-                tls_certificates:
-                - certificate_chain:
-                    filename: /secrets/tls/tls.crt
-                  private_key:
-                    filename: /secrets/tls/tls.key
           filters:
           - name: envoy.filters.network.http_connection_manager
             typed_config:
@@ -208,6 +202,8 @@ data:
 
               # This is mandatory in order to have the HTTP routes above.
               - name: envoy.filters.http.router
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
               # We need this in order to generate JSON responses according to
               # our API guidelines, otherwise Envoy will generate plain text

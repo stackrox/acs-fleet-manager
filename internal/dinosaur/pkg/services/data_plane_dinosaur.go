@@ -159,7 +159,7 @@ func (s *dataPlaneCentralService) setCentralClusterFailed(centralRequest *dbapi.
 
 	centralRequest.Status = string(constants.CentralRequestStatusFailed)
 	centralRequest.FailedReason = fmt.Sprintf("Central reported as failed: '%s'", errMessage)
-	err = s.dinosaurService.Update(centralRequest)
+	err = s.dinosaurService.UpdateIgnoreNils(centralRequest)
 	if err != nil {
 		return serviceError.NewWithCause(err.Code, err, "failed to update central cluster to %s status for central cluster %s", constants.CentralRequestStatusFailed, centralRequest.ID)
 	}
@@ -189,7 +189,7 @@ func (s *dataPlaneCentralService) reassignCentralCluster(centralRequest *dbapi.C
 		// But now we only have one OSD cluster, so we need to change the placementId field so that the fleetshard-operator will try it again
 		// In the future, we may consider adding a new table to track the placement history for dinosaur clusters if there are multiple OSD clusters and the value here can be the key of that table
 		centralRequest.PlacementID = api.NewID()
-		if err := s.dinosaurService.Update(centralRequest); err != nil {
+		if err := s.dinosaurService.UpdateIgnoreNils(centralRequest); err != nil {
 			return err
 		}
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants.CentralRequestStatusProvisioning, centralRequest.ID, centralRequest.ClusterID, time.Since(centralRequest.CreatedAt))
@@ -244,7 +244,7 @@ func (s *dataPlaneCentralService) persistCentralValues(centralRequest *dbapi.Cen
 		return err
 	}
 
-	if err := s.dinosaurService.Update(centralRequest); err != nil {
+	if err := s.dinosaurService.UpdateIgnoreNils(centralRequest); err != nil {
 		return serviceError.NewWithCause(err.Code, err, "failed to update routes for central cluster %s", centralRequest.ID)
 	}
 

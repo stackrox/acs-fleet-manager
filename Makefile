@@ -23,6 +23,8 @@ GINKGO_FLAGS ?= -v
 # cluster will not pull the new image from the internal registry:
 version:=$(shell date +%s)
 
+NAMESPACE = rhacs
+PROBE_NAMESPACE = rhacs-probe
 IMAGE_NAME = fleet-manager
 PROBE_IMAGE_NAME = probe
 IMAGE_TARGET = standard
@@ -30,7 +32,6 @@ IMAGE_TARGET = standard
 SHORT_IMAGE_REF = "$(IMAGE_NAME):$(image_tag)"
 PROBE_SHORT_IMAGE_REF = "$(PROBE_IMAGE_NAME):$(image_tag)"
 
-IMAGE_REGISTRY ?= quay.io/rhacs-eng
 image_repository:=$(IMAGE_NAME)
 probe_image_repository:=$(PROBE_IMAGE_NAME)
 
@@ -39,17 +40,20 @@ probe_image_repository:=$(PROBE_IMAGE_NAME)
 # when it is accessed from outside the cluster and when it is accessed from
 # inside the cluster. We need the external name to push the image, and the
 # internal name to pull it.
-external_image_registry:= $(IMAGE_REGISTRY)
+external_image_registry:=quay.io/rhacs-eng
 internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 
 DOCKER ?= docker
 DOCKER_CONFIG ?= "${HOME}/.docker"
 
 # Default Variables
-ACSCS_NAMESPACE ?= acscs
-ENABLE_OCM_MOCK ?= false
+ENABLE_OCM_MOCK ?= true
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
+GITOPS_CONFIG_FILE ?= ${PROJECT_PATH}/dev/config/gitops-config.yaml
+DATAPLANE_CLUSTER_CONFIG_FILE ?= ${PROJECT_PATH}/dev/config/dataplane-cluster-configuration.yaml
+PROVIDERS_CONFIG_FILE ?= ${PROJECT_PATH}/dev/config/provider-configuration.yaml
+QUOTA_MANAGEMENT_LIST_CONFIG_FILE ?= ${PROJECT_PATH}/dev/config/quota-management-list-configuration.yaml
 
 GO := go
 GOFMT := gofmt
@@ -62,6 +66,15 @@ endif
 
 ifeq ($(IMAGE_PLATFORM),)
 IMAGE_PLATFORM=linux/$(shell $(GO) env GOARCH)
+endif
+
+ifeq ($(CLUSTER_DNS),)
+# This makes sure that the "ingresscontroller" kind, which only exists on OpenShift by default, is only queried
+# when CLUSTER_DNS is not set.
+CLUSTER_DNS=$(shell oc get -n "openshift-ingress-operator" ingresscontrollers default -o=jsonpath='{.status.domain}' --ignore-not-found 2> /dev/null)
+ifeq ($(CLUSTER_DNS),)
+CLUSTER_DNS=host.acscs.internal
+endif
 endif
 
 LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
@@ -86,8 +99,8 @@ $(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/segmentio/chamber/v2
 
 GINKGO_BIN := $(LOCAL_BIN_PATH)/ginkgo
-$(GINKGO_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
-	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
+$(GINKGO_BIN): go.mod go.sum
+	@GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
 
 TOOLS_VENV_DIR := $(LOCAL_BIN_PATH)/tools_venv
 $(TOOLS_VENV_DIR): $(TOOLS_DIR)/requirements.txt
@@ -203,7 +216,7 @@ help:
 	@echo "make observatorium/setup         setup observatorium secrets used by CI"
 	@echo "make observatorium/token-refresher/setup" setup a local observatorium token refresher
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
-	@echo "make image/build/push/internal   build and push image to an openshift cluster image registry."
+	@echo "make image/push/internal         push image to an openshift cluster image registry."
 	@echo "make deploy/project              deploy the service via templates to an openshift cluster"
 	@echo "make undeploy                    remove the service deployments from an openshift cluster"
 	@echo "make redhatsso/setup             setup sso clientId & clientSecret"
@@ -280,11 +293,6 @@ acsfleetctl:
 binary: fleet-manager fleetshard-sync probe acsfleetctl
 .PHONY: binary
 
-# Install
-install: verify lint
-	$(GO) install ./cmd/fleet-manager
-.PHONY: install
-
 clean:
 	rm -f fleet-manager fleetshard-sync probe/bin/probe
 .PHONY: clean
@@ -337,6 +345,7 @@ test/e2e: $(GINKGO_BIN)
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	RUN_E2E=true \
 	ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=$(ENABLE_CENTRAL_EXTERNAL_CERTIFICATE) \
+	GITOPS_CONFIG_PATH=$(GITOPS_CONFIG_FILE) \
 	$(GINKGO_BIN) -r $(GINKGO_FLAGS) \
 		--randomize-suites \
 		--fail-on-pending --keep-going \
@@ -426,9 +435,8 @@ code/fix:
 	@$(GOFMT) -w `find . -type f -name '*.go' -not -path "./vendor/*"`
 .PHONY: code/fix
 
-run: install
-	fleet-manager migrate
-	fleet-manager serve --public-host-url=${PUBLIC_HOST_URL}
+run: fleet-manager db/migrate
+	./fleet-manager serve --dataplane-cluster-config-file $(DATAPLANE_CLUSTER_CONFIG_FILE)
 .PHONY: run
 
 # Run Swagger and host the api docs
@@ -549,8 +557,7 @@ image/push/probe: image/build/probe
 # push the image to the OpenShift internal registry
 image/push/internal: IMAGE_TAG ?= $(image_tag)
 image/push/internal: docker/login/internal
-	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)"
-	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(probe_image_repository):$(IMAGE_TAG)"
+	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)" --platform linux/amd64 --push .
 .PHONY: image/push/internal
 
 image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
@@ -677,15 +684,14 @@ deploy/project:
 
 # deploy the postgres database required by the service to an OpenShift cluster
 deploy/db:
-	oc process -f ./templates/db-template.yml | oc apply -f - -n $(NAMESPACE)
+	oc process -f ./templates/db-template.yml --local | oc apply -f - -n $(NAMESPACE)
 	@time timeout --foreground 3m bash -c "until oc get pods -n $(NAMESPACE) | grep fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
 .PHONY: deploy/db
 
 # deploys the secrets required by the service to an OpenShift cluster
 deploy/secrets:
-	@oc get service/fleet-manager-db -n $(NAMESPACE) || (echo "Database is not deployed, please run 'make deploy/db'"; exit 1)
-	@oc process -f ./templates/secrets-template.yml \
-		-p DATABASE_HOST="$(shell oc get service/fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
+	@oc process -f ./templates/secrets-template.yml --local \
+		-p DATABASE_HOST="fleet-manager-db.$(NAMESPACE).svc.cluster.local" \
 		-p OCM_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-service.clientId' ] && [ -z '${OCM_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-service.clientId || echo '${OCM_SERVICE_CLIENT_ID}')" \
 		-p OCM_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-service.clientSecret' ] && [ -z '${OCM_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-service.clientSecret || echo '${OCM_SERVICE_CLIENT_SECRET}')" \
 		-p OCM_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-service.token' ] && [ -z '${OCM_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-service.token || echo '${OCM_SERVICE_TOKEN}')" \
@@ -718,18 +724,33 @@ deploy/envoy:
 .PHONY: deploy/envoy
 
 deploy/route:
-	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
+	@oc process -f ./templates/route-template.yml --local | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/route
 
+# When making changes to the gitops configuration for development purposes
+# situated here dev/env/manifests/fleet-manager/04-gitops-config.yaml, this
+# target will update the gitops configmap on the dev cluster.
+# It might take a few seconds/minutes for fleet-manager to observe the changes.
+# Changes to the configmap are hot-reloaded
+# See https://kubernetes.io/docs/concepts/configuration/configmap/#mounted-configmaps-are-updated-automatically
+deploy/gitops:
+ifeq (,$(wildcard $(GITOPS_CONFIG_FILE)))
+    $(error gitops config file not found at path: '$(GITOPS_CONFIG_FILE)')
+endif
+	@oc process -f ./templates/gitops-template.yml --local -p GITOPS_CONFIG='$(shell yq . $(GITOPS_CONFIG_FILE) -r -o=j -I=0)' \
+	| oc apply -f - -n $(NAMESPACE)
+.PHONY: deploy/gitops
+
 # deploy service via templates to an OpenShift cluster
-deploy/service: IMAGE_REGISTRY ?= $(internal_image_registry)
-deploy/service: IMAGE_REPOSITORY ?= $(image_repository)
+deploy/service: FLEET_MANAGER_IMAGE ?= $(SHORT_IMAGE_REF)
+deploy/service: IMAGE_TAG ?= $(image_tag)
 deploy/service: FLEET_MANAGER_ENV ?= "development"
 deploy/service: REPLICAS ?= "1"
 deploy/service: ENABLE_CENTRAL_EXTERNAL_CERTIFICATE ?= "false"
 deploy/service: ENABLE_CENTRAL_LIFE_SPAN ?= "false"
 deploy/service: CENTRAL_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
+deploy/service: OCM_ADDON_SERVICE_URL ?= "https://api.stage.openshift.com"
 deploy/service: TOKEN_ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
 deploy/service: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
 deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
@@ -743,15 +764,23 @@ deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
 deploy/service: CENTRAL_IDP_ISSUER ?= "https://sso.stage.redhat.com/auth/realms/redhat-external"
 deploy/service: CENTRAL_IDP_CLIENT_ID ?= "rhacs-ms-dev"
 deploy/service: CENTRAL_REQUEST_EXPIRATION_TIMEOUT ?= "1h"
-deploy/service: deploy/envoy deploy/route
-	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
+deploy/service: ENABLE_HTTPS ?= "false"
+deploy/service: HEALTH_CHECK_SCHEME ?= "HTTP"
+deploy/service: CPU_REQUEST ?= "200m"
+deploy/service: MEMORY_REQUEST ?= "300Mi"
+deploy/service: CPU_LIMIT ?= "200m"
+deploy/service: MEMORY_LIMIT ?= "300Mi"
+deploy/service: CENTRAL_DOMAIN_NAME ?= "rhacs-dev.com"
+deploy/service: deploy/envoy deploy/route deploy/gitops
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q fleet-manager; do echo 'waiting for fleet-manager route to be created'; sleep 1; done"
-	@oc process -f ./templates/service-template.yml \
+ifeq (,$(wildcard $(PROVIDERS_CONFIG_FILE)))
+	$(error providers config file not found at path: '$(PROVIDERS_CONFIG_FILE)')
+endif
+	@oc process -f ./templates/service-template.yml --local \
 		-p ENVIRONMENT="$(FLEET_MANAGER_ENV)" \
 		-p CENTRAL_IDP_ISSUER="$(CENTRAL_IDP_ISSUER)" \
 		-p CENTRAL_IDP_CLIENT_ID="$(CENTRAL_IDP_CLIENT_ID)" \
-		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
-		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
+		-p REPO_DIGEST="$(FLEET_MANAGER_IMAGE)" \
 		-p IMAGE_TAG=$(IMAGE_TAG) \
 		-p REPLICAS="${REPLICAS}" \
 		-p ENABLE_CENTRAL_EXTERNAL_CERTIFICATE="${ENABLE_CENTRAL_EXTERNAL_CERTIFICATE}" \
@@ -760,6 +789,7 @@ deploy/service: deploy/envoy deploy/route
 		-p ENABLE_OCM_MOCK=$(ENABLE_OCM_MOCK) \
 		-p OCM_MOCK_MODE=$(OCM_MOCK_MODE) \
 		-p OCM_URL="$(OCM_URL)" \
+		-p OCM_ADDON_SERVICE_URL="$(OCM_ADDON_SERVICE_URL)" \
 		-p AMS_URL="${AMS_URL}" \
 		-p JWKS_URL="$(JWKS_URL)" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
@@ -776,23 +806,31 @@ deploy/service: deploy/envoy deploy/route
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
 		-p CENTRAL_REQUEST_EXPIRATION_TIMEOUT="${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}" \
+		-p CLUSTER_LIST='$(shell make cluster-list)' \
+		-p ENABLE_HTTPS="$(ENABLE_HTTPS)" \
+		-p HEALTH_CHECK_SCHEME="$(HEALTH_CHECK_SCHEME)" \
+		-p CPU_REQUEST="$(CPU_REQUEST)" \
+		-p MEMORY_REQUEST="$(MEMORY_REQUEST)" \
+		-p CPU_LIMIT="$(CPU_LIMIT)" \
+		-p MEMORY_LIMIT="$(MEMORY_LIMIT)" \
+		-p CENTRAL_DOMAIN_NAME="$(CENTRAL_DOMAIN_NAME)" \
+		-p SUPPORTED_CLOUD_PROVIDERS='$(shell yq .supported_providers $(PROVIDERS_CONFIG_FILE) -r -o=j -I=0)' \
+		-p REGISTERED_USERS_PER_ORGANISATION='$(shell yq .registered_users_per_organisation $(QUOTA_MANAGEMENT_LIST_CONFIG_FILE) -r -o=j -I=0)' \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
 
 
 # remove service deployments from an OpenShift cluster
-undeploy: IMAGE_REGISTRY ?= $(internal_image_registry)
-undeploy: IMAGE_REPOSITORY ?= $(image_repository)
+undeploy: FLEET_MANAGER_IMAGE ?= $(SHORT_IMAGE_REF)
 undeploy:
-	@-oc process -f ./templates/observatorium-token-refresher.yml | oc delete -f - -n $(NAMESPACE)
-	@-oc process -f ./templates/db-template.yml | oc delete -f - -n $(NAMESPACE)
-	@-oc process -f ./templates/secrets-template.yml | oc delete -f - -n $(NAMESPACE)
-	@-oc process -f ./templates/route-template.yml | oc delete -f - -n $(NAMESPACE)
+	@-oc process -f ./templates/observatorium-token-refresher.yml --local | oc delete -f - -n $(NAMESPACE)
+	@-oc process -f ./templates/db-template.yml --local | oc delete -f - -n $(NAMESPACE)
+	@-oc process -f ./templates/secrets-template.yml --local | oc delete -f - -n $(NAMESPACE)
+	@-oc process -f ./templates/route-template.yml --local | oc delete -f - -n $(NAMESPACE)
 	@-oc delete -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
-	@-oc process -f ./templates/service-template.yml \
-		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
-		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
+	@-oc process -f ./templates/service-template.yml --local \
+		-p REPO_DIGEST="$(FLEET_MANAGER_IMAGE)" \
 		| oc delete -f - -n $(NAMESPACE)
 .PHONY: undeploy
 
@@ -840,22 +878,41 @@ deploy/bootstrap:
 deploy/dev-fast: image/build deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 
 deploy/dev-fast/fleet-manager: image/build
-	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
-	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleet-manager
+	kubectl -n $(NAMESPACE) set image deploy/fleet-manager service=$(SHORT_IMAGE_REF) migration=$(SHORT_IMAGE_REF)
+	kubectl -n $(NAMESPACE) delete pod -l app=fleet-manager
 
 deploy/dev-fast/fleetshard-sync: image/build
-	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
-	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleetshard-sync
+	kubectl -n $(NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
+	kubectl -n $(NAMESPACE) delete pod -l application=fleetshard-sync
 
-# When making changes to the gitops configuration for development purposes
-# situated here dev/env/manifests/fleet-manager/04-gitops-config.yaml, this
-# target will update the gitops configmap on the dev cluster.
-# It might take a few seconds/minutes for fleet-manager to observe the changes.
-# Changes to the configmap are hot-reloaded
-# See https://kubernetes.io/docs/concepts/configuration/configmap/#mounted-configmaps-are-updated-automatically
-deploy/dev/update-gitops-config:
-	./dev/env/scripts/update_gitops_config.sh
-.PHONY: deploy/dev/update-gitops-config
+deploy/probe: IMAGE_REGISTRY?="$(external_image_registry)"
+deploy/probe: IMAGE_REPOSITORY?="$(probe_image_repository)"
+deploy/probe: IMAGE_TAG?="$(image_tag)"
+deploy/probe:
+	@oc create namespace $(PROBE_NAMESPACE) --dry-run=client -o yaml | oc apply -f -
+	@oc create secret generic probe-credentials \
+             --save-config \
+             --dry-run=client \
+             --from-literal=OCM_USERNAME=${USER} \
+             --from-literal=OCM_TOKEN='$(shell ocm token --refresh)' \
+             -o yaml | oc apply -n $(PROBE_NAMESPACE) -f -
+	@oc process -f ./templates/probe-template.yml --local \
+		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
+		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
+		-p IMAGE_TAG=$(IMAGE_TAG) \
+		| oc apply -f - -n $(PROBE_NAMESPACE)
+.PHONY: deploy/probe
+
+undeploy/probe: IMAGE_REGISTRY="$(external_image_registry)"
+undeploy/probe: IMAGE_REPOSITORY="$(probe_image_repository)"
+undeploy/probe:
+	@oc process -f ./templates/probe-template.yml --local \
+		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
+		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
+			| oc delete -f - -n $(PROBE_NAMESPACE) --ignore-not-found
+	@oc delete secret probe-credentials --ignore-not-found
+	@oc delete namespace $(PROBE_NAMESPACE) --ignore-not-found
+.PHONY: undeploy/probe
 
 tag:
 	@echo "$(image_tag)"
@@ -869,3 +926,7 @@ clean/go-generated:
 	@echo "Cleaning generated .go files..."
 	@find . -name '*.go' | xargs grep -l '// Code generated by .*; DO NOT EDIT.$$' | while read -r file; do echo ""$$file""; rm -f "$$file"; done
 .PHONY: clean/go-generated
+
+cluster-list:
+	@yq '.clusters | .[0].cluster_dns="$(CLUSTER_DNS)"' $(DATAPLANE_CLUSTER_CONFIG_FILE) -r -o=j -I=0
+.PHONY: cluster-list

@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -88,9 +90,9 @@ type DinosaurService interface {
 	// same as the original status. The error will contain any error encountered when attempting to update or the reason
 	// why no attempt has been done
 	UpdateStatus(id string, status dinosaurConstants.CentralStatus) (bool, *errors.ServiceError)
-	// Update does NOT update nullable fields when they're nil in the request. Use Updates() instead.
-	Update(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
-	// Updates() updates the given fields of a dinosaur. This takes in a map so that even zero-fields can be updated.
+	// UpdateIgnoreNils does NOT update nullable fields when they're nil in the request. Use Updates() instead.
+	UpdateIgnoreNils(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
+	// Updates changes the given fields of a dinosaur. This takes in a map so that even zero-fields can be updated.
 	// Use this only when you want to update the multiple columns that may contain zero-fields, otherwise use the `DinosaurService.Update()` method.
 	// See https://gorm.io/docs/update.html#Updates-multiple-columns for more info
 	Updates(dinosaurRequest *dbapi.CentralRequest, values map[string]interface{}) *errors.ServiceError
@@ -113,6 +115,7 @@ type DinosaurService interface {
 	// This is currently the only way to update secret backups, an automatic approach should be implemented
 	// to accomated for regular processes like central TLS cert rotation.
 	ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
+	ChangeBillingParameters(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -167,7 +170,7 @@ func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralR
 	if err := rhsso.AugmentWithDynamicAuthConfig(ctx, centralRequest, k.iamConfig.RedhatSSORealm, k.rhSSODynamicClientsAPI); err != nil {
 		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to augment auth config")
 	}
-	if err := k.Update(centralRequest); err != nil {
+	if err := k.UpdateIgnoreNils(centralRequest); err != nil {
 		glog.Errorf("Rotating RHSSO client failed: created new RHSSO dynamic client, but failed to update central record, client ID is %s", centralRequest.AuthConfig.ClientID)
 		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to update database record")
 	}
@@ -180,6 +183,8 @@ func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralR
 
 func (k *dinosaurService) ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	centralRequest.Secrets = nil // pragma: allowlist secret
+
+	logStateChange("reset secrets", centralRequest.ID, nil)
 
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Model(centralRequest).Select("secrets").Updates(centralRequest).Error; err != nil {
@@ -230,7 +235,7 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 }
 
 // reserveQuota - reserves quota for the given dinosaur request. If a RHACS quota has been assigned, it will try to reserve RHACS quota, otherwise it will try with RHACSTrial
-func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) (subscriptionID string, err *errors.ServiceError) {
+func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dbapi.CentralRequest, bm string, product string) (subscriptionID string, err *errors.ServiceError) {
 	if dinosaurRequest.InstanceType == types.EVAL.String() &&
 		!(environments.GetEnvironmentStrFromEnv() == environments.DevelopmentEnv || environments.GetEnvironmentStrFromEnv() == environments.TestingEnv) {
 		if !k.dinosaurConfig.Quota.AllowEvaluatorInstance {
@@ -258,7 +263,7 @@ func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dba
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
-	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType))
+	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest, bm, product)
 	return subscriptionID, err
 }
 
@@ -288,7 +293,7 @@ func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurReque
 		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", dinosaurRequest.Region, dinosaurRequest.InstanceType))
 	}
 	dinosaurRequest.ClusterID = cluster.ClusterID
-	subscriptionID, err := k.reserveQuota(ctx, dinosaurRequest)
+	subscriptionID, err := k.reserveQuota(ctx, dinosaurRequest, "", "")
 	if err != nil {
 		return err
 	}
@@ -302,6 +307,9 @@ func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurReque
 	// the API is restarted this time changing the --quota-type flag to quota-management-list, when dinosaur A is deleted at this point,
 	// we want to use the correct quota to perform the deletion.
 	dinosaurRequest.QuotaType = k.dinosaurConfig.Quota.Type
+
+	logStateChange("register dinosaur job", dinosaurRequest.ID, dinosaurRequest)
+
 	if err := dbConn.Create(dinosaurRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create central request") // hide the db error to http caller
 	}
@@ -333,7 +341,7 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 		centralRequest.Host = clusterDNS
 	}
 
-	// Update the fields of the CentralRequest record in the database.
+	// UpdateIgnoreNils the fields of the CentralRequest record in the database.
 	updatedDinosaurRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: centralRequest.ID,
@@ -343,7 +351,7 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 		Status:      dinosaurConstants.CentralRequestStatusPreparing.String(),
 		Namespace:   centralRequest.Namespace,
 	}
-	if err := k.Update(updatedDinosaurRequest); err != nil {
+	if err := k.UpdateIgnoreNils(updatedDinosaurRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update central request")
 	}
 
@@ -376,7 +384,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		return errors.OrganisationNameInvalid(dinosaurRequest.OrganisationID, orgName)
 	}
 
-	// Update the fields of the CentralRequest record in the database.
+	// UpdateIgnoreNils the fields of the CentralRequest record in the database.
 	updatedCentralRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
@@ -384,7 +392,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		OrganisationName: orgName,
 		Status:           dinosaurConstants.CentralRequestStatusProvisioning.String(),
 	}
-	if err := k.Update(updatedCentralRequest); err != nil {
+	if err := k.UpdateIgnoreNils(updatedCentralRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update central request")
 	}
 
@@ -599,12 +607,12 @@ func (k *dinosaurService) Delete(centralRequest *dbapi.CentralRequest, force boo
 		}
 	}
 
+	logStateChange("delete request", centralRequest.ID, nil)
 	// soft delete the dinosaur request
 	if err := dbConn.Delete(centralRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete central request with id %s", centralRequest.ID)
 	}
 
-	glog.Infof("Successfully deleted Central tenant %q in the database.", centralRequest.ID)
 	if force {
 		glog.Infof("Make sure any other resources belonging to the Central tenant %q are manually deleted.", centralRequest.ID)
 	}
@@ -684,10 +692,12 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 }
 
 // Update ...
-func (k *dinosaurService) Update(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+func (k *dinosaurService) UpdateIgnoreNils(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(dinosaurRequest).
 		Where("status not IN (?)", dinosaurDeletionStatuses) // ignore updates of dinosaur under deletion
+
+	logStateChange("updates", dinosaurRequest.ID, dinosaurRequest)
 
 	if err := dbConn.Updates(dinosaurRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update central")
@@ -701,6 +711,8 @@ func (k *dinosaurService) Updates(dinosaurRequest *dbapi.CentralRequest, fields 
 	dbConn := k.connectionFactory.New().
 		Model(dinosaurRequest).
 		Where("status not IN (?)", dinosaurDeletionStatuses) // ignore updates of dinosaur under deletion
+
+	glog.Infof("instance state change: id=%q: fields=%+v", dinosaurRequest.ID, fields)
 
 	if err := dbConn.Updates(fields).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update central")
@@ -726,7 +738,7 @@ func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dino
 		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for central %s", dinosaurRequest.ID))
 	}
 
-	return k.Update(dinosaurRequest)
+	return k.UpdateIgnoreNils(dinosaurRequest)
 }
 
 // UpdateStatus ...
@@ -750,8 +762,10 @@ func (k *dinosaurService) UpdateStatus(id string, status dinosaurConstants.Centr
 	update := &dbapi.CentralRequest{Status: status.String()}
 	if status.String() == dinosaurConstants.CentralRequestStatusDeprovision.String() {
 		now := time.Now()
-		update.DeletionTimestamp = &now
+		update.DeletionTimestamp = sql.NullTime{Time: now, Valid: true}
 	}
+
+	logStateChange(fmt.Sprintf("change status to %q", status.String()), id, nil)
 
 	if err := dbConn.Model(&dbapi.CentralRequest{Meta: api.Meta{ID: id}}).Updates(update).Error; err != nil {
 		return true, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update central status")
@@ -844,11 +858,13 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 	}
 
 	// use a new central request, so that unset field for columnsToReset will automatically be set to the zero value
-	// this Update only changes columns listed in columnsToReset
+	// this UpdateIgnoreNils only changes columns listed in columnsToReset
 	resetRequest := &dbapi.CentralRequest{}
 	resetRequest.ID = centralRequest.ID
 	resetRequest.Status = dinosaurConstants.CentralRequestStatusPreparing.String()
 	resetRequest.CreatedAt = time.Now()
+
+	logStateChange("restore", resetRequest.ID, resetRequest)
 
 	if err := dbConn.Unscoped().Model(resetRequest).Select(columnsToReset).Updates(resetRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset CentralRequest status")
@@ -976,4 +992,106 @@ func buildResourceRecordChange(recordName string, clusterIngress string, action 
 	}
 
 	return resourceRecordChange
+}
+
+func logStateChange(msg, id string, req *dbapi.CentralRequest) {
+	if req != nil {
+		glog.Infof("instance state change: id=%q: message=%s: request=%+v", id, msg, convertCentralRequestToString(req))
+	} else {
+		glog.Infof("instance state change: id=%q: message=%s", id, msg)
+	}
+}
+
+func convertCentralRequestToString(req *dbapi.CentralRequest) string {
+	traits, _ := req.Traits.Value()
+	requestAsMap := map[string]interface{}{
+		"id":                      req.ID,
+		"created_at":              req.CreatedAt,
+		"updated_at":              req.UpdatedAt,
+		"deleted_at":              req.DeletedAt,
+		"region":                  req.Region,
+		"cluster_id":              req.ClusterID,
+		"cloud_provider":          req.CloudProvider,
+		"cloud_account_id":        req.CloudAccountID,
+		"multi_az":                req.MultiAZ,
+		"name":                    req.Name,
+		"status":                  req.Status,
+		"subscription_id":         req.SubscriptionID,
+		"owner":                   req.Owner,
+		"owner_account_id":        req.OwnerAccountID,
+		"owner_user_id":           req.OwnerUserID,
+		"owner_alternate_user_id": req.OwnerAlternateUserID,
+		"host":                    req.Host,
+		"organisation_id":         req.OrganisationID,
+		"organisation_name":       req.OrganisationName,
+		"failed_reason":           req.FailedReason,
+		"placement_id":            req.PlacementID,
+		"instance_type":           req.InstanceType,
+		"qouta_type":              req.QuotaType,
+		"routes_created":          req.RoutesCreated,
+		"namespace":               req.Namespace,
+		"routes_creation_id":      req.RoutesCreationID,
+		"deletion_timestamp":      req.DeletionTimestamp,
+		"internal":                req.Internal,
+		"expired_at":              req.ExpiredAt,
+		"traits":                  traits,
+		"issuer":                  req.Issuer,
+		"client_origin":           req.ClientOrigin,
+	}
+	return fmt.Sprintf("%+v", requestAsMap)
+}
+
+type billingParameters struct {
+	cloudAccountID string
+	cloudProvider  string
+	subscriptionID string
+	instanceType   string
+	product        string
+}
+
+func makeBillingParameters(central *dbapi.CentralRequest) *billingParameters {
+	return &billingParameters{
+		cloudAccountID: central.CloudAccountID,
+		cloudProvider:  central.CloudProvider,
+		subscriptionID: central.SubscriptionID,
+		instanceType:   central.InstanceType,
+		product:        types.DinosaurInstanceType(central.InstanceType).GetQuotaType().GetProduct(),
+	}
+}
+
+func (k *dinosaurService) ChangeBillingParameters(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *errors.ServiceError {
+	centralRequest, svcErr := k.GetByID(centralID)
+	if svcErr != nil {
+		return svcErr
+	}
+
+	original := makeBillingParameters(centralRequest)
+
+	centralRequest.CloudAccountID = cloudAccountID
+	centralRequest.CloudProvider = cloudProvider
+
+	// Changing product is allowed (by OCM) only from RHACSTrial to RHACS today.
+	// This change should also change the instance type.
+	if original.product == string(ocm.RHACSTrialProduct) && product == string(ocm.RHACSProduct) {
+		centralRequest.InstanceType = string(types.STANDARD)
+	}
+
+	newSubscriptionID, svcErr := k.reserveQuota(ctx, centralRequest, billingModel, product)
+	updated := makeBillingParameters(centralRequest)
+	if svcErr != nil {
+		glog.Errorf("Failed to reserve quota with updated billing parameters (%+v): %v", updated, svcErr)
+		return svcErr
+	}
+	updated.subscriptionID = newSubscriptionID
+
+	if !reflect.DeepEqual(original, updated) {
+		if svcErr = k.UpdateIgnoreNils(centralRequest); svcErr != nil {
+			glog.Errorf("Failed to update central %q record with updated billing parameters (%v): %v", centralID, updated, svcErr)
+			return svcErr
+		}
+		glog.Infof("Central %q billing parameters have been changed from %v to %v", centralID, original, updated)
+	} else {
+		glog.Infof("Central %q has no change in billing parameters")
+	}
+	return nil
 }

@@ -30,6 +30,11 @@ var testConfig = &config.Config{
 	ProbeUsername:       "service-account-client",
 }
 
+var centralSpec = config.CentralSpec{
+	CloudProvider: "aws",
+	Region:        "us-east-1",
+}
+
 func makeHTTPResponse(statusCode int) *http.Response {
 	response := &http.Response{
 		Body:       io.NopCloser(bytes.NewBufferString(`{}`)),
@@ -123,7 +128,7 @@ func TestCreateCentral(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.TODO(), testConfig.ProbeRunTimeout)
 			defer cancel()
 
-			central, err := probe.createCentral(ctx)
+			central, err := probe.createCentral(ctx, centralSpec)
 
 			if tc.wantErr {
 				assert.Error(t, err, "expected an error during probe run")

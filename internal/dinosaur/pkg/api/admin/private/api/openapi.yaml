@@ -519,6 +519,52 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
       summary: Restore a central tenant that was already deleted
+  /api/rhacs/v1/admin/centrals/{id}/billing:
+    patch:
+      operationId: changeBillingParameters
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CentralBillingChangeRequest'
+        description: Billing target parameters
+        required: true
+      responses:
+        "200":
+          description: Billing parameters changed
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID or dynamic clients are
+            not configured
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Change central billing parameters
   /api/rhacs/v1/admin/centrals/db/{id}:
     delete:
       operationId: deleteDbCentralById
@@ -785,6 +831,31 @@ components:
       required:
       - name
       - reason
+      type: object
+    CentralBillingChangeRequest:
+      example:
+        cloud_account_id: cloud_account_id
+        product: RHACS
+        model: standard
+        cloud_provider: cloud_provider
+      properties:
+        model:
+          enum:
+          - standard
+          - marketplace
+          - marketplace-aws
+          - marketplace-gcp
+          - marketplace-rhm
+          - marketplace-azure
+          type: string
+        cloud_account_id:
+          type: string
+        cloud_provider:
+          type: string
+        product:
+          enum:
+          - RHACS
+          type: string
       type: object
     Error:
       allOf:

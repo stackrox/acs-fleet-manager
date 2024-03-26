@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stackrox/acs-fleet-manager/probe/config"
 )
 
 const (
@@ -43,10 +44,12 @@ func (m *Metrics) Register(r prometheus.Registerer) {
 }
 
 // Init sets initial values for the gauge metrics.
-func (m *Metrics) Init(region string) {
-	m.lastFailureTimestamp.With(prometheus.Labels{regionLabelName: region}).Set(0)
-	m.lastStartedTimestamp.With(prometheus.Labels{regionLabelName: region}).Set(0)
-	m.lastSuccessTimestamp.With(prometheus.Labels{regionLabelName: region}).Set(0)
+func (m *Metrics) Init(config *config.Config) {
+	for _, spec := range config.CentralSpecs {
+		m.lastFailureTimestamp.With(prometheus.Labels{regionLabelName: spec.Region}).Set(0)
+		m.lastStartedTimestamp.With(prometheus.Labels{regionLabelName: spec.Region}).Set(0)
+		m.lastSuccessTimestamp.With(prometheus.Labels{regionLabelName: spec.Region}).Set(0)
+	}
 }
 
 // IncStartedRuns increments the metric counter for started probe runs.

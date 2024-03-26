@@ -17,7 +17,7 @@ func FailIfTimeoutExceeded(centralService services.DinosaurService, timeout time
 		centralRequest.Status = constants2.CentralRequestStatusFailed.String()
 		centralRequest.FailedReason = "Creation time went over the timeout. Interrupting central initialization."
 
-		if err := centralService.Update(centralRequest); err != nil {
+		if err := centralService.UpdateIgnoreNils(centralRequest); err != nil {
 			return errors.Wrapf(err, "failed to update timed out central %s", centralRequest.ID)
 		}
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusFailed, centralRequest.ID, centralRequest.ClusterID, time.Since(centralRequest.CreatedAt))

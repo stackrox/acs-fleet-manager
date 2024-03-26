@@ -45,7 +45,9 @@ func (q QuotaManagementListService) HasQuotaAllowance(dinosaur *dbapi.CentralReq
 }
 
 // ReserveQuota ...
-func (q QuotaManagementListService) ReserveQuota(_ context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+func (q QuotaManagementListService) ReserveQuota(_ context.Context, dinosaur *dbapi.CentralRequest, _ string, _ string) (string, *errors.ServiceError) {
+	instanceType := types.DinosaurInstanceType(dinosaur.InstanceType)
+
 	if !q.quotaManagementList.EnableInstanceLimitControl {
 		return "", nil
 	}

@@ -123,8 +123,8 @@ var _ = Describe("Central", Ordered, func() {
 			Expect(tenantLabelFound).To(BeTrue())
 		})
 
-		It("should generate a central-encryption-key secret", func() {
-			Eventually(assertSecretExists(ctx, &corev1.Secret{}, namespaceName, "central-encryption-key")).
+		It("should generate a central-encryption-key-chain secret", func() {
+			Eventually(assertSecretExists(ctx, &corev1.Secret{}, namespaceName, "central-encryption-key-chain")).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -149,7 +149,7 @@ var _ = Describe("Central", Ordered, func() {
 
 		It("should transition central request state to ready", func() {
 			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
-				WithTimeout(waitTimeout).
+				WithTimeout(extendedWaitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})

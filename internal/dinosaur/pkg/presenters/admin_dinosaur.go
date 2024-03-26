@@ -25,7 +25,7 @@ func PresentDinosaurRequestAdminEndpoint(request *dbapi.CentralRequest, _ accoun
 		Host:          request.GetUIHost(), // TODO(ROX-11990): Split the Host in Fleet Manager Public API to UI and Data hosts
 		CreatedAt:     request.CreatedAt,
 		UpdatedAt:     request.UpdatedAt,
-		ExpiredAt:     request.ExpiredAt,
+		ExpiredAt:     dbapi.NullTimeToTimePtr(request.ExpiredAt),
 		FailedReason:  request.FailedReason,
 		InstanceType:  request.InstanceType,
 		Traits:        request.Traits,
