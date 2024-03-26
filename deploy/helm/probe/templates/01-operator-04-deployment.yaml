@@ -50,8 +50,8 @@ spec:
                   name: rhacs-probe-ocm-token
                   key: TOKEN
             {{- end }}
-            - name: DATA_PLANE_REGION
-              value: {{ .Values.dataPlaneRegion | quote }}
+            - name: CENTRAL_SPECS
+              value: {{ printf `[{ "cloudProvider": "aws", "region": "%s" }]` .Values.dataPlaneRegion | quote }}
           ports:
             - name: monitoring
               containerPort: 7070

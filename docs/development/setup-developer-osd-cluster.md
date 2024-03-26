@@ -186,7 +186,7 @@ oc create namespace "${NAMESPACE}"
 ```
 export IMAGE_TAG=osd-test
 
-GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
+make image/push/internal
 ```
 
 11. (Optional local fleet synchronizer build) Get Fleet Manager image name

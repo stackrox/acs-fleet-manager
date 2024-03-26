@@ -18,14 +18,14 @@
 #    cluster_dns: apps.example.com #Valid cluster DNS. This will be used to build central host url and to communicate with standalone clusters. Required when "provider_type" is "standalone"
 #    supported_instance_type: "eval" # could be "eval", "standard" or both i.e "standard,eval" or "eval,standard". Defaults to "standard,eval" if not set
 clusters:
- - name: rancher-desktop
+ - name: dev
    cluster_id: 1234567890abcdef1234567890abcdef
    cloud_provider: standalone
    region: standalone
+   multi_az: true
    schedulable: true
    status: ready
-   central_instance_limit: 9999
    provider_type: standalone
    supported_instance_type: "eval,standard"
-   cluster_dns: cluster.local
-   multi_az: true
+   cluster_dns: host.acscs.internal # Can be overriden in 'cluster-list' Makefile target
+   central_instance_limit: 99999

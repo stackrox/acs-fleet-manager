@@ -19,6 +19,12 @@ var testConfig = &config.Config{
 	ProbeRunTimeout:     100 * time.Millisecond,
 	ProbeName:           "probe",
 	RHSSOClientID:       "client",
+	CentralSpecs: []config.CentralSpec{
+		{
+			CloudProvider: "aws",
+			Region:        "us-east-1",
+		},
+	},
 }
 
 func TestCLIInterrupt(t *testing.T) {
@@ -26,7 +32,7 @@ func TestCLIInterrupt(t *testing.T) {
 		CleanUpFunc: func(ctx context.Context) error {
 			return nil
 		},
-		ExecuteFunc: func(ctx context.Context) error {
+		ExecuteFunc: func(ctx context.Context, spec config.CentralSpec) error {
 			process, err := os.FindProcess(os.Getpid())
 			require.NoError(t, err, "could not find current process ID")
 			process.Signal(os.Interrupt)

@@ -8,6 +8,5 @@ config/
 secrets/
 stackrox/
 .pre-commit-config.yaml
-templates/
 .artifacts/
 .DS_Store

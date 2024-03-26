@@ -631,6 +631,99 @@ data:
           ],
           "title": "CPU usage",
           "type": "timeseries"
+        },
+        {
+          "id": 15,
+          "gridPos": {
+            "x": 0,
+            "y": 42,
+            "w": 12,
+            "h": 8
+          },
+          "type": "timeseries",
+          "title": "Expired Centrals Count",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "P3CBCA2291C540C18"
+              },
+              "refId": "A",
+              "editorMode": "code",
+              "expr": "max(acs_fleet_manager_expired_centrals_count)",
+              "legendFormat": "__auto",
+              "range": true
+            }
+          ],
+          "options": {
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            },
+            "legend": {
+              "showLegend": true,
+              "displayMode": "list",
+              "placement": "bottom",
+              "calcs": []
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "barAlignment": 0,
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "spanNulls": false,
+                "showPoints": "auto",
+                "pointSize": 5,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": "",
+                "axisColorMode": "text",
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "axisCenteredZero": false,
+                "hideFrom": {
+                  "tooltip": false,
+                  "viz": false,
+                  "legend": false
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "value": null,
+                    "color": "green"
+                  },
+                  {
+                    "value": 80,
+                    "color": "red"
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "datasource": {
+            "uid": "P3CBCA2291C540C18",
+            "type": "prometheus"
+          },
+          "description": "The number of centrals with no quota allowance."
         }
       ],
       "schemaVersion": 37,

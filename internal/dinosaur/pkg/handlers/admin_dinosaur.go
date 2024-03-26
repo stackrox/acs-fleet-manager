@@ -53,6 +53,7 @@ type AdminCentralHandler interface {
 	// a tenant. In particular, avoid two Central CRs appearing in the same
 	// tenant namespace. This may cause conflicts due to mixed resource ownership.
 	PatchName(w http.ResponseWriter, r *http.Request)
+
 	// ListTraits returns all central traits
 	ListTraits(w http.ResponseWriter, r *http.Request)
 	// GetTrait tells wheter a central has the trait
@@ -61,6 +62,9 @@ type AdminCentralHandler interface {
 	AddTrait(w http.ResponseWriter, r *http.Request)
 	// DeleteTrait deletes a trait from a central
 	DeleteTrait(w http.ResponseWriter, r *http.Request)
+
+	// PatchBillingParameters changes the billing model of a central
+	PatchBillingParameters(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -386,4 +390,16 @@ func (h adminCentralHandler) DeleteTrait(w http.ResponseWriter, r *http.Request)
 		},
 	}
 	handlers.HandleDelete(w, r, cfg, http.StatusOK)
+}
+
+func (h adminCentralHandler) PatchBillingParameters(w http.ResponseWriter, r *http.Request) {
+	var request *private.CentralBillingChangeRequest
+	cfg := &handlers.HandlerConfig{
+		MarshalInto: &request,
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			return nil, h.service.ChangeBillingParameters(r.Context(), mux.Vars(r)["id"],
+				request.Model, request.CloudAccountId, request.CloudProvider, request.Product)
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
 }

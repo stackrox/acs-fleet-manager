@@ -15,7 +15,7 @@ type QuotaService interface {
 	// HasQuotaAllowance checks if allowed quota is not zero for the given instance type
 	HasQuotaAllowance(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError)
 	// ReserveQuota reserves a quota for a user and return the reservation id or an error in case of failure
-	ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError)
+	ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, forcedBillingModel string, forcedProduct string) (string, *errors.ServiceError)
 	// DeleteQuota deletes a reserved quota
 	DeleteQuota(subscriptionID string) *errors.ServiceError
 }

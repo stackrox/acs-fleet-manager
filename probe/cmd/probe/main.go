@@ -28,7 +28,7 @@ func main() {
 		glog.Fatal(err)
 	}
 
-	if metricsServer := metrics.NewMetricsServer(config.MetricsAddress, config.DataPlaneRegion); metricsServer != nil {
+	if metricsServer := metrics.NewMetricsServer(config); metricsServer != nil {
 		defer metrics.CloseMetricsServer(metricsServer)
 		go metrics.ListenAndServe(metricsServer)
 	} else {

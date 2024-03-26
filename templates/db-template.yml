@@ -49,7 +49,7 @@ parameters:
     description: Version of PostgreSQL image to be used (10 or latest).
     displayName: Version of PostgreSQL Image
     required: true
-    value: "10-el8"
+    value: "13"
 
 objects:
 
@@ -62,16 +62,10 @@ objects:
     spec:
       ports:
         - name: postgresql
-          nodePort: 0
           port: 5432
-          protocol: TCP
           targetPort: 5432
       selector:
-        name: ${DATABASE_SERVICE_NAME}
-      sessionAffinity: None
-      type: ClusterIP
-    status:
-      loadBalancer: {}
+        application: ${DATABASE_SERVICE_NAME}
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -82,50 +76,45 @@ objects:
       resources:
         requests:
           storage: ${DATABASE_VOLUME_CAPACITY}
-  - apiVersion: v1
-    kind: DeploymentConfig
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
       name: ${DATABASE_SERVICE_NAME}
+      labels:
+        application: ${DATABASE_SERVICE_NAME}
     spec:
       replicas: 1
       selector:
-        name: ${DATABASE_SERVICE_NAME}
-      strategy:
-        type: Recreate
+        matchLabels:
+          application: ${DATABASE_SERVICE_NAME}
+      strategy: {}
       template:
         metadata:
           labels:
-            name: ${DATABASE_SERVICE_NAME}
+            application: ${DATABASE_SERVICE_NAME}
         spec:
           containers:
             - capabilities: {}
               env:
-                - name: POSTGRESQL_USER
+                - name: POSTGRES_USER
                   valueFrom:
                     secretKeyRef:
                       key: database-user
                       name: ${DATABASE_SERVICE_NAME}
-                - name: POSTGRESQL_PASSWORD
+                - name: POSTGRES_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
                       name: ${DATABASE_SERVICE_NAME}
-                - name: POSTGRESQL_DATABASE
+                - name: POSTGRES_DB
                   valueFrom:
                     secretKeyRef:
                       key: database-name
                       name: ${DATABASE_SERVICE_NAME}
-              image: ""
+              image: postgres:${POSTGRESQL_VERSION}
               imagePullPolicy: IfNotPresent
-              livenessProbe:
-                exec:
-                  command:
-                    - /usr/libexec/check-container
-                    - --live
-                initialDelaySeconds: 120
-                timeoutSeconds: 10
               name: postgresql
               ports:
                 - containerPort: 5432
@@ -133,9 +122,16 @@ objects:
               readinessProbe:
                 exec:
                   command:
-                    - /usr/libexec/check-container
-                initialDelaySeconds: 5
-                timeoutSeconds: 1
+                    - pg_isready
+                    - -h
+                    - localhost
+                    - -U
+                    - "${DATABASE_USER}"
+                    - -d
+                    - "${DATABASE_NAME}"
+                failureThreshold: 30
+                periodSeconds: 1
+                timeoutSeconds: 3
               securityContext:
                 capabilities: {}
                 privileged: false
@@ -149,18 +145,6 @@ objects:
             - name: ${DATABASE_SERVICE_NAME}-data
               persistentVolumeClaim:
                 claimName: ${DATABASE_SERVICE_NAME}
-      triggers:
-        - type: ImageChange
-          imageChangeParams:
-            automatic: true
-            containerNames:
-              - postgresql
-            from:
-              kind: ImageStreamTag
-              name: postgresql:${POSTGRESQL_VERSION}
-              namespace: ${POSTGRESQL_IMAGESTREAM_NAMESPACE}
-        - type: ConfigChange
-    status: {}
 
   - apiVersion: v1
     kind: Secret

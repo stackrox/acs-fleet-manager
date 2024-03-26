@@ -27,7 +27,7 @@ import (
 //
 //go:generate moq -out probe_moq.go . Probe
 type Probe interface {
-	Execute(ctx context.Context) error
+	Execute(ctx context.Context, spec config.CentralSpec) error
 	CleanUp(ctx context.Context) error
 }
 
@@ -65,16 +65,16 @@ func (p *ProbeImpl) newCentralName() (string, error) {
 }
 
 // Execute the probe of the fleet manager API.
-func (p *ProbeImpl) Execute(ctx context.Context) error {
+func (p *ProbeImpl) Execute(ctx context.Context, spec config.CentralSpec) error {
 	glog.Infof("probe run has been started: fleetManagerEndpoint=%q, provider=%q, region=%q",
 		p.config.FleetManagerEndpoint,
-		p.config.DataCloudProvider,
-		p.config.DataPlaneRegion,
+		spec.CloudProvider,
+		spec.Region,
 	)
 	defer glog.Info("probe run has ended")
-	defer recordElapsedTime(time.Now(), p.config.DataPlaneRegion)
+	defer recordElapsedTime(time.Now(), spec.Region)
 
-	central, err := p.createCentral(ctx)
+	central, err := p.createCentral(ctx, spec)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
 }
 
 // Create a Central and verify that it transitioned to 'ready' state.
-func (p *ProbeImpl) createCentral(ctx context.Context) (*public.CentralRequest, error) {
+func (p *ProbeImpl) createCentral(ctx context.Context, spec config.CentralSpec) (*public.CentralRequest, error) {
 	centralName, err := p.newCentralName()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create central name")
@@ -141,8 +141,8 @@ func (p *ProbeImpl) createCentral(ctx context.Context) (*public.CentralRequest, 
 	request := public.CentralRequestPayload{
 		Name:          centralName,
 		MultiAz:       true,
-		CloudProvider: p.config.DataCloudProvider,
-		Region:        p.config.DataPlaneRegion,
+		CloudProvider: spec.CloudProvider,
+		Region:        spec.Region,
 	}
 	central, resp, err := p.fleetManagerPublicAPI.CreateCentral(ctx, true, request)
 	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))

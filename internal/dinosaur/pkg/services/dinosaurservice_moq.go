@@ -28,6 +28,9 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			AcceptCentralRequestFunc: func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the AcceptCentralRequest method")
 //			},
+//			ChangeBillingParametersFunc: func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
+//				panic("mock out the ChangeBillingParameters method")
+//			},
 //			ChangeDinosaurCNAMErecordsFunc: func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
 //				panic("mock out the ChangeDinosaurCNAMErecords method")
 //			},
@@ -91,8 +94,8 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			RotateCentralRHSSOClientFunc: func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the RotateCentralRHSSOClient method")
 //			},
-//			UpdateFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
-//				panic("mock out the Update method")
+//			UpdateIgnoreNilsFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+//				panic("mock out the UpdateIgnoreNils method")
 //			},
 //			UpdateStatusFunc: func(id string, status dinosaurConstants.CentralStatus) (bool, *serviceError.ServiceError) {
 //				panic("mock out the UpdateStatus method")
@@ -112,6 +115,9 @@ var _ DinosaurService = &DinosaurServiceMock{}
 type DinosaurServiceMock struct {
 	// AcceptCentralRequestFunc mocks the AcceptCentralRequest method.
 	AcceptCentralRequestFunc func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
+
+	// ChangeBillingParametersFunc mocks the ChangeBillingParameters method.
+	ChangeBillingParametersFunc func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError
 
 	// ChangeDinosaurCNAMErecordsFunc mocks the ChangeDinosaurCNAMErecords method.
 	ChangeDinosaurCNAMErecordsFunc func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
@@ -176,8 +182,8 @@ type DinosaurServiceMock struct {
 	// RotateCentralRHSSOClientFunc mocks the RotateCentralRHSSOClient method.
 	RotateCentralRHSSOClientFunc func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
-	// UpdateFunc mocks the Update method.
-	UpdateFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
+	// UpdateIgnoreNilsFunc mocks the UpdateIgnoreNils method.
+	UpdateIgnoreNilsFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(id string, status dinosaurConstants.CentralStatus) (bool, *serviceError.ServiceError)
@@ -194,6 +200,21 @@ type DinosaurServiceMock struct {
 		AcceptCentralRequest []struct {
 			// CentralRequest is the centralRequest argument value.
 			CentralRequest *dbapi.CentralRequest
+		}
+		// ChangeBillingParameters holds details about calls to the ChangeBillingParameters method.
+		ChangeBillingParameters []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// CentralID is the centralID argument value.
+			CentralID string
+			// BillingModel is the billingModel argument value.
+			BillingModel string
+			// CloudAccountID is the cloudAccountID argument value.
+			CloudAccountID string
+			// CloudProvider is the cloudProvider argument value.
+			CloudProvider string
+			// Product is the product argument value.
+			Product string
 		}
 		// ChangeDinosaurCNAMErecords holds details about calls to the ChangeDinosaurCNAMErecords method.
 		ChangeDinosaurCNAMErecords []struct {
@@ -310,8 +331,8 @@ type DinosaurServiceMock struct {
 			// CentralRequest is the centralRequest argument value.
 			CentralRequest *dbapi.CentralRequest
 		}
-		// Update holds details about calls to the Update method.
-		Update []struct {
+		// UpdateIgnoreNils holds details about calls to the UpdateIgnoreNils method.
+		UpdateIgnoreNils []struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 		}
@@ -338,6 +359,7 @@ type DinosaurServiceMock struct {
 		}
 	}
 	lockAcceptCentralRequest              sync.RWMutex
+	lockChangeBillingParameters           sync.RWMutex
 	lockChangeDinosaurCNAMErecords        sync.RWMutex
 	lockCountByRegionAndInstanceType      sync.RWMutex
 	lockCountByStatus                     sync.RWMutex
@@ -359,7 +381,7 @@ type DinosaurServiceMock struct {
 	lockResetCentralSecretBackup          sync.RWMutex
 	lockRestore                           sync.RWMutex
 	lockRotateCentralRHSSOClient          sync.RWMutex
-	lockUpdate                            sync.RWMutex
+	lockUpdateIgnoreNils                  sync.RWMutex
 	lockUpdateStatus                      sync.RWMutex
 	lockUpdates                           sync.RWMutex
 	lockVerifyAndUpdateDinosaurAdmin      sync.RWMutex
@@ -394,6 +416,58 @@ func (mock *DinosaurServiceMock) AcceptCentralRequestCalls() []struct {
 	mock.lockAcceptCentralRequest.RLock()
 	calls = mock.calls.AcceptCentralRequest
 	mock.lockAcceptCentralRequest.RUnlock()
+	return calls
+}
+
+// ChangeBillingParameters calls ChangeBillingParametersFunc.
+func (mock *DinosaurServiceMock) ChangeBillingParameters(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
+	if mock.ChangeBillingParametersFunc == nil {
+		panic("DinosaurServiceMock.ChangeBillingParametersFunc: method is nil but DinosaurService.ChangeBillingParameters was just called")
+	}
+	callInfo := struct {
+		Ctx            context.Context
+		CentralID      string
+		BillingModel   string
+		CloudAccountID string
+		CloudProvider  string
+		Product        string
+	}{
+		Ctx:            ctx,
+		CentralID:      centralID,
+		BillingModel:   billingModel,
+		CloudAccountID: cloudAccountID,
+		CloudProvider:  cloudProvider,
+		Product:        product,
+	}
+	mock.lockChangeBillingParameters.Lock()
+	mock.calls.ChangeBillingParameters = append(mock.calls.ChangeBillingParameters, callInfo)
+	mock.lockChangeBillingParameters.Unlock()
+	return mock.ChangeBillingParametersFunc(ctx, centralID, billingModel, cloudAccountID, cloudProvider, product)
+}
+
+// ChangeBillingParametersCalls gets all the calls that were made to ChangeBillingParameters.
+// Check the length with:
+//
+//	len(mockedDinosaurService.ChangeBillingParametersCalls())
+func (mock *DinosaurServiceMock) ChangeBillingParametersCalls() []struct {
+	Ctx            context.Context
+	CentralID      string
+	BillingModel   string
+	CloudAccountID string
+	CloudProvider  string
+	Product        string
+} {
+	var calls []struct {
+		Ctx            context.Context
+		CentralID      string
+		BillingModel   string
+		CloudAccountID string
+		CloudProvider  string
+		Product        string
+	}
+	mock.lockChangeBillingParameters.RLock()
+	calls = mock.calls.ChangeBillingParameters
+	mock.lockChangeBillingParameters.RUnlock()
 	return calls
 }
 
@@ -1085,35 +1159,35 @@ func (mock *DinosaurServiceMock) RotateCentralRHSSOClientCalls() []struct {
 	return calls
 }
 
-// Update calls UpdateFunc.
-func (mock *DinosaurServiceMock) Update(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
-	if mock.UpdateFunc == nil {
-		panic("DinosaurServiceMock.UpdateFunc: method is nil but DinosaurService.Update was just called")
+// UpdateIgnoreNils calls UpdateIgnoreNilsFunc.
+func (mock *DinosaurServiceMock) UpdateIgnoreNils(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+	if mock.UpdateIgnoreNilsFunc == nil {
+		panic("DinosaurServiceMock.UpdateIgnoreNilsFunc: method is nil but DinosaurService.UpdateIgnoreNils was just called")
 	}
 	callInfo := struct {
 		DinosaurRequest *dbapi.CentralRequest
 	}{
 		DinosaurRequest: dinosaurRequest,
 	}
-	mock.lockUpdate.Lock()
-	mock.calls.Update = append(mock.calls.Update, callInfo)
-	mock.lockUpdate.Unlock()
-	return mock.UpdateFunc(dinosaurRequest)
+	mock.lockUpdateIgnoreNils.Lock()
+	mock.calls.UpdateIgnoreNils = append(mock.calls.UpdateIgnoreNils, callInfo)
+	mock.lockUpdateIgnoreNils.Unlock()
+	return mock.UpdateIgnoreNilsFunc(dinosaurRequest)
 }
 
-// UpdateCalls gets all the calls that were made to Update.
+// UpdateIgnoreNilsCalls gets all the calls that were made to UpdateIgnoreNils.
 // Check the length with:
 //
-//	len(mockedDinosaurService.UpdateCalls())
-func (mock *DinosaurServiceMock) UpdateCalls() []struct {
+//	len(mockedDinosaurService.UpdateIgnoreNilsCalls())
+func (mock *DinosaurServiceMock) UpdateIgnoreNilsCalls() []struct {
 	DinosaurRequest *dbapi.CentralRequest
 } {
 	var calls []struct {
 		DinosaurRequest *dbapi.CentralRequest
 	}
-	mock.lockUpdate.RLock()
-	calls = mock.calls.Update
-	mock.lockUpdate.RUnlock()
+	mock.lockUpdateIgnoreNils.RLock()
+	calls = mock.calls.UpdateIgnoreNils
+	mock.lockUpdateIgnoreNils.RUnlock()
 	return calls
 }
 
