@@ -1266,12 +1266,12 @@ func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) e
 	if err != nil {
 		return err
 	}
-	b64KeyChainFile := base64.StdEncoding.EncodeToString([]byte(keyChainFile))
+	b64KeyChainFile := base64.StdEncoding.EncodeToString(keyChainFile)
 	secret.Data = map[string][]byte{encryptionKeyChainFile: []byte(b64KeyChainFile)}
 	return nil
 }
 
-func generateNewKeyChainFile(b64Key string) (string, error) {
+func generateNewKeyChainFile(b64Key string) ([]byte, error) {
 	keyMap := make(map[int]string)
 	keyMap[0] = b64Key
 
@@ -1282,10 +1282,10 @@ func generateNewKeyChainFile(b64Key string) (string, error) {
 
 	yamlBytes, err := yaml.Marshal(keyChain)
 	if err != nil {
-		return "", fmt.Errorf("generating key-chain file: %w", err)
+		return []byte{}, fmt.Errorf("generating key-chain file: %w", err)
 	}
 
-	return string(yamlBytes), nil
+	return yamlBytes, nil
 }
 
 func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral *private.ManagedCentral) (string, error) {
