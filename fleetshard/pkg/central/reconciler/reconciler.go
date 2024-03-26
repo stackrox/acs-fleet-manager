@@ -1266,8 +1266,7 @@ func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) e
 	if err != nil {
 		return err
 	}
-	b64KeyChainFile := base64.StdEncoding.EncodeToString(keyChainFile)
-	secret.Data = map[string][]byte{encryptionKeyChainFile: []byte(b64KeyChainFile)}
+	secret.Data = map[string][]byte{encryptionKeyChainFile: keyChainFile}
 	return nil
 }
 

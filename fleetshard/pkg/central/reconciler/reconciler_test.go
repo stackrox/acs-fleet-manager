@@ -879,11 +879,8 @@ func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, centralEncryptionSecret.Data, "key-chain.yaml")
 
-	keyChainFileContents, err := base64.StdEncoding.DecodeString(string(centralEncryptionSecret.Data["key-chain.yaml"]))
-	require.NoError(t, err)
-
 	var keyChain centralNotifierUtils.KeyChain
-	err = yaml.Unmarshal(keyChainFileContents, &keyChain)
+	err = yaml.Unmarshal(centralEncryptionSecret.Data["key-chain.yaml"], &keyChain)
 	require.NoError(t, err)
 	require.Equal(t, 0, keyChain.ActiveKeyIndex)
 	require.Equal(t, 1, len(keyChain.KeyMap))
