@@ -1688,8 +1688,6 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 	return false, nil
 }
 
-const ()
-
 func getManagedCentralLabels(c private.ManagedCentral) map[string]string {
 	return map[string]string{
 		managedByLabelKey:    labelManagedByFleetshardValue,
