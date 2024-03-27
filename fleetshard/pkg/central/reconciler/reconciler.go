@@ -59,7 +59,7 @@ const (
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 	envAnnotationKey          = "rhacs.redhat.com/environment"
 	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
-	orgNameAnnotationKey      = "rhacs.redhat.com/org-namespaceName"
+	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
 
 	labelManagedByFleetshardValue = "rhacs-fleetshard"
 	instanceLabelKey              = "app.kubernetes.io/instance"
