@@ -2287,6 +2287,215 @@ metadata:
 
 }
 
+func TestReconciler_reconcileNamespace(t *testing.T) {
+	tests := []struct {
+		name              string
+		existingNamespace *v1.Namespace
+		wantErr           bool
+		wantNamespace     *v1.Namespace
+		expectUpdate      bool
+		expectCreate      bool
+	}{
+		{
+			name:         "namespace should be created if it doesn't exist",
+			expectCreate: true,
+			wantNamespace: &v1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: simpleManagedCentral.Metadata.Namespace,
+					Labels: map[string]string{
+						"app.kubernetes.io/instance":     "test-central",
+						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
+						"rhacs.redhat.com/instance-type": "standard",
+						"rhacs.redhat.com/org-id":        "12345",
+						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+					},
+					Annotations: map[string]string{
+						"rhacs.redhat.com/org-name": "org-name",
+					},
+				},
+			},
+		},
+		{
+			name:         "namespace with wrong labels or annotations should be updated",
+			expectUpdate: true,
+			existingNamespace: &v1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: simpleManagedCentral.Metadata.Namespace,
+					Labels: map[string]string{
+						"app.kubernetes.io/instance":     "wrong",
+						"app.kubernetes.io/managed-by":   "wrong",
+						"rhacs.redhat.com/instance-type": "wrong",
+						"rhacs.redhat.com/org-id":        "wrong",
+						"rhacs.redhat.com/tenant":        "wrong",
+					},
+					Annotations: map[string]string{
+						"rhacs.redhat.com/org-name": "wrong",
+					},
+				},
+			},
+			wantNamespace: &v1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: simpleManagedCentral.Metadata.Namespace,
+					Labels: map[string]string{
+						"app.kubernetes.io/instance":     "test-central",
+						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
+						"rhacs.redhat.com/instance-type": "standard",
+						"rhacs.redhat.com/org-id":        "12345",
+						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+					},
+					Annotations: map[string]string{
+						"rhacs.redhat.com/org-name": "org-name",
+					},
+				},
+			},
+		},
+		{
+			name: "extra labels/annotations should remain untouched",
+			existingNamespace: &v1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: simpleManagedCentral.Metadata.Namespace,
+					Labels: map[string]string{
+						"app.kubernetes.io/instance":     "test-central",
+						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
+						"rhacs.redhat.com/instance-type": "standard",
+						"rhacs.redhat.com/org-id":        "12345",
+						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+						"extra":                          "extra",
+					},
+					Annotations: map[string]string{
+						"rhacs.redhat.com/org-name": "org-name",
+						"extra":                     "extra",
+					},
+				},
+			},
+			wantNamespace: &v1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: simpleManagedCentral.Metadata.Namespace,
+					Labels: map[string]string{
+						"app.kubernetes.io/instance":     "test-central",
+						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
+						"rhacs.redhat.com/instance-type": "standard",
+						"rhacs.redhat.com/org-id":        "12345",
+						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+						"extra":                          "extra",
+					},
+					Annotations: map[string]string{
+						"rhacs.redhat.com/org-name": "org-name",
+						"extra":                     "extra",
+					},
+				},
+			},
+		},
+		{
+			name: "namespace should not be updated if it's already correct",
+			existingNamespace: &v1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: simpleManagedCentral.Metadata.Namespace,
+					Labels: map[string]string{
+						"app.kubernetes.io/instance":     "test-central",
+						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
+						"rhacs.redhat.com/instance-type": "standard",
+						"rhacs.redhat.com/org-id":        "12345",
+						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+					},
+					Annotations: map[string]string{
+						"rhacs.redhat.com/org-name": "org-name",
+					},
+				},
+			},
+			wantNamespace: &v1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: simpleManagedCentral.Metadata.Namespace,
+					Labels: map[string]string{
+						"app.kubernetes.io/instance":     "test-central",
+						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
+						"rhacs.redhat.com/instance-type": "standard",
+						"rhacs.redhat.com/org-id":        "12345",
+						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+					},
+					Annotations: map[string]string{
+						"rhacs.redhat.com/org-name": "org-name",
+					},
+				},
+			},
+		},
+	}
+
+	managedCentral := simpleManagedCentral
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, nil, defaultReconcilerOptions)
+			if tt.existingNamespace != nil {
+				require.NoError(t, fakeClient.Create(context.Background(), tt.existingNamespace))
+			}
+			updateCount := 0
+			createCount := 0
+			r.client = interceptor.NewClient(fakeClient, interceptor.Funcs{
+				Update: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
+					updateCount++
+					return client.Update(ctx, obj, opts...)
+				},
+				Create: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.CreateOption) error {
+					createCount++
+					return client.Create(ctx, obj, opts...)
+				},
+			})
+			err := r.reconcileNamespace(context.Background(), managedCentral)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				var gotNamespace v1.Namespace
+				err := fakeClient.Get(context.Background(), client.ObjectKey{Name: simpleManagedCentral.Metadata.Namespace}, &gotNamespace)
+				require.NoError(t, err)
+				assert.Equal(t, tt.wantNamespace.Name, gotNamespace.Name)
+				assert.Equal(t, tt.wantNamespace.Labels, gotNamespace.Labels)
+				assert.Equal(t, tt.wantNamespace.Annotations, gotNamespace.Annotations)
+				if tt.expectUpdate {
+					assert.Equal(t, 1, updateCount, "update should be called")
+				} else {
+					assert.Equal(t, 0, updateCount, "update should not be called")
+				}
+
+				if tt.expectCreate {
+					assert.Equal(t, 1, createCount, "create should be called")
+				} else {
+					assert.Equal(t, 0, createCount, "create should not be called")
+				}
+			}
+		})
+	}
+}
+
+func TestReconciler_ensureChartResourcesExist_labelsAndAnnotations(t *testing.T) {
+	fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, nil, defaultReconcilerOptions)
+	require.NoError(t, r.ensureChartResourcesExist(context.Background(), simpleManagedCentral))
+
+	var egressProxyDeployment appsv1.Deployment
+	err := fakeClient.Get(context.Background(), client.ObjectKey{
+		Namespace: simpleManagedCentral.Metadata.Namespace,
+		Name:      "egress-proxy",
+	}, &egressProxyDeployment)
+	require.NoError(t, err)
+
+	assert.Equal(t, map[string]string{
+		"app.kubernetes.io/instance":     "test-central",
+		"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
+		"rhacs.redhat.com/instance-type": "standard",
+		"rhacs.redhat.com/org-id":        "12345",
+		"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+		"app.kubernetes.io/component":    "egress-proxy",
+		"app.kubernetes.io/name":         "central-tenant-resources",
+		"helm.sh/chart":                  "central-tenant-resources-0.0.0",
+	}, egressProxyDeployment.ObjectMeta.Labels)
+
+	assert.Equal(t, map[string]string{
+		"rhacs.redhat.com/org-name": "org-name",
+	}, egressProxyDeployment.ObjectMeta.Annotations)
+
+}
+
 func TestReconciler_needsReconcile(t *testing.T) {
 	tests := []struct {
 		name string
