@@ -1179,14 +1179,21 @@ func (r *CentralReconciler) reconcileNamespace(ctx context.Context, c private.Ma
 		return fmt.Errorf("getting namespace %q: %w", desiredNamespace.Name, err)
 	}
 
-	desiredAnnotations := getNamespaceAnnotations(c)
-	desiredLabels := getNamespaceLabels(c)
-
 	// check if labels or annotations need to be updated
-	if stringMapNeedsUpdating(desiredAnnotations, existingNamespace.Annotations) || stringMapNeedsUpdating(desiredLabels, existingNamespace.Labels) {
+	if stringMapNeedsUpdating(desiredNamespace.Annotations, existingNamespace.Annotations) || stringMapNeedsUpdating(desiredNamespace.Labels, existingNamespace.Labels) {
 		glog.Infof("Updating namespace %q", desiredNamespace.Name)
-		existingNamespace.Annotations = desiredAnnotations
-		existingNamespace.Labels = desiredLabels
+		if existingNamespace.Annotations == nil {
+			existingNamespace.Annotations = map[string]string{}
+		}
+		for k, v := range desiredNamespace.Annotations {
+			existingNamespace.Annotations[k] = v
+		}
+		if existingNamespace.Labels == nil {
+			existingNamespace.Labels = map[string]string{}
+		}
+		for k, v := range desiredNamespace.Labels {
+			existingNamespace.Labels[k] = v
+		}
 		if err = r.client.Update(ctx, existingNamespace, &ctrlClient.UpdateOptions{
 			FieldManager: "fleetshard-sync",
 		}); err != nil {
