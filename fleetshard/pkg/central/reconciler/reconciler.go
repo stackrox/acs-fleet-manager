@@ -1127,10 +1127,8 @@ func (r *CentralReconciler) computeCentralHash(central private.ManagedCentral) (
 
 func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) {
 	var namespace corev1.Namespace
-	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, &namespace)
-	if err != nil {
-		// Propagate corev1.Namespace to the caller so that the namespace can be easily created
-		return &namespace, fmt.Errorf("retrieving resource for namespace %q from Kubernetes: %w", name, err)
+	if err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, &namespace); err != nil {
+		return nil, fmt.Errorf("getting namespace %q: %w", name, err)
 	}
 	return &namespace, nil
 }
