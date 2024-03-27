@@ -58,7 +58,7 @@ const (
 	centralPVCAnnotationKey   = "platform.stackrox.io/obsolete-central-pvc"
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 	envAnnotationKey          = "rhacs.redhat.com/environment"
-	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-namespaceName"
+	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
 	orgNameAnnotationKey      = "rhacs.redhat.com/org-namespaceName"
 
 	labelManagedByFleetshardValue = "rhacs-fleetshard"
