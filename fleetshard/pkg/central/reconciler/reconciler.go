@@ -1722,7 +1722,8 @@ func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Val
 	}
 	src := r.resourcesChart.Values
 	dst := map[string]interface{}{
-		"labels": getManagedCentralLabels(c),
+		"labels":      stringMapToMapInterface(getManagedCentralLabels(c)),
+		"annotations": stringMapToMapInterface(getManagedCentralAnnotations(c)),
 	}
 	if r.egressProxyImage != "" {
 		dst["egressProxy"] = map[string]interface{}{
@@ -1730,6 +1731,14 @@ func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Val
 		}
 	}
 	return chartutil.CoalesceTables(dst, src), nil
+}
+
+func stringMapToMapInterface(m map[string]string) map[string]interface{} {
+	result := make(map[string]interface{}, len(m))
+	for k, v := range m {
+		result[k] = v
+	}
+	return result
 }
 
 func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
