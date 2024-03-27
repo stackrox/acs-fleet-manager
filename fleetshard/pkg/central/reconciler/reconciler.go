@@ -32,7 +32,6 @@ import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/random"
-	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -59,12 +58,16 @@ const (
 	centralPVCAnnotationKey   = "platform.stackrox.io/obsolete-central-pvc"
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 	envAnnotationKey          = "rhacs.redhat.com/environment"
-	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
-	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
-	instanceTypeLabelKey      = "rhacs.redhat.com/instance-type"
-	orgIDLabelKey             = "rhacs.redhat.com/org-id"
-	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
-	centralExpiredAtKey       = "rhacs.redhat.com/expired-at"
+	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-namespaceName"
+	orgNameAnnotationKey      = "rhacs.redhat.com/org-namespaceName"
+
+	labelManagedByFleetshardValue = "rhacs-fleetshard"
+	instanceLabelKey              = "app.kubernetes.io/instance"
+	instanceTypeLabelKey          = "rhacs.redhat.com/instance-type"
+	managedByLabelKey             = "app.kubernetes.io/managed-by"
+	orgIDLabelKey                 = "rhacs.redhat.com/org-id"
+	tenantIDLabelKey              = "rhacs.redhat.com/tenant"
+	centralExpiredAtKey           = "rhacs.redhat.com/expired-at"
 
 	auditLogNotifierKey  = "com.redhat.rhacs.auditLogNotifier"
 	auditLogNotifierName = "Platform Audit Logs"
@@ -196,17 +199,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return status, err
 	}
 
-	namespaceLabels := map[string]string{
-		orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
-		tenantIDLabelKey: remoteCentral.Id,
-	}
-	namespaceAnnotations := map[string]string{
-		orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
-	}
-	if remoteCentral.Metadata.ExpiredAt != nil {
-		namespaceAnnotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
-	}
-	if err := r.reconcileNamespace(ctx, remoteCentralNamespace, namespaceLabels, namespaceAnnotations); err != nil {
+	if err := r.reconcileNamespace(ctx, remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
@@ -1133,17 +1126,13 @@ func (r *CentralReconciler) computeCentralHash(central private.ManagedCentral) (
 }
 
 func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) {
-	namespace := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-	}
-	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
+	var namespace corev1.Namespace
+	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, &namespace)
 	if err != nil {
 		// Propagate corev1.Namespace to the caller so that the namespace can be easily created
-		return namespace, fmt.Errorf("retrieving resource for namespace %q from Kubernetes: %w", name, err)
+		return &namespace, fmt.Errorf("retrieving resource for namespace %q from Kubernetes: %w", name, err)
 	}
-	return namespace, nil
+	return &namespace, nil
 }
 
 func (r *CentralReconciler) getSecret(namespaceName string, secretName string) (*corev1.Secret, error) {
@@ -1178,34 +1167,46 @@ func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespace
 	return nil
 }
 
-func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace) error {
-	err := r.client.Create(ctx, namespace)
+func (r *CentralReconciler) reconcileNamespace(ctx context.Context, c private.ManagedCentral) error {
+	desiredNamespace := getDesiredNamespace(c)
+
+	existingNamespace, err := r.getNamespace(desiredNamespace.Name)
 	if err != nil {
-		return fmt.Errorf("creating namespace %q: %w", namespace.ObjectMeta.Name, err)
+		if apiErrors.IsNotFound(err) {
+			if err := r.client.Create(ctx, desiredNamespace); err != nil {
+				return fmt.Errorf("creating namespace %q: %w", desiredNamespace.Name, err)
+			}
+			return nil
+		}
+		return fmt.Errorf("getting namespace %q: %w", desiredNamespace.Name, err)
 	}
+
+	desiredAnnotations := getNamespaceAnnotations(c)
+	desiredLabels := getNamespaceLabels(c)
+
+	// check if labels or annotations need to be updated
+	if stringMapNeedsUpdating(desiredAnnotations, existingNamespace.Annotations) || stringMapNeedsUpdating(desiredLabels, existingNamespace.Labels) {
+		glog.Infof("Updating namespace %q", desiredNamespace.Name)
+		existingNamespace.Annotations = desiredAnnotations
+		existingNamespace.Labels = desiredLabels
+		if err = r.client.Update(ctx, existingNamespace, &ctrlClient.UpdateOptions{
+			FieldManager: "fleetshard-sync",
+		}); err != nil {
+			return fmt.Errorf("updating namespace %q: %w", desiredNamespace.Name, err)
+		}
+	}
+
 	return nil
 }
 
-func (r *CentralReconciler) reconcileNamespace(ctx context.Context, name string, labels map[string]string, annotations map[string]string) error {
-	namespace, err := r.getNamespace(name)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			namespace.Annotations = annotations
-			namespace.Labels = labels
-			return r.createTenantNamespace(ctx, namespace)
-		}
-		return fmt.Errorf("getting namespace %s: %w", name, err)
-	} else if !maps.Equal(labels, namespace.Labels) ||
-		!maps.Equal(annotations, namespace.Annotations) {
-		namespace.Annotations = annotations
-		namespace.Labels = labels
-		if err = r.client.Update(ctx, namespace, &ctrlClient.UpdateOptions{
-			FieldManager: "fleetshard-sync",
-		}); err != nil {
-			return fmt.Errorf("updating namespace %s: %w", name, err)
-		}
+func getDesiredNamespace(c private.ManagedCentral) *corev1.Namespace {
+	return &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        c.Metadata.Namespace,
+			Annotations: getNamespaceAnnotations(c),
+			Labels:      getNamespaceLabels(c),
+		},
 	}
-	return nil
 }
 
 func (r *CentralReconciler) ensureImagePullSecretConfigured(ctx context.Context, namespaceName string, secretName string, imagePullSecret []byte) error {
@@ -1682,15 +1683,43 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 	return false, nil
 }
 
-func (r *CentralReconciler) chartValues(_ private.ManagedCentral) (chartutil.Values, error) {
+const ()
+
+func getManagedCentralLabels(c private.ManagedCentral) map[string]string {
+	return map[string]string{
+		managedByLabelKey:    labelManagedByFleetshardValue,
+		instanceLabelKey:     c.Metadata.Name,
+		orgIDLabelKey:        c.Spec.Auth.OwnerOrgId,
+		tenantIDLabelKey:     c.Id,
+		instanceTypeLabelKey: c.Spec.InstanceType,
+	}
+}
+
+func getManagedCentralAnnotations(c private.ManagedCentral) map[string]string {
+	return map[string]string{
+		orgNameAnnotationKey: c.Spec.Auth.OwnerOrgName,
+	}
+}
+
+func getNamespaceLabels(c private.ManagedCentral) map[string]string {
+	return getManagedCentralLabels(c)
+}
+
+func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
+	namespaceAnnotations := getManagedCentralAnnotations(c)
+	if c.Metadata.ExpiredAt != nil {
+		namespaceAnnotations[centralExpiredAtKey] = c.Metadata.ExpiredAt.Format(time.RFC3339)
+	}
+	return namespaceAnnotations
+}
+
+func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Values, error) {
 	if r.resourcesChart == nil {
 		return nil, errors.New("resources chart is not set")
 	}
 	src := r.resourcesChart.Values
 	dst := map[string]interface{}{
-		"labels": map[string]interface{}{
-			k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
-		},
+		"labels": getManagedCentralLabels(c),
 	}
 	if r.egressProxyImage != "" {
 		dst["egressProxy"] = map[string]interface{}{
