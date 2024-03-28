@@ -102,6 +102,96 @@ func ValidateConfig(config Config) field.ErrorList {
 func validateCentralsConfig(path *field.Path, config CentralsConfig) field.ErrorList {
 	var errs field.ErrorList
 	errs = append(errs, validateCentralOverrides(path.Child("overrides"), config.Overrides)...)
+	errs = append(errs, validateAdditionalAuthProviders(path.Child("additionalAuthProviders"), config.AdditionalAuthProviders)...)
+	return errs
+}
+
+func validateAdditionalAuthProviders(path *field.Path, providers []AuthProviderAddition) field.ErrorList {
+	var errs field.ErrorList
+	for i, additionalProvider := range providers {
+		errs = append(errs, validateAdditionalAuthProvider(path.Index(i), additionalProvider)...)
+	}
+	return errs
+}
+
+func validateAdditionalAuthProvider(path *field.Path, provider AuthProviderAddition) field.ErrorList {
+	var errs field.ErrorList
+
+	if provider.InstanceID == "" {
+		errs = append(errs, field.Required(path.Child("instanceID"), "instance ID is required"))
+	}
+	authProviderPath := path.Child("authProvider")
+	if provider.AuthProvider == nil {
+		errs = append(errs, field.Required(authProviderPath, "auth provider spec is required"))
+		return errs
+	}
+	if provider.AuthProvider.Name == "" {
+		errs = append(errs, field.Required(authProviderPath, "name is required"))
+	}
+	for i, group := range provider.AuthProvider.Groups {
+		errs = append(errs, validateAuthProviderGroup(authProviderPath.Child("groups").Index(i), group)...)
+	}
+	for i, requiredAttribute := range provider.AuthProvider.RequiredAttributes {
+		errs = append(errs, validateAuthProviderRequiredAttribute(authProviderPath.Child("requiredAttributes").Index(i), requiredAttribute)...)
+	}
+	for i, claimMapping := range provider.AuthProvider.ClaimMappings {
+		errs = append(errs, validateAuthProviderClaimMapping(authProviderPath.Child("claimMappings").Index(i), claimMapping)...)
+	}
+	// Empty config means that the config will be copied over from the default auth provider.
+	if provider.AuthProvider.OIDCConfig != nil {
+		errs = append(errs, validateAuthProviderOIDCConfig(authProviderPath.Child("oidc"), provider.AuthProvider.OIDCConfig)...)
+	}
+
+	return errs
+}
+
+func validateAuthProviderOIDCConfig(path *field.Path, config *AuthProviderOIDCConfig) field.ErrorList {
+	var errs field.ErrorList
+	if config.ClientID == "" {
+		errs = append(errs, field.Required(path.Child("clientID"), "clientID is required"))
+	}
+	if config.Issuer == "" {
+		errs = append(errs, field.Required(path.Child("issuer"), "issuer is required"))
+	}
+	if config.CallbackMode == "" {
+		errs = append(errs, field.Required(path.Child("mode"), "callbackMode is required"))
+	}
+	return errs
+}
+
+func validateAuthProviderClaimMapping(path *field.Path, claimMapping AuthProviderClaimMapping) field.ErrorList {
+	var errs field.ErrorList
+	if claimMapping.Path == "" {
+		errs = append(errs, field.Required(path.Child("path"), "path is required"))
+	}
+	if claimMapping.Name == "" {
+		errs = append(errs, field.Required(path.Child("name"), "name is required"))
+	}
+	return errs
+}
+
+func validateAuthProviderRequiredAttribute(path *field.Path, attribute AuthProviderRequiredAttribute) field.ErrorList {
+	var errs field.ErrorList
+	if attribute.AttributeKey == "" {
+		errs = append(errs, field.Required(path.Child("key"), "key is required"))
+	}
+	if attribute.AttributeValue == "" {
+		errs = append(errs, field.Required(path.Child("value"), "value is required"))
+	}
+	return errs
+}
+
+func validateAuthProviderGroup(path *field.Path, group AuthProviderGroup) field.ErrorList {
+	var errs field.ErrorList
+	if group.RoleName == "" {
+		errs = append(errs, field.Required(path.Child("role"), "role name is required"))
+	}
+	if group.AttributeKey == "" {
+		errs = append(errs, field.Required(path.Child("key"), "key is required"))
+	}
+	if group.AttributeValue == "" {
+		errs = append(errs, field.Required(path.Child("value"), "value is required"))
+	}
 	return errs
 }
 
