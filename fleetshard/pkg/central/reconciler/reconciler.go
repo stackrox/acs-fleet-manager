@@ -1179,7 +1179,6 @@ func (r *CentralReconciler) reconcileNamespace(ctx context.Context, c private.Ma
 		return fmt.Errorf("getting namespace %q: %w", desiredNamespace.Name, err)
 	}
 
-	// check if labels or annotations need to be updated
 	if stringMapNeedsUpdating(desiredNamespace.Annotations, existingNamespace.Annotations) || stringMapNeedsUpdating(desiredNamespace.Labels, existingNamespace.Labels) {
 		glog.Infof("Updating namespace %q", desiredNamespace.Name)
 		if existingNamespace.Annotations == nil {
@@ -1688,7 +1687,7 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 	return false, nil
 }
 
-func getManagedCentralLabels(c private.ManagedCentral) map[string]string {
+func getTenantLabels(c private.ManagedCentral) map[string]string {
 	return map[string]string{
 		managedByLabelKey:    labelManagedByFleetshardValue,
 		instanceLabelKey:     c.Metadata.Name,
@@ -1698,18 +1697,18 @@ func getManagedCentralLabels(c private.ManagedCentral) map[string]string {
 	}
 }
 
-func getManagedCentralAnnotations(c private.ManagedCentral) map[string]string {
+func getTenantAnnotations(c private.ManagedCentral) map[string]string {
 	return map[string]string{
 		orgNameAnnotationKey: c.Spec.Auth.OwnerOrgName,
 	}
 }
 
 func getNamespaceLabels(c private.ManagedCentral) map[string]string {
-	return getManagedCentralLabels(c)
+	return getTenantLabels(c)
 }
 
 func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
-	namespaceAnnotations := getManagedCentralAnnotations(c)
+	namespaceAnnotations := getTenantAnnotations(c)
 	if c.Metadata.ExpiredAt != nil {
 		namespaceAnnotations[centralExpiredAtKey] = c.Metadata.ExpiredAt.Format(time.RFC3339)
 	}
@@ -1722,8 +1721,8 @@ func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Val
 	}
 	src := r.resourcesChart.Values
 	dst := map[string]interface{}{
-		"labels":      stringMapToMapInterface(getManagedCentralLabels(c)),
-		"annotations": stringMapToMapInterface(getManagedCentralAnnotations(c)),
+		"labels":      stringMapToMapInterface(getTenantLabels(c)),
+		"annotations": stringMapToMapInterface(getTenantAnnotations(c)),
 	}
 	if r.egressProxyImage != "" {
 		dst["egressProxy"] = map[string]interface{}{
