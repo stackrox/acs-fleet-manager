@@ -2,6 +2,8 @@
 package gitops
 
 import (
+	"fmt"
+
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -22,17 +24,17 @@ type AuthProviderAddition struct {
 // AuthProvider represents auth provider configuration
 type AuthProvider struct {
 	Name               string                          `json:"name,omitempty"`
-	MinimumRoleName    string                          `json:"minimumRole,omitempty"`
+	MinimumRole        string                          `json:"minimumRole,omitempty"`
 	Groups             []AuthProviderGroup             `json:"groups,omitempty"`
 	RequiredAttributes []AuthProviderRequiredAttribute `json:"requiredAttributes,omitempty"`
 	ClaimMappings      []AuthProviderClaimMapping      `json:"claimMappings,omitempty"`
-	OIDCConfig         *AuthProviderOIDCConfig         `json:"oidc,omitempty"`
+	OIDC               *AuthProviderOIDCConfig         `json:"oidc,omitempty"`
 }
 
 // AuthProviderRequiredAttribute is representation of storage.AuthProvider_RequiredAttribute that supports transformation from YAML.
 type AuthProviderRequiredAttribute struct {
-	AttributeKey   string `json:"key,omitempty"`
-	AttributeValue string `json:"value,omitempty"`
+	Key   string `json:"key,omitempty"`
+	Value string `json:"value,omitempty"`
 }
 
 // AuthProviderClaimMapping represents a single entry in "claim_mappings" field in auth provider proto.
@@ -43,9 +45,9 @@ type AuthProviderClaimMapping struct {
 
 // AuthProviderGroup is representation of storage.AuthProviderGroup that supports transformation from YAML.
 type AuthProviderGroup struct {
-	AttributeKey   string `json:"key,omitempty"`
-	AttributeValue string `json:"value,omitempty"`
-	RoleName       string `json:"role,omitempty"`
+	Key   string `json:"key,omitempty"`
+	Value string `json:"value,omitempty"`
+	Role  string `json:"role,omitempty"`
 }
 
 // AuthProviderOIDCConfig contains config values for OIDC auth provider.
@@ -53,7 +55,7 @@ type AuthProviderOIDCConfig struct {
 	Issuer string `json:"issuer,omitempty"`
 	// Depending on callback mode, different OAuth 2.0 would be preferred.
 	// Possible values are: auto, post, query, fragment.
-	CallbackMode string `json:"mode,omitempty"`
+	Mode         string `json:"mode,omitempty"`
 	ClientID     string `json:"clientID,omitempty"`
 	ClientSecret string `json:"clientSecret,omitempty"`
 	// Disables request for "offline_access" scope from OIDC identity provider.
@@ -118,30 +120,68 @@ func validateAdditionalAuthProvider(path *field.Path, provider AuthProviderAddit
 	var errs field.ErrorList
 
 	if provider.InstanceID == "" {
-		errs = append(errs, field.Required(path.Child("instanceID"), "instance ID is required"))
+		errs = append(errs, field.Required(path.Child("instanceId"), "instance ID is required"))
 	}
 	authProviderPath := path.Child("authProvider")
-	if provider.AuthProvider == nil {
-		errs = append(errs, field.Required(authProviderPath, "auth provider spec is required"))
+	errs = append(errs, validateAuthProvider(authProviderPath, provider.AuthProvider)...)
+
+	return errs
+}
+
+func validateAuthProvider(path *field.Path, provider *AuthProvider) field.ErrorList {
+	var errs field.ErrorList
+	if provider == nil {
+		errs = append(errs, field.Required(path, "auth provider spec is required"))
 		return errs
 	}
-	if provider.AuthProvider.Name == "" {
-		errs = append(errs, field.Required(authProviderPath, "name is required"))
-	}
-	for i, group := range provider.AuthProvider.Groups {
-		errs = append(errs, validateAuthProviderGroup(authProviderPath.Child("groups").Index(i), group)...)
-	}
-	for i, requiredAttribute := range provider.AuthProvider.RequiredAttributes {
-		errs = append(errs, validateAuthProviderRequiredAttribute(authProviderPath.Child("requiredAttributes").Index(i), requiredAttribute)...)
-	}
-	for i, claimMapping := range provider.AuthProvider.ClaimMappings {
-		errs = append(errs, validateAuthProviderClaimMapping(authProviderPath.Child("claimMappings").Index(i), claimMapping)...)
-	}
+	errs = append(errs, validateAuthProviderName(path.Child("name"), provider.Name)...)
+	errs = append(errs, validateAuthProviderGroups(path.Child("groups"), provider.Groups)...)
+	errs = append(errs, validateAuthProviderRequiredAttributes(path.Child("requiredAttributes"), provider.RequiredAttributes)...)
+	errs = append(errs, validateAuthProviderClaimMappings(path.Child("claimMappings"), provider.ClaimMappings)...)
 	// Empty config means that the config will be copied over from the default auth provider.
-	if provider.AuthProvider.OIDCConfig != nil {
-		errs = append(errs, validateAuthProviderOIDCConfig(authProviderPath.Child("oidc"), provider.AuthProvider.OIDCConfig)...)
+	if provider.OIDC != nil {
+		errs = append(errs, validateAuthProviderOIDCConfig(path.Child("oidc"), provider.OIDC)...)
 	}
+	return errs
+}
 
+func validateAuthProviderClaimMappings(path *field.Path, claimMappings []AuthProviderClaimMapping) field.ErrorList {
+	var errs field.ErrorList
+	for i, claimMapping := range claimMappings {
+		errs = append(errs, validateAuthProviderClaimMapping(path.Index(i), claimMapping)...)
+	}
+	return errs
+}
+
+func validateAuthProviderRequiredAttributes(path *field.Path, requiredAttributes []AuthProviderRequiredAttribute) field.ErrorList {
+	var errs field.ErrorList
+	for i, requiredAttribute := range requiredAttributes {
+		errs = append(errs, validateAuthProviderRequiredAttribute(path.Index(i), requiredAttribute)...)
+	}
+	return errs
+}
+
+func validateAuthProviderGroups(path *field.Path, groups []AuthProviderGroup) field.ErrorList {
+	var errs field.ErrorList
+	for i, group := range groups {
+		errs = append(errs, validateAuthProviderGroup(path.Index(i), group)...)
+		for j, anotherGroup := range groups {
+			if i != j {
+				if group.Role == anotherGroup.Role && group.Key == anotherGroup.Key && group.Value == anotherGroup.Value {
+					groupDescription := fmt.Sprintf("%s-%s-%s", group.Role, group.Key, group.Value)
+					errs = append(errs, field.Duplicate(path.Index(i), groupDescription))
+				}
+			}
+		}
+	}
+	return errs
+}
+
+func validateAuthProviderName(path *field.Path, name string) field.ErrorList {
+	var errs field.ErrorList
+	if name == "" {
+		errs = append(errs, field.Required(path, "name is required"))
+	}
 	return errs
 }
 
@@ -153,7 +193,7 @@ func validateAuthProviderOIDCConfig(path *field.Path, config *AuthProviderOIDCCo
 	if config.Issuer == "" {
 		errs = append(errs, field.Required(path.Child("issuer"), "issuer is required"))
 	}
-	if config.CallbackMode == "" {
+	if config.Mode == "" {
 		errs = append(errs, field.Required(path.Child("mode"), "callbackMode is required"))
 	}
 	return errs
@@ -172,10 +212,10 @@ func validateAuthProviderClaimMapping(path *field.Path, claimMapping AuthProvide
 
 func validateAuthProviderRequiredAttribute(path *field.Path, attribute AuthProviderRequiredAttribute) field.ErrorList {
 	var errs field.ErrorList
-	if attribute.AttributeKey == "" {
+	if attribute.Key == "" {
 		errs = append(errs, field.Required(path.Child("key"), "key is required"))
 	}
-	if attribute.AttributeValue == "" {
+	if attribute.Value == "" {
 		errs = append(errs, field.Required(path.Child("value"), "value is required"))
 	}
 	return errs
@@ -183,13 +223,13 @@ func validateAuthProviderRequiredAttribute(path *field.Path, attribute AuthProvi
 
 func validateAuthProviderGroup(path *field.Path, group AuthProviderGroup) field.ErrorList {
 	var errs field.ErrorList
-	if group.RoleName == "" {
+	if group.Role == "" {
 		errs = append(errs, field.Required(path.Child("role"), "role name is required"))
 	}
-	if group.AttributeKey == "" {
+	if group.Key == "" {
 		errs = append(errs, field.Required(path.Child("key"), "key is required"))
 	}
-	if group.AttributeValue == "" {
+	if group.Value == "" {
 		errs = append(errs, field.Required(path.Child("value"), "value is required"))
 	}
 	return errs

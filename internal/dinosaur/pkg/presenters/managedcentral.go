@@ -169,17 +169,17 @@ func constructAdditionalAuthProvider(authProvider *gitops.AuthProvider, from *db
 	groups := make([]private.ManagedCentralAllOfSpecAdditionalAuthProviderGroups, 0, len(authProvider.Groups))
 	for _, group := range authProvider.Groups {
 		groups = append(groups, private.ManagedCentralAllOfSpecAdditionalAuthProviderGroups{
-			Key:   group.AttributeKey,
-			Value: group.AttributeValue,
-			Role:  group.RoleName,
+			Key:   group.Key,
+			Value: group.Value,
+			Role:  group.Role,
 		})
 	}
 
 	requiredAttributes := make([]private.ManagedCentralAllOfSpecAdditionalAuthProviderRequiredAttributes, 0, len(authProvider.RequiredAttributes))
 	for _, requiredAttribute := range authProvider.RequiredAttributes {
 		requiredAttributes = append(requiredAttributes, private.ManagedCentralAllOfSpecAdditionalAuthProviderRequiredAttributes{
-			Key:   requiredAttribute.AttributeKey,
-			Value: requiredAttribute.AttributeValue,
+			Key:   requiredAttribute.Key,
+			Value: requiredAttribute.Value,
 		})
 	}
 
@@ -192,7 +192,7 @@ func constructAdditionalAuthProvider(authProvider *gitops.AuthProvider, from *db
 	}
 	return private.ManagedCentralAllOfSpecAdditionalAuthProvider{
 		Name:               authProvider.Name,
-		MinimumRoleName:    authProvider.MinimumRoleName,
+		MinimumRoleName:    authProvider.MinimumRole,
 		Groups:             groups,
 		RequiredAttributes: requiredAttributes,
 		ClaimMappings:      claimMappings,
@@ -202,12 +202,12 @@ func constructAdditionalAuthProvider(authProvider *gitops.AuthProvider, from *db
 
 func constructAdditionalOidcConfig(authProvider *gitops.AuthProvider, from *dbapi.CentralRequest) private.ManagedCentralAllOfSpecAdditionalAuthProviderOidc {
 	oidcConfig := private.ManagedCentralAllOfSpecAdditionalAuthProviderOidc{}
-	if authProvider.OIDCConfig != nil && authProvider.OIDCConfig.ClientID != "" {
-		oidcConfig.ClientID = authProvider.OIDCConfig.ClientID
-		oidcConfig.ClientSecret = authProvider.OIDCConfig.ClientSecret
-		oidcConfig.Issuer = authProvider.OIDCConfig.Issuer
-		oidcConfig.CallbackMode = authProvider.OIDCConfig.CallbackMode
-		oidcConfig.DisableOfflineAccessScope = authProvider.OIDCConfig.DisableOfflineAccessScope
+	if authProvider.OIDC != nil && authProvider.OIDC.ClientID != "" {
+		oidcConfig.ClientID = authProvider.OIDC.ClientID
+		oidcConfig.ClientSecret = authProvider.OIDC.ClientSecret
+		oidcConfig.Issuer = authProvider.OIDC.Issuer
+		oidcConfig.CallbackMode = authProvider.OIDC.Mode
+		oidcConfig.DisableOfflineAccessScope = authProvider.OIDC.DisableOfflineAccessScope
 	} else {
 		oidcConfig.ClientID = from.ClientID
 		oidcConfig.ClientSecret = from.ClientSecret

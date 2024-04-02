@@ -1833,7 +1833,7 @@ func (r *CentralReconciler) ensureSecretExists(
 }
 
 func (r *CentralReconciler) configureAdditionalAuthProvider(secret *corev1.Secret, central private.ManagedCentral) error {
-	authProviderConfig := getAdditionalAuthProvider(central)
+	authProviderConfig := findAdditionalAuthProvider(central)
 	if authProviderConfig == nil {
 		return nil
 	}
@@ -1849,7 +1849,7 @@ func (r *CentralReconciler) configureAdditionalAuthProvider(secret *corev1.Secre
 	return nil
 }
 
-func getAdditionalAuthProvider(central private.ManagedCentral) *declarativeconfig.AuthProvider {
+func findAdditionalAuthProvider(central private.ManagedCentral) *declarativeconfig.AuthProvider {
 	authProvider := central.Spec.AdditionalAuthProvider
 	// Assume that if name is not specified, no additional auth provider is configured.
 	if authProvider.Name == "" {
