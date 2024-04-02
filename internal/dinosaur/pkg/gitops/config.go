@@ -163,16 +163,15 @@ func validateAuthProviderRequiredAttributes(path *field.Path, requiredAttributes
 
 func validateAuthProviderGroups(path *field.Path, groups []AuthProviderGroup) field.ErrorList {
 	var errs field.ErrorList
+	var seenGroups = make(map[AuthProviderGroup]struct{}, 0, len(groups))
 	for i, group := range groups {
-		errs = append(errs, validateAuthProviderGroup(path.Index(i), group)...)
-		for j, anotherGroup := range groups {
-			if i != j {
-				if group.Role == anotherGroup.Role && group.Key == anotherGroup.Key && group.Value == anotherGroup.Value {
-					groupDescription := fmt.Sprintf("%s-%s-%s", group.Role, group.Key, group.Value)
-					errs = append(errs, field.Duplicate(path.Index(i), groupDescription))
-				}
-			}
-		}
+	    groupPath := path.Index(i)
+	    if _, ok := seenGroups[group]; ok {
+	        errs = append(errs, field.Duplicate(groupPath, fmt.Sprintf("duplicate group %v", group)))
+	        continue
+	     }
+	     seenGroups[group] = {}
+	     errs = append(errs, validateAuthProviderGroup(groupPath, group)...)
 	}
 	return errs
 }
