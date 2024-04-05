@@ -25,3 +25,7 @@ updates:
     directory: "/dp-terraform/helm"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: 'weekly'
