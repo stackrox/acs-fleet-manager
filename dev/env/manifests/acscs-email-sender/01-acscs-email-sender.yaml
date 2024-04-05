@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    application: email-sender
+  name: email-sender
+  namespace: "$ACSCS_NAMESPACE"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: email-sender
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        application: email-sender
+    spec:
+      containers:
+        - command:
+          - "sh"
+          - "-c"
