@@ -256,7 +256,8 @@ verify: check-gopath openapi/validate
 		./internal/... \
 		./test/... \
 		./fleetshard/... \
-		./probe/...
+		./probe/... \
+		./emailsender/ ...
 .PHONY: verify
 
 # Runs linter against go files and .y(a)ml files in the templates directory
@@ -290,11 +291,15 @@ acsfleetctl:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o acsfleetctl ./cmd/acsfleetctl
 .PHONY: acsfleetctl
 
-binary: fleet-manager fleetshard-sync probe acsfleetctl
+email-sender:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o emailsender/bin/emailsender
+.PHONY: email-sender
+
+binary: fleet-manager fleetshard-sync probe acsfleetctl email-sender
 .PHONY: binary
 
 clean:
-	rm -f fleet-manager fleetshard-sync probe/bin/probe
+	rm -f fleet-manager fleetshard-sync probe/bin/probe emailsender/bin/emailsender
 .PHONY: clean
 
 # Runs the unit tests.
