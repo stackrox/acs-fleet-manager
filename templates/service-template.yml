@@ -862,6 +862,13 @@ objects:
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --alsologtostderr
             - -v=${GLOG_V}
+            resources:
+              requests:
+                cpu: ${CPU_REQUEST}
+                memory: ${MEMORY_REQUEST}
+              limits:
+                cpu: ${CPU_LIMIT}
+                memory: ${MEMORY_LIMIT}
           containers:
           - name: service
             image: ${REPO_DIGEST}
