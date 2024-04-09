@@ -85,3 +85,19 @@ objects:
                 limits:
                   memory: ${MEMORY_LIMITS}
           terminationGracePeriodSeconds: 300
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: probe-metrics
+      labels:
+        app: probe
+        port: monitoring
+      annotations:
+        description: Exposes and load balances the probe pods metrics endpoint
+    spec:
+      selector:
+        app: probe
+      ports:
+        - port: 7070
+          targetPort: 7070
+          name: monitoring
