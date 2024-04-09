@@ -32,11 +32,37 @@ rhacsOperators:
       centralLabelSelector: "app.kubernetes.io/name=central"
       securedClusterLabelSelector: "app.kubernetes.io/name=securedCluster"
 centrals:
+  additionalAuthProviders:
+    - instanceId: "id1"
+      authProvider:
+        name: "good-name"
+        groups:
+          - key: "a"
+            value: "b"
+            role: "Admin"
   overrides:
   - instanceIds:
     - id1
     patch: |
       {}`,
+		}, {
+			name: "invalid auth provider oidc config",
+			assert: func(t *testing.T, c *Config, err field.ErrorList) {
+				require.Len(t, err, 3)
+			},
+			yaml: `
+centrals:
+  additionalAuthProviders:
+    - instanceId: "id1"
+      authProvider:
+        name: "good-name"
+        oidc:
+          clientSecret: "donttellanyonemysecret!"
+        groups:
+          - key: "a"
+            value: "b"
+            role: "Admin"
+`,
 		}, {
 			name: "invalid yaml in patch",
 			assert: func(t *testing.T, c *Config, err field.ErrorList) {
