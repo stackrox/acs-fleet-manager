@@ -28,16 +28,16 @@ parameters:
     value: '[{ "cloudProvider": "standalone", "region": "standalone" }]'
   - name: CPU_REQUESTS
     displayName: CPU Requests
-    value: 100m
+    value: "100m"
   - name: CPU_LIMITS
     displayName: CPU Limits
-    value: 100m
+    value: "100m"
   - name: MEMORY_REQUESTS
     displayName: Memory Requests
-    value: 128Mi
+    value: "128Mi"
   - name: MEMORY_LIMITS
     displayName: Memory Limits
-    value: 128Mi
+    value: "128Mi"
 objects:
   - apiVersion: apps/v1
     kind: Deployment
