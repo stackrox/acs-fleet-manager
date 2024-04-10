@@ -1187,6 +1187,12 @@ func TestMapAllowedQuotaCosts(t *testing.T) {
 		expectedUnsupported []string
 	}
 
+	rrStandardCost1 := v1.NewRelatedResource().Cost(1).BillingModel(string(v1.BillingModelStandard))
+	rrUnsupportedCost1 := func(bm string) *v1.RelatedResourceBuilder {
+		return v1.NewRelatedResource().Cost(1).BillingModel(bm)
+	}
+	rrMarketplaceCost1 := v1.NewRelatedResource().Cost(1).BillingModel(string(v1.BillingModelMarketplace))
+
 	for name, testcase := range map[string]testCase{
 		"empty": {
 			quotaCostBuilders:   []*v1.QuotaCostBuilder{},
@@ -1195,7 +1201,7 @@ func TestMapAllowedQuotaCosts(t *testing.T) {
 		},
 		"one allowed": {
 			quotaCostBuilders: []*v1.QuotaCostBuilder{v1.NewQuotaCost().Allowed(1).RelatedResources(
-				v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
+				rrStandardCost1,
 			)},
 			expectedAllowed:     map[v1.BillingModel]int{v1.BillingModelStandard: 1},
 			expectedUnsupported: nilStringArray,
@@ -1203,8 +1209,8 @@ func TestMapAllowedQuotaCosts(t *testing.T) {
 		"one allowed and one unsupported": {
 			quotaCostBuilders: []*v1.QuotaCostBuilder{
 				v1.NewQuotaCost().Allowed(1).RelatedResources(
-					v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
-					v1.NewRelatedResource().BillingModel("unsupported"),
+					rrStandardCost1,
+					rrUnsupportedCost1("unsupported"),
 				),
 			},
 			expectedAllowed:     map[v1.BillingModel]int{v1.BillingModelStandard: 1},
@@ -1213,22 +1219,22 @@ func TestMapAllowedQuotaCosts(t *testing.T) {
 		"one zero allowed and one 10 allowed": {
 			quotaCostBuilders: []*v1.QuotaCostBuilder{
 				v1.NewQuotaCost().Allowed(0).RelatedResources(
-					v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
+					rrStandardCost1,
 				),
 				v1.NewQuotaCost().Allowed(10).RelatedResources(
-					v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplaceAWS)),
+					rrMarketplaceCost1,
 				),
 			},
-			expectedAllowed:     map[v1.BillingModel]int{v1.BillingModelMarketplaceAWS: 10},
+			expectedAllowed:     map[v1.BillingModel]int{v1.BillingModelMarketplace: 10},
 			expectedUnsupported: nilStringArray,
 		},
 		"zero allowed and one unsupported": {
 			quotaCostBuilders: []*v1.QuotaCostBuilder{
 				v1.NewQuotaCost().Allowed(0).RelatedResources(
-					v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
+					rrStandardCost1,
 				),
 				v1.NewQuotaCost().Allowed(1).RelatedResources(
-					v1.NewRelatedResource().BillingModel("unsupported"),
+					rrUnsupportedCost1("unsupported"),
 				),
 			}, expectedAllowed: map[v1.BillingModel]int{},
 			expectedUnsupported: []string{"unsupported"},
@@ -1236,7 +1242,7 @@ func TestMapAllowedQuotaCosts(t *testing.T) {
 		"no allowed and one unsupported": {
 			quotaCostBuilders: []*v1.QuotaCostBuilder{
 				v1.NewQuotaCost().Allowed(1).RelatedResources(
-					v1.NewRelatedResource().BillingModel("unsupported"),
+					rrUnsupportedCost1("unsupported"),
 				),
 			},
 			expectedAllowed:     map[v1.BillingModel]int{},
@@ -1245,21 +1251,47 @@ func TestMapAllowedQuotaCosts(t *testing.T) {
 		"many allowed and many unsupported": {
 			quotaCostBuilders: []*v1.QuotaCostBuilder{
 				v1.NewQuotaCost().Allowed(10).RelatedResources(
-					v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
-					v1.NewRelatedResource().BillingModel("unsupported1"),
+					rrStandardCost1,
+					rrUnsupportedCost1("unsupported1"),
 				),
 				v1.NewQuotaCost().Allowed(1).RelatedResources(
-					v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)),
-					v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplaceAWS)),
-					v1.NewRelatedResource().BillingModel("unsupported2"),
-					v1.NewRelatedResource().BillingModel("unsupported3"),
+					rrStandardCost1,
+					rrMarketplaceCost1,
+					rrUnsupportedCost1("unsupported2"),
+					rrUnsupportedCost1("unsupported3"),
 				),
 			},
 			expectedAllowed: map[v1.BillingModel]int{
-				v1.BillingModelStandard:       11,
-				v1.BillingModelMarketplaceAWS: 1,
+				v1.BillingModelStandard:    11,
+				v1.BillingModelMarketplace: 1,
 			},
 			expectedUnsupported: []string{"unsupported1", "unsupported2", "unsupported3"},
+		},
+		"not allowed zero-cost, and non-zero-cost unsupported": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{
+				v1.NewQuotaCost().Allowed(0).RelatedResources(
+					v1.NewRelatedResource().Cost(0).BillingModel(string(v1.BillingModelStandard)),
+					v1.NewRelatedResource().Cost(0).BillingModel("unsupported"),
+					v1.NewRelatedResource().Cost(0).BillingModel(string(v1.BillingModelMarketplace)),
+				),
+			},
+			expectedAllowed: map[v1.BillingModel]int{
+				v1.BillingModelStandard:    0,
+				v1.BillingModelMarketplace: 0,
+			},
+			expectedUnsupported: []string{"unsupported"},
+		},
+		"mixed zero and non-zero cost, zero-allowed": {
+			quotaCostBuilders: []*v1.QuotaCostBuilder{
+				v1.NewQuotaCost().Allowed(0).RelatedResources(
+					v1.NewRelatedResource().Cost(1).BillingModel(string(v1.BillingModelStandard)),
+					v1.NewRelatedResource().Cost(0).BillingModel(string(v1.BillingModelMarketplace)),
+				),
+			},
+			expectedAllowed: map[v1.BillingModel]int{
+				v1.BillingModelMarketplace: 0,
+			},
+			expectedUnsupported: nil,
 		},
 	} {
 		t.Run(name, func(tt *testing.T) {
@@ -1276,6 +1308,10 @@ func TestMapAllowedQuotaCosts(t *testing.T) {
 					n += cost.Allowed()
 				}
 				assert.Equal(tt, testcase.expectedAllowed[model], n)
+			}
+			for model := range testcase.expectedAllowed {
+				_, ok := allowed[model]
+				assert.True(tt, ok)
 			}
 			assert.Equal(tt, testcase.expectedUnsupported, unsupported)
 		})
