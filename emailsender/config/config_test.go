@@ -15,6 +15,7 @@ func TestGetConfigSuccess(t *testing.T) {
 	t.Setenv("ENABLE_HTTPS", "true")
 	t.Setenv("HTTPS_CERT_FILE", "/some/tls.crt")
 	t.Setenv("HTTPS_KEY_FILE", "/some/tls.key")
+	t.Setenv("METRICS_ADDRESS", ":9999")
 
 	cfg, err := GetConfig()
 
@@ -25,6 +26,7 @@ func TestGetConfigSuccess(t *testing.T) {
 	assert.Equal(t, cfg.EnableHTTPS, true)
 	assert.Equal(t, cfg.HTTPSCertFile, "/some/tls.crt")
 	assert.Equal(t, cfg.HTTPSKeyFile, "/some/tls.key")
+	assert.Equal(t, cfg.MetricsAddress, ":9999")
 }
 
 func TestGetConfigFailureParsingWrongTimeDuration(t *testing.T) {

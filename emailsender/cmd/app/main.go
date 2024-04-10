@@ -14,6 +14,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/emailsender/config"
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/metrics"
 )
 
 func main() {
@@ -59,6 +60,14 @@ func main() {
 		}
 	}()
 
+	metricServer := metrics.NewMetricsServer(cfg)
+	go func() {
+		glog.Info("Creating metrics server...")
+		if err := metricServer.ListenAndServe(); err != nil {
+			glog.Errorf("serving metrics server error: %v", err)
+		}
+	}()
+
 	sigs := make(chan os.Signal, 1)
 	notifySignals := []os.Signal{os.Interrupt, unix.SIGTERM}
 	signal.Notify(sigs, notifySignals...)
@@ -67,6 +76,9 @@ func main() {
 	sig := <-sigs
 	if err := server.Shutdown(ctx); err != nil {
 		glog.Errorf("API Shutdown error: %v", err)
+	}
+	if err := metricServer.Close(); err != nil {
+		glog.Errorf("closing metric server error: %v", err)
 	}
 
 	glog.Infof("Caught %s signal", sig)
