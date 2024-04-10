@@ -23,6 +23,8 @@ func main() {
 	// parsed.
 	_ = flag.CommandLine.Parse([]string{})
 
+	// TODO: remove this, just to trigger CI
+
 	// Always log to stderr by default, required for glog.
 	if err := flag.Set("logtostderr", "true"); err != nil {
 		glog.Info("Unable to set logtostderr to true")
