@@ -69,6 +69,14 @@ func main() {
 		}
 	}()
 
+	metricServer := metrics.NewMetricsServer(cfg)
+	go func() {
+		glog.Info("Creating metrics server...")
+		if err := metricServer.ListenAndServe(); err != nil {
+			glog.Errorf("serving metrics server error: %v", err)
+		}
+	}()
+
 	sigs := make(chan os.Signal, 1)
 	notifySignals := []os.Signal{os.Interrupt, unix.SIGTERM}
 	signal.Notify(sigs, notifySignals...)
