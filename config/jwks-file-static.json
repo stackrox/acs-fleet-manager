@@ -38,7 +38,7 @@
       "use": "sig",
       "kid": "acs-dev-bitwarden-static-token-jwks",
       "alg": "RS256",
-      "n": "s6bi3xECYj1V_QksbRme4wRMm9X8NoCPqqYRqn3PGTYSpNpTsvOohSd2b3gtbtR_89N1YXFYbjMmk-dqaaZNGCVfg45KuCjaore62yiExAzMA8N-gw6IiBXe6TUN6kZP84OLDhfDZXmrpL1tOepWY1mSAN3IT_lmDFqU06MS7AXOTz7qWXOp6s_-Bwbl3GmP6OhAdc955-WAizTxiWdKWGZ0aXlhP167GE45IRjVarB_TIemDYfN1PBfznfgW7F4JZvwzC--oiH2mps8xaDvby7Y0W-LHFL_64lXgTs1OW9vcIisSH-1YsiVIraQDbiVtNTjzDrF7ouNKSL5uTQ2pQ"
+      "n": "sOxtMpVCVOUu0eX-yJ6PTv4yTTunZFQDvkbR4DM5XJ4nwyPYZpCFu9CnHbmnyUm6TVAbaESYGz8FR4ljb9QsEJMox1SMX_2_q2vNGh_l3_3OHsvJSgtW0fZb-V9nXm40iYbZlvHEqZuhkfKbd6mKtWq6Lz5tV-Y5WgAbxkMAe240MT9XxBdNn-uiwrGuQFYbl3628ECpG6XF7NAuhytaypgddSy4j0Md98tqg1pjT8jPGl-iBKJpv9zMPv-b78ZwrRn_4EDWlc3CqyzuTvu1sW_FnqvPPfMfyuxkk2iSrVFad1bqk23A3oALWWingJdIkD03gmGTFcd9h9s0_XfeJQ"
     }
   ]
 }

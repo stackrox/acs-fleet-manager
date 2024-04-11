@@ -28,6 +28,7 @@ Show X.509: Yes
 7. Copy the values of from Bitwarden's `ACS Fleet* Static token JWKS` item respectively, pasting them into the `VERIFY SIGNATURE` fields.
 8. Copy the payload data contained within `config/static-token-payload.json` and adjust the payload to your liking.
 9. Once finished copy the payload data and update the value within `config/static-token-payload.json`.
+   Use `config/static-token-admin-payload.json` for admin static token
 10. Also, ensure that the ConfigMap `fleet-manager-authentication` is up-to-date, specifically the `jwks-file-static.json` item.
 
 If you have re-created the JWKS files, ensure that fleet manager is re-started with the new values of the `config/jwks-file-static.json`.
