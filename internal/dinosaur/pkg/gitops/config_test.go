@@ -169,3 +169,183 @@ dataPlaneClusters:
 		})
 	}
 }
+
+func TestValidateAdditionalAuthProvider(t *testing.T) {
+	path := field.NewPath("additionalAuthProvider")
+	authProviderPath := path.Child("authProvider")
+	err := validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: nil,
+		InstanceID:   "",
+	})
+	assert.Len(t, err.ToAggregate().Errors(), 2)
+	assert.Equal(t, field.Required(path.Child("instanceId"), "instance ID is required"), err[0])
+	assert.Equal(t, field.Required(authProviderPath, "auth provider spec is required"), err[1])
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: nil,
+		InstanceID:   "non-nil",
+	})
+	require.Len(t, err.ToAggregate().Errors(), 1)
+	assert.Equal(t, field.Required(authProviderPath, "auth provider spec is required"), err[0])
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: &AuthProvider{},
+		InstanceID:   "non-nil",
+	})
+	require.Len(t, err.ToAggregate().Errors(), 1)
+	assert.Equal(t, field.Required(authProviderPath.Child("name"), "name is required"), err[0])
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: &AuthProvider{
+			Name: "all too well",
+		},
+		InstanceID: "non-nil",
+	})
+	assert.Nil(t, err)
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: &AuthProvider{
+			Name: "all too well",
+			OIDC: &AuthProviderOIDCConfig{},
+		},
+		InstanceID: "non-nil",
+	})
+	require.Len(t, err.ToAggregate().Errors(), 3)
+	oidcPath := authProviderPath.Child("oidc")
+	assert.Equal(t, field.Required(oidcPath.Child("clientID"), "clientID is required"), err[0])
+	assert.Equal(t, field.Required(oidcPath.Child("issuer"), "issuer is required"), err[1])
+	assert.Equal(t, field.Required(oidcPath.Child("mode"), "callbackMode is required"), err[2])
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: &AuthProvider{
+			Name: "all too well",
+			OIDC: &AuthProviderOIDCConfig{
+				ClientID: "clientID",
+				Issuer:   "issuer",
+				Mode:     "post",
+			},
+		},
+		InstanceID: "non-nil",
+	})
+	assert.Nil(t, err)
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: &AuthProvider{
+			Name: "all too well",
+			OIDC: &AuthProviderOIDCConfig{
+				ClientID: "clientID",
+				Issuer:   "issuer",
+				Mode:     "post",
+			},
+			Groups: []AuthProviderGroup{
+				{},
+			},
+		},
+		InstanceID: "non-nil",
+	})
+	require.Len(t, err.ToAggregate().Errors(), 3)
+	groupsPath := authProviderPath.Child("groups")
+	firstGroupPath := groupsPath.Index(0)
+	assert.Equal(t, field.Required(firstGroupPath.Child("role"), "role name is required"), err[0])
+	assert.Equal(t, field.Required(firstGroupPath.Child("key"), "key is required"), err[1])
+	assert.Equal(t, field.Required(firstGroupPath.Child("value"), "value is required"), err[2])
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: &AuthProvider{
+			Name: "all too well",
+			OIDC: &AuthProviderOIDCConfig{
+				ClientID: "clientID",
+				Issuer:   "issuer",
+				Mode:     "post",
+			},
+			Groups: []AuthProviderGroup{
+				{
+					Role:  "role",
+					Key:   "key",
+					Value: "value",
+				},
+			},
+		},
+		InstanceID: "non-nil",
+	})
+	assert.Nil(t, err)
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: &AuthProvider{
+			Name: "all too well",
+			Groups: []AuthProviderGroup{
+				{
+					Role:  "role",
+					Key:   "key",
+					Value: "value",
+				},
+				{
+					Role:  "role",
+					Key:   "key",
+					Value: "value",
+				},
+			},
+		},
+		InstanceID: "non-nil",
+	})
+	secondGroupPath := groupsPath.Index(1)
+	assert.Equal(t, field.Duplicate(secondGroupPath, "duplicate group {key value role}"), err[0])
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: &AuthProvider{
+			Name: "all too well",
+			RequiredAttributes: []AuthProviderRequiredAttribute{
+				{},
+			},
+		},
+		InstanceID: "non-nil",
+	})
+	require.Len(t, err.ToAggregate().Errors(), 2)
+	requiredAttributesPath := authProviderPath.Child("requiredAttributes")
+	firstAttributePath := requiredAttributesPath.Index(0)
+	assert.Equal(t, field.Required(firstAttributePath.Child("key"), "key is required"), err[0])
+	assert.Equal(t, field.Required(firstAttributePath.Child("value"), "value is required"), err[1])
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: &AuthProvider{
+			Name: "all too well",
+			RequiredAttributes: []AuthProviderRequiredAttribute{
+				{
+					Key:   "key",
+					Value: "value",
+				},
+			},
+		},
+		InstanceID: "non-nil",
+	})
+	assert.Nil(t, err)
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: &AuthProvider{
+			Name: "all too well",
+			ClaimMappings: []AuthProviderClaimMapping{
+				{},
+			},
+		},
+		InstanceID: "non-nil",
+	})
+	require.Len(t, err.ToAggregate().Errors(), 2)
+	claimMappingsPath := authProviderPath.Child("claimMappings")
+	firstMappingPath := claimMappingsPath.Index(0)
+	assert.Equal(t, field.Required(firstMappingPath.Child("path"), "path is required"), err[0])
+	assert.Equal(t, field.Required(firstMappingPath.Child("name"), "name is required"), err[1])
+
+	err = validateAdditionalAuthProvider(path, AuthProviderAddition{
+		AuthProvider: &AuthProvider{
+			Name: "all too well",
+			ClaimMappings: []AuthProviderClaimMapping{
+				{
+					Path: "path",
+					Name: "name",
+				},
+			},
+		},
+		InstanceID: "non-nil",
+	})
+	assert.Nil(t, err)
+}
