@@ -51,3 +51,16 @@ data:
             - name: Bounce
             - name: Reputation.BounceRate
             - name: Reputation.ComplaintRate
+    static:
+      - name: selinux_avc_denials
+        namespace: SELinux
+        regions:
+          - eu-west-1
+          - us-east-1
+        metrics:
+          - name: AVCDenial
+            nilToZero: true
+            statistics:
+              - SampleCount
+            period: 300
+            length: 300
