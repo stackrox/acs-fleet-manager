@@ -58,7 +58,19 @@ data:
           - eu-west-1
           - us-east-1
         metrics:
-          - name: AVCDenial
+          - name: AVCDenials
+            nilToZero: true
+            statistics:
+              - SampleCount
+            period: 300
+            length: 300
+      - name: network_policy_acl_denials
+        namespace: NetworkPolicy
+        regions:
+          - eu-west-1
+          - us-east-1
+        metrics:
+          - name: ACLDenials
             nilToZero: true
             statistics:
               - SampleCount
