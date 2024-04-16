@@ -1,0 +1,154 @@
+# If zero NetworkPolicy's exist for Ingress or Egress, then all traffic is by
+# default *allowed*. By explicitly creating an *empty* policy for Ingress and
+# Egress targeting all pods in the namespace, we are saying "deny all traffic
+# unless another NetworkPolicy allows it".
+# Following https://docs.openshift.com/container-platform/4.14/networking/network_policy/about-network-policy.html#nw-networkpolicy-optimize-ovn_about-network-policy
+# also combine the deny-all with allow-dns policies.
+# Note that OpenShift has two: (internal) DNS and ExternalDNS.
+# TODO: Double check this allows KubeDNS, OpenShift Internal DNS, OpenShift External DNS
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all-except-dns
+  labels:
+    {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress:
+  - to:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+---
+# Source: https://docs.openshift.com/container-platform/4.13/networking/network_policy/about-network-policy.html#nw-networkpolicy-allow-from-router_about-network-policy
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-central
+  labels:
+    {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: central
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:  # Allow ingress from external Internet to use Central
+    - namespaceSelector:
+        matchLabels:
+          network.openshift.io/policy-group: ingress
+    ports:
+    - port: 8443
+      protocol: TCP
+  - from:  # Allow ingress from observability to scrape metrics
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: rhacs-observability
+    ports:
+    - port: 9090
+      protocol: TCP
+    - port: 9091
+      protocol: TCP
+  egress:
+  - to:  # Allow egress to RDS subnet, EgressFirewall will limit to its specific instance because the IP address is not static and EgressFirewall can do DNS resolution
+    - ipBlock:
+        cidr: 10.1.0.0/16
+    ports:
+      - port: 5432
+        protocol: TCP
+  - to:  # Allow egress to Scanner
+    - podSelector:
+        matchLabels:
+          app: scanner
+    ports:
+    - port: 8080
+      protocol: TCP
+    - port: 8443
+      protocol: TCP
+  - to:  # Allow egress to external Internet
+    - ipBlock:
+        cidr: 0.0.0.0/0
+      except:
+        {{- include "localNetworkCidrRanges" . | nindent 8 }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-scanner
+  labels:
+    {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+spec:
+  podSelector: 
+    matchLabels:
+      app: scanner
+  ingress:
+  - from:  # Allow ingress from Central to use Scanner
+    - podSelector:
+        matchLabels:
+          app: central
+    ports:
+    - port: 8080
+      protocol: TCP
+    - port: 8443
+      protocol: TCP
+  - from:  # Allow ingress from observability to scrape metrics
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: rhacs-observability
+    ports:
+    - port: 9090
+      protocol: TCP
+    - port: 9091
+      protocol: TCP
+  egress:
+  - to:  # Allow egress to Scanner-db
+    - podSelector:
+        matchLabels:
+          app: scanner-db
+    ports:
+    - port: 5432
+      protocol: TCP
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-scanner-db
+  labels:
+    {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: scanner-db
+  ingress:
+  - from:  # Allow ingress from scanner to use scanner-db
+    - podSelector:
+        matchLabels:
+          app: scanner
+    ports:
+    - port: 5432
+      protocol: TCP
+  policyTypes:
+  - Ingress
