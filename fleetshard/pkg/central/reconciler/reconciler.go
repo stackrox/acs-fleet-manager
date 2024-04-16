@@ -61,6 +61,9 @@ const (
 	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
 	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
 
+	ovnACLLoggingAnnotationKey     = "k8s.ovn.org/acl-logging"
+	ovnACLLoggingAnnotationDefault = "{\"deny\": \"warning\"}"
+
 	labelManagedByFleetshardValue = "rhacs-fleetshard"
 	instanceLabelKey              = "app.kubernetes.io/instance"
 	instanceTypeLabelKey          = "rhacs.redhat.com/instance-type"
@@ -1716,6 +1719,7 @@ func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
 	if c.Metadata.ExpiredAt != nil {
 		namespaceAnnotations[centralExpiredAtKey] = c.Metadata.ExpiredAt.Format(time.RFC3339)
 	}
+	namespaceAnnotations[ovnACLLoggingAnnotationKey] = ovnACLLoggingAnnotationDefault
 	return namespaceAnnotations
 }
 
