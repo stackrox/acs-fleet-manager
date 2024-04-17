@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"reflect"
 	"sort"
 	"sync/atomic"
@@ -315,32 +314,9 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 	r.applyTelemetry(remoteCentral, central)
 	r.applyRoutes(central)
-	shouldApplyProxyConfig, err := r.shouldApplyProxyConfig(remoteCentral)
-	if err != nil {
-		return err
-	}
-	if shouldApplyProxyConfig {
-		r.applyProxyConfig(central)
-	}
 	r.applyDeclarativeConfig(central)
 	r.applyAnnotations(remoteCentral, central)
 	return nil
-}
-
-func (r *CentralReconciler) shouldApplyProxyConfig(remoteCentral *private.ManagedCentral) (bool, error) {
-	defaultValue := !r.secureTenantNetwork
-	if len(remoteCentral.Spec.TenantResourcesValues) > 0 {
-		secureTenantNetworkIntf, ok := remoteCentral.Spec.TenantResourcesValues["secureTenantNetwork"]
-		if !ok {
-			return defaultValue, nil
-		}
-		secureTenantNetwork, ok := secureTenantNetworkIntf.(bool)
-		if !ok {
-			return defaultValue, fmt.Errorf("secureTenantNetwork value is not a boolean")
-		}
-		return !secureTenantNetwork, nil
-	}
-	return defaultValue, nil
 }
 
 func (r *CentralReconciler) applyAnnotations(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) {
@@ -373,18 +349,6 @@ func (r *CentralReconciler) applyDeclarativeConfig(central *v1alpha1.Central) {
 	}
 
 	central.Spec.Central.DeclarativeConfiguration = declarativeConfig
-}
-
-func (r *CentralReconciler) applyProxyConfig(central *v1alpha1.Central) {
-	if central.Spec.Customize == nil {
-		central.Spec.Customize = &v1alpha1.CustomizeSpec{}
-	}
-	auditLoggingURL := url.URL{Host: r.auditLogging.Endpoint(false)}
-	kubernetesURL := url.URL{
-		Host: "kubernetes.default.svc.cluster.local.:443",
-	}
-	envVars := getProxyEnvVars(central.Namespace, auditLoggingURL, kubernetesURL)
-	central.Spec.Customize.EnvVars = append(central.Spec.Customize.EnvVars, envVars...)
 }
 
 func (r *CentralReconciler) applyRoutes(central *v1alpha1.Central) {
