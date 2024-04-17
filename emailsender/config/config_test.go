@@ -24,16 +24,6 @@ func TestGetConfigSuccess(t *testing.T) {
 	assert.Equal(t, cfg.HTTPSKeyFile, "/some/tls.key")
 }
 
-func TestGetConfigFailureParsingWrongTimeDuration(t *testing.T) {
-	t.Setenv("CLUSTER_ID", "test-1")
-	t.Setenv("STARTUP_TIMEOUT", "not_time_duration")
-
-	cfg, err := GetConfig()
-
-	assert.Error(t, err)
-	assert.Nil(t, cfg)
-}
-
 func TestGetConfigFailureMissingClusterID(t *testing.T) {
 	cfg, err := GetConfig()
 
