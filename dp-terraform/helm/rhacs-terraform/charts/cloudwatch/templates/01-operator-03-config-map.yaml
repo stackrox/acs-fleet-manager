@@ -53,24 +53,24 @@ data:
             - name: Reputation.ComplaintRate
     static:
       - name: selinux_avc_denials
-        namespace: SELinux
+        namespace: "{{ .Values.clusterName }}"
         regions:
           - eu-west-1
           - us-east-1
         metrics:
-          - name: AVCDenials
+          - name: SELinuxDenials
             nilToZero: true
             statistics:
               - SampleCount
             period: 300
             length: 300
       - name: network_policy_acl_denials
-        namespace: NetworkPolicy
+        namespace: "{{ .Values.clusterName }}"
         regions:
           - eu-west-1
           - us-east-1
         metrics:
-          - name: ACLDenials
+          - name: NetworkPolicyDenials
             nilToZero: true
             statistics:
               - SampleCount
