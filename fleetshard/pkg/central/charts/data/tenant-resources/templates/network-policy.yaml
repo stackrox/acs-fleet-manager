@@ -222,6 +222,13 @@ spec:
     - port: 9090
       protocol: TCP
   egress:
+  - to:  # Allow egress to Scanner-v4-db for normal function
+    - podSelector:
+        matchLabels:
+          app: scanner-v4-db
+    ports:
+    - port: 5432
+      protocol: TCP
   - to:  # Allow egress to Central for periodic file updates
     - podSelector:
         matchLabels:
@@ -266,6 +273,13 @@ spec:
     - port: 9090
       protocol: TCP
   egress:
+  - to:  # Allow egress to Scanner-v4-db for normal function
+    - podSelector:
+        matchLabels:
+          app: scanner-v4-db
+    ports:
+    - port: 5432
+      protocol: TCP
   - to:  # Allow egress to Central for periodic file updates
     - podSelector:
         matchLabels:
