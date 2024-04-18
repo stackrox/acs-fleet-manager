@@ -47,6 +47,7 @@ type Config struct {
 	SecretEncryption      SecretEncryption
 	RouteParameters       RouteConfig
 	FleetshardAddonName   string `env:"FLEETSHARD_ADDON_NAME" envDefault:"acs-fleetshard"`
+	SecureTenantNetwork   bool   `env:"SECURE_TENANT_NETWORK" envDefault:"false"`
 }
 
 // ManagedDB for configuring managed DB specific parameters
