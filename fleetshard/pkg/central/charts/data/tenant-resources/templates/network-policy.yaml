@@ -7,6 +7,9 @@
 # Note that OpenShift has two: (internal) DNS and ExternalDNS.
 # TODO: Double check this allows KubeDNS, OpenShift Internal DNS, OpenShift External DNS
 
+# TODO: Scanner-v4 - any egress? Central or Internet?
+# TODO: Scanner-v4 - any monitoring?
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -156,6 +159,75 @@ spec:
           app: scanner
     ports:
     - port: 5432
+      protocol: TCP
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-scanner-v4-db
+  labels:
+    {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+spec:
+  podSelector: 
+    matchLabels:
+      app: scanner-v4-db
+  ingress:
+  - from:  # Allow ingress from Indexer and Matcher
+    - podSelector:
+        matchExpressions:
+          - { key: app, operator: In, values: [scanner-v4-indexer, scanner-v4-matcher] }
+    ports:
+    - port: 5432
+      protocol: TCP
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-scanner-v4-indexer
+  labels:
+    {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+spec:
+  podSelector: 
+    matchLabels:
+      app: scanner-v4-indexer
+  ingress:
+  - from:  # Allow ingress from Central and Matcher
+    - podSelector:
+        matchExpressions:
+          - { key: app, operator: In, values: [central, scanner-v4-matcher] }
+    ports:
+    - port: 8443
+      protocol: TCP
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-scanner-v4-matcher
+  labels:
+    {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+spec:
+  podSelector: 
+    matchLabels:
+      app: scanner-v4-matcher
+  ingress:
+  - from:  # Allow ingress from Central
+    - podSelector:
+        matchLabels:
+          app: central
+    ports:
+    - port: 8443
       protocol: TCP
   policyTypes:
   - Ingress
