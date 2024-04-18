@@ -7,9 +7,6 @@
 # Note that OpenShift has two: (internal) DNS and ExternalDNS.
 # TODO: Double check this allows KubeDNS, OpenShift Internal DNS, OpenShift External DNS
 
-# TODO: Scanner-v4 - any egress? Central or Internet?
-# TODO: Scanner-v4 - any monitoring?
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -183,6 +180,13 @@ spec:
     ports:
     - port: 5432
       protocol: TCP
+  - from:  # Allow ingress from observability to scrape metrics
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: rhacs-observability
+    ports:
+    - port: 9090
+      protocol: TCP
   policyTypes:
   - Ingress
 ---
@@ -206,6 +210,13 @@ spec:
     ports:
     - port: 8443
       protocol: TCP
+  - from:  # Allow ingress from observability to scrape metrics
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: rhacs-observability
+    ports:
+    - port: 9090
+      protocol: TCP
   policyTypes:
   - Ingress
 ---
@@ -228,6 +239,13 @@ spec:
           app: central
     ports:
     - port: 8443
+      protocol: TCP
+  - from:  # Allow ingress from observability to scrape metrics
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: rhacs-observability
+    ports:
+    - port: 9090
       protocol: TCP
   policyTypes:
   - Ingress
