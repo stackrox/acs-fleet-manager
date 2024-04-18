@@ -119,6 +119,13 @@ spec:
     - port: 9091
       protocol: TCP
   egress:
+  - to:  # Allow egress to Central for vulnerability data updates
+    - podSelector:
+        matchLabels:
+          app: central
+    ports:
+    - port: 8443
+      protocol: TCP
   - to:  # Allow egress to Scanner-db
     - podSelector:
         matchLabels:
