@@ -55,6 +55,8 @@ spec:
           value: {{ .Values.fleetshardSync.staticToken }}
         - name: EGRESS_PROXY_IMAGE
           value: {{ .Values.fleetshardSync.egressProxy.image | quote }}
+        - name: SECURE_TENANT_NETWORK
+          value: {{ .Values.fleetshardSync.secureTenantNetwork }}
         - name: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
           valueFrom:
             secretKeyRef:
