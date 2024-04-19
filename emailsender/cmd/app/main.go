@@ -31,11 +31,11 @@ func main() {
 
 	cfg, err := config.GetConfig()
 	if err != nil {
-		glog.Fatal(err)
+		glog.Errorf("Failed to load configuration: %v", err)
+		os.Exit(1)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.StartupTimeout)
-	defer cancel()
+	ctx := context.Background()
 
 	// base router
 	router := mux.NewRouter()
@@ -49,18 +49,18 @@ func main() {
 
 	go func() {
 		glog.Info("Creating api server...")
+		var err error
 		if cfg.EnableHTTPS {
-			if err := server.ListenAndServeTLS(cfg.HTTPSCertFile, cfg.HTTPSKeyFile); err != http.ErrServerClosed {
-				glog.Fatalf("HTTPS API ListenAndServe error: %v", err)
-			}
+			err = server.ListenAndServeTLS(cfg.HTTPSCertFile, cfg.HTTPSKeyFile)
 		} else {
-			if err := server.ListenAndServe(); err != http.ErrServerClosed {
-				glog.Fatalf("HTTP API ListenAndServe error: %v", err)
-			}
+			err = server.ListenAndServe()
 		}
-	}()
-
-	metricServer := metrics.NewMetricsServer(cfg)
+		if err != http.ErrServerClosed {
+			glog.Fatalf("ListenAndServer error: %v", err)
+    }
+  }()
+    
+  metricServer := metrics.NewMetricsServer(cfg)
 	go func() {
 		glog.Info("Creating metrics server...")
 		if err := metricServer.ListenAndServe(); err != nil {
@@ -72,7 +72,7 @@ func main() {
 	notifySignals := []os.Signal{os.Interrupt, unix.SIGTERM}
 	signal.Notify(sigs, notifySignals...)
 
-	glog.Infof("Application started. Will shut down gracefully on %s.", notifySignals)
+	glog.Info("Application started. Will shut down gracefully on interrupt terminated OS signals")
 	sig := <-sigs
 	if err := server.Shutdown(ctx); err != nil {
 		glog.Errorf("API Shutdown error: %v", err)

@@ -246,11 +246,12 @@ func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel
 	costsMap := make(map[amsv1.BillingModel][]*amsv1.QuotaCost)
 	var foundUnsupportedBillingModels []string
 	for _, qc := range quotaCosts {
-		// When an SKU entitlement expires in AMS, the allowed value for that quota cost is set back to 0.
-		if qc.Allowed() == 0 {
-			continue
-		}
 		for _, rr := range qc.RelatedResources() {
+			// When an SKU entitlement expires in AMS, the allowed value for that quota cost is set back to 0.
+			// Ignore allowance for zero-cost resources.
+			if qc.Allowed() == 0 && rr.Cost() != 0 {
+				continue
+			}
 			bm := amsv1.BillingModel(rr.BillingModel())
 			if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
 				costsMap[bm] = append(costsMap[bm], qc)

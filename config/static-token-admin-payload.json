@@ -1,0 +1,36 @@
+{
+  "account_id": "12345678",
+  "account_number": "1234567",
+  "acr": "0",
+  "aud": "cloud-services",
+  "azp": "cloud-services",
+  "email": "rhacs-ms-test@redhat.com",
+  "exp": 7955112142,
+  "first_name": "Test",
+  "iat": 1656293927,
+  "is_active": true,
+  "is_internal": true,
+  "is_org_admin": true,
+  "iss": "https://auth.redhat.com/auth/realms/EmployeeIDP",
+  "jti": "03f0bd7b-003f-43cc-a169-fc4a7a582655",
+  "last_name": "Test",
+  "locale": "en_us",
+  "nonce": "eb1485d6-8351-4494-978d-8b62bebe126b",
+  "org_id": "16155304",
+  "preferred_username": "rhacs-ms-test@redhat.com",
+  "realm_access": {
+    "roles": [
+      "authenticated",
+      "fleet-manager-admin-full",
+      "acs-general-engineering"
+    ]
+  },
+  "scope": "openid iam.clients.service_accounts offline_access",
+  "session_state": "20873d12-aae8-4d3b-9c14-44a5a253c367",
+  "sid": "20873d12-aae8-4d3b-9c14-44a5a253c367",
+  "sub": "f:528d76ff-f708-43ed-8cd5-fe16f4fe0ce6:rhacs-ms-test@redhat.com",
+  "typ": "Bearer",
+  "type": "User",
+  "user_id": "12345678",
+  "username": "rhacs-ms-test@redhat.com"
+}

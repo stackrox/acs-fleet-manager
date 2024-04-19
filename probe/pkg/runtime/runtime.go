@@ -46,7 +46,23 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 }
 
 // RunSingle executes a single probe run.
-func (r *Runtime) RunSingle(ctx context.Context) error {
+func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
+	defer func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), r.Config.ProbeCleanUpTimeout)
+		defer cancel()
+
+		if err := r.probe.CleanUp(cleanupCtx); err != nil {
+			// If clean up failed AND the original probe run failed, wrap the
+			// original error and return it in `SingleRun`.
+			// If ONLY the clean up failed, the context error is wrapped and
+			// returned in `SingleRun`.
+			if errReturn != nil {
+				errReturn = fmt.Errorf("cleanup failed: %w: %w", err, errReturn)
+			} else {
+				errReturn = fmt.Errorf("cleanup failed: %w", err)
+			}
+		}
+	}()
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(r.Config.CentralSpecs))
 
@@ -68,28 +84,12 @@ func (r *Runtime) RunSingle(ctx context.Context) error {
 	return result
 }
 
-func (r *Runtime) runWithSpec(ctx context.Context, spec config.CentralSpec) (errReturn error) {
+func (r *Runtime) runWithSpec(ctx context.Context, spec config.CentralSpec) error {
 	metrics.MetricsInstance().IncStartedRuns(spec.Region)
 	metrics.MetricsInstance().SetLastStartedTimestamp(spec.Region)
 
 	probeRunCtx, cancel := context.WithTimeout(ctx, r.Config.ProbeRunTimeout)
 	defer cancel()
-	defer func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), r.Config.ProbeCleanUpTimeout)
-		defer cancel()
-
-		if err := r.probe.CleanUp(cleanupCtx); err != nil {
-			// If clean up failed AND the original probe run failed, wrap the
-			// original error and return it in `SingleRun`.
-			// If ONLY the clean up failed, the context error is wrapped and
-			// returned in `SingleRun`.
-			if errReturn != nil {
-				errReturn = fmt.Errorf("cleanup failed: %w: %w", err, errReturn)
-			} else {
-				errReturn = fmt.Errorf("cleanup failed: %w", err)
-			}
-		}
-	}()
 
 	if err := r.probe.Execute(probeRunCtx, spec); err != nil {
 		metrics.MetricsInstance().IncFailedRuns(spec.Region)

@@ -801,6 +801,23 @@ func TestNamespaceLabelsAreSet(t *testing.T) {
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, namespace.GetLabels()[orgIDLabelKey])
 }
 
+func TestNamespaceAnnotationsAreSet(t *testing.T) {
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		nil,
+		useRoutesReconcilerOptions,
+	)
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	namespace := &v1.Namespace{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
+	require.NoError(t, err)
+	assert.Equal(t, ovnACLLoggingAnnotationDefault, namespace.GetAnnotations()[ovnACLLoggingAnnotationKey])
+}
+
 func TestReportRoutesStatuses(t *testing.T) {
 	_, _, r := getClientTrackerAndReconciler(
 		t,
@@ -2312,6 +2329,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "org-name",
+						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
 					},
 				},
 			},
@@ -2331,6 +2349,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "wrong",
+						ovnACLLoggingAnnotationKey:  "{\"allow\": \"wrong\"}",
 					},
 				},
 			},
@@ -2346,6 +2365,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "org-name",
+						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
 					},
 				},
 			},
@@ -2365,6 +2385,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "org-name",
+						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
 						"extra":                     "extra",
 					},
 				},
@@ -2382,6 +2403,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "org-name",
+						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
 						"extra":                     "extra",
 					},
 				},
@@ -2401,6 +2423,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "org-name",
+						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
 					},
 				},
 			},
@@ -2416,6 +2439,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "org-name",
+						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
 					},
 				},
 			},

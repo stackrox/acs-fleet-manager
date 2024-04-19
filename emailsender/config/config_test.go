@@ -2,7 +2,6 @@ package config
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -10,7 +9,6 @@ import (
 
 func TestGetConfigSuccess(t *testing.T) {
 	t.Setenv("CLUSTER_ID", "test-1")
-	t.Setenv("STARTUP_TIMEOUT", "10s")
 	t.Setenv("SERVER_ADDRESS", ":8888")
 	t.Setenv("ENABLE_HTTPS", "true")
 	t.Setenv("HTTPS_CERT_FILE", "/some/tls.crt")
@@ -21,22 +19,10 @@ func TestGetConfigSuccess(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, cfg.ClusterID, "test-1")
-	assert.Equal(t, cfg.StartupTimeout, 10*time.Second)
 	assert.Equal(t, cfg.ServerAddress, ":8888")
 	assert.Equal(t, cfg.EnableHTTPS, true)
 	assert.Equal(t, cfg.HTTPSCertFile, "/some/tls.crt")
 	assert.Equal(t, cfg.HTTPSKeyFile, "/some/tls.key")
-	assert.Equal(t, cfg.MetricsAddress, ":9999")
-}
-
-func TestGetConfigFailureParsingWrongTimeDuration(t *testing.T) {
-	t.Setenv("CLUSTER_ID", "test-1")
-	t.Setenv("STARTUP_TIMEOUT", "not_time_duration")
-
-	cfg, err := GetConfig()
-
-	assert.Error(t, err)
-	assert.Nil(t, cfg)
 }
 
 func TestGetConfigFailureMissingClusterID(t *testing.T) {

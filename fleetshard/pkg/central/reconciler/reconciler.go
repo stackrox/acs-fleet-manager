@@ -61,6 +61,9 @@ const (
 	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
 	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
 
+	ovnACLLoggingAnnotationKey     = "k8s.ovn.org/acl-logging"
+	ovnACLLoggingAnnotationDefault = "{\"deny\": \"warning\"}"
+
 	labelManagedByFleetshardValue = "rhacs-fleetshard"
 	instanceLabelKey              = "app.kubernetes.io/instance"
 	instanceTypeLabelKey          = "rhacs.redhat.com/instance-type"
@@ -88,6 +91,7 @@ const (
 	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
 
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
+	additionalAuthProviderConfigKey  = "additional-auth-provider"
 
 	tenantImagePullSecretName = "stackrox" // pragma: allowlist secret
 )
@@ -646,6 +650,9 @@ func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Co
 				configErrs = multierror.Append(configErrs, err)
 			}
 			if err := r.configureAuthProvider(secret, remoteCentral); err != nil {
+				configErrs = multierror.Append(configErrs, err)
+			}
+			if err := r.configureAdditionalAuthProvider(secret, remoteCentral); err != nil {
 				configErrs = multierror.Append(configErrs, err)
 			}
 			return errors.Wrapf(configErrs.ErrorOrNil(),
@@ -1712,6 +1719,7 @@ func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
 	if c.Metadata.ExpiredAt != nil {
 		namespaceAnnotations[centralExpiredAtKey] = c.Metadata.ExpiredAt.Format(time.RFC3339)
 	}
+	namespaceAnnotations[ovnACLLoggingAnnotationKey] = ovnACLLoggingAnnotationDefault
 	return namespaceAnnotations
 }
 
@@ -1826,6 +1834,71 @@ func (r *CentralReconciler) ensureSecretExists(
 		return fmt.Errorf("creating %s/%s secret: %w", namespace, secretName, createErr)
 	}
 	return nil
+}
+
+func (r *CentralReconciler) configureAdditionalAuthProvider(secret *corev1.Secret, central private.ManagedCentral) error {
+	authProviderConfig := findAdditionalAuthProvider(central)
+	if authProviderConfig == nil {
+		return nil
+	}
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
+	}
+
+	rawAuthProviderBytes, err := yaml.Marshal(authProviderConfig)
+	if err != nil {
+		return fmt.Errorf("marshaling additional auth provider configuration: %w", err)
+	}
+	secret.Data[additionalAuthProviderConfigKey] = rawAuthProviderBytes
+	return nil
+}
+
+func findAdditionalAuthProvider(central private.ManagedCentral) *declarativeconfig.AuthProvider {
+	authProvider := central.Spec.AdditionalAuthProvider
+	// Assume that if name is not specified, no additional auth provider is configured.
+	if authProvider.Name == "" {
+		return nil
+	}
+	groups := make([]declarativeconfig.Group, 0, len(authProvider.Groups))
+	for _, group := range authProvider.Groups {
+		groups = append(groups, declarativeconfig.Group{
+			AttributeKey:   group.Key,
+			AttributeValue: group.Value,
+			RoleName:       group.Role,
+		})
+	}
+
+	requiredAttributes := make([]declarativeconfig.RequiredAttribute, 0, len(authProvider.RequiredAttributes))
+	for _, requiredAttribute := range authProvider.RequiredAttributes {
+		requiredAttributes = append(requiredAttributes, declarativeconfig.RequiredAttribute{
+			AttributeKey:   requiredAttribute.Key,
+			AttributeValue: requiredAttribute.Value,
+		})
+	}
+
+	claimMappings := make([]declarativeconfig.ClaimMapping, 0, len(authProvider.ClaimMappings))
+	for _, claimMapping := range authProvider.ClaimMappings {
+		claimMappings = append(claimMappings, declarativeconfig.ClaimMapping{
+			Path: claimMapping.Key,
+			Name: claimMapping.Value,
+		})
+	}
+
+	return &declarativeconfig.AuthProvider{
+		Name:               authProvider.Name,
+		UIEndpoint:         central.Spec.UiEndpoint.Host,
+		ExtraUIEndpoints:   []string{"localhost:8443"},
+		Groups:             groups,
+		RequiredAttributes: requiredAttributes,
+		ClaimMappings:      claimMappings,
+		OIDCConfig: &declarativeconfig.OIDCConfig{
+			Issuer:                    authProvider.Oidc.Issuer,
+			CallbackMode:              authProvider.Oidc.CallbackMode,
+			ClientID:                  authProvider.Oidc.ClientID,
+			ClientSecret:              authProvider.Oidc.ClientSecret, // pragma: allowlist secret
+			DisableOfflineAccessScope: authProvider.Oidc.DisableOfflineAccessScope,
+		},
+	}
 }
 
 // NewCentralReconciler ...
