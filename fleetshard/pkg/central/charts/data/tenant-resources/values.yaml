@@ -9,3 +9,4 @@ egressProxy:
       memory: 275Mi
 labels: {}
 annotations: {}
+secureTenantNetwork: false

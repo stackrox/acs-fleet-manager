@@ -7,6 +7,7 @@
 # Note that OpenShift has two: (internal) DNS and ExternalDNS.
 # TODO: Double check this allows KubeDNS, OpenShift Internal DNS, OpenShift External DNS
 
+{{- if .Values.secureTenantNetwork }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -290,3 +291,4 @@ spec:
   policyTypes:
   - Ingress
   - Egress
+{{ end }}

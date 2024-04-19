@@ -47,7 +47,11 @@ type Config struct {
 	SecretEncryption      SecretEncryption
 	RouteParameters       RouteConfig
 	FleetshardAddonName   string `env:"FLEETSHARD_ADDON_NAME" envDefault:"acs-fleetshard"`
-	SecureTenantNetwork   bool   `env:"SECURE_TENANT_NETWORK" envDefault:"false"`
+
+	// The SecureTenantNetwork option controls whether the Tenant's K8s
+	// Namespace will be secured at the network level, e.g. by using
+	// NetworkPolicy and EgressFirewalls in the Tenant Helm chart.
+	SecureTenantNetwork bool `env:"SECURE_TENANT_NETWORK" envDefault:"false"`
 }
 
 // ManagedDB for configuring managed DB specific parameters
