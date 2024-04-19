@@ -5,13 +5,13 @@ go 1.20
 require (
 	github.com/go-bindata/go-bindata/v3 v3.1.4-0.20210427095211-26949cc13d95
 	github.com/matryer/moq v0.3.4
-	github.com/segmentio/chamber/v2 v2.14.0
+	github.com/segmentio/chamber/v2 v2.14.1
 	gotest.tools/gotestsum v1.11.0
 )
 
 require (
 	github.com/alessio/shellescape v1.4.2 // indirect
-	github.com/aws/aws-sdk-go v1.50.10 // indirect
+	github.com/aws/aws-sdk-go v1.50.30 // indirect
 	github.com/bitfield/gotestdox v0.2.1 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
 	github.com/fatih/color v1.15.0 // indirect
@@ -33,7 +33,7 @@ require (
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
