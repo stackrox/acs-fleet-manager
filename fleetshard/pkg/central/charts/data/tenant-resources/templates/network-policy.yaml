@@ -78,9 +78,9 @@ spec:
       - port: 5432
         protocol: TCP
   - to:  # Allow egress to Scanner
-    - podSelector:
-        matchLabels:
-          app: scanner
+      - podSelector:
+          matchExpressions:
+            - { key: app, operator: In, values: [scanner, scanner-v4-indexer, scanner-v4-matcher] }
     ports:
     - port: 8080
       protocol: TCP
