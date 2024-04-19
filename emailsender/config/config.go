@@ -10,12 +10,12 @@ import (
 
 // Config contains this application's runtime configuration.
 type Config struct {
-	ClusterID     string `env:"CLUSTER_ID"`
-	ServerAddress string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	EnableHTTPS   bool   `env:"ENABLE_HTTPS" envDefault:"false"`
-	HTTPSCertFile string `env:"HTTPS_CERT_FILE" envDefault:""`
-	HTTPSKeyFile  string `env:"HTTPS_KEY_FILE" envDefault:""`
-  MetricsAddress string        `env:"METRICS_ADDRESS" envDefault:":9090"`
+	ClusterID      string `env:"CLUSTER_ID"`
+	ServerAddress  string `env:"SERVER_ADDRESS" envDefault:":8080"`
+	EnableHTTPS    bool   `env:"ENABLE_HTTPS" envDefault:"false"`
+	HTTPSCertFile  string `env:"HTTPS_CERT_FILE" envDefault:""`
+	HTTPSKeyFile   string `env:"HTTPS_KEY_FILE" envDefault:""`
+	MetricsAddress string `env:"METRICS_ADDRESS" envDefault:":9090"`
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.

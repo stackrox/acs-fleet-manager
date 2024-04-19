@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"net/http"
 	"os"
@@ -55,12 +56,12 @@ func main() {
 		} else {
 			err = server.ListenAndServe()
 		}
-		if err != http.ErrServerClosed {
+		if !errors.Is(err, http.ErrServerClosed) {
 			glog.Fatalf("ListenAndServer error: %v", err)
-    }
-  }()
-    
-  metricServer := metrics.NewMetricsServer(cfg)
+		}
+	}()
+
+	metricServer := metrics.NewMetricsServer(cfg)
 	go func() {
 		glog.Info("Creating metrics server...")
 		if err := metricServer.ListenAndServe(); err != nil {
