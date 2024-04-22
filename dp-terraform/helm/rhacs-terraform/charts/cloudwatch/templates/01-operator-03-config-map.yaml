@@ -62,7 +62,7 @@ data:
             nilToZero: true
             statistics:
               - SampleCount
-            period: 300
+            period: 60
             length: 300
       - name: network_policy_acl_denials
         namespace: "{{ .Values.clusterName }}"
@@ -74,5 +74,5 @@ data:
             nilToZero: true
             statistics:
               - SampleCount
-            period: 300
+            period: 60
             length: 300
