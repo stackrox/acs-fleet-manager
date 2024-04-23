@@ -10,7 +10,7 @@ import (
 
 // NewMetricsServer returns the metrics server.
 func NewMetricsServer(address string) *http.Server {
-	registry := initPrometheus(NewInstance())
+	registry := initPrometheus(DefaultInstance())
 	return newMetricsServer(address, registry)
 }
 

@@ -33,8 +33,8 @@ func (m *Metrics) IncEmailsSent(clusterID string) {
 	m.emailsSent.With(prometheus.Labels{clusterIDLabelName: clusterID}).Inc()
 }
 
-// NewInstance returns the global Singleton instance for Metrics.
-func NewInstance() *Metrics {
+// DefaultInstance returns the global Singleton instance for Metrics.
+func DefaultInstance() *Metrics {
 	once.Do(func() {
 		metrics = newMetrics()
 	})

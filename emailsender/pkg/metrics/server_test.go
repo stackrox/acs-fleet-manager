@@ -20,7 +20,7 @@ func TestMetricsServerCorrectAddress(t *testing.T) {
 }
 
 func TestMetricsServerServesDefaultMetrics(t *testing.T) {
-	registry := initPrometheus(NewInstance())
+	registry := initPrometheus(DefaultInstance())
 	metrics := serveMetrics(t, registry)
 	assert.Contains(t, metrics, "go_memstats_alloc_bytes", "not found default metrics")
 }
