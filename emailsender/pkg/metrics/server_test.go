@@ -16,10 +16,6 @@ type metricResponse map[string]*io_prometheus_client.MetricFamily
 
 func TestMetricsServerCorrectAddress(t *testing.T) {
 	server := NewMetricsServer(cfg.MetricsAddress)
-	defer func(server *http.Server) {
-		err := server.Close()
-		require.NoError(t, err)
-	}(server)
 	assert.Equal(t, ":9999", server.Addr)
 }
 
@@ -35,10 +31,6 @@ func serveMetrics(t *testing.T, registry *prometheus.Registry) metricResponse {
 	require.NoError(t, err, "failed creating metrics requests")
 
 	server := newMetricsServer(":9999", registry)
-	defer func(server *http.Server) {
-		err := server.Close()
-		require.NoError(t, err)
-	}(server)
 	server.Handler.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code, "status code should be OK")
 
