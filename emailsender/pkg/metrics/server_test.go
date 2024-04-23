@@ -15,7 +15,7 @@ import (
 type metricResponse map[string]*io_prometheus_client.MetricFamily
 
 func TestMetricsServerCorrectAddress(t *testing.T) {
-	server := NewMetricsServer(cfg)
+	server := NewMetricsServer(cfg.MetricsAddress)
 	defer func(server *http.Server) {
 		err := server.Close()
 		require.NoError(t, err)

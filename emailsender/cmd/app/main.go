@@ -57,15 +57,15 @@ func main() {
 			err = server.ListenAndServe()
 		}
 		if !errors.Is(err, http.ErrServerClosed) {
-			glog.Fatalf("ListenAndServer error: %v", err)
+			glog.Errorf("api server error: %v", err)
 		}
 	}()
 
-	metricServer := metrics.NewMetricsServer(cfg)
+	metricServer := metrics.NewMetricsServer(cfg.MetricsAddress)
 	go func() {
 		glog.Info("Creating metrics server...")
-		if err := metricServer.ListenAndServe(); err != nil {
-			glog.Errorf("serving metrics server error: %v", err)
+		if err := metricServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			glog.Errorf("metrics server error: %v", err)
 		}
 	}()
 
