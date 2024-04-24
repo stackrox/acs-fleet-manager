@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.20 AS build
+FROM --platform=linux/amd64 registry.ci.openshift.org/openshift/release:golang-1.21 AS build
 
 USER root
 RUN mkdir /src /rds_ca
