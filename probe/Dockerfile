@@ -1,10 +1,10 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:1.20 AS build
+FROM registry.access.redhat.com/ubi8/go-toolset:1.21 AS build
 USER root
 ENV GOFLAGS="-mod=mod"
 
 RUN mkdir /src
 WORKDIR /src
-RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@v1.20.1
+RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@v1.21.2
 COPY go.*  ./
 RUN go mod download
 COPY . ./
