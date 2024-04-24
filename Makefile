@@ -298,11 +298,11 @@ emailsender:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o emailsender/bin/emailsender ./emailsender/cmd/app
 .PHONY: emailsender
 
-binary: fleet-manager fleetshard-sync probe acsfleetctl email-sender
+binary: fleet-manager fleetshard-sync probe acsfleetctl emailsender
 .PHONY: binary
 
 clean:
-	rm -f fleet-manager fleetshard-sync probe/bin/probe emailsender/bin/email-sender
+	rm -f fleet-manager fleetshard-sync probe/bin/probe emailsender/bin/emailsender
 .PHONY: clean
 
 # Runs the unit tests.
@@ -543,19 +543,19 @@ image/push/fleet-manager-tools: image/build/fleet-manager-tools
 	@echo "Image fleet-manager-tools was pushed as $(IMAGE_REF)."
 .PHONY: image/push/fleet-manager-tools
 
-image/build/email-sender: GOOS=linux
-image/build/email-sender: IMAGE_REF="$(external_image_registry)/$(email_sender_image_repository):$(image_tag)"
-image/build/email-sender:
+image/build/emailsender: GOOS=linux
+image/build/emailsender: IMAGE_REF="$(external_image_registry)/$(email_sender_image_repository):$(image_tag)"
+image/build/emailsender:
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f emailsender/Dockerfile .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(EMAIL_SENDER_SHORT_IMAGE_REF)
-.PHONY: image/build/email-sender
+.PHONY: image/build/emailsender
 
-image/push/email-sender: IMAGE_REF="$(external_image_registry)/$(email_sender_image_repository):$(image_tag)"
-image/push/email-sender: image/build/email-sender
+image/push/emailsender: IMAGE_REF="$(external_image_registry)/$(email_sender_image_repository):$(image_tag)"
+image/push/emailsender: image/build/emailsender
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
 	@echo
 	@echo "Email sender image was pushed as $(IMAGE_REF)."
-.PHONY: image/push/email-sender
+.PHONY: image/push/emailsender
 
 # Build and push the image
 image/push: image/push/fleet-manager image/push/probe

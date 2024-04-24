@@ -4,7 +4,6 @@ ENV GOFLAGS="-mod=mod"
 
 RUN mkdir /src
 WORKDIR /src
-RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@v1.20.1
 COPY go.*  ./
 RUN go mod download
 COPY . ./
@@ -21,7 +20,7 @@ USER unprivilegeduser
 
 COPY --from=build /src/emailsender/bin /acscs/
 EXPOSE 8080
-ENTRYPOINT ["/acscs/email-sender"]
+ENTRYPOINT ["/acscs/emailsender"]
 LABEL name="ACSCS email sender" \
 	vendor="Red Hat" \
 	version="0.0.1" \
