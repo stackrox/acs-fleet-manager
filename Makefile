@@ -28,12 +28,15 @@ PROBE_NAMESPACE = rhacs-probe
 IMAGE_NAME = fleet-manager
 PROBE_IMAGE_NAME = probe
 IMAGE_TARGET = standard
+EMAILSENDER_IMAGE = emailsender
 
 SHORT_IMAGE_REF = "$(IMAGE_NAME):$(image_tag)"
 PROBE_SHORT_IMAGE_REF = "$(PROBE_IMAGE_NAME):$(image_tag)"
+EMAILSENDER_SHORT_IMAGE_REF = "$(EMAILSENDER_IMAGE):$(image_tag)"
 
 image_repository:=$(IMAGE_NAME)
 probe_image_repository:=$(PROBE_IMAGE_NAME)
+emailsender_image_repository:=$(EMAILSENDER_IMAGE)
 
 # In the development environment we are pushing the image directly to the image
 # registry inside the development cluster. That registry has a different name
@@ -256,7 +259,8 @@ verify: check-gopath openapi/validate
 		./internal/... \
 		./test/... \
 		./fleetshard/... \
-		./probe/...
+		./probe/... \
+		./emailsender/...
 .PHONY: verify
 
 # Runs linter against go files and .y(a)ml files in the templates directory
@@ -290,11 +294,15 @@ acsfleetctl:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o acsfleetctl ./cmd/acsfleetctl
 .PHONY: acsfleetctl
 
-binary: fleet-manager fleetshard-sync probe acsfleetctl
+emailsender:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o emailsender/bin/emailsender ./emailsender/cmd/app
+.PHONY: emailsender
+
+binary: fleet-manager fleetshard-sync probe acsfleetctl emailsender
 .PHONY: binary
 
 clean:
-	rm -f fleet-manager fleetshard-sync probe/bin/probe
+	rm -f fleet-manager fleetshard-sync probe/bin/probe emailsender/bin/emailsender
 .PHONY: clean
 
 # Runs the unit tests.
@@ -534,6 +542,20 @@ image/push/fleet-manager-tools: image/build/fleet-manager-tools
 	@echo
 	@echo "Image fleet-manager-tools was pushed as $(IMAGE_REF)."
 .PHONY: image/push/fleet-manager-tools
+
+image/build/emailsender: GOOS=linux
+image/build/emailsender: IMAGE_REF="$(external_image_registry)/$(email_sender_image_repository):$(image_tag)"
+image/build/emailsender:
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f emailsender/Dockerfile .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(EMAILSENDER_SHORT_IMAGE_REF)
+.PHONY: image/build/emailsender
+
+image/push/emailsender: IMAGE_REF="$(external_image_registry)/$(emailsender_image_repository):$(image_tag)"
+image/push/emailsender: image/build/emailsender
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
+	@echo
+	@echo "emailsender image was pushed as $(IMAGE_REF)."
+.PHONY: image/push/emailsender
 
 # Build and push the image
 image/push: image/push/fleet-manager image/push/probe

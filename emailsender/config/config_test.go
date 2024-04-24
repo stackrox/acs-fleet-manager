@@ -23,6 +23,7 @@ func TestGetConfigSuccess(t *testing.T) {
 	assert.Equal(t, cfg.EnableHTTPS, true)
 	assert.Equal(t, cfg.HTTPSCertFile, "/some/tls.crt")
 	assert.Equal(t, cfg.HTTPSKeyFile, "/some/tls.key")
+	assert.Equal(t, cfg.MetricsAddress, ":9999")
 }
 
 func TestGetConfigFailureMissingClusterID(t *testing.T) {
