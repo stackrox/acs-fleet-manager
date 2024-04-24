@@ -1,13 +1,12 @@
-# If zero NetworkPolicy's exist for Ingress or Egress, then all traffic is by
-# default *allowed*. By explicitly creating an *empty* policy for Ingress and
-# Egress targeting all pods in the namespace, we are saying "deny all traffic
-# unless another NetworkPolicy allows it".
-# Following https://docs.openshift.com/container-platform/4.14/networking/network_policy/about-network-policy.html#nw-networkpolicy-optimize-ovn_about-network-policy
-# also combine the deny-all with allow-dns policies.
-# Note that OpenShift has two: (internal) DNS and ExternalDNS.
-# TODO: Double check this allows KubeDNS, OpenShift Internal DNS, OpenShift External DNS
-
 {{- if .Values.secureTenantNetwork }}
+# If no ingress NetworkPolicy exists for a pod, then all ingress is allowed.
+# Similarly, if no egress NetworkPolicy exists for a pod, all egress is allowed.
+# By creating a policy targeting all pods, we deny all ingress and egress that
+# is not explicitly allowed by other NetworkPolicy.
+
+# Following https://docs.openshift.com/container-platform/4.14/networking/network_policy/about-network-policy.html#nw-networkpolicy-optimize-ovn_about-network-policy
+# we allow any DNS in the cluster, including OpenShift Internal, KubeDNS, and
+# external DNS traffic.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -73,9 +72,9 @@ spec:
     - port: 9091
       protocol: TCP
   egress:
-  - to:  # Allow egress to RDS subnet, EgressFirewall will limit to its specific instance because the IP address is not static and EgressFirewall can do DNS resolution
+  - to:  # Allow egress to all RDS instances. EgressFirewall will limit to its specific instance because the IP address is not static and EgressFirewall can do DNS resolution
     - ipBlock:
-        cidr: 10.1.0.0/16
+        cidr: {{ .Values.centralRdsCidrBlock }}
     ports:
       - port: 5432
         protocol: TCP
