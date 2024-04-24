@@ -13,6 +13,7 @@ func TestGetConfigSuccess(t *testing.T) {
 	t.Setenv("ENABLE_HTTPS", "true")
 	t.Setenv("HTTPS_CERT_FILE", "/some/tls.crt")
 	t.Setenv("HTTPS_KEY_FILE", "/some/tls.key")
+	t.Setenv("METRICS_ADDRESS", ":9999")
 
 	cfg, err := GetConfig()
 

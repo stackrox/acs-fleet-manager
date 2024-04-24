@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/emailsender/config"
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/metrics"
 )
 
 func main() {
@@ -54,8 +56,16 @@ func main() {
 		} else {
 			err = server.ListenAndServe()
 		}
-		if err != http.ErrServerClosed {
-			glog.Fatalf("ListenAndServer error: %v", err)
+		if !errors.Is(err, http.ErrServerClosed) {
+			glog.Errorf("api server error: %v", err)
+		}
+	}()
+
+	metricServer := metrics.NewMetricsServer(cfg.MetricsAddress)
+	go func() {
+		glog.Info("Creating metrics server...")
+		if err := metricServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			glog.Errorf("metrics server error: %v", err)
 		}
 	}()
 
@@ -67,6 +77,9 @@ func main() {
 	sig := <-sigs
 	if err := server.Shutdown(ctx); err != nil {
 		glog.Errorf("API Shutdown error: %v", err)
+	}
+	if err := metricServer.Close(); err != nil {
+		glog.Errorf("closing metric server error: %v", err)
 	}
 
 	glog.Infof("Caught %s signal", sig)
