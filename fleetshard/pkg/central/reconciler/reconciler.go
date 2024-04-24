@@ -312,7 +312,9 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 	r.applyTelemetry(remoteCentral, central)
 	r.applyRoutes(central)
-	r.applyProxyConfig(central)
+	if !r.secureTenantNetwork {
+		r.applyProxyConfig(central)
+	}
 	r.applyDeclarativeConfig(central)
 	r.applyAnnotations(remoteCentral, central)
 	return nil
