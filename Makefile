@@ -28,7 +28,7 @@ PROBE_NAMESPACE = rhacs-probe
 IMAGE_NAME = fleet-manager
 PROBE_IMAGE_NAME = probe
 IMAGE_TARGET = standard
-EMAIL_SENDER_IMAGE = email-sender
+EMAIL_SENDER_IMAGE = emailsender
 
 SHORT_IMAGE_REF = "$(IMAGE_NAME):$(image_tag)"
 PROBE_SHORT_IMAGE_REF = "$(PROBE_IMAGE_NAME):$(image_tag)"
@@ -294,9 +294,9 @@ acsfleetctl:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o acsfleetctl ./cmd/acsfleetctl
 .PHONY: acsfleetctl
 
-email-sender:
-	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o emailsender/bin/email-sender ./emailsender/cmd/app
-.PHONY: email-sender
+emailsender:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o emailsender/bin/emailsender ./emailsender/cmd/app
+.PHONY: emailsender
 
 binary: fleet-manager fleetshard-sync probe acsfleetctl email-sender
 .PHONY: binary

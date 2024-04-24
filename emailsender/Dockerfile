@@ -9,7 +9,7 @@ COPY go.*  ./
 RUN go mod download
 COPY . ./
 
-RUN make email-sender
+RUN make emailsender
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9 as standard
 
@@ -20,7 +20,7 @@ RUN useradd -u 1001 unprivilegeduser
 USER unprivilegeduser
 
 COPY --from=build /src/emailsender/bin /acscs/
-EXPOSE 8000
+EXPOSE 8080
 ENTRYPOINT ["/acscs/email-sender"]
 LABEL name="ACSCS email sender" \
 	vendor="Red Hat" \
