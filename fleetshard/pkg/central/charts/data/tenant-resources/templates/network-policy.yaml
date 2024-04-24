@@ -95,6 +95,15 @@ spec:
     ports:
       - port: 8888
         protocol: TCP
+  - to:  # Allow egress to Kube API for debug snapshot generation.
+    - podSelector:
+        matchLabels:
+          app: openshift-kube-apiserver
+    ports:
+      - port: 443
+        protocol: TCP
+      - port: 6443
+        protocol: TCP
   - to:  # Allow egress to external Internet
     - ipBlock:
         cidr: 0.0.0.0/0
