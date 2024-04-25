@@ -62,10 +62,13 @@ spec:
     - podSelector:
         matchExpressions:
           - { key: app, operator: In, values: [scanner, scanner-v4-indexer, scanner-v4-matcher] }
+    ports:
+      - port: 8443
+        protocol: TCP
   - from:  # Allow ingress from observability to scrape metrics
     - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: rhacs-observability
+        matchExpressions:
+          - { key: kubernetes.io/metadata.name, operator: In, values: [ rhacs-observability, openshift-monitoring ] }
     ports:
     - port: 9090
       protocol: TCP
@@ -133,8 +136,8 @@ spec:
       protocol: TCP
   - from:  # Allow ingress from observability to scrape metrics
     - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: rhacs-observability
+        matchExpressions:
+          - { key: kubernetes.io/metadata.name, operator: In, values: [ rhacs-observability, openshift-monitoring ] }
     ports:
     - port: 9090
       protocol: TCP
@@ -204,8 +207,8 @@ spec:
       protocol: TCP
   - from:  # Allow ingress from observability to scrape metrics
     - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: rhacs-observability
+        matchExpressions:
+          - { key: kubernetes.io/metadata.name, operator: In, values: [ rhacs-observability, openshift-monitoring ] }
     ports:
     - port: 9090
       protocol: TCP
@@ -234,8 +237,8 @@ spec:
       protocol: TCP
   - from:  # Allow ingress from observability to scrape metrics
     - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: rhacs-observability
+        matchExpressions:
+          - { key: kubernetes.io/metadata.name, operator: In, values: [ rhacs-observability, openshift-monitoring ] }
     ports:
     - port: 9090
       protocol: TCP
@@ -285,8 +288,8 @@ spec:
       protocol: TCP
   - from:  # Allow ingress from observability to scrape metrics
     - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: rhacs-observability
+        matchExpressions:
+          - { key: kubernetes.io/metadata.name, operator: In, values: [ rhacs-observability, openshift-monitoring ] }
     ports:
     - port: 9090
       protocol: TCP
