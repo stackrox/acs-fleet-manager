@@ -90,7 +90,7 @@ spec:
   - to:  # Allow egress to audit-logs-aggregator
       - podSelector:
           matchLabels:
-            app=audit-logs-aggregator
+            app: audit-logs-aggregator
     ports:
       - port: 8888
         protocol: TCP
