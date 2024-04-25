@@ -55,7 +55,6 @@ data:
       - name: selinux_avc_denials
         namespace: "{{ .Values.clusterName }}"
         regions:
-          - eu-west-1
           - us-east-1
         metrics:
           - name: SELinuxDenials
@@ -67,7 +66,6 @@ data:
       - name: network_policy_acl_denials
         namespace: "{{ .Values.clusterName }}"
         regions:
-          - eu-west-1
           - us-east-1
         metrics:
           - name: NetworkPolicyDenials
