@@ -118,7 +118,7 @@ metadata:
   annotations:
     {{- include "annotations" . | nindent 4 }}
 spec:
-  podSelector: 
+  podSelector:
     matchLabels:
       app: scanner
   ingress:
@@ -191,7 +191,7 @@ metadata:
   annotations:
     {{- include "annotations" . | nindent 4 }}
 spec:
-  podSelector: 
+  podSelector:
     matchLabels:
       app: scanner-v4-db
   ingress:
@@ -221,7 +221,7 @@ metadata:
   annotations:
     {{- include "annotations" . | nindent 4 }}
 spec:
-  podSelector: 
+  podSelector:
     matchLabels:
       app: scanner-v4-indexer
   ingress:
@@ -272,7 +272,7 @@ metadata:
   annotations:
     {{- include "annotations" . | nindent 4 }}
 spec:
-  podSelector: 
+  podSelector:
     matchLabels:
       app: scanner-v4-matcher
   ingress:
