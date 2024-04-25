@@ -94,7 +94,7 @@ spec:
     ports:
       - port: 8888
         protocol: TCP
-  - to:  # Allow egress to Kube API for debug snapshot generation.
+  - to:  # Allow egress to Kube API for debug snapshot generation, mTLS setup for OpenShift monitoring, telemetry
     - podSelector:
         matchLabels:
           app: openshift-kube-apiserver
