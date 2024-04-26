@@ -83,4 +83,8 @@ spec:
             cidr: 0.0.0.0/0
             except:
               {{- include "localNetworkCidrRanges" . | nindent 14 }}
+        - ipBlock:
+            cidr: ::/0
+            except:
+              {{- include "localNetworkCidrRangesIPv6" . | nindent 14 }}
 {{ end }}
