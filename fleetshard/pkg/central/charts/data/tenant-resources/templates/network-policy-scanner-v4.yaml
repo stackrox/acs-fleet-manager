@@ -1,0 +1,128 @@
+{{- if .Values.secureTenantNetwork }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-scanner-v4-indexer
+  labels:
+    {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: scanner-v4-indexer
+  ingress:
+    - from:  # Allow ingress from Central and Matcher
+        - podSelector:
+            matchExpressions:
+              - { key: app, operator: In, values: [central, scanner-v4-matcher] }
+      ports:
+        - port: 8443
+          protocol: TCP
+    - from:  # Allow ingress from observability to scrape metrics
+        - namespaceSelector:
+            matchExpressions:
+              - { key: kubernetes.io/metadata.name, operator: In, values: [ rhacs-observability, openshift-monitoring ] }
+      ports:
+        - port: 9090
+          protocol: TCP
+  egress:
+    - to:  # Allow egress to Scanner-v4-db for normal function
+        - podSelector:
+            matchLabels:
+              app: scanner-v4-db
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:  # Allow egress to Central for periodic file updates
+        - podSelector:
+            matchLabels:
+              app: central
+      ports:
+        - port: 8443
+          protocol: TCP
+    - to:  # Allow egress to external Internet
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+          {{- include "localNetworkCidrRanges" . | nindent 8 }}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-scanner-v4-matcher
+  labels:
+    {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: scanner-v4-matcher
+  ingress:
+    - from:  # Allow ingress from Central
+        - podSelector:
+            matchLabels:
+              app: central
+      ports:
+        - port: 8443
+          protocol: TCP
+    - from:  # Allow ingress from observability to scrape metrics
+        - namespaceSelector:
+            matchExpressions:
+              - { key: kubernetes.io/metadata.name, operator: In, values: [ rhacs-observability, openshift-monitoring ] }
+      ports:
+        - port: 9090
+          protocol: TCP
+  egress:
+    - to:  # Allow egress to Scanner-v4-db for normal function
+        - podSelector:
+            matchLabels:
+              app: scanner-v4-db
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:  # Allow egress to Central for periodic file updates
+        - podSelector:
+            matchLabels:
+              app: central
+      ports:
+        - port: 8443
+          protocol: TCP
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-scanner-v4-db
+  labels:
+    {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: scanner-v4-db
+  ingress:
+    - from:  # Allow ingress from Indexer and Matcher
+        - podSelector:
+            matchExpressions:
+              - { key: app, operator: In, values: [scanner-v4-indexer, scanner-v4-matcher] }
+      ports:
+        - port: 5432
+          protocol: TCP
+    - from:  # Allow ingress from observability to scrape metrics
+        - namespaceSelector:
+            matchExpressions:
+              - { key: kubernetes.io/metadata.name, operator: In, values: [ rhacs-observability, openshift-monitoring ] }
+      ports:
+        - port: 9090
+          protocol: TCP
+  policyTypes:
+    - Ingress
+{{ end }}

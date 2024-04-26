@@ -1,0 +1,86 @@
+{{- if .Values.secureTenantNetwork }}
+# Source: https://docs.openshift.com/container-platform/4.13/networking/network_policy/about-network-policy.html#nw-networkpolicy-allow-from-router_about-network-policy
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-central
+  labels:
+    {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: central
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:  # Allow ingress from external Internet to use Central
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: ingress
+      ports:
+        - port: 8443
+          protocol: TCP
+    - from:  # Allow ingress from appropriate scanner pieces
+        - podSelector:
+            matchExpressions:
+              - { key: app, operator: In, values: [scanner, scanner-v4-indexer, scanner-v4-matcher] }
+      ports:
+        - port: 8443
+          protocol: TCP
+    - from:  # Allow ingress from observability to scrape metrics
+        - namespaceSelector:
+            matchExpressions:
+              - { key: kubernetes.io/metadata.name, operator: In, values: [ rhacs-observability, openshift-monitoring ] }
+      ports:
+        - port: 9090
+          protocol: TCP
+        - port: 9091
+          protocol: TCP
+  egress:
+    - to:  # Allow egress to all RDS instances. EgressFirewall will limit to its specific instance because the IP address is not static and EgressFirewall can do DNS resolution
+        - ipBlock:
+            cidr: {{ .Values.centralRdsCidrBlock }}
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:  # Allow egress to Scanner
+        - podSelector:
+            matchExpressions:
+              - { key: app, operator: In, values: [scanner, scanner-v4-indexer, scanner-v4-matcher] }
+      ports:
+        - port: 8080
+          protocol: TCP
+        - port: 8443
+          protocol: TCP
+    - to:  # Allow egress to audit-logs-aggregator
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: rhacs-audit-logs
+          podSelector:
+            matchLabels:
+              app: audit-logs-aggregator
+      ports:
+        - port: 8888
+          protocol: TCP
+    - to:  # Allow egress to Kube API for debug snapshot generation, mTLS setup for OpenShift monitoring, telemetry
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-kube-apiserver
+          podSelector:
+            matchLabels:
+              app: openshift-kube-apiserver
+      ports:
+        - port: 443
+          protocol: TCP
+        - port: 6443
+          protocol: TCP
+    - to:  # Allow egress to external Internet
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+          {{- include "localNetworkCidrRanges" . | nindent 8 }}
+{{ end }}
