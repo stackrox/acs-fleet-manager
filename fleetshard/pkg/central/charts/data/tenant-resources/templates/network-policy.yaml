@@ -91,14 +91,20 @@ spec:
     - port: 8443
       protocol: TCP
   - to:  # Allow egress to audit-logs-aggregator
-      - podSelector:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: rhacs-audit-logs
+        podSelector:
           matchLabels:
             app: audit-logs-aggregator
     ports:
       - port: 8888
         protocol: TCP
   - to:  # Allow egress to Kube API for debug snapshot generation, mTLS setup for OpenShift monitoring, telemetry
-    - podSelector:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-kube-apiserver
+      podSelector:
         matchLabels:
           app: openshift-kube-apiserver
     ports:
