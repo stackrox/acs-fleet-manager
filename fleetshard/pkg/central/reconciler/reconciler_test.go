@@ -66,7 +66,8 @@ var (
 
 	defaultReconcilerOptions = CentralReconcilerOptions{}
 
-	useRoutesReconcilerOptions = CentralReconcilerOptions{UseRoutes: true}
+	useRoutesReconcilerOptions           = CentralReconcilerOptions{UseRoutes: true}
+	secureTenantNetworkReconcilerOptions = CentralReconcilerOptions{SecureTenantNetwork: true}
 
 	defaultAuditLogConfig = config.AuditLogging{
 		Enabled:            true,
@@ -1000,6 +1001,71 @@ func TestEgressProxyIsDeployed(t *testing.T) {
 				assert.NotEmpty(t, dep.Spec.Template.Spec.Containers[0].Image, "container should define an image to be used")
 			})
 		}
+	}
+}
+
+func TestTenantNetworkIsSecured(t *testing.T) {
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		nil,
+		secureTenantNetworkReconcilerOptions,
+	)
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	expectedObjs := []client.Object{
+		&networkingv1.NetworkPolicy{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: simpleManagedCentral.Metadata.Namespace,
+				Name:      "default-deny-all-except-dns",
+			},
+		},
+		&networkingv1.NetworkPolicy{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: simpleManagedCentral.Metadata.Namespace,
+				Name:      "tenant-central",
+			},
+		},
+		&networkingv1.NetworkPolicy{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: simpleManagedCentral.Metadata.Namespace,
+				Name:      "tenant-scanner",
+			},
+		},
+		&networkingv1.NetworkPolicy{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: simpleManagedCentral.Metadata.Namespace,
+				Name:      "tenant-scanner-db",
+			},
+		},
+		&networkingv1.NetworkPolicy{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: simpleManagedCentral.Metadata.Namespace,
+				Name:      "tenant-scanner-v4-db",
+			},
+		},
+		&networkingv1.NetworkPolicy{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: simpleManagedCentral.Metadata.Namespace,
+				Name:      "tenant-scanner-v4-indexer",
+			},
+		},
+		&networkingv1.NetworkPolicy{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: simpleManagedCentral.Metadata.Namespace,
+				Name:      "tenant-scanner-v4-matcher",
+			},
+		},
+	}
+
+	for _, expectedObj := range expectedObjs {
+		actualObj := expectedObj.DeepCopyObject().(client.Object)
+		if !assert.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKeyFromObject(expectedObj), actualObj)) {
+			continue
+		}
+		assert.Equal(t, k8s.ManagedByFleetshardValue, actualObj.GetLabels()[k8s.ManagedByLabelKey])
 	}
 }
 

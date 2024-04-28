@@ -27,6 +27,7 @@ fleetshardSync:
     realm: "redhat-external"
   egressProxy:
     image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.14"
+  secureTenantNetwork: false
   auditLogs:
     enabled: true
     skipTLSVerify: true

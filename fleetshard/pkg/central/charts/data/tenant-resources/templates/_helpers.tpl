@@ -9,3 +9,11 @@
 {{- $annotations = merge (deepCopy .Values.annotations) $annotations -}}
 {{- $annotations | toYaml | nindent 0 }}
 {{- end -}}
+
+{{- define "localNetworkCidrRanges" -}}
+{{- tpl (.Files.Get "config/local-network-cidr-ranges.yaml.tpl") . -}}
+{{- end -}}
+
+{{- define "localNetworkCidrRangesIPv6" -}}
+{{- tpl (.Files.Get "config/local-network-cidr-ranges-ipv6.yaml.tpl") . -}}
+{{- end -}}

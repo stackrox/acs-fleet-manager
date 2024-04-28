@@ -1,0 +1,2 @@
+- fc00::/7       	    # RFC 4193 local private network range
+- fe80::/10      	    # RFC 4291 link-local (directly plugged) machines

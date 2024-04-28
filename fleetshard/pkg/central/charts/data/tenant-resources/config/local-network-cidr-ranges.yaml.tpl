@@ -1,0 +1,6 @@
+- 0.0.0.0/8             # RFC 1122 "this" network (LAN)
+- 10.0.0.0/8		    # RFC 1918 local private network (LAN)
+- 100.64.0.0/10		    # RFC 6598 shared address space (CGN)
+- 169.254.0.0/16 	    # RFC 3927 link-local (directly plugged) machines
+- 172.16.0.0/12		    # RFC 1918 local private network (LAN)
+- 192.168.0.0/16		# RFC 1918 local private network (LAN)

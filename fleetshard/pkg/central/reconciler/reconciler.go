@@ -113,6 +113,7 @@ type CentralReconcilerOptions struct {
 	AuditLogging          config.AuditLogging
 	TenantImagePullSecret string
 	RouteParameters       config.RouteConfig
+	SecureTenantNetwork   bool
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -134,6 +135,7 @@ type CentralReconciler struct {
 	clusterName            string
 	environment            string
 	auditLogging           config.AuditLogging
+	secureTenantNetwork    bool
 	encryptionKeyGenerator cipher.KeyGenerator
 
 	managedDBEnabled            bool
@@ -310,7 +312,9 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 	r.applyTelemetry(remoteCentral, central)
 	r.applyRoutes(central)
-	r.applyProxyConfig(central)
+	if !r.secureTenantNetwork {
+		r.applyProxyConfig(central)
+	}
 	r.applyDeclarativeConfig(central)
 	r.applyAnnotations(remoteCentral, central)
 	return nil
@@ -1737,6 +1741,7 @@ func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Val
 			"image": r.egressProxyImage,
 		}
 	}
+	dst["secureTenantNetwork"] = r.secureTenantNetwork
 	return chartutil.CoalesceTables(dst, src), nil
 }
 
@@ -1922,6 +1927,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		clusterName:            opts.ClusterName,
 		environment:            opts.Environment,
 		auditLogging:           opts.AuditLogging,
+		secureTenantNetwork:    opts.SecureTenantNetwork,
 		encryptionKeyGenerator: encryptionKeyGenerator,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
