@@ -77,6 +77,17 @@ if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
     $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
 fi
 
+
+if [[ "$ENABLE_EMAIL_SENDER" == "true" ]]; then # pragma: allowlist secret
+    log "Deploying emailsender"
+    exec_emailsender.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
+
+    wait_for_container_to_appear "$ACSCS_NAMESPACE" "application=emailsender" "emailsender"
+    if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
+        $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=emailsender --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_emailsender_emailsender.txt" 2>&1 &
+    fi
+fi
+
 # Sanity check.
 wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync" 500
 # Prerequisite for port-forwarding are pods in ready state.
