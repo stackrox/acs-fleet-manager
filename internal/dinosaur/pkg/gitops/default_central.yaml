@@ -55,6 +55,9 @@ spec:
           memory: 2Gi
     monitoring:
       exposeEndpoint: Enabled
+  scannerV4:
+    monitoring:
+      exposeEndpoint: Enabled
   monitoring:
     openshift:
       enabled:  {{ not .IsInternal }}

@@ -98,6 +98,11 @@ func wantCentralForDummyParams(p *CentralParams) *v1alpha1.Central {
 					ExposeEndpoint: &exposeEndpointEnabled,
 				},
 			},
+			ScannerV4: &v1alpha1.ScannerV4Spec{
+				Monitoring: &v1alpha1.Monitoring{
+					ExposeEndpoint: &exposeEndpointEnabled,
+				},
+			},
 			Monitoring: &v1alpha1.GlobalMonitoring{
 				OpenShiftMonitoring: &v1alpha1.OpenShiftMonitoring{
 					Enabled: true,
