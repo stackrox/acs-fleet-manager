@@ -104,14 +104,23 @@ spec:
           set -e
 
           # Wait until the openshift-vertical-pod-autoscaler is present
+
+          echo "Trying to find verticalpodautoscalercontrollers/default in namespace openshift-vertical-pod-autoscaler..."
+          found=false
           for i in {1..180}; do
-            echo "Waiting for openshift-vertical-pod-autoscaler to be present"
-            if oc -n openshift-vertical-pod-autoscaler get verticalpodautoscalercontrollers/default 2>/dev/null; then
-              echo "Found openshift-vertical-pod-autoscaler"
+            echo "[Attempt $i/180] Trying..."
+            if oc -n openshift-vertical-pod-autoscaler get verticalpodautoscalercontrollers/default 2>&1> /dev/null; then
+              echo "[Attempt $i/180] Found it!"
+              found=true
               break
             fi
             sleep 1
           done
+
+          if [ "$found" = false ]; then
+            echo "Couldn't find it :("
+            exit 1
+          fi
 
           # Patch the vertical-pod-autoscaler-controller.yaml
           # We need to tweak the exit code, because patch will return 1 if there is no change
