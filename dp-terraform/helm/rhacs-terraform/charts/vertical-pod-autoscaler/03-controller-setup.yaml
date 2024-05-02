@@ -104,13 +104,13 @@ spec:
           set -e
 
           # Wait until the openshift-vertical-pod-autoscaler is present
-          for i in {1..50}; do
+          for i in {1..180}; do
             echo "Waiting for openshift-vertical-pod-autoscaler to be present"
             if oc -n openshift-vertical-pod-autoscaler get verticalpodautoscalercontrollers/default 2>/dev/null; then
               echo "Found openshift-vertical-pod-autoscaler"
               break
             fi
-            sleep 2
+            sleep 1
           done
 
           # Patch the vertical-pod-autoscaler-controller.yaml
