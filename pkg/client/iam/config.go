@@ -6,35 +6,47 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-
 	"github.com/spf13/pflag"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
+	"github.com/stackrox/rox/pkg/netutil"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // IAMConfig ...
 type IAMConfig struct {
-	SsoBaseURL           string                `json:"sso_base_url"`
-	InternalSsoBaseURL   string                `json:"internal_sso_base_url"`
-	RedhatSSORealm       *IAMRealmConfig       `json:"redhat_sso_config"`
-	InternalSSORealm     *IAMRealmConfig       `json:"internal_sso_config"`
-	AdditionalSSOIssuers *AdditionalSSOIssuers `json:"-"`
+	JwksURL              string
+	JwksFile             string
+	SsoBaseURL           string
+	InternalSsoBaseURL   string
+	RedhatSSORealm       *IAMRealmConfig
+	InternalSSORealm     *IAMRealmConfig
+	AdditionalSSOIssuers *OIDCIssuers
+	DataPlaneOIDCIssuers *OIDCIssuers
 }
 
-// AdditionalSSOIssuers ...
-type AdditionalSSOIssuers struct {
-	URIs     []string
+// OIDCIssuers is a list of issuers that the Fleet Manager server trusts.
+type OIDCIssuers struct {
+	// URIs the list of issuer uris
+	URIs []string
+	// JWKSURIs the list of JWKSs uris derived from URIs
 	JWKSURIs []string
-	File     string
-	Enabled  bool
+	// File location of the file from which the URIs will be read
+	File string
+	// Enabled add to the server configuration if true
+	Enabled bool
 }
 
 // GetURIs returns copy of URIs to protect config from modifications.
-func (a *AdditionalSSOIssuers) GetURIs() []string {
+func (a *OIDCIssuers) GetURIs() []string {
 	uris := make([]string, 0, len(a.URIs))
 	copy(uris, a.URIs)
 	return uris
@@ -94,6 +106,8 @@ func (c *IAMRealmConfig) validateConfiguration() error {
 // NewIAMConfig ...
 func NewIAMConfig() *IAMConfig {
 	kc := &IAMConfig{
+		JwksURL:    "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
+		JwksFile:   "config/jwks-file.json",
 		SsoBaseURL: "https://sso.redhat.com",
 		RedhatSSORealm: &IAMRealmConfig{
 			APIEndpointURI:   "/auth/realms/redhat-external",
@@ -107,23 +121,32 @@ func NewIAMConfig() *IAMConfig {
 			Realm:          "EmployeeIDP",
 		},
 		InternalSsoBaseURL:   "https://auth.redhat.com",
-		AdditionalSSOIssuers: &AdditionalSSOIssuers{},
+		AdditionalSSOIssuers: &OIDCIssuers{},
+		DataPlaneOIDCIssuers: &OIDCIssuers{
+			Enabled: true,
+			File:    "config/dataplane-oidc-issuers.yaml",
+		},
 	}
 	return kc
 }
 
 // AddFlags ...
 func (ic *IAMConfig) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&ic.JwksURL, "jwks-url", ic.JwksURL, "The URL of the JSON web token signing certificates.")
+	fs.StringVar(&ic.JwksFile, "jwks-file", ic.JwksFile, "File containing the the JSON web token signing certificates.")
 	fs.StringVar(&ic.RedhatSSORealm.ClientIDFile, "redhat-sso-client-id-file", ic.RedhatSSORealm.ClientIDFile, "File containing IAM privileged account client-id that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&ic.RedhatSSORealm.ClientSecretFile, "redhat-sso-client-secret-file", ic.RedhatSSORealm.ClientSecretFile, "File containing IAM privileged account client-secret that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&ic.SsoBaseURL, "redhat-sso-base-url", ic.SsoBaseURL, "The base URL of the SSO, integration by default")
+	fs.StringVar(&ic.InternalSsoBaseURL, "internal-sso-base-url", ic.InternalSsoBaseURL, "The base URL of the internal SSO, production by default")
 	fs.BoolVar(&ic.AdditionalSSOIssuers.Enabled, "enable-additional-sso-issuers", ic.AdditionalSSOIssuers.Enabled, "Enable additional SSO issuer URIs for verifying tokens")
 	fs.StringVar(&ic.AdditionalSSOIssuers.File, "additional-sso-issuers-file", ic.AdditionalSSOIssuers.File, "File containing a list of SSO issuer URIs to include for verifying tokens")
-	fs.StringVar(&ic.InternalSsoBaseURL, "internal-sso-base-url", ic.InternalSsoBaseURL, "The base URL of the internal SSO, production by default")
+	fs.StringVar(&ic.DataPlaneOIDCIssuers.File, "dataplane-oidc-issuers-file", ic.DataPlaneOIDCIssuers.File, "File containing a list of OIDC issuer URIs to include for verifying tokens")
 }
 
 // ReadFiles ...
 func (ic *IAMConfig) ReadFiles() error {
+	ic.JwksFile = shared.BuildFullFilePath(ic.JwksFile)
+
 	err := shared.ReadFileValueString(ic.RedhatSSORealm.ClientIDFile, &ic.RedhatSSORealm.ClientID)
 	if err != nil {
 		return fmt.Errorf("reading Red Hat SSO Realm ClientID file %q: %w", ic.RedhatSSORealm.ClientIDFile, err)
@@ -146,7 +169,7 @@ func (ic *IAMConfig) ReadFiles() error {
 	// Read the additional issuers file. This will add additional SSO issuer URIs which shall be used as valid issuers
 	// for tokens, i.e. sso.stage.redhat.com.
 	if ic.AdditionalSSOIssuers.Enabled {
-		err = readAdditionalIssuersFile(ic.AdditionalSSOIssuers.File, ic.AdditionalSSOIssuers)
+		err = readIssuersFile(ic.AdditionalSSOIssuers.File, ic.AdditionalSSOIssuers)
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
 				glog.V(10).Infof("Specified additional SSO issuers file %q does not exist. "+
@@ -159,24 +182,30 @@ func (ic *IAMConfig) ReadFiles() error {
 			return err
 		}
 	}
-
-	return nil
+	if err := readIssuersFile(ic.DataPlaneOIDCIssuers.File, ic.DataPlaneOIDCIssuers); err != nil {
+		return err
+	}
+	return ic.DataPlaneOIDCIssuers.resolveURIs()
 }
 
 const (
 	openidConfigurationPath = "/.well-known/openid-configuration"
+	kubernetesIssuer        = "https://kubernetes.default.svc"
 )
 
 type openIDConfiguration struct {
 	JwksURI string `json:"jwks_uri"`
 }
 
-// setJWKSURIs will set the jwks URIs by taking the issuer URI and fetching the openid-configuration, setting the
+// resolveURIs will set the jwks URIs by taking the issuer URI and fetching the openid-configuration, setting the
 // jwks URI dynamically
-func (a *AdditionalSSOIssuers) resolveURIs() error {
-	client := http.Client{Timeout: time.Minute}
+func (a *OIDCIssuers) resolveURIs() error {
 	jwksURIs := make([]string, 0, len(a.URIs))
 	for _, issuerURI := range a.URIs {
+		client, err := createHTTPClient(issuerURI)
+		if err != nil {
+			return err
+		}
 		cfg, err := getOpenIDConfiguration(client, issuerURI)
 		if err != nil {
 			return errors.Wrapf(err, "retrieving open-id configuration for %q", issuerURI)
@@ -190,7 +219,51 @@ func (a *AdditionalSSOIssuers) resolveURIs() error {
 	return nil
 }
 
-func getOpenIDConfiguration(c http.Client, baseURL string) (*openIDConfiguration, error) {
+func createHTTPClient(url string) (*http.Client, error) {
+	// Special case for dev/test environments: Fleet Manager runs on the Data Plane cluster
+	if url == kubernetesIssuer {
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			return nil, fmt.Errorf("create in-cluster k8s config: %w", err)
+		}
+		client, err := rest.HTTPClientFor(config)
+		if err != nil {
+			return nil, fmt.Errorf("create http client for in-cluster k8s issuer: %w", err)
+		}
+		return client, nil
+	}
+	// Special case for local dev environments: Fleet Manager manages a local cluster, assuming kubeconfig exists
+	if isLocalCluster(url) {
+		kubeconfig := os.Getenv("KUBECONFIG")
+		if len(kubeconfig) == 0 {
+			kubeconfig = filepath.Join(os.Getenv("HOME"), ".kube/config")
+		}
+		config, err := clientcmd.BuildConfigFromFlags(url, kubeconfig)
+		if err != nil {
+			return nil, fmt.Errorf("create local cluster k8s config: %w", err)
+		}
+		client, err := rest.HTTPClientFor(config)
+		if err != nil {
+			return nil, fmt.Errorf("create http client for local k8s issuer")
+		}
+		return client, nil
+	}
+	// default client
+	return &http.Client{
+		Timeout: time.Minute,
+	}, nil
+}
+
+func isLocalCluster(uri string) bool {
+	url, err := url.Parse(uri)
+	if err != nil {
+		glog.V(10).Infof("Unable to parse the issuer URI %v, consider it a non-local cluster", uri)
+		return false
+	}
+	return netutil.IsLocalHost(url.Hostname())
+}
+
+func getOpenIDConfiguration(c *http.Client, baseURL string) (*openIDConfiguration, error) {
 	url := strings.TrimRight(baseURL, "/") + openidConfigurationPath
 	resp, err := c.Get(url)
 	if err != nil {
@@ -214,7 +287,7 @@ func getOpenIDConfiguration(c http.Client, baseURL string) (*openIDConfiguration
 	return &cfg, nil
 }
 
-func readAdditionalIssuersFile(file string, endpoints *AdditionalSSOIssuers) error {
+func readIssuersFile(file string, endpoints *OIDCIssuers) error {
 	var issuers []string
 	if err := shared.ReadYamlFile(file, &issuers); err != nil {
 		return fmt.Errorf("reading from yaml file: %w", err)

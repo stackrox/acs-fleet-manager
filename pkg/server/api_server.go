@@ -8,19 +8,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/goava/di"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-
-	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/pkg/server/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
-
-	"github.com/openshift-online/ocm-sdk-go/authentication"
-
-	// TODO why is this imported?
-	_ "github.com/auth0/go-jwt-middleware/v2"
-	// TODO why is this imported?
-	_ "github.com/golang-jwt/jwt/v4"
 
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/golang/glog"
@@ -97,11 +90,9 @@ func NewAPIServer(options ServerOptions) *APIServer {
 
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
 	var mainHandler http.Handler = mainRouter
-	var builder *authentication.HandlerBuilder
-	options.Env.MustResolve(&builder)
 
 	var err error
-	mainHandler, err = builder.Next(mainHandler).Build()
+	mainHandler, err = handlers.NewAuthenticationHandler(options.IAMConfig, mainHandler)
 	check(err, "Unable to create authentication handler", options.SentryConfig.Timeout)
 
 	mainHandler = gorillahandlers.CORS(

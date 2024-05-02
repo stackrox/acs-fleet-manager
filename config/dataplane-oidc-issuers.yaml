@@ -1,0 +1,4 @@
+---
+# A list of DataPlane OpenID Connect issuers that should be verified for issued tokens.
+# Endpoints in the list are represented by URLs that must match the iss claim in the access token.
+[]

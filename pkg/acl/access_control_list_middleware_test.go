@@ -12,10 +12,9 @@ import (
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
-	"github.com/stackrox/acs-fleet-manager/pkg/server"
-
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	"github.com/stackrox/acs-fleet-manager/pkg/server"
 
 	. "github.com/onsi/gomega"
 )
@@ -42,7 +41,7 @@ func TestMain(m *testing.M) {
 
 func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 	RegisterTestingT(t)
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, serverConfig.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, "")
 	Expect(err).NotTo(HaveOccurred())
 
 	tests := []struct {

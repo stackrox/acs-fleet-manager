@@ -11,9 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/shared/testutils"
-
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/testutils"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
@@ -108,14 +107,13 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	parseCommandLineFlags(env)
 
 	var ocmConfig *ocm.OCMConfig
-	var serverConfig *server.ServerConfig
 	var iamConfig *iam.IAMConfig
 	var centralConfig *config.CentralConfig
 
-	env.MustResolveAll(&ocmConfig, &serverConfig, &iamConfig, &centralConfig)
+	env.MustResolveAll(&ocmConfig, &iamConfig, &centralConfig)
 
 	// Create a new helper
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, serverConfig.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, iamConfig.RedhatSSORealm.ValidIssuerURI)
 	if err != nil {
 		t.Fatalf("failed to create a new auth helper %s", err.Error())
 	}
@@ -132,7 +130,8 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	}
 
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
-	serverConfig.JwksURL = jwkURL
+	iamConfig.JwksURL = jwkURL
+	iamConfig.DataPlaneOIDCIssuers.JWKSURIs = []string{jwkURL}
 
 	file := testutils.CreateNonEmptyFile(t)
 	defer os.Remove(file.Name())
