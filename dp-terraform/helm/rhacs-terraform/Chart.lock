@@ -17,5 +17,8 @@ dependencies:
 - name: external-secrets
   repository: https://charts.external-secrets.io/
   version: 0.9.5
-digest: sha256:4d1257d43daeda9d4f956f141edaba7f708838cbd2de86048f37261e9627f9cc
-generated: "2023-10-30T11:48:03.686258+01:00"
+- name: vertical-pod-autoscaler
+  repository: ""
+  version: 0.1.0
+digest: sha256:d935785f613711e133ef1b0e340d5ac480f54b31c586f94abdda4955593c936a
+generated: "2024-05-02T17:11:35.093988-04:00"
