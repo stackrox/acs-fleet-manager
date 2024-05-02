@@ -63,6 +63,10 @@ data:
   #   podMinMemoryMb: 250
   #   recommendationOnly: false
   #   safetyMarginFraction: 0.15
+
+  # By default, the VPA will only adjust pods that have at least 2 replicas.
+  # Since we also want to manage Central, which has 1 replica, we need
+  # to adjust this value.
   patch.json: |
     [
       {
