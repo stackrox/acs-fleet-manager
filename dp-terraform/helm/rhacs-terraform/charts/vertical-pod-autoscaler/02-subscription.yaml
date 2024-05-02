@@ -1,0 +1,12 @@
+apiVersion: "operators.coreos.com/v1alpha1"
+kind: Subscription
+metadata:
+  name: vertical-pod-autoscaler
+  namespace: openshift-vertical-pod-autoscaler
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: vertical-pod-autoscaler
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: verticalpodautoscaler.v4.15.0-202404161612
