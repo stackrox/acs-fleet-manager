@@ -544,7 +544,7 @@ image/push/fleet-manager-tools: image/build/fleet-manager-tools
 .PHONY: image/push/fleet-manager-tools
 
 image/build/emailsender: GOOS=linux
-image/build/emailsender: IMAGE_REF="$(external_image_registry)/$(email_sender_image_repository):$(image_tag)"
+image/build/emailsender: IMAGE_REF="$(external_image_registry)/$(emailsender_image_repository):$(image_tag)"
 image/build/emailsender:
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f emailsender/Dockerfile .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(EMAILSENDER_SHORT_IMAGE_REF)
@@ -943,6 +943,10 @@ tag:
 full-image-tag:
 	@echo "$(IMAGE_NAME):$(image_tag)"
 .PHONY: full-image-tag
+
+image-tag/emailsender:
+	@echo "$(external_image_registry)/$(emailsender_image_repository):$(image_tag)"
+.PHONY: image-tag/emailsender
 
 clean/go-generated:
 	@echo "Cleaning generated .go files..."
