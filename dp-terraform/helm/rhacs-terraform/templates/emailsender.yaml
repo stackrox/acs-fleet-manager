@@ -1,0 +1,45 @@
+{{- if eq .Values.emailsender.enabled false }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emailsender
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: emailsender
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: emailsender
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: emailsender
+    spec:
+      serviceAccountName: emailsender
+      containers:
+        - name: emailsender
+          image: "{{ .Values.emailsender.image.repo }}:{{ .Values.emailsender.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          command:
+            - /usr/local/bin/emailsender
+          env:
+            - name: CLUSTER_ID
+              value: {{ .Values.fleetshardSync.clusterId }}
+            - name: CLUSTER_NAME
+              value: {{ .Values.fleetshardSync.clusterName }}
+            - name: ENVIRONMENT
+              value: {{ .Values.fleetshardSync.environment }}
+          ports:
+            - name: monitoring
+              containerPort: 8080
+          resources:
+            limits:
+              cpu: {{ .Values.emailsender.resources.limits.cpu | quote }}
+              memory: {{ .Values.emailsender.resources.limits.memory | quote }}
+            requests:
+              cpu: {{ .Values.emailsender.resources.requests.cpu | quote }}
+              memory: {{ .Values.emailsender.resources.requests.memory | quote }}
+{{- end }}
