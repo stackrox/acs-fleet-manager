@@ -31,6 +31,16 @@ spec:
       ports:
         - port: 8443
           protocol: TCP
+    - from: # Allow ingress from fleetshard-sync for "readiness" check on Central - ensuring auth provider exists
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: rhacs
+        - podSelector:
+            matchLabels:
+              app: fleetshard-sync
+      ports:
+        - port: 8443
+          protocol: TCP
     - from:  # Allow ingress from observability to scrape metrics
         - namespaceSelector:
             matchExpressions:
