@@ -27,17 +27,16 @@ spec:
             - /usr/local/bin/emailsender
           env:
             - name: CLUSTER_ID
-              value: {{ .Values.fleetshardSync.clusterId }}
+              value: {{ .Values.emailsender.clusterId }}
             - name: CLUSTER_NAME
-              value: {{ .Values.fleetshardSync.clusterName }}
+              value: {{ .Values.emailsender.clusterName }}
             - name: ENVIRONMENT
-              value: {{ .Values.fleetshardSync.environment }}
+              value: {{ .Values.emailsender.environment }}
           ports:
             - name: monitoring
               containerPort: 8080
           resources:
             limits:
-              cpu: {{ .Values.emailsender.resources.limits.cpu | quote }}
               memory: {{ .Values.emailsender.resources.limits.memory | quote }}
             requests:
               cpu: {{ .Values.emailsender.resources.requests.cpu | quote }}

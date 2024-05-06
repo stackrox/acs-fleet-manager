@@ -65,6 +65,24 @@ fleetshardSync:
   addonAutoUpgradeEnabled: true
   addonName: acs-fleetshard
 
+# Email sender service parameters
+# - enabled flag is used to completely enable/disable email sender service
+emailsender:
+  enabled: false
+  image:
+    repo: "quay.io/app-sre/emailsender"
+    tag: "main"
+  clusterId: ""
+  clusterName: ""
+  environment: ""
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
 # See available parameters in charts/cloudwatch/values.yaml
 # - enabled flag is used to completely enable/disable cloudwatch sub-chart
 cloudwatch:
