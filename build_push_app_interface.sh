@@ -34,6 +34,7 @@
 # Set image repository to default value if it is not passed via env
 IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-fleet-manager}"
 PROBE_IMAGE_REPOSITORY="${PROBE_QUAY_IMAGE_REPOSITORY:-app-sre/acscs-probe}"
+EMAILSENDER_IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-emailsender}"
 
 source ./scripts/build_setup.sh
 
@@ -80,3 +81,24 @@ make \
   probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
   docker/login/probe \
   image/push/probe
+
+make \
+  DOCKER_CONFIG="${DOCKER_CONFIG}" \
+  QUAY_USER="${QUAY_USER}" \
+  QUAY_TOKEN="${QUAY_TOKEN}" \
+  external_image_registry="quay.io" \
+  internal_image_registry="quay.io" \
+  emailsender_image_repository="${EMAILSENDER_IMAGE_REPOSITORY}" \
+  docker/login/fleet-manager \
+  image/push/emailsender
+
+make \
+  DOCKER_CONFIG="${DOCKER_CONFIG}" \
+  QUAY_USER="${QUAY_USER}" \
+  QUAY_TOKEN="${QUAY_TOKEN}" \
+  TAG="main" \
+  external_image_registry="quay.io" \
+  internal_image_registry="quay.io" \
+  emailsender_image_repository="${EMAILSENDER_IMAGE_REPOSITORY}" \
+  docker/login/fleet-manager \
+  image/push/emailsender
