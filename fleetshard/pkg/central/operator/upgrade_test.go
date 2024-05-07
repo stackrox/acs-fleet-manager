@@ -151,8 +151,8 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.NoError(t, err)
 	containers := operatorDeployment1.Spec.Template.Spec.Containers
-	assert.Len(t, containers, 2)
-	managerContainer := containers[1]
+	assert.Len(t, containers, 1)
+	managerContainer := containers[0]
 	assert.Equal(t, managerContainer.Image, operatorImage1)
 }
 
@@ -165,12 +165,12 @@ func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.NoError(t, err)
-	managerContainer := operatorDeployment1.Spec.Template.Spec.Containers[1]
+	managerContainer := operatorDeployment1.Spec.Template.Spec.Containers[0]
 	assert.Equal(t, managerContainer.Image, operatorImage1)
 
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
 	require.NoError(t, err)
-	managerContainer = operatorDeployment2.Spec.Template.Spec.Containers[1]
+	managerContainer = operatorDeployment2.Spec.Template.Spec.Containers[0]
 	assert.Equal(t, managerContainer.Image, operatorImage2)
 }
 
@@ -187,7 +187,7 @@ func TestOperatorUpgradeImageWithDigest(t *testing.T) {
 
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.NoError(t, err)
-	managerContainer := operatorDeployment1.Spec.Template.Spec.Containers[1]
+	managerContainer := operatorDeployment1.Spec.Template.Spec.Containers[0]
 	assert.Equal(t, managerContainer.Image, digestedImage)
 }
 
