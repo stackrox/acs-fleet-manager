@@ -9,4 +9,3 @@ spec:
   name: vertical-pod-autoscaler
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: verticalpodautoscaler.v4.15.0-202404161612
