@@ -27,7 +27,7 @@ jobs:
     name: "Run pre-commit hooks"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
       - uses: actions/setup-go@v5
         with:
@@ -84,7 +84,7 @@ jobs:
         with:
           go-version: "1.20"
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Cache go module
         uses: actions/cache@v2
         with:
@@ -128,7 +128,7 @@ jobs:
           username: ${{ secrets.QUAY_RHACS_ENG_FM_RW_USERNAME }}
           password: ${{ secrets.QUAY_RHACS_ENG_FM_RW_PASSWORD }}
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Critical for correct image detection in Makefile
       - name: Set up Docker Buildx
