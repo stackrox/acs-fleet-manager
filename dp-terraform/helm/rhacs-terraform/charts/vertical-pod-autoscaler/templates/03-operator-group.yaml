@@ -4,6 +4,4 @@ metadata:
   name: openshift-vertical-pod-autoscaler
   namespace: openshift-vertical-pod-autoscaler
 spec:
-  targetNamespaces:
-    - openshift-vertical-pod-autoscaler
   upgradeStrategy: Default
