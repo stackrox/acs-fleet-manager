@@ -4,8 +4,6 @@ metadata:
   name: openshift-vertical-pod-autoscaler
   namespace: openshift-vertical-pod-autoscaler
 spec:
-  selector:
-    matchExpressions:
-      - key: rhacs.redhat.com/tenant
-        operator: Exists
+  targetNamespaces:
+    - openshift-vertical-pod-autoscaler
   upgradeStrategy: Default
