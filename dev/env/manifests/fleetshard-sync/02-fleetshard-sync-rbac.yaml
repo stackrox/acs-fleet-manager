@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fleetshard-sync
+  namespace: "$ACSCS_NAMESPACE"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: fleetshard-sync-rb-$ACSCS_NAMESPACE
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fleetshard-sync-role
+subjects:
+  - kind: ServiceAccount
+    name: fleetshard-sync
+    namespace: "$ACSCS_NAMESPACE"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fleetshard-sync-role
+# // TODO(create-ticket): Replace with least privileges permissions
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - '*'

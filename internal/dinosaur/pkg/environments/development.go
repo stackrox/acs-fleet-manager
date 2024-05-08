@@ -37,5 +37,7 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"central-idp-issuer":                              "https://sso.stage.redhat.com/auth/realms/redhat-external",
 		"admin-authz-config-file":                         "config/admin-authz-roles-dev.yaml",
 		"enable-leader-election":                          "false",
+		"kubernetes-issuer-enabled":                       "true",
+		"kubernetes-issuer-uri":                           "https://127.0.0.1:6443",
 	}
 }
