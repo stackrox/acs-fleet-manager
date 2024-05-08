@@ -39,7 +39,7 @@ spec:
       containers:
         - args:
             - --health-probe-bind-address=:8081
-            - --metrics-bind-address=127.0.0.1:8080
+            - --metrics-bind-address=0.0.0.0:8443
           env:
             - name: ENABLE_PROFILING
               value: 'true'
@@ -103,6 +103,9 @@ spec:
           ports:
             - containerPort: 9443
               name: webhook-server
+              protocol: TCP
+            - containerPort: 8443
+              name: https
               protocol: TCP
           readinessProbe:
             failureThreshold: 3
