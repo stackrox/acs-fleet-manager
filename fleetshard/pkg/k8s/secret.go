@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -20,6 +21,16 @@ const (
 var defaultSecretsToWatch = []string{
 	CentralTLSSecretName,
 	centralEncryptionKeySecretName,
+}
+
+// SecretNotFound is the error returned when a kube API requests for a single secret
+// returns a not found error
+type SecretNotFound struct {
+	SecretName string
+}
+
+func (s *SecretNotFound) Error() string {
+	return fmt.Sprintf("%s secret not found", s.SecretName)
 }
 
 // SecretBackup is responsible for reading secrets to Backup for a tenant.
@@ -66,10 +77,21 @@ func getSecret(ctx context.Context, client ctrlClient.Client, secretname, namesp
 	err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: secretname}, centralSecret)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			return centralSecret, fmt.Errorf("%s secret not found", secretname)
+			return centralSecret, &SecretNotFound{SecretName: secretname} // pragma: allowlist secret
 		}
 		return centralSecret, fmt.Errorf("getting secret %s/%s: %w", namespace, secretname, err)
 	}
 
 	return centralSecret, nil
+}
+
+// IsCentralTLSNotFound return true if err or a wrapped error is a SecretNotFound error
+// with the name of CentralTLSSecretName
+func IsCentralTLSNotFound(err error) bool {
+	var secretNotFound *SecretNotFound
+	if errors.As(err, &secretNotFound) {
+		return secretNotFound.SecretName == CentralTLSSecretName // pragma: allowlist secret
+	}
+
+	return false
 }
