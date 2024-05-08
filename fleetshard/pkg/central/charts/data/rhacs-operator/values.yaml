@@ -55,4 +55,3 @@ operator:
   #     securedClusterReconcilerEnabled: true
   #
   images: []
-  # TODO: add value for kube-rbac-proxy image
