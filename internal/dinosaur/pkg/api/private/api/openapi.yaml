@@ -537,6 +537,8 @@ components:
           - eval
           - standard
           type: string
+        tenantResourcesValues:
+          type: object
         centralCRYAML:
           type: string
         owners:

@@ -13,7 +13,7 @@ func TestShouldNotRenderTwiceForSameParams(t *testing.T) {
 	var params = gitops.CentralParams{}
 	var renderCount = 0
 	r := newCachedCentralRenderer()
-	r.renderFn = func(params gitops.CentralParams, config gitops.Config) (v1alpha1.Central, error) {
+	r.renderCentralFn = func(params gitops.CentralParams, config gitops.Config) (v1alpha1.Central, error) {
 		renderCount++
 		return v1alpha1.Central{}, nil
 	}
@@ -21,29 +21,29 @@ func TestShouldNotRenderTwiceForSameParams(t *testing.T) {
 	assert.Equal(t, 0, renderCount)
 
 	// first call should render once
-	r.getCentralYaml(gitopsConfig, params)
+	r.render(gitopsConfig, params)
 	assert.Equal(t, 1, renderCount)
 
 	// second call should not render again
-	r.getCentralYaml(gitopsConfig, params)
+	r.render(gitopsConfig, params)
 	assert.Equal(t, 1, renderCount)
 
 	// third call with different params should render again
 	params = gitops.CentralParams{ID: "foo"}
-	r.getCentralYaml(gitopsConfig, params)
+	r.render(gitopsConfig, params)
 	assert.Equal(t, 2, renderCount)
 
 	// fourth call with same params should not render again
-	r.getCentralYaml(gitopsConfig, params)
+	r.render(gitopsConfig, params)
 	assert.Equal(t, 2, renderCount)
 
 	// fifth call with different params should render again
 	gitopsConfig = gitops.Config{Centrals: gitops.CentralsConfig{Overrides: []gitops.CentralOverride{{InstanceIDs: []string{"foo"}}}}}
-	r.getCentralYaml(gitopsConfig, params)
+	r.render(gitopsConfig, params)
 	assert.Equal(t, 3, renderCount)
 
 	// sixth call with same params should not render again
-	r.getCentralYaml(gitopsConfig, params)
+	r.render(gitopsConfig, params)
 	assert.Equal(t, 3, renderCount)
 }
 
@@ -54,7 +54,7 @@ func TestShouldNotCacheOnError(t *testing.T) {
 	var shouldThrow = false
 
 	r := newCachedCentralRenderer()
-	r.renderFn = func(params gitops.CentralParams, config gitops.Config) (v1alpha1.Central, error) {
+	r.renderCentralFn = func(params gitops.CentralParams, config gitops.Config) (v1alpha1.Central, error) {
 		renderCount++
 		if shouldThrow {
 			return v1alpha1.Central{}, assert.AnError
@@ -65,17 +65,17 @@ func TestShouldNotCacheOnError(t *testing.T) {
 	assert.Equal(t, 0, renderCount)
 
 	shouldThrow = true
-	r.getCentralYaml(gitopsConfig, params)
+	r.render(gitopsConfig, params)
 	assert.Equal(t, 1, renderCount)
 
-	r.getCentralYaml(gitopsConfig, params)
+	r.render(gitopsConfig, params)
 	assert.Equal(t, 2, renderCount)
 
 	shouldThrow = false
-	r.getCentralYaml(gitopsConfig, params)
+	r.render(gitopsConfig, params)
 	assert.Equal(t, 3, renderCount)
 
-	r.getCentralYaml(gitopsConfig, params)
+	r.render(gitopsConfig, params)
 	assert.Equal(t, 3, renderCount)
 }
 

@@ -2,6 +2,7 @@ package gitops
 
 import (
 	"encoding/json"
+	"helm.sh/helm/v3/pkg/chartutil"
 	"strings"
 	"text/template"
 
@@ -18,6 +19,36 @@ func RenderCentral(params CentralParams, config Config) (v1alpha1.Central, error
 		return v1alpha1.Central{}, errors.Wrap(err, "failed to get default Central instance")
 	}
 	return applyConfigToCentral(config, central, params)
+}
+
+// RenderTenantResourceValues renders the values for tenant resources helm chart for the given GitOps configuration and parameters.
+func RenderTenantResourceValues(params CentralParams, config Config) (map[string]interface{}, error) {
+	values := map[string]interface{}{}
+	if len(config.TenantResources.Default) > 0 {
+		renderedDefault, err := renderPatchTemplate(config.TenantResources.Default, params)
+		if err != nil {
+			return nil, err
+		}
+		if err := yaml.Unmarshal([]byte(renderedDefault), &values); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal default tenant resource values")
+		}
+	}
+
+	for _, override := range config.TenantResources.Overrides {
+		if !shouldApplyOverride(override.InstanceIDs, params) {
+			continue
+		}
+		rendered, err := renderPatchTemplate(override.Values, params)
+		if err != nil {
+			return nil, err
+		}
+		patchValues := map[string]interface{}{}
+		if err := yaml.Unmarshal([]byte(rendered), &patchValues); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal override patch")
+		}
+		values = chartutil.CoalesceTables(patchValues, values)
+	}
+	return values, nil
 }
 
 func renderDefaultCentral(params CentralParams) (v1alpha1.Central, error) {
@@ -72,7 +103,7 @@ type CentralParams struct {
 func applyConfigToCentral(config Config, central v1alpha1.Central, ctx CentralParams) (v1alpha1.Central, error) {
 	var overrides []CentralOverride
 	for _, override := range config.Centrals.Overrides {
-		if !shouldApplyCentralOverride(override, ctx) {
+		if !shouldApplyOverride(override.InstanceIDs, ctx) {
 			continue
 		}
 		overrides = append(overrides, override)
@@ -106,9 +137,9 @@ func applyConfigToCentral(config Config, central v1alpha1.Central, ctx CentralPa
 	return result, nil
 }
 
-// shouldApplyCentralOverride returns true if the given Central override should be applied to the given Central instance.
-func shouldApplyCentralOverride(override CentralOverride, ctx CentralParams) bool {
-	for _, d := range override.InstanceIDs {
+// shouldApplyOverride returns true if the given Central override should be applied to the given Central instance.
+func shouldApplyOverride(instanceIDs []string, ctx CentralParams) bool {
+	for _, d := range instanceIDs {
 		if d == "*" {
 			return true
 		}
@@ -122,12 +153,12 @@ func shouldApplyCentralOverride(override CentralOverride, ctx CentralParams) boo
 // applyPatchToCentral will apply the given patch to the given Central instance.
 func applyPatchToCentral(centralBytes, patch []byte) ([]byte, error) {
 	// convert patch from yaml to json
-	jsonPath, err := yaml.YAMLToJSON(patch)
+	patchJson, err := yaml.YAMLToJSON(patch)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "failed to convert override patch from yaml to json")
 	}
 	// apply patch
-	patchedBytes, err := strategicpatch.StrategicMergePatch(centralBytes, jsonPath, v1alpha1.Central{})
+	patchedBytes, err := strategicpatch.StrategicMergePatch(centralBytes, patchJson, v1alpha1.Central{})
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "failed to apply override to Central instance")
 	}
@@ -148,3 +179,16 @@ func renderPatchTemplate(patchTemplate string, ctx CentralParams) (string, error
 
 // defaultTemplate is the default template for Central instances.
 var defaultTemplate = template.Must(template.New("default").Parse(string(defaultCentralTemplate)))
+
+func copyMap(m map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range m {
+		switch v := v.(type) {
+		case map[string]interface{}:
+			result[k] = copyMap(v)
+		default:
+			result[k] = v
+		}
+	}
+	return result
+}

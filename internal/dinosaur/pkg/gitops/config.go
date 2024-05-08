@@ -10,6 +10,7 @@ import (
 
 // Config represents the gitops configuration
 type Config struct {
+	TenantResources   TenantResourceConfig     `json:"tenantResources"`
 	Centrals          CentralsConfig           `json:"centrals"`
 	RHACSOperators    operator.OperatorConfigs `json:"rhacsOperators"`
 	DataPlaneClusters []DataPlaneClusterConfig `json:"dataPlaneClusters"`
@@ -92,10 +93,23 @@ type AddonConfig struct {
 	Parameters map[string]string `json:"parameters"`
 }
 
+// TenantResourceConfig represents the declarative configuration for tenant resource values defaults and overrides.
+type TenantResourceConfig struct {
+	Default   string                   `json:"default"`
+	Overrides []TenantResourceOverride `json:"overrides"`
+}
+
+// TenantResourceOverride represents the configuration for a tenant resource override. The override
+type TenantResourceOverride struct {
+	InstanceIDs []string `json:"instanceIds"`
+	Values      string   `json:"values"`
+}
+
 // ValidateConfig validates the GitOps configuration.
 func ValidateConfig(config Config) field.ErrorList {
 	var errs field.ErrorList
 	errs = append(errs, validateCentralsConfig(field.NewPath("centrals"), config.Centrals)...)
+	errs = append(errs, validateTenantResourcesConfig(field.NewPath("tenantResources"), config.TenantResources)...)
 	errs = append(errs, operator.Validate(field.NewPath("rhacsOperators"), config.RHACSOperators)...)
 	errs = append(errs, validateDataPlaneClusterConfigs(field.NewPath("dataPlaneClusters"), config.DataPlaneClusters)...)
 	return errs
@@ -105,6 +119,38 @@ func validateCentralsConfig(path *field.Path, config CentralsConfig) field.Error
 	var errs field.ErrorList
 	errs = append(errs, validateCentralOverrides(path.Child("overrides"), config.Overrides)...)
 	errs = append(errs, validateAdditionalAuthProviders(path.Child("additionalAuthProviders"), config.AdditionalAuthProviders)...)
+	return errs
+}
+
+func validateTenantResourcesConfig(path *field.Path, config TenantResourceConfig) field.ErrorList {
+	var errs field.ErrorList
+	errs = append(errs, validateTenantResourcesDefault(path.Child("default"), config.Default)...)
+	errs = append(errs, validateTenantResourceOverrides(path.Child("overrides"), config.Overrides)...)
+	return errs
+}
+
+func validateTenantResourcesDefault(path *field.Path, defaultValues string) field.ErrorList {
+	var errs field.ErrorList
+	if err := tryRenderDummyValuesWithPatch(defaultValues); err != nil {
+		errs = append(errs, field.Invalid(path, defaultValues, "invalid default values: "+err.Error()))
+	}
+	return errs
+}
+
+func validateTenantResourceOverrides(path *field.Path, overrides []TenantResourceOverride) field.ErrorList {
+	var errs field.ErrorList
+	for i, override := range overrides {
+		errs = append(errs, validateTenantResourceOverride(path.Index(i), override)...)
+	}
+	return errs
+}
+
+func validateTenantResourceOverride(path *field.Path, override TenantResourceOverride) field.ErrorList {
+	var errs field.ErrorList
+	errs = append(errs, validateInstanceIDs(path.Child("instanceIds"), override.InstanceIDs)...)
+	if err := tryRenderDummyValuesWithPatch(override.Values); err != nil {
+		errs = append(errs, field.Invalid(path.Child("values"), override.Values, "invalid values: "+err.Error()))
+	}
 	return errs
 }
 
@@ -276,6 +322,24 @@ func tryRenderDummyCentralWithPatch(patch string) error {
 		},
 	}
 	if _, err := RenderCentral(dummyParams, dummyConfig); err != nil {
+		return err
+	}
+	return nil
+}
+
+func tryRenderDummyValuesWithPatch(patch string) error {
+	var dummyParams = getDummyCentralParams()
+	dummyConfig := Config{
+		TenantResources: TenantResourceConfig{
+			Overrides: []TenantResourceOverride{
+				{
+					Values:      patch,
+					InstanceIDs: []string{"*"},
+				},
+			},
+		},
+	}
+	if _, err := RenderTenantResourceValues(dummyParams, dummyConfig); err != nil {
 		return err
 	}
 	return nil
