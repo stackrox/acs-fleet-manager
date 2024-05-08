@@ -111,6 +111,5 @@ spec:
       kind: DaemonSet
       name: collector
       patches:
-        - path: .spec.template.spec.containers[name:node-inventory].securityContext
-          value: |
-            privileged: true
+        - path: spec.template.spec.containers[name:node-inventory].securityContext.privileged
+          value: "true"
