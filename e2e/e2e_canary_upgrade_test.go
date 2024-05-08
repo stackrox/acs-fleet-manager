@@ -162,6 +162,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				}
 				return config
 			})).To(Succeed())
+			debugGitopsConfig(ctx)
 			Eventually(assertDeployedOperators(ctx, operator1DeploymentName)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -182,7 +183,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			Expect(err).To(Not(HaveOccurred()))
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 			centralNamespace, err = services.FormatNamespace(createdCentral.Id)
-
+			debugGitopsConfig(ctx)
 			Eventually(assertCentralLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion1)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -199,6 +200,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				}
 				return config
 			})).To(Succeed())
+			debugGitopsConfig(ctx)
 			Eventually(assertCentralLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion2)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -236,7 +238,7 @@ egressProxy:
 `
 				return config
 			})).To(Succeed())
-
+			debugGitopsConfig(ctx)
 			Eventually(func() error {
 				egressProxy, err := getDeployment(ctx, centralNamespace, "egress-proxy")
 				if err != nil {
@@ -334,22 +336,54 @@ func putGitopsConfig(ctx context.Context, config gitops.Config) error {
 	return k8sClient.Create(ctx, configMap)
 }
 
+func debugGitopsConfig(ctx context.Context) {
+	var configMap v1.ConfigMap
+	if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: gitopsConfigmapName}, &configMap); err != nil {
+		if errors2.IsNotFound(err) {
+			println("configmap not found")
+			return
+		}
+		println("error getting configmap", err.Error())
+		return
+	}
+	var config gitops.Config
+	if err := yaml.Unmarshal([]byte(configMap.Data[gitopsConfigmapDataKey]), &config); err != nil {
+		println("error unmarshalling configmap data", err.Error())
+		return
+	}
+	println("configmap data", configMap.Data[gitopsConfigmapDataKey])
+}
+
 func updateGitopsConfig(ctx context.Context, updateFn func(config gitops.Config) gitops.Config) error {
 	var configMap v1.ConfigMap
 	if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: gitopsConfigmapName}, &configMap); err != nil {
-		return err
+		if !errors2.IsNotFound(err) {
+			return err
+		}
+		configMap = v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: namespace,
+				Name:      gitopsConfigmapName,
+			},
+			Data: map[string]string{},
+		}
 	}
 	var config gitops.Config
 	if err := yaml.Unmarshal([]byte(configMap.Data[gitopsConfigmapDataKey]), &config); err != nil {
 		return err
 	}
 	updated := updateFn(config)
-	configYAML, err := yaml.Marshal(updated)
+	updatedYaml, err := yaml.Marshal(updated)
 	if err != nil {
 		return err
 	}
-	configMap.Data[gitopsConfigmapDataKey] = string(configYAML)
-	return k8sClient.Update(ctx, &configMap)
+	configMap.Data[gitopsConfigmapDataKey] = string(updatedYaml)
+	if err := k8sClient.Update(ctx, &configMap); err != nil {
+		if !errors2.IsNotFound(err) {
+			return err
+		}
+	}
+	return k8sClient.Create(ctx, &configMap)
 }
 
 func operatorConfigForVersion(version string) operator.OperatorConfig {
