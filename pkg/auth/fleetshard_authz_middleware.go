@@ -5,23 +5,60 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-
 	"github.com/gorilla/mux"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 // UseFleetShardAuthorizationMiddleware ...
-func UseFleetShardAuthorizationMiddleware(router *mux.Router, jwkValidIssuerURI string,
+func UseFleetShardAuthorizationMiddleware(router *mux.Router, iamConfig *iam.IAMConfig,
 	fleetShardAuthZConfig *FleetShardAuthZConfig) {
-	router.Use(
-		NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorNotFound),
-		checkAllowedOrgIDs(fleetShardAuthZConfig.AllowedOrgIDs),
-		NewRequireIssuerMiddleware().RequireIssuer([]string{jwkValidIssuerURI}, errors.ErrorNotFound),
-	)
+	router.Use(fleetShardAuthorizationMiddleware(iamConfig, fleetShardAuthZConfig))
 }
 
-func checkAllowedOrgIDs(allowedOrgIDs AllowedOrgIDs) mux.MiddlewareFunc {
+func fleetShardAuthorizationMiddleware(iamConfig *iam.IAMConfig, fleetShardAuthZConfig *FleetShardAuthZConfig) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			ctx := req.Context()
+			claims, err := GetClaimsFromContext(ctx)
+			if err != nil {
+				serviceErr := errors.New(errors.ErrorNotFound, "")
+				shared.HandleError(req, w, serviceErr)
+				return
+			}
+
+			if claims.VerifyIssuer(iamConfig.RedhatSSORealm.ValidIssuerURI, true) {
+				// middlewares must be applied in REVERSE order (last comes first)
+				next = checkAllowedOrgIDs(fleetShardAuthZConfig.AllowedOrgIDs)(next)
+				next = NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorNotFound)(next)
+			} else {
+				// middlewares must be applied in REVERSE order (last comes first)
+				next = checkSubject(fleetShardAuthZConfig.AllowedSubjects)(next)
+				next = checkAudience(fleetShardAuthZConfig.AllowedAudiences)(next)
+				next = NewRequireIssuerMiddleware().RequireIssuer(iamConfig.DataPlaneOIDCIssuers.URIs, errors.ErrorNotFound)(next)
+			}
+
+			next.ServeHTTP(w, req)
+		})
+	}
+}
+
+func checkAllowedOrgIDs(allowedOrgIDs []string) mux.MiddlewareFunc {
+	return checkClaim(alternateTenantIDClaim, (*ACSClaims).GetOrgID, allowedOrgIDs)
+}
+
+func checkSubject(subjects []string) mux.MiddlewareFunc {
+	return checkClaim(tenantSubClaim, (*ACSClaims).GetSubject, subjects)
+}
+
+func checkAudience(audiences []string) mux.MiddlewareFunc {
+	return checkClaim(audienceClaim, (*ACSClaims).GetAudience, audiences)
+}
+
+type claimsGetter func(*ACSClaims) (string, error)
+
+func checkClaim(claimName string, getter claimsGetter, allowedValues ClaimValues) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			ctx := request.Context()
@@ -34,14 +71,14 @@ func checkAllowedOrgIDs(allowedOrgIDs AllowedOrgIDs) mux.MiddlewareFunc {
 				return
 			}
 
-			orgID, _ := claims.GetOrgID()
-			if allowedOrgIDs.IsOrgIDAllowed(orgID) {
+			claimValue, _ := getter(&claims)
+			if allowedValues.Contains(claimValue) {
 				next.ServeHTTP(writer, request)
 				return
 			}
 
-			glog.Infof("org_id %q is not in the list of allowed org IDs [%s]",
-				orgID, strings.Join(allowedOrgIDs, ","))
+			glog.Infof("%s %q is not in the list of allowed values [%s]",
+				claimName, claimValue, strings.Join(allowedValues, ","))
 
 			shared.HandleError(request, writer, errors.NotFound(""))
 		})

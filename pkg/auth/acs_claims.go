@@ -79,6 +79,15 @@ func (c *ACSClaims) GetSubject() (string, error) {
 	return "", fmt.Errorf("can't find %q attribute in claims", tenantSubClaim)
 }
 
+// GetAudience returns the audience claim of the token. It identifies the token consumer.
+func (c *ACSClaims) GetAudience() (string, error) {
+	if sub, ok := (*c)[audienceClaim].(string); ok {
+		return sub, nil
+	}
+
+	return "", fmt.Errorf("can't find %q attribute in claims", audienceClaim)
+}
+
 // IsOrgAdmin ...
 func (c *ACSClaims) IsOrgAdmin() bool {
 	isOrgAdmin, _ := (*c)[tenantOrgAdminClaim].(bool)

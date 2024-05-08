@@ -1,0 +1,9 @@
+---
+# A list of org_id's that allow access to the internal API of the fleet manager.
+allowed_org_ids:
+  # ACS RH SSO Org Prod
+  - "16134752"
+allowed_subjects:
+  - "system:serviceaccount:rhacs:fleetshard-sync"
+allowed_audiences:
+  - "acs-fleet-manager-private-api"
