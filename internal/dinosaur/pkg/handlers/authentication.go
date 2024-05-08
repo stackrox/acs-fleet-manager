@@ -87,6 +87,8 @@ func NewAuthenticationHandler(IAMConfig *iam.IAMConfig, next http.Handler) (http
 
 	adminAPIHandler, err := authentication.NewHandler().
 		Logger(authnLogger).
+		KeysURL(IAMConfig.JwksURL).                          // ocm JWK JSON web token signing certificates URL
+		KeysFile(IAMConfig.JwksFile).                        // ocm JWK backup JSON web token signing certificates
 		KeysURL(IAMConfig.InternalSSORealm.JwksEndpointURI). // internal sso (auth.redhat.com) JWK Cert URL
 		Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 		Service(errors.ErrorCodePrefix).
