@@ -57,6 +57,7 @@ spec:
           value: {{ .Values.fleetshardSync.egressProxy.image | quote }}
         - name: SECURE_TENANT_NETWORK
           value: {{ .Values.fleetshardSync.secureTenantNetwork | quote }}
+        {{- if eq "RHSSO" .Values.fleetshardSync.authType }}
         - name: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
           valueFrom:
             secretKeyRef:
@@ -73,6 +74,7 @@ spec:
           value: {{ .Values.fleetshardSync.redHatSSO.realm }}
         - name: RHSSO_ENDPOINT
           value: {{ .Values.fleetshardSync.redHatSSO.endpoint }}
+        {{- end }}
         - name: AUDIT_LOG_ENABLED
           value: {{ .Values.fleetshardSync.auditLogs.enabled | quote }}
         - name: AUDIT_LOG_SKIP_TLS_VERIFY
@@ -128,9 +130,17 @@ spec:
           value: {{ .Values.fleetshardSync.addonAutoUpgradeEnabled | quote }}
         - name: FLEETSHARD_ADDON_NAME
           value: {{ .Values.fleetshardSync.addonName | quote }}
+        {{- if eq "SERVICE_ACCOUNT_TOKEN" .Values.fleetshardSync.authType }}
+        - name: FLEET_MANAGER_TOKEN_FILE
+          value: "/var/run/secrets/tokens/fleet-manager-token"
+        {{- end }}
         volumeMounts:
           - mountPath: /var/run/secrets/tokens
             name: aws-token
+          {{- if eq "SERVICE_ACCOUNT_TOKEN" .Values.fleetshardSync.authType }}
+          - mountPath: /var/run/secrets/tokens
+            name: fleet-manager-token
+          {{- end }}
         ports:
         - name: monitoring
           containerPort: 8080
@@ -148,3 +158,13 @@ spec:
               - serviceAccountToken:
                   path: aws-token
                   audience: sts.amazonaws.com
+                  expirationSeconds: 3600
+        {{- if eq "SERVICE_ACCOUNT_TOKEN" .Values.fleetshardSync.authType }}
+        - name: fleet-manager-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: fleet-manager-token
+                  audience: acs-fleet-manager-private-api
+                  expirationSeconds: 3600
+        {{- end }}

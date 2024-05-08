@@ -6,8 +6,8 @@ fleetshardSync:
   image:
     repo: "quay.io/app-sre/acs-fleet-manager"
     tag: "main"
-  # Can be either OCM, RHSSO, STATIC_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses RHSSO.
-  authType: "RHSSO"
+  # Can be either OCM, RHSSO, STATIC_TOKEN, SERVICE_ACCOUNT_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses SERVICE_ACCOUNT_TOKEN.
+  authType: "SERVICE_ACCOUNT_TOKEN"
   # OCM refresh token, only required in combination with authType=OCM.
   ocmToken: ""
   fleetManagerEndpoint: ""
