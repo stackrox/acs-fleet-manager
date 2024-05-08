@@ -105,3 +105,12 @@ spec:
       {{- if .Values.scannerV4.db.nodeSelector }}
       nodeSelector: {{ toYaml .Values.scannerV4.db.nodeSelector | nindent 8 }}
       {{- end }}
+  # TODO(ROX-24119): Once the issue is fixed within the Helm chart we can remove this:
+  overlays:
+    - apiVersion: apps/v1
+      kind: DaemonSet
+      name: collector
+      patches:
+        - path: .spec.template.spec.containers[name:node-inventory].securityContext
+          value: |
+            privileged: true
