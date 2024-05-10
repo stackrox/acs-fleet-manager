@@ -1004,6 +1004,50 @@ func TestEgressProxyIsDeployed(t *testing.T) {
 	}
 }
 
+func TestEgressProxyIsNotDeployedWhenSecureTenantNetwork(t *testing.T) {
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		nil,
+		secureTenantNetworkReconcilerOptions,
+	)
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	unexpectedObjs := []client.Object{
+		&v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: simpleManagedCentral.Metadata.Namespace,
+				Name:      "egress-proxy-config",
+			},
+		},
+		&v1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: simpleManagedCentral.Metadata.Namespace,
+				Name:      "egress-proxy",
+			},
+		},
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: simpleManagedCentral.Metadata.Namespace,
+				Name:      "egress-proxy",
+			},
+		},
+		&networkingv1.NetworkPolicy{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: simpleManagedCentral.Metadata.Namespace,
+				Name:      "egress-proxy",
+			},
+		},
+	}
+
+	for _, unexpectedObj := range unexpectedObjs {
+		actualObj := unexpectedObj.DeepCopyObject().(client.Object)
+		assert.Error(t, fakeClient.Get(context.TODO(), client.ObjectKeyFromObject(unexpectedObj), actualObj))
+	}
+}
+
 func TestTenantNetworkIsSecured(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
