@@ -1,3 +1,4 @@
+{{- if not .Values.secureTenantNetwork }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -118,3 +119,4 @@ spec:
     ports:
     - port: 3128
       protocol: TCP
+{{ end }}
