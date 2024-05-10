@@ -41,7 +41,7 @@ spec:
       ports:
         - port: 8443
           protocol: TCP
-    - to:  # Allow egress to external Internet
+    - to:  # Allow egress to external Internet for Image Registries
         - ipBlock:
             cidr: 0.0.0.0/0
             except:
