@@ -217,13 +217,13 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
 				config.TenantResources.Default = `
 labels:
-  app.kubernetes.io/managed-by: rhacs-fleetshard
-  app.kubernetes.io/instance: {{ .Name }}
-  rhacs.redhat.com/org-id: {{ .OrganizationID }}
-  rhacs.redhat.com/tenant: {{ .ID }}
-  rhacs.redhat.com/instance-type: {{ .InstanceType }}
+  app.kubernetes.io/managed-by: "rhacs-fleetshard"
+  app.kubernetes.io/instance: "{{ .Name }}"
+  rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
+  rhacs.redhat.com/tenant: "{{ .ID }}"
+  rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
 annotations:
-  rhacs.redhat.com/org-name: {{ .OrganizationName }}
+  rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
 secureTenantNetwork: false
 centralRdsCidrBlock: "10.1.0.0/16"
 egressProxy:
@@ -585,13 +585,13 @@ metadata:
 func defaultTenantResourceValues() string {
 	return `
 labels:
-  app.kubernetes.io/managed-by: rhacs-fleetshard
-  app.kubernetes.io/instance: {{ .Name }}
-  rhacs.redhat.com/org-id: {{ .OrganizationID }}
-  rhacs.redhat.com/tenant: {{ .ID }}
-  rhacs.redhat.com/instance-type: {{ .InstanceType }}
+  app.kubernetes.io/managed-by: "rhacs-fleetshard"
+  app.kubernetes.io/instance: "{{ .Name }}"
+  rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
+  rhacs.redhat.com/tenant: "{{ .ID }}"
+  rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
 annotations:
-  rhacs.redhat.com/org-name: {{ .OrganizationName }}
+  rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
 secureTenantNetwork: false
 centralRdsCidrBlock: "10.1.0.0/16"
 egressProxy:
