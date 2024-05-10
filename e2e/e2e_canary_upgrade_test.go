@@ -215,7 +215,8 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			Expect(egressProxy.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String()).To(Equal("275Mi"))
 			Expect(egressProxy.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String()).To(Equal("275Mi"))
 			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
-				config.TenantResources.Default = `
+				tenantResources := config.TenantResources
+				tenantResources.Default = `
 labels:
   app.kubernetes.io/managed-by: "rhacs-fleetshard"
   app.kubernetes.io/instance: "{{ .Name }}"
@@ -236,6 +237,7 @@ egressProxy:
   limits:
     memory: 200Mi
 `
+				config.TenantResources = tenantResources
 				return config
 			})).To(Succeed())
 			debugGitopsConfig(ctx)
