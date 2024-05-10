@@ -230,11 +230,11 @@ egressProxy:
   image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.14"
   replicas: 2
   resources:
-	requests:
-	  cpu: 100m
-	  memory: 200Mi
-	limits:
-	  memory: 200Mi
+  requests:
+    cpu: 100m
+    memory: 200Mi
+  limits:
+    memory: 200Mi
 `
 				return config
 			})).To(Succeed())
@@ -598,11 +598,11 @@ egressProxy:
   image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.14"
   replicas: 2
   resources:
-	requests:
-	  cpu: 100m
-	  memory: 275Mi
-	limits:
-	  memory: 275Mi`
+    requests:
+      cpu: 100m
+      memory: 275Mi
+    limits:
+      memory: 275Mi`
 }
 
 func defaultGitopsConfig() gitops.Config {
