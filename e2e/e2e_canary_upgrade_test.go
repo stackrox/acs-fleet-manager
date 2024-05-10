@@ -340,26 +340,29 @@ func debugGitopsConfig(ctx context.Context) {
 	var configMap v1.ConfigMap
 	if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: gitopsConfigmapName}, &configMap); err != nil {
 		if errors2.IsNotFound(err) {
-			println("configmap not found")
+			GinkgoLogr.Info("configmap not found")
 			return
 		}
-		println("error getting configmap", err.Error())
+		GinkgoLogr.Error(err, "error getting configmap")
 		return
 	}
 	var config gitops.Config
 	if err := yaml.Unmarshal([]byte(configMap.Data[gitopsConfigmapDataKey]), &config); err != nil {
-		println("error unmarshalling configmap data", err.Error())
+		GinkgoLogr.Error(err, "error unmarshalling configmap data")
 		return
 	}
-	println("configmap data", configMap.Data[gitopsConfigmapDataKey])
+	GinkgoLogr.Info("configmap data", "config", config)
 }
 
 func updateGitopsConfig(ctx context.Context, updateFn func(config gitops.Config) gitops.Config) error {
+	exists := true
 	var configMap v1.ConfigMap
+	var config gitops.Config
 	if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: gitopsConfigmapName}, &configMap); err != nil {
 		if !errors2.IsNotFound(err) {
 			return err
 		}
+		exists = false
 		configMap = v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace,
@@ -367,23 +370,24 @@ func updateGitopsConfig(ctx context.Context, updateFn func(config gitops.Config)
 			},
 			Data: map[string]string{},
 		}
+	} else {
+		if err := yaml.Unmarshal([]byte(configMap.Data[gitopsConfigmapDataKey]), &config); err != nil {
+			return err
+		}
 	}
-	var config gitops.Config
-	if err := yaml.Unmarshal([]byte(configMap.Data[gitopsConfigmapDataKey]), &config); err != nil {
-		return err
-	}
+
 	updated := updateFn(config)
 	updatedYaml, err := yaml.Marshal(updated)
 	if err != nil {
 		return err
 	}
 	configMap.Data[gitopsConfigmapDataKey] = string(updatedYaml)
-	if err := k8sClient.Update(ctx, &configMap); err != nil {
-		if !errors2.IsNotFound(err) {
-			return err
-		}
+	if exists {
+		return k8sClient.Update(ctx, &configMap)
+	} else {
+		return k8sClient.Create(ctx, &configMap)
 	}
-	return k8sClient.Create(ctx, &configMap)
+
 }
 
 func operatorConfigForVersion(version string) operator.OperatorConfig {
