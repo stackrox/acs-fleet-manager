@@ -249,7 +249,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	centralTLSSecretFound := true // pragma: allowlist secret
 	if r.useRoutes {
 		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
-			if errors.Is(err, k8s.ErrCentralTLSSecretNotFound) {
+			if k8s.IsCentralTLSNotFound(err) {
 				centralTLSSecretFound = false // pragma: allowlist secret
 			} else {
 				return nil, errors.Wrap(err, "updating routes")
