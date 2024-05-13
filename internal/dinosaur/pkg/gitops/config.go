@@ -131,7 +131,7 @@ func validateTenantResourcesConfig(path *field.Path, config TenantResourceConfig
 
 func validateTenantResourcesDefault(path *field.Path, defaultValues string) field.ErrorList {
 	var errs field.ErrorList
-	if err := tryRenderDummyValuesWithPatch(defaultValues); err != nil {
+	if err := renderDummyValuesWithPatchForValidation(defaultValues); err != nil {
 		errs = append(errs, field.Invalid(path, defaultValues, "invalid default values: "+err.Error()))
 	}
 	return errs
@@ -148,7 +148,7 @@ func validateTenantResourceOverrides(path *field.Path, overrides []TenantResourc
 func validateTenantResourceOverride(path *field.Path, override TenantResourceOverride) field.ErrorList {
 	var errs field.ErrorList
 	errs = append(errs, validateInstanceIDs(path.Child("instanceIds"), override.InstanceIDs)...)
-	if err := tryRenderDummyValuesWithPatch(override.Values); err != nil {
+	if err := renderDummyValuesWithPatchForValidation(override.Values); err != nil {
 		errs = append(errs, field.Invalid(path.Child("values"), override.Values, "invalid values: "+err.Error()))
 	}
 	return errs
@@ -301,15 +301,15 @@ func validatePatch(path *field.Path, patch string) field.ErrorList {
 		errs = append(errs, field.Required(path, "patch is required"))
 		return errs
 	}
-	if err := tryRenderDummyCentralWithPatch(patch); err != nil {
+	if err := renderDummyCentralWithPatchForValidation(patch); err != nil {
 		errs = append(errs, field.Invalid(path, patch, "invalid patch: "+err.Error()))
 	}
 	return errs
 }
 
-// tryRenderDummyCentralWithPatch renders a dummy Central instance with the given patch.
-// useful to test that a patch is valid.
-func tryRenderDummyCentralWithPatch(patch string) error {
+// renderDummyCentralWithPatchForValidation renders a dummy Central instance with the given patch.
+// useful to test that a Central patch is valid.
+func renderDummyCentralWithPatchForValidation(patch string) error {
 	var dummyParams = getDummyCentralParams()
 	dummyConfig := Config{
 		Centrals: CentralsConfig{
@@ -327,7 +327,9 @@ func tryRenderDummyCentralWithPatch(patch string) error {
 	return nil
 }
 
-func tryRenderDummyValuesWithPatch(patch string) error {
+// renderDummyValuesWithPatchForValidation renders a dummy tenant resource values with the given patch.
+// useful to test that a values patch is valid.
+func renderDummyValuesWithPatchForValidation(patch string) error {
 	var dummyParams = getDummyCentralParams()
 	dummyConfig := Config{
 		TenantResources: TenantResourceConfig{

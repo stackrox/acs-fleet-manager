@@ -179,16 +179,3 @@ func renderPatchTemplate(patchTemplate string, ctx CentralParams) (string, error
 
 // defaultTemplate is the default template for Central instances.
 var defaultTemplate = template.Must(template.New("default").Parse(string(defaultCentralTemplate)))
-
-func copyMap(m map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
-	for k, v := range m {
-		switch v := v.(type) {
-		case map[string]interface{}:
-			result[k] = copyMap(v)
-		default:
-			result[k] = v
-		}
-	}
-	return result
-}
