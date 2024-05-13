@@ -138,6 +138,9 @@ init() {
     if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
         eval "$(minikube docker-env)"
     fi
+    if [[ "$CLUSTER_TYPE" == "crc" ]]; then
+        eval "$(crc podman-env)"
+    fi
 
     if [[ "$EMAIL_SENDER_IMAGE" == "" ]]; then
         EMAIL_SENDER_IMAGE=$(make -s -C "$GITROOT" image-tag/emailsender)

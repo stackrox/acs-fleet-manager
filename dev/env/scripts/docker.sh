@@ -60,8 +60,8 @@ ensure_fleet_manager_image_exists() {
             if [[ "$image_available" != "true" || "$FLEET_MANAGER_IMAGE" =~ dirty$ ]]; then
                 # Attempt to build this image.
                 if [[ "$FLEET_MANAGER_IMAGE" == "$(make -s -C "${GITROOT}" full-image-tag)" ]]; then
-                        log "Building local image..."
-                        make -C "${GITROOT}" image/build
+                    log "Building local image..."
+                    make -C "${GITROOT}" image/build
                 else
                     die "Cannot find image '${FLEET_MANAGER_IMAGE}' and don't know how to build it"
                 fi
@@ -75,6 +75,9 @@ ensure_fleet_manager_image_exists() {
 
         if [[ "${CLUSTER_TYPE}" == "kind" ]]; then
             kind load docker-image "$FLEET_MANAGER_IMAGE"
+        fi
+        if [[ "${CLUSTER_TYPE}" == "crc" ]]; then
+            docker tag "$FLEET_MANAGER_IMAGE" "${ACSCS_NAMESPACE}/$FLEET_MANAGER_IMAGE"
         fi
 
         # Verify that the image is there.

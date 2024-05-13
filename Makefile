@@ -513,7 +513,7 @@ docker/login/internal:
 
 # Build the image
 image/build:
-	DOCKER_CONFIG=${DOCKER_CONFIG} DOCKER_BUILDKIT=1 $(DOCKER) build -t $(SHORT_IMAGE_REF) .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(SHORT_IMAGE_REF) . --load
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 ifeq ("$(CLUSTER_TYPE)","kind")
