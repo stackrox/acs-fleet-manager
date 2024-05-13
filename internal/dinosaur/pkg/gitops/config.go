@@ -100,6 +100,7 @@ type TenantResourceConfig struct {
 }
 
 // TenantResourceOverride represents the configuration for a tenant resource override. The override
+// will be applied on top of the default tenant resource values configuration.
 type TenantResourceOverride struct {
 	InstanceIDs []string `json:"instanceIds"`
 	Values      string   `json:"values"`
