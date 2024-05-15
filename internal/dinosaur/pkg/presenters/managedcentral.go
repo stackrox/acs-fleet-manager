@@ -102,7 +102,7 @@ func (c *ManagedCentralPresenter) PresentManagedCentralWithSecrets(from *dbapi.C
 
 func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Config, from *dbapi.CentralRequest) (private.ManagedCentral, error) {
 	centralParams := centralParamsFromRequest(from)
-	centralYaml, err := c.renderer.getCentralYaml(gitopsConfig, centralParams)
+	renderedCentral, err := c.renderer.render(gitopsConfig, centralParams)
 	if err != nil {
 		return private.ManagedCentral{}, errors.Wrap(err, "failed to get Central YAML")
 	}
@@ -147,8 +147,9 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 			DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
 				Host: from.GetDataHost(),
 			},
-			CentralCRYAML: string(centralYaml),
-			InstanceType:  from.InstanceType,
+			CentralCRYAML:         renderedCentral.CentralCRYaml,
+			TenantResourcesValues: renderedCentral.Values,
+			InstanceType:          from.InstanceType,
 		},
 		RequestStatus: from.Status,
 	}
@@ -267,23 +268,31 @@ func centralParamsFromRequest(centralRequest *dbapi.CentralRequest) gitops.Centr
 	}
 }
 
-type renderFn func(gitops.CentralParams, gitops.Config) (v1alpha1.Central, error)
+type renderCentralFn func(gitops.CentralParams, gitops.Config) (v1alpha1.Central, error)
+type renderValuesFn func(gitops.CentralParams, gitops.Config) (map[string]interface{}, error)
 
 type cachedCentralRenderer struct {
-	renderFn renderFn
-	locks    *keyedMutex
-	cache    *centralYamlCache
+	renderCentralFn renderCentralFn
+	renderValuesFn  renderValuesFn
+	locks           *keyedMutex
+	cache           *centralYamlCache
 }
 
 func newCachedCentralRenderer() *cachedCentralRenderer {
 	return &cachedCentralRenderer{
-		renderFn: gitops.RenderCentral,
-		locks:    newKeyedMutex(),
-		cache:    newCentralYamlCache(),
+		renderCentralFn: gitops.RenderCentral,
+		renderValuesFn:  gitops.RenderTenantResourceValues,
+		locks:           newKeyedMutex(),
+		cache:           newCentralYamlCache(),
 	}
 }
 
-func (r *cachedCentralRenderer) getCentralYaml(gitopsConfig gitops.Config, centralParams gitops.CentralParams) ([]byte, error) {
+type RenderedCentral struct {
+	CentralCRYaml string
+	Values        map[string]interface{}
+}
+
+func (r *cachedCentralRenderer) render(gitopsConfig gitops.Config, centralParams gitops.CentralParams) (RenderedCentral, error) {
 	centralID := centralParams.ID
 
 	// We obtain a lock for the central ID so that no other goroutine can render the central yaml for the same central
@@ -296,10 +305,11 @@ func (r *cachedCentralRenderer) getCentralYaml(gitopsConfig gitops.Config, centr
 	// In other words, the central YAML will always be the same for the same gitops config and central params.
 	hashes, err := newHashes(gitopsConfig, centralParams)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get hash for Central")
+		return RenderedCentral{}, errors.Wrap(err, "failed to get hash for Central")
 	}
 
 	var centralYaml []byte
+	var values map[string]interface{}
 	var shouldRender = true
 
 	// Check if the central yaml is in the cache and if it is, check if the hash matches
@@ -311,19 +321,24 @@ func (r *cachedCentralRenderer) getCentralYaml(gitopsConfig gitops.Config, centr
 		if entry.hashes.equals(hashes) {
 			// The hash matches, we can use the cached central yaml
 			centralYaml = entry.centralYaml
+			values = entry.values
 			shouldRender = false
 		}
 	}
 
 	if shouldRender {
 		// There was no matching cache entry, we need to render the central yaml.
-		centralCR, err := r.renderFn(centralParams, gitopsConfig)
+		centralCR, err := r.renderCentralFn(centralParams, gitopsConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to apply GitOps overrides to Central")
+			return RenderedCentral{}, errors.Wrap(err, "failed to apply GitOps overrides to Central")
 		}
 		centralYaml, err = yaml.Marshal(centralCR)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal Central CR")
+			return RenderedCentral{}, errors.Wrap(err, "failed to marshal Central CR")
+		}
+		values, err := r.renderValuesFn(centralParams, gitopsConfig)
+		if err != nil {
+			return RenderedCentral{}, errors.Wrap(err, "failed to render tenant resource values")
 		}
 		// Locking the whole cache to add the new entry
 		r.cache.Lock()
@@ -332,10 +347,14 @@ func (r *cachedCentralRenderer) getCentralYaml(gitopsConfig gitops.Config, centr
 			id:          centralID,
 			hashes:      hashes,
 			centralYaml: centralYaml,
+			values:      values,
 		}
 	}
 
-	return centralYaml, nil
+	return RenderedCentral{
+		CentralCRYaml: string(centralYaml),
+		Values:        values,
+	}, nil
 }
 
 type centralHashes struct {
@@ -414,6 +433,7 @@ type cacheEntry struct {
 	id          string
 	hashes      centralHashes
 	centralYaml []byte
+	values      map[string]interface{}
 }
 
 type centralYamlCache struct {

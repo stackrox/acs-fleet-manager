@@ -153,19 +153,16 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 		var centralNamespace string
 
 		It("run only one operator with version: "+operatorVersion1, func() {
-			config := gitops.Config{
-				RHACSOperators: operator.OperatorConfigs{
-					CRDURLs: defaultCRDUrls,
-					Configs: []operator.OperatorConfig{operatorConfig1},
-				},
-				Centrals: gitops.CentralsConfig{
-					Overrides: []gitops.CentralOverride{
-						overrideAllCentralsToBeReconciledByOperator(operatorConfig1),
-						overrideAllCentralsToUseMinimalResources(),
-					},
-				},
-			}
-			Expect(putGitopsConfig(ctx, config)).To(Succeed())
+			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
+				config = defaultGitopsConfig()
+				config.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
+				config.Centrals.Overrides = []gitops.CentralOverride{
+					overrideAllCentralsToBeReconciledByOperator(operatorConfig1),
+					overrideAllCentralsToUseMinimalResources(),
+				}
+				return config
+			})).To(Succeed())
+			debugGitopsConfig(ctx)
 			Eventually(assertDeployedOperators(ctx, operator1DeploymentName)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -186,7 +183,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			Expect(err).To(Not(HaveOccurred()))
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 			centralNamespace, err = services.FormatNamespace(createdCentral.Id)
-
+			debugGitopsConfig(ctx)
 			Eventually(assertCentralLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion1)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -194,20 +191,72 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 		})
 
 		It("upgrade central", func() {
-			config := gitops.Config{
-				RHACSOperators: operator.OperatorConfigs{
-					CRDURLs: defaultCRDUrls,
-					Configs: []operator.OperatorConfig{operatorConfig1, operatorConfig2},
-				},
-				Centrals: gitops.CentralsConfig{
-					Overrides: []gitops.CentralOverride{
-						overrideAllCentralsToBeReconciledByOperator(operatorConfig2),
-						overrideAllCentralsToUseMinimalResources(),
-					},
-				},
-			}
-			Expect(putGitopsConfig(ctx, config)).To(Succeed())
+			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
+				config = defaultGitopsConfig()
+				config.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1, operatorConfig2}
+				config.Centrals.Overrides = []gitops.CentralOverride{
+					overrideAllCentralsToBeReconciledByOperator(operatorConfig2),
+					overrideAllCentralsToUseMinimalResources(),
+				}
+				return config
+			})).To(Succeed())
+			debugGitopsConfig(ctx)
 			Eventually(assertCentralLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion2)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+		})
+
+		It("changes tenant resources", func() {
+			egressProxy, err := getDeployment(ctx, centralNamespace, "egress-proxy")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(egressProxy.Spec.Template.Spec.Containers).To(HaveLen(1))
+			Expect(egressProxy.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String()).To(Equal("100m"))
+			Expect(egressProxy.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String()).To(Equal("275Mi"))
+			Expect(egressProxy.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String()).To(Equal("275Mi"))
+			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
+				tenantResources := config.TenantResources
+				tenantResources.Default = `
+labels:
+  app.kubernetes.io/managed-by: "rhacs-fleetshard"
+  app.kubernetes.io/instance: "{{ .Name }}"
+  rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
+  rhacs.redhat.com/tenant: "{{ .ID }}"
+  rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
+annotations:
+  rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
+secureTenantNetwork: false
+centralRdsCidrBlock: "10.1.0.0/16"
+egressProxy:
+  image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.14"
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 200Mi
+    limits:
+      memory: 200Mi
+`
+				config.TenantResources = tenantResources
+				return config
+			})).To(Succeed())
+			debugGitopsConfig(ctx)
+			Eventually(func() error {
+				egressProxy, err := getDeployment(ctx, centralNamespace, "egress-proxy")
+				if err != nil {
+					return err
+				}
+				if egressProxy.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String() != "200Mi" {
+					return fmt.Errorf("egress proxy memory request not updated")
+				}
+				if egressProxy.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String() != "200Mi" {
+					return fmt.Errorf("egress proxy memory limit not updated")
+				}
+				if egressProxy.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String() != "100m" {
+					return fmt.Errorf("egress proxy cpu request not updated")
+				}
+				return nil
+			}).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -287,6 +336,60 @@ func putGitopsConfig(ctx context.Context, config gitops.Config) error {
 		return nil
 	}
 	return k8sClient.Create(ctx, configMap)
+}
+
+func debugGitopsConfig(ctx context.Context) {
+	var configMap v1.ConfigMap
+	if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: gitopsConfigmapName}, &configMap); err != nil {
+		if errors2.IsNotFound(err) {
+			GinkgoLogr.Info("configmap not found")
+			return
+		}
+		GinkgoLogr.Error(err, "error getting configmap")
+		return
+	}
+	var config gitops.Config
+	if err := yaml.Unmarshal([]byte(configMap.Data[gitopsConfigmapDataKey]), &config); err != nil {
+		GinkgoLogr.Error(err, "error unmarshalling configmap data")
+		return
+	}
+	GinkgoLogr.Info("configmap data", "config", config)
+}
+
+func updateGitopsConfig(ctx context.Context, updateFn func(config gitops.Config) gitops.Config) error {
+	exists := true
+	var configMap v1.ConfigMap
+	var config gitops.Config
+	if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: gitopsConfigmapName}, &configMap); err != nil {
+		if !errors2.IsNotFound(err) {
+			return err
+		}
+		exists = false
+		configMap = v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: namespace,
+				Name:      gitopsConfigmapName,
+			},
+			Data: map[string]string{},
+		}
+	} else {
+		if err := yaml.Unmarshal([]byte(configMap.Data[gitopsConfigmapDataKey]), &config); err != nil {
+			return err
+		}
+	}
+
+	updated := updateFn(config)
+	updatedYaml, err := yaml.Marshal(updated)
+	if err != nil {
+		return err
+	}
+	configMap.Data[gitopsConfigmapDataKey] = string(updatedYaml)
+	if exists {
+		return k8sClient.Update(ctx, &configMap)
+	} else {
+		return k8sClient.Create(ctx, &configMap)
+	}
+
 }
 
 func operatorConfigForVersion(version string) operator.OperatorConfig {
@@ -481,8 +584,34 @@ metadata:
     ` + key + `: "` + value + `"`)
 }
 
+func defaultTenantResourceValues() string {
+	return `
+labels:
+  app.kubernetes.io/managed-by: "rhacs-fleetshard"
+  app.kubernetes.io/instance: "{{ .Name }}"
+  rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
+  rhacs.redhat.com/tenant: "{{ .ID }}"
+  rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
+annotations:
+  rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
+secureTenantNetwork: false
+centralRdsCidrBlock: "10.1.0.0/16"
+egressProxy:
+  image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.14"
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 275Mi
+    limits:
+      memory: 275Mi`
+}
+
 func defaultGitopsConfig() gitops.Config {
 	return gitops.Config{
+		TenantResources: gitops.TenantResourceConfig{
+			Default: defaultTenantResourceValues(),
+		},
 		RHACSOperators: operator.OperatorConfigs{
 			CRDURLs: defaultCRDUrls,
 			Configs: []operator.OperatorConfig{

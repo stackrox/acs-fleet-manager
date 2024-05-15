@@ -1732,6 +1732,14 @@ func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Val
 		return nil, errors.New("resources chart is not set")
 	}
 	src := r.resourcesChart.Values
+
+	// We are introducing the passing of helm values from fleetManager (and gitops). If the managed central
+	// includes the tenant resource values, we will use them. Otherwise, defaults to the previous
+	// implementation.
+	if len(c.Spec.TenantResourcesValues) > 0 {
+		return chartutil.CoalesceTables(c.Spec.TenantResourcesValues, src), nil
+	}
+
 	dst := map[string]interface{}{
 		"labels":      stringMapToMapInterface(getTenantLabels(c)),
 		"annotations": stringMapToMapInterface(getTenantAnnotations(c)),

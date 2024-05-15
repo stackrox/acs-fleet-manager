@@ -7,7 +7,27 @@ rhacsOperators:
       image: "quay.io/rhacs-eng/stackrox-operator:4.3.4"
       centralLabelSelector: "rhacs.redhat.com/version-selector=4.3.4"
       securedClusterReconcilerEnabled: false
-
+tenantResources:
+  default: |
+    labels:
+      app.kubernetes.io/managed-by: rhacs-fleetshard
+      app.kubernetes.io/instance: "{{ .Name }}"
+      rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
+      rhacs.redhat.com/tenant: "{{ .ID }}"
+      rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
+    annotations:
+      rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
+    secureTenantNetwork: false
+    centralRdsCidrBlock: "10.1.0.0/16"
+    egressProxy:
+      image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.14"
+      replicas: 2
+      resources:
+        requests:
+          cpu: 100m
+          memory: 275Mi
+        limits:
+          memory: 275Mi
 centrals:
   overrides:
     - instanceIds:
