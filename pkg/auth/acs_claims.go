@@ -16,6 +16,11 @@ func (c *ACSClaims) VerifyIssuer(cmp string, req bool) bool {
 	return jwt.MapClaims(*c).VerifyIssuer(cmp, req)
 }
 
+// VerifyAudience wraps jwt.VerifyAudience
+func (c *ACSClaims) VerifyAudience(cmp string, req bool) bool {
+	return jwt.MapClaims(*c).VerifyAudience(cmp, req)
+}
+
 // GetUsername ...
 func (c *ACSClaims) GetUsername() (string, error) {
 	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil },
@@ -80,9 +85,9 @@ func (c *ACSClaims) GetSubject() (string, error) {
 }
 
 // GetAudience returns the audience claim of the token. It identifies the token consumer.
-func (c *ACSClaims) GetAudience() (string, error) {
-	if sub, ok := (*c)[audienceClaim].(string); ok {
-		return sub, nil
+func (c *ACSClaims) GetAudience() (interface{}, error) {
+	if aud, ok := (*c)[audienceClaim]; ok {
+		return aud, nil
 	}
 
 	return "", fmt.Errorf("can't find %q attribute in claims", audienceClaim)

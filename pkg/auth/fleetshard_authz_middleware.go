@@ -45,15 +45,47 @@ func fleetShardAuthorizationMiddleware(iamConfig *iam.IAMConfig, fleetShardAuthZ
 }
 
 func checkAllowedOrgIDs(allowedOrgIDs []string) mux.MiddlewareFunc {
-	return checkClaim(alternateTenantIDClaim, (*ACSClaims).GetOrgID, allowedOrgIDs)
+	return checkClaim(tenantIDClaim, (*ACSClaims).GetOrgID, allowedOrgIDs)
 }
 
-func checkSubject(subjects []string) mux.MiddlewareFunc {
-	return checkClaim(tenantSubClaim, (*ACSClaims).GetSubject, subjects)
+func checkSubject(allowedSubjects []string) mux.MiddlewareFunc {
+	return checkClaim(tenantSubClaim, (*ACSClaims).GetSubject, allowedSubjects)
 }
 
-func checkAudience(audiences []string) mux.MiddlewareFunc {
-	return checkClaim(audienceClaim, (*ACSClaims).GetAudience, audiences)
+func checkAudience(allowedAudiences []string) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			ctx := request.Context()
+			claims, err := GetClaimsFromContext(ctx)
+			if err != nil {
+				// Deliberately return 404 here so that it will appear as the endpoint doesn't exist if requests are
+				// not authorised. Otherwise, we would leak information about existing cluster IDs, since the path
+				// of the request is /agent-clusters/<id>.
+				shared.HandleError(request, writer, errors.NotFound(""))
+				return
+			}
+
+			audienceAccepted := false
+			for _, audience := range allowedAudiences {
+				if claims.VerifyAudience(audience, true) {
+					audienceAccepted = true
+					break
+				}
+			}
+
+			if !audienceAccepted {
+				audience, _ := claims.GetAudience()
+				glog.Infof("none of the audiences (%q) in the access token is not in the list of allowed values [%s]",
+					audience, strings.Join(allowedAudiences, ","))
+
+				shared.HandleError(request, writer, errors.NotFound(""))
+				return
+			}
+
+			next.ServeHTTP(writer, request)
+
+		})
+	}
 }
 
 type claimsGetter func(*ACSClaims) (string, error)

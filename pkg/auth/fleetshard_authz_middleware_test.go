@@ -126,6 +126,7 @@ func TestUseFleetShardAuthorizationMiddleware_NoTokenSet(t *testing.T) {
 
 func TestUseFleetShardAuthorizationMiddleware_DataPlaneOIDCIssuers(t *testing.T) {
 	const validIssuer = "http://localhost"
+	validAudience := []string{"acs-fleet-manager-private-api"}
 
 	tests := map[string]struct {
 		token              *jwt.Token
@@ -136,6 +137,7 @@ func TestUseFleetShardAuthorizationMiddleware_DataPlaneOIDCIssuers(t *testing.T)
 				Claims: jwt.MapClaims{
 					"iss": validIssuer,
 					"sub": "fleetshard-sync",
+					"aud": validAudience,
 				},
 			},
 			expectedStatusCode: http.StatusOK,
@@ -145,6 +147,7 @@ func TestUseFleetShardAuthorizationMiddleware_DataPlaneOIDCIssuers(t *testing.T)
 				Claims: jwt.MapClaims{
 					"iss": validIssuer,
 					"sub": "third-party-service",
+					"aud": "acs-fleet-manager-private-api",
 				},
 			},
 			expectedStatusCode: http.StatusNotFound,
@@ -168,9 +171,39 @@ func TestUseFleetShardAuthorizationMiddleware_DataPlaneOIDCIssuers(t *testing.T)
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
 					"iss": validIssuer,
+					"aud": validAudience,
 				},
 			},
 			expectedStatusCode: http.StatusNotFound,
+		},
+		"should fail when audience is not set": {
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{
+					"iss": validIssuer,
+					"sub": "fleetshard-sync",
+				},
+			},
+			expectedStatusCode: http.StatusNotFound,
+		},
+		"should fail when audience is not allowed": {
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{
+					"iss": validIssuer,
+					"sub": "fleetshard-sync",
+					"aud": []string{"https://kubernetes.default.svc"},
+				},
+			},
+			expectedStatusCode: http.StatusNotFound,
+		},
+		"should succeed when at least one audience is allowed": {
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{
+					"iss": validIssuer,
+					"sub": "fleetshard-sync",
+					"aud": []string{"other-api", "acs-fleet-manager-private-api"},
+				},
+			},
+			expectedStatusCode: http.StatusOK,
 		},
 	}
 
@@ -192,7 +225,8 @@ func TestUseFleetShardAuthorizationMiddleware_DataPlaneOIDCIssuers(t *testing.T)
 					DataPlaneOIDCIssuers: &iam.OIDCIssuers{URIs: []string{validIssuer}},
 				},
 				&FleetShardAuthZConfig{
-					AllowedSubjects: []string{"fleetshard-sync"},
+					AllowedSubjects:  []string{"fleetshard-sync"},
+					AllowedAudiences: validAudience,
 				})
 
 			req := httptest.NewRequest("GET", "http://example.com/agent-clusters/1234", nil)
