@@ -7,9 +7,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/../scripts/lib/external_config.sh"
 
 if [[ $# -ne 2 ]]; then
-    echo "Usage: $0 [environment] [cluster]" >&2
+    echo "Usage: $0 [environment] [cluster] [admin-user-name]" >&2
     echo "Known environments: integration stage prod"
     echo "Cluster typically looks like: acs-{env}-dp-01"
+    echo "admin-user-name should be the RH SSO OIDC user name of the person running this script"
     echo "Description: This script will create identity providers for the OSD cluster:"
     echo "- OIDC provider using auth.redhat.com"
     echo "See additional documentation in docs/development/setup-osd-cluster-idp.md"
@@ -24,6 +25,7 @@ fi
 
 ENVIRONMENT=$1
 CLUSTER_NAME=$2
+OIDC_USER_NAME=${3:-$(whoami)}
 
 export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-saml}"
 
@@ -46,11 +48,11 @@ setup_oidc_provider() {
       echo "Skipping creating an OIDC IdP for the cluster, already exists."
     fi
 
-    # Create the users that should have access to the cluster with cluster administrative rights.
-    # Ignore errors as the sometimes users already exist.
+    # Give cluster administrative rights to the user that is bringing up the dataplane cluster.
+    # Ignore errors in case user already exists
     ocm create user --cluster="${CLUSTER_NAME}" \
       --group=cluster-admins \
-      "${OSD_OIDC_USER_LIST}" || true
+      "${OIDC_USER_NAME}" || true
 }
 
 case $ENVIRONMENT in
