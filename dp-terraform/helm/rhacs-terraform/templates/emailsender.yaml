@@ -7,12 +7,12 @@ metadata:
   labels:
     app: emailsender
 spec:
-  replicas: 1
+  replicas: {{ .Values.emailsender.replicas }}
   selector:
     matchLabels:
       app: emailsender
   strategy:
-    type: Recreate
+    type: RollingUpdate
   template:
     metadata:
       labels:

@@ -69,6 +69,7 @@ fleetshardSync:
 # - enabled flag is used to completely enable/disable email sender service
 emailsender:
   enabled: false
+  replicas: 3
   image:
     repo: "quay.io/app-sre/emailsender"
     tag: "main"
@@ -80,7 +81,7 @@ emailsender:
       cpu: "100m"
       memory: "512Mi"
     limits:
-      cpu: "500m"
+      cpu: "200m"
       memory: "512Mi"
 
 # See available parameters in charts/cloudwatch/values.yaml
