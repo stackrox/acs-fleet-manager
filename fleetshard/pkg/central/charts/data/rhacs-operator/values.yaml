@@ -3,7 +3,6 @@ operator:
   default:
     resources:
       limits:
-        cpu: "2"
         memory: "2Gi"
       requests:
         cpu: "1"
