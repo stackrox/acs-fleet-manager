@@ -23,7 +23,13 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9 as standard
 
-RUN microdnf install shadow-utils
+RUN microdnf install shadow-utils openssl git tar
+
+COPY /scripts/install-helm.sh /tmp/install-helm.sh
+RUN /tmp/install-helm.sh --version 3.15.0 && rm /tmp/install-helm.sh
+
+WORKDIR /charts
+COPY /fleetshard/pkg/central/charts/data/tenant-resources/. /charts/tenant-resources
 
 RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user

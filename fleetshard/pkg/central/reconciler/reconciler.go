@@ -7,9 +7,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/url"
+	"os"
+	"os/exec"
 	"reflect"
 	"sort"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -35,6 +40,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	helmtime "helm.sh/helm/v3/pkg/time"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,6 +60,7 @@ const (
 	PauseReconcileAnnotation = "stackrox.io/pause-reconcile"
 
 	helmReleaseName = "tenant-resources"
+	helmReleasePath = "/charts/tenant-resources"
 
 	centralPVCAnnotationKey   = "platform.stackrox.io/obsolete-central-pvc"
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
@@ -1554,24 +1561,74 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		return fmt.Errorf("obtaining values for resources chart: %w", err)
 	}
 
-	objs, err := charts.RenderToObjects(helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
+	valsYaml, err := yaml.Marshal(vals)
 	if err != nil {
-		return fmt.Errorf("rendering resources chart: %w", err)
+		return fmt.Errorf("marshaling values for resources chart: %w", err)
 	}
-	for _, obj := range objs {
-		if obj.GetNamespace() == "" {
-			obj.SetNamespace(remoteCentral.Metadata.Namespace)
-		}
-		err := charts.InstallOrUpdateChart(ctx, obj, r.client)
-		if err != nil {
-			return fmt.Errorf("failed to update central tenant object %w", err)
-		}
+
+	valuesFile, err := ioutil.TempFile("", "tenant-resources-values-*.yaml")
+	if err != nil {
+		return fmt.Errorf("creating temporary file for values: %w", err)
+	}
+
+	defer func() {
+		// Cleanup temporary helm values file
+		_ = valuesFile.Close()
+		_ = os.Remove(valuesFile.Name())
+	}()
+
+	if _, err := valuesFile.Write(valsYaml); err != nil {
+		return fmt.Errorf("writing values to temporary file: %w", err)
+	}
+
+	helmArgs := []string{
+		"upgrade",
+		"--install",
+		"--namespace", remoteCentral.Metadata.Namespace,
+		"--values", valuesFile.Name(),
+		helmReleaseName,
+		helmReleasePath,
+	}
+
+	helmCmd := exec.CommandContext(ctx, "helm", helmArgs...)
+	helmCmd.Stdout = glogWriter{}
+	errWriter := &strings.Builder{}
+	helmCmd.Stderr = io.MultiWriter(os.Stderr, errWriter)
+
+	if err := helmCmd.Run(); err != nil {
+		return fmt.Errorf("running helm upgrade: %w: %s", err, errWriter.String())
 	}
 
 	return nil
 }
 
 func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, remoteCentral *private.ManagedCentral) (bool, error) {
+
+	helmArgs := []string{
+		"uninstall",
+		"--namespace", remoteCentral.Metadata.Namespace,
+		"--wait",             // wait for all resources to be deleted
+		"--ignore-not-found", // treat "release not found" as a successful operation
+		"--timeout", "5m",
+		helmReleaseName,
+	}
+	helmCmd := exec.CommandContext(ctx, "helm", helmArgs...)
+	helmCmd.Stdout = glogWriter{}
+	errWriter := &strings.Builder{}
+	helmCmd.Stderr = io.MultiWriter(os.Stderr, errWriter)
+	if err := helmCmd.Run(); err != nil {
+		return false, fmt.Errorf("uninstalling helm chart: %w: %s", err, errWriter.String())
+	}
+
+	// todo: Uncomment this and delete the code below once all tenants have been migrated to using the helm client
+	// return true, nil
+
+	// We are migrating from a custom implementation of helm install/uninstall to using the helm client
+	// directly. There might be a case where a tenant (e.g. probe) has not yet been migrated to helm, and
+	// is in deleting state. In this case, the helm release secret will not exist. We leave the old deletion
+	// logic in place to handle this case, it will be safe to remove once all tenants have been migrated
+	// to using the helm client.
+
 	vals, err := r.chartValues(*remoteCentral)
 	if err != nil {
 		return false, fmt.Errorf("obtaining values for resources chart: %w", err)
@@ -1582,7 +1639,7 @@ func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, rem
 		return false, fmt.Errorf("rendering resources chart: %w", err)
 	}
 
-	waitForDelete := false
+	allObjectsDeleted := true
 	for _, obj := range objs {
 		key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
 		if key.Namespace == "" {
@@ -1598,7 +1655,7 @@ func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, rem
 			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
 		}
 		if out.GetDeletionTimestamp() != nil {
-			waitForDelete = true
+			allObjectsDeleted = false
 			continue
 		}
 		err = r.client.Delete(ctx, &out)
@@ -1606,7 +1663,14 @@ func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, rem
 			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
 		}
 	}
-	return !waitForDelete, nil
+	return allObjectsDeleted, nil
+}
+
+type glogWriter struct{}
+
+func (g glogWriter) Write(p []byte) (n int, err error) {
+	glog.Info(string(p))
+	return len(p), nil
 }
 
 func (r *CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
@@ -1982,3 +2046,14 @@ type fakeClock struct {
 func (f fakeClock) Now() time.Time {
 	return f.NowTime
 }
+
+type releaseInfo struct {
+	Revision    int           `json:"revision"`
+	Updated     helmtime.Time `json:"updated"`
+	Status      string        `json:"status"`
+	Chart       string        `json:"chart"`
+	AppVersion  string        `json:"app_version"`
+	Description string        `json:"description"`
+}
+
+type releaseHistory []releaseInfo
