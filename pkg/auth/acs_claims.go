@@ -1,4 +1,4 @@
-// Package auth ...
+// Package auth contains the authentication logic for the Fleet Manager API.
 package auth
 
 import (
@@ -8,20 +8,20 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 )
 
-// ACSClaims ...
+// ACSClaims claims of the JWT access token specific to ACS.
 type ACSClaims jwt.MapClaims
 
-// VerifyIssuer ...
+// VerifyIssuer verifies the issuer claim of the access token
 func (c *ACSClaims) VerifyIssuer(cmp string, req bool) bool {
 	return jwt.MapClaims(*c).VerifyIssuer(cmp, req)
 }
 
-// VerifyAudience wraps jwt.VerifyAudience
-func (c *ACSClaims) VerifyAudience(cmp string, req bool) bool {
-	return jwt.MapClaims(*c).VerifyAudience(cmp, req)
+// VerifyAudience verifies the audience claim of the access token.
+func (c *ACSClaims) VerifyAudience(cmp string) bool {
+	return jwt.MapClaims(*c).VerifyAudience(cmp, true)
 }
 
-// GetUsername ...
+// GetUsername returns the username claim of the token or error if the claim can't be found.
 func (c *ACSClaims) GetUsername() (string, error) {
 	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil },
 		(*c)[tenantUsernameClaim], (*c)[alternateTenantUsernameClaim]); idx != -1 {
@@ -33,7 +33,7 @@ func (c *ACSClaims) GetUsername() (string, error) {
 		tenantUsernameClaim, alternateTenantUsernameClaim)
 }
 
-// GetAccountID ...
+// GetAccountID returns the account ID claim of the access token.
 func (c *ACSClaims) GetAccountID() (string, error) {
 	if accountID, ok := (*c)[tenantAccountIDClaim].(string); ok {
 		return accountID, nil
@@ -54,7 +54,7 @@ func (c *ACSClaims) GetUserID() (string, error) {
 		tenantUserIDClaim, alternateTenantUserIDClaim)
 }
 
-// GetAlternateUserID ...
+// GetAlternateUserID returns the alternate user ID claim of the access token.
 func (c *ACSClaims) GetAlternateUserID() (string, error) {
 	if alternateSub, ok := (*c)[alternateSubClaim].(string); ok {
 		return alternateSub, nil
@@ -62,7 +62,7 @@ func (c *ACSClaims) GetAlternateUserID() (string, error) {
 	return "", fmt.Errorf("can't find %q attribute in claims", alternateSubClaim)
 }
 
-// GetOrgID ...
+// GetOrgID returns organization ID claim of the access token.
 func (c *ACSClaims) GetOrgID() (string, error) {
 	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil },
 		(*c)[tenantIDClaim], (*c)[alternateTenantIDClaim]); idx != -1 {
@@ -106,7 +106,7 @@ func (c *ACSClaims) GetAudience() ([]string, error) {
 	return aud, nil
 }
 
-// IsOrgAdmin ...
+// IsOrgAdmin returns true if the access token indicates that the owner of this token is an organization admin.
 func (c *ACSClaims) IsOrgAdmin() bool {
 	isOrgAdmin, _ := (*c)[tenantOrgAdminClaim].(bool)
 	return isOrgAdmin
