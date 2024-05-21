@@ -8,8 +8,8 @@ import (
 
 // EmailRequest represents API requests for sending email
 type EmailRequest struct {
-	Recipient string
-	Body      string
+	To         []string
+	RawMessage string
 }
 
 // SendEmailHandler handles sending email API endpoint
