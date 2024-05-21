@@ -2622,6 +2622,7 @@ func TestReconciler_ensureChartResourcesExist_labelsAndAnnotations(t *testing.T)
 		"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
 		"app.kubernetes.io/component":    "egress-proxy",
 		"app.kubernetes.io/name":         "central-tenant-resources",
+		"helm.sh/chart-name":             "central-tenant-resources",
 		"helm.sh/chart":                  "central-tenant-resources-0.0.0",
 	}, egressProxyDeployment.ObjectMeta.Labels)
 
