@@ -85,12 +85,25 @@ func (c *ACSClaims) GetSubject() (string, error) {
 }
 
 // GetAudience returns the audience claim of the token. It identifies the token consumer.
-func (c *ACSClaims) GetAudience() (interface{}, error) {
-	if aud, ok := (*c)[audienceClaim]; ok {
-		return aud, nil
+func (c *ACSClaims) GetAudience() ([]string, error) {
+	aud := make([]string, 0)
+	switch v := (*c)[audienceClaim].(type) {
+	case string:
+		aud = append(aud, v)
+	case []string:
+		aud = v
+	case []interface{}:
+		for _, a := range v {
+			vs, ok := a.(string)
+			if !ok {
+				return nil, fmt.Errorf("can't parse part of the audience claim: %q", a)
+			}
+			aud = append(aud, vs)
+		}
+	default:
+		return nil, fmt.Errorf("can't parse the audience claim: %q", v)
 	}
-
-	return "", fmt.Errorf("can't find %q attribute in claims", audienceClaim)
+	return aud, nil
 }
 
 // IsOrgAdmin ...

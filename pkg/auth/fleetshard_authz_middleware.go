@@ -65,25 +65,18 @@ func checkAudience(allowedAudiences []string) mux.MiddlewareFunc {
 				return
 			}
 
-			audienceAccepted := false
 			for _, audience := range allowedAudiences {
 				if claims.VerifyAudience(audience, true) {
-					audienceAccepted = true
+					next.ServeHTTP(writer, request)
 					break
 				}
 			}
 
-			if !audienceAccepted {
-				audience, _ := claims.GetAudience()
-				glog.Infof("none of the audiences (%q) in the access token is not in the list of allowed values [%s]",
-					audience, strings.Join(allowedAudiences, ","))
+			audience, _ := claims.GetAudience()
+			glog.Infof("none of the audiences [%s] in the access token is not in the list of allowed values [%s]",
+				strings.Join(audience, ","), strings.Join(allowedAudiences, ","))
 
-				shared.HandleError(request, writer, errors.NotFound(""))
-				return
-			}
-
-			next.ServeHTTP(writer, request)
-
+			shared.HandleError(request, writer, errors.NotFound(""))
 		})
 	}
 }
