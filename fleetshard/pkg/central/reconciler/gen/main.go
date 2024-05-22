@@ -90,7 +90,7 @@ func generateGVKsList(seen resourceMap) error {
 	builder.WriteString("\t\"k8s.io/apimachinery/pkg/runtime/schema\"\n")
 	builder.WriteString(")\n\n")
 
-	builder.WriteString("// tenantChartResourceGVKs is a list of GroupVersionKind that... \n")
+	builder.WriteString("// tenantChartResourceGVKs is a list of GroupVersionKind that...\n")
 	builder.WriteString("// - are present in the tenant-resources helm chart\n")
 	builder.WriteString("// - were present in a previous version of the chart. A comment will indicate that manual removal from the list is required.\n")
 
