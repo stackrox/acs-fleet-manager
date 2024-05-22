@@ -289,6 +289,12 @@ func TestACSClaims_Audience(t *testing.T) {
 			}),
 			expectError: true,
 		},
+		"should not fail when part of the claim can't be parsed": {
+			claims: ACSClaims(jwt.MapClaims{
+				audienceClaim: []interface{}{123, "test"},
+			}),
+			expectValues: []string{"test"},
+		},
 	}
 
 	for name, tt := range tests {

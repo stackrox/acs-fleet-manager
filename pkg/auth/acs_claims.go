@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 )
 
@@ -94,11 +95,12 @@ func (c *ACSClaims) GetAudience() ([]string, error) {
 		aud = v
 	case []interface{}:
 		for _, a := range v {
-			vs, ok := a.(string)
-			if !ok {
-				return nil, fmt.Errorf("can't parse part of the audience claim: %q", a)
+			if vs, ok := a.(string); !ok {
+				userID, _ := c.GetUserID()
+				glog.V(5).Infof("can't parse part of the audience claim for user %q: %q", userID, a)
+			} else {
+				aud = append(aud, vs)
 			}
-			aud = append(aud, vs)
 		}
 	default:
 		return nil, fmt.Errorf("can't parse the audience claim: %q", v)
