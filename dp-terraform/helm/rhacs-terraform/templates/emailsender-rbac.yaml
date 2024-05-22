@@ -1,0 +1,25 @@
+{{- if eq .Values.emailsender.enabled false }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: emailsender
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ printf "%s-%s" "emailsender-rb" .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: emailsender-role
+subjects:
+  - kind: ServiceAccount
+    name: emailsender
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: emailsender-role
+{{- end }}
