@@ -220,8 +220,8 @@ func Test_GetClusterDNS(t *testing.T) {
 					},
 				}
 				mocket.Catcher.Reset().
-					NewMock().WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
-					WithArgs(testClusterID).
+					NewMock().WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1 AND "clusters"."deleted_at" IS NULL ORDER BY "clusters"."id" LIMIT $2`).
+					WithArgs(testClusterID, int64(1)).
 					WithReply(res)
 			},
 			wantErr: false,
@@ -329,8 +329,8 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 				mockedResponse := []map[string]interface{}{{"cluster_id": testClusterID}}
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
-					WithArgs(testClusterID).
+					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1 AND "clusters"."deleted_at" IS NULL ORDER BY "clusters"."id" LIMIT $2`).
+					WithArgs(testClusterID, int64(1)).
 					WithReply(mockedResponse)
 			},
 		},
@@ -956,7 +956,7 @@ func Test_Cluster_FindNonEmptyClusterByID(t *testing.T) {
 			want: &api.Cluster{ClusterID: testClusterID, Meta: api.Meta{CreatedAt: now, UpdatedAt: now, DeletedAt: gorm.DeletedAt{Valid: true}}},
 			setupFn: func() {
 				mockedResponse := []map[string]interface{}{{"cluster_id": testClusterID, "created_at": now, "updated_at": now, "deleted_at": gorm.DeletedAt{Valid: true}.Time}}
-				query := `SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1 AND cluster_id IN (SELECT "cluster_id" FROM "central_requests" WHERE (status != $2 AND cluster_id = $3) AND "central_requests"."deleted_at" IS NULL) AND "clusters"."deleted_at" IS NULL ORDER BY "clusters"."id" LIMIT 1%`
+				query := `SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1 AND cluster_id IN (SELECT "cluster_id" FROM "central_requests" WHERE (status != $2 AND cluster_id = $3) AND "central_requests"."deleted_at" IS NULL) AND "clusters"."deleted_at" IS NULL ORDER BY "clusters"."id" LIMIT $4%`
 				mocket.Catcher.Reset().NewMock().WithQuery(query).WithReply(mockedResponse)
 			},
 		},
@@ -1587,8 +1587,8 @@ func Test_ClusterService_GetExternalID(t *testing.T) {
 				mockedResponse := []map[string]interface{}{{"external_id": "test-cluster-id"}}
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
-					WithArgs(testClusterID).
+					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1 AND "clusters"."deleted_at" IS NULL ORDER BY "clusters"."id" LIMIT $2`).
+					WithArgs(testClusterID, int64(1)).
 					WithReply(mockedResponse)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -1608,8 +1608,8 @@ func Test_ClusterService_GetExternalID(t *testing.T) {
 				mockedResponse := []map[string]interface{}{{"external_id": ""}}
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
-					WithArgs(testClusterID).
+					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1 AND "clusters"."deleted_at" IS NULL ORDER BY "clusters"."id" LIMIT $2`).
+					WithArgs(testClusterID, int64(1)).
 					WithReply(mockedResponse)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
