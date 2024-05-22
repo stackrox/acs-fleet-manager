@@ -52,7 +52,6 @@ DOCKER_CONFIG ?= "${HOME}/.docker"
 # Default Variables
 ENABLE_OCM_MOCK ?= true
 OCM_MOCK_MODE ?= emulate-server
-JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
 GITOPS_CONFIG_FILE ?= ${PROJECT_PATH}/dev/config/gitops-config.yaml
 DATAPLANE_CLUSTER_CONFIG_FILE ?= ${PROJECT_PATH}/dev/config/dataplane-cluster-configuration.yaml
 PROVIDERS_CONFIG_FILE ?= ${PROJECT_PATH}/dev/config/provider-configuration.yaml
@@ -444,7 +443,9 @@ code/fix:
 .PHONY: code/fix
 
 run: fleet-manager db/migrate
-	./fleet-manager serve --dataplane-cluster-config-file $(DATAPLANE_CLUSTER_CONFIG_FILE)
+	./fleet-manager serve \
+		--dataplane-cluster-config-file $(DATAPLANE_CLUSTER_CONFIG_FILE) \
+		--dataplane-oidc-issuers-file ./dev/config/dataplane-oidc-issuers.yaml
 .PHONY: run
 
 # Run Swagger and host the api docs
@@ -713,7 +714,7 @@ deploy/db:
 # deploys the secrets required by the service to an OpenShift cluster
 deploy/secrets:
 	@oc process -f ./templates/secrets-template.yml --local \
-		-p DATABASE_HOST="fleet-manager-db.$(NAMESPACE).svc.cluster.local" \
+		-p DATABASE_HOST="fleet-manager-db" \
 		-p OCM_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-service.clientId' ] && [ -z '${OCM_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-service.clientId || echo '${OCM_SERVICE_CLIENT_ID}')" \
 		-p OCM_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-service.clientSecret' ] && [ -z '${OCM_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-service.clientSecret || echo '${OCM_SERVICE_CLIENT_SECRET}')" \
 		-p OCM_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-service.token' ] && [ -z '${OCM_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-service.token || echo '${OCM_SERVICE_TOKEN}')" \
@@ -763,7 +764,7 @@ endif
 	| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/gitops
 
-# deploy service via templates to an OpenShift cluster
+# deploy service via templates to a development Kubernetes/OpenShift cluster
 deploy/service: FLEET_MANAGER_IMAGE ?= $(SHORT_IMAGE_REF)
 deploy/service: IMAGE_TAG ?= $(image_tag)
 deploy/service: FLEET_MANAGER_ENV ?= "development"
@@ -773,7 +774,6 @@ deploy/service: ENABLE_CENTRAL_LIFE_SPAN ?= "false"
 deploy/service: CENTRAL_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
 deploy/service: OCM_ADDON_SERVICE_URL ?= "https://api.stage.openshift.com"
-deploy/service: TOKEN_ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
 deploy/service: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
 deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
 deploy/service: ENABLE_DENY_LIST ?= "false"
@@ -813,8 +813,6 @@ endif
 		-p OCM_URL="$(OCM_URL)" \
 		-p OCM_ADDON_SERVICE_URL="$(OCM_ADDON_SERVICE_URL)" \
 		-p AMS_URL="${AMS_URL}" \
-		-p JWKS_URL="$(JWKS_URL)" \
-		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
 		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
 		-p OBSERVATORIUM_RHSSO_GATEWAY="${OBSERVATORIUM_RHSSO_GATEWAY}" \
 		-p OBSERVATORIUM_RHSSO_REALM="${OBSERVATORIUM_RHSSO_REALM}" \

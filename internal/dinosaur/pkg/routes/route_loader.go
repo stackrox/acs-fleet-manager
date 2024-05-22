@@ -67,7 +67,7 @@ func NewRouteLoader(s options) environments.RouteLoader {
 
 // AddRoutes ...
 func (s *options) AddRoutes(mainRouter *mux.Router) error {
-	basePath := fmt.Sprintf("%s/%s", routes.APIEndpoint, routes.DinosaursFleetManagementAPIPrefix)
+	basePath := fmt.Sprintf("%s/%s", routes.APIEndpoint, routes.FleetManagementAPIPrefix)
 	err := s.buildAPIBaseRouter(mainRouter, basePath, "fleet-manager.yaml")
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
 	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(
-		append(s.IAMConfig.AdditionalSSOIssuers.GetURIs(), s.ServerConfig.TokenIssuerURL), errors.ErrorUnauthenticated)
+		append(s.IAMConfig.AdditionalSSOIssuers.GetURIs(), s.IAMConfig.RedhatSSORealm.ValidIssuerURI), errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
 
 	// base path.
@@ -157,8 +157,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		Name(logger.NewLogEvent("get-federate-metrics", "get federate metrics by id").ToString()).
 		Methods(http.MethodGet)
 	apiV1MetricsFederateRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
-		append(s.IAMConfig.AdditionalSSOIssuers.GetURIs(), s.ServerConfig.TokenIssuerURL,
-			s.IAMConfig.RedhatSSORealm.ValidIssuerURI), errors.ErrorUnauthenticated))
+		append(s.IAMConfig.AdditionalSSOIssuers.GetURIs(), s.IAMConfig.RedhatSSORealm.ValidIssuerURI), errors.ErrorUnauthenticated))
 	apiV1MetricsFederateRouter.Use(requireOrgID)
 	apiV1MetricsFederateRouter.Use(authorizeMiddleware)
 
@@ -200,7 +199,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	// /agent-clusters/{id}
 	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
 	dataPlaneCentralHandler := handlers.NewDataPlaneDinosaurHandler(s.DataPlaneCentralService, s.Central, s.ManagedCentralPresenter, s.GitopsProvider)
-	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
+	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix(routes.PrivateAPIPrefix).Subrouter()
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).
 		Name(logger.NewLogEvent("get-dataplane-cluster-config", "get dataplane cluster config by id").ToString()).
 		Methods(http.MethodGet)
@@ -225,7 +224,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		s.IAMConfig.RedhatSSORealm.ValidIssuerURI, s.FleetShardAuthZConfig)
 
 	adminCentralHandler := handlers.NewAdminCentralHandler(s.Central, s.AccountService, s.ProviderConfig, s.Telemetry)
-	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
+	adminRouter := apiV1Router.PathPrefix(routes.AdminAPIPrefix).Subrouter()
 
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
 		[]string{s.IAMConfig.InternalSSORealm.ValidIssuerURI}, errors.ErrorNotFound))
