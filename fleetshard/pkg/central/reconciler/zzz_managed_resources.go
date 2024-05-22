@@ -5,9 +5,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+// tenantChartResourceGVKs is a list of GroupVersionKind that...
+// - are present in the tenant-resources helm chart
+// - were present in a previous version of the chart. A comment will indicate that manual removal from the list is required.
 var tenantChartResourceGVKs = []schema.GroupVersionKind{
 	schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ConfigMap"},
+	schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"},
 	schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
 	schema.GroupVersionKind{Group: "networking.k8s.io", Version: "v1", Kind: "NetworkPolicy"},
-	schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"},
 }
