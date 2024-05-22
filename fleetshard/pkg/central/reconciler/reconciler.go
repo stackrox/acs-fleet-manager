@@ -1616,7 +1616,7 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 
 			// Re-check that the helm label is present & namespace matches.
 			// Failsafe against some potential k8s-client bug when listing objects with a label selector
-			if existingObject.GetLabels() == nil || existingObject.GetLabels()[helmChartNameLabel] != r.resourcesChart.Name() || existingObject.GetNamespace() != remoteCentral.Metadata.Namespace {
+			if !r.isTenantResourcesChartObject(existingObject, &remoteCentral) {
 				continue
 			}
 
@@ -1627,7 +1627,7 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 			// The object exists but it should not. Delete it.
 			if err := r.client.Delete(ctx, existingObject); err != nil {
 				if !apiErrors.IsNotFound(err) {
-					return fmt.Errorf("failed to delete central tenant object %w", err)
+					return fmt.Errorf("failed to delete central tenant object %v %q in namespace %s: %w", gvk, existingObject.GetName(), remoteCentral.Metadata.Namespace, err)
 				}
 			}
 		}
@@ -1655,7 +1655,7 @@ func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, rem
 			ctrlClient.InNamespace(remoteCentral.Metadata.Namespace),
 			ctrlClient.MatchingLabels{helmChartNameLabel: r.resourcesChart.Name()},
 		); err != nil {
-			return false, fmt.Errorf("failed to list tenant resources chart objects %v: %w", gvk, err)
+			return false, fmt.Errorf("failed to list tenant resources chart objects %v in namespace %s: %w", gvk, remoteCentral.Metadata.Namespace, err)
 		}
 
 		for _, existingObject := range existingObjects.Items {
@@ -1663,7 +1663,7 @@ func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, rem
 
 			// Re-check that the helm label is present & namespace matches.
 			// Failsafe against some potential k8s-client bug when listing objects with a label selector
-			if existingObject.GetLabels() == nil || existingObject.GetLabels()[helmChartNameLabel] != r.resourcesChart.Name() || existingObject.GetNamespace() != remoteCentral.Metadata.Namespace {
+			if !r.isTenantResourcesChartObject(existingObject, remoteCentral) {
 				continue
 			}
 
@@ -1674,13 +1674,20 @@ func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, rem
 
 			if err := r.client.Delete(ctx, existingObject); err != nil {
 				if !apiErrors.IsNotFound(err) {
-					return false, fmt.Errorf("failed to delete central tenant object %w", err)
+					return false, fmt.Errorf("failed to delete central tenant object %v in namespace %q: %w", gvk, remoteCentral.Metadata.Namespace, err)
 				}
 			}
 		}
 	}
 
 	return allObjectsDeleted, nil
+}
+
+func (r *CentralReconciler) isTenantResourcesChartObject(existingObject *unstructured.Unstructured, remoteCentral *private.ManagedCentral) bool {
+	return existingObject.GetLabels() != nil &&
+		existingObject.GetLabels()[helmChartNameLabel] == r.resourcesChart.Name() &&
+		existingObject.GetLabels()[managedByLabelKey] == labelManagedByFleetshardValue &&
+		existingObject.GetNamespace() == remoteCentral.Metadata.Namespace
 }
 
 func (r *CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
