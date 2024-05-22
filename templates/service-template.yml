@@ -929,11 +929,11 @@ objects:
               mountPath: /config/jwks-file-static.json
               subPath: jwks-file-static.json
             - name: fleet-manager-fleetshard-authz-config
-              mountPath: /config/fleetshard-authz-org-ids-development.yaml
-              subPath: fleetshard-authz-org-ids-development.yaml
+              mountPath: /config/fleetshard-authz-development.yaml
+              subPath: fleetshard-authz-development.yaml
             - name: fleet-manager-fleetshard-authz-config
-              mountPath: /config/fleetshard-authz-org-ids-prod.yaml
-              subPath: fleetshard-authz-org-ids-prod.yaml
+              mountPath: /config/fleetshard-authz-prod.yaml
+              subPath: fleetshard-authz-prod.yaml
             - name: fleet-manager-admin-authz-config
               mountPath: /config/admin-authz-roles-dev.yaml
               subPath: admin-authz-roles-dev.yaml
