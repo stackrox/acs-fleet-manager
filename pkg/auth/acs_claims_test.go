@@ -242,3 +242,68 @@ func TestACSClaims_IsOrgAdmin(t *testing.T) {
 		})
 	}
 }
+
+func TestACSClaims_Audience(t *testing.T) {
+	tests := map[string]struct {
+		claims       ACSClaims
+		expectValues []string
+		expectError  bool
+	}{
+		"should parse the audience claim as string": {
+			claims: ACSClaims(jwt.MapClaims{
+				audienceClaim: "test",
+			}),
+			expectValues: []string{"test"},
+		},
+		"should parse the audience claim as an array of strings": {
+			claims: ACSClaims(jwt.MapClaims{
+				audienceClaim: []string{"test1", "test2"},
+			}),
+			expectValues: []string{"test1", "test2"},
+		},
+		"should parse the audience claim as an array of interfaces": {
+			claims: ACSClaims(jwt.MapClaims{
+				audienceClaim: []interface{}{"test"},
+			}),
+			expectValues: []string{"test"},
+		},
+		"should return error if there's no claim": {
+			claims:      ACSClaims(jwt.MapClaims{}),
+			expectError: true,
+		},
+		"should return empty slice if the claim is empty array": {
+			claims: ACSClaims(jwt.MapClaims{
+				audienceClaim: []string{},
+			}),
+			expectValues: []string{},
+		},
+		"should return empty slice if the claim is empty interface": {
+			claims: ACSClaims(jwt.MapClaims{
+				audienceClaim: []interface{}{},
+			}),
+			expectValues: []string{},
+		},
+		"should return error if can't parse the claim": {
+			claims: ACSClaims(jwt.MapClaims{
+				audienceClaim: 123,
+			}),
+			expectError: true,
+		},
+		"should not fail when part of the claim can't be parsed": {
+			claims: ACSClaims(jwt.MapClaims{
+				audienceClaim: []interface{}{123, "test"},
+			}),
+			expectValues: []string{"test"},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			audience, err := tt.claims.GetAudience()
+			assert.Equal(t, tt.expectError, err != nil)
+			if !tt.expectError {
+				assert.Equal(t, tt.expectValues, audience)
+			}
+		})
+	}
+}

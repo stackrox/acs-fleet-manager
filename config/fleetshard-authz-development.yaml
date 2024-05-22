@@ -1,0 +1,15 @@
+---
+# A list of org_id's that allow access to the internal API of the fleet manager.
+allowed_org_ids:
+  # RH ACS Organization (returned for personal tokens obtained by ocm token).
+  - "11009103"
+  # RHACS Managed Service Org for staging (Entry `RHACS Managed Service Org for AWS Billing` in Bitwarden).
+  - "16064548"
+  # ACS RH SSO Org Prod
+  - "16134752"
+  # ACS RH SSO ORG Development
+  - "16155304"
+allowed_subjects:
+  - "system:serviceaccount:rhacs:fleetshard-sync"
+allowed_audiences:
+  - "acs-fleet-manager-private-api"

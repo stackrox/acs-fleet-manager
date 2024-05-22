@@ -24,6 +24,8 @@ var (
 
 	// Sub claim in old format.
 	alternateSubClaim = "deprecated_sub"
+
+	audienceClaim = "aud"
 )
 
 // ContextConfig ...

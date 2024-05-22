@@ -9,34 +9,36 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// AllowedOrgIDs ...
-type AllowedOrgIDs []string
+// ClaimValues a list of claim values that a fleetshard access token may contain
+type ClaimValues []string
 
-// IsOrgIDAllowed ...
-func (allowedOrgIDs AllowedOrgIDs) IsOrgIDAllowed(orgID string) bool {
-	return arrays.FindFirstString(allowedOrgIDs, func(allowedOrgID string) bool {
-		return orgID == allowedOrgID
+// Contains returns true if the specified value is present in the list
+func (v ClaimValues) Contains(value string) bool {
+	return arrays.FindFirstString(v, func(allowedValue string) bool {
+		return value == allowedValue
 	}) != -1
 }
 
 // FleetShardAuthZConfig ...
 type FleetShardAuthZConfig struct {
-	Enabled           bool
-	AllowedOrgIDs     AllowedOrgIDs
-	AllowedOrgIDsFile string
+	Enabled          bool        `yaml:"-"`
+	File             string      `yaml:"-"`
+	AllowedOrgIDs    ClaimValues `yaml:"allowed_org_ids"`
+	AllowedSubjects  ClaimValues `yaml:"allowed_subjects"`
+	AllowedAudiences ClaimValues `yaml:"allowed_audiences"`
 }
 
 // NewFleetShardAuthZConfig ...
 func NewFleetShardAuthZConfig() *FleetShardAuthZConfig {
 	return &FleetShardAuthZConfig{
-		Enabled:           true,
-		AllowedOrgIDsFile: "config/fleetshard-authz-org-ids-prod.yaml",
+		Enabled: true,
+		File:    "config/fleetshard-authz-prod.yaml",
 	}
 }
 
 // AddFlags ...
 func (c *FleetShardAuthZConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.AllowedOrgIDsFile, "fleetshard-authz-config-file", c.AllowedOrgIDsFile,
+	fs.StringVar(&c.File, "fleetshard-authz-config-file", c.File,
 		"Fleetshard authZ middleware configuration file containing a list of allowed org IDs")
 	fs.BoolVar(&c.Enabled, "enable-fleetshard-authz", c.Enabled, "Enable fleetshard authZ "+
 		"via the list of allowed org IDs")
@@ -45,19 +47,19 @@ func (c *FleetShardAuthZConfig) AddFlags(fs *pflag.FlagSet) {
 // ReadFiles ...
 func (c *FleetShardAuthZConfig) ReadFiles() error {
 	if c.Enabled {
-		return readFleetShardAuthZConfigFile(c.AllowedOrgIDsFile, &c.AllowedOrgIDs)
+		return readFleetShardAuthZConfigFile(c.File, c)
 	}
 
 	return nil
 }
 
-func readFleetShardAuthZConfigFile(file string, val *AllowedOrgIDs) error {
+func readFleetShardAuthZConfigFile(file string, config *FleetShardAuthZConfig) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("reading FleedShard AuthZ config: %w", err)
 	}
 
-	err = yaml.UnmarshalStrict([]byte(fileContents), val)
+	err = yaml.UnmarshalStrict([]byte(fileContents), config)
 	if err != nil {
 		return fmt.Errorf("unmarshalling FleedShard AuthZ config: %w", err)
 	}

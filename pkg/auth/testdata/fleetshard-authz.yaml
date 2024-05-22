@@ -1,0 +1,7 @@
+---
+allowed_org_ids:
+  - "12345678"
+allowed_subjects:
+  - "test-sub"
+allowed_audiences:
+  - "test-aud"
