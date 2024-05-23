@@ -12,5 +12,5 @@ func SetupRoutes(router *mux.Router) {
 	router.Use(loggingMiddleware.RequestLoggingMiddleware, EnsureJSONContentType)
 
 	router.HandleFunc("/health", HealthCheckHandler).Methods("GET")
-	router.HandleFunc("/api/rhacs/v1/acscsemail", SendEmailHandler).Methods("POST")
+	router.HandleFunc("/api/v1/acscsemail", SendEmailHandler).Methods("POST")
 }
