@@ -17,6 +17,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"io/fs"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"os"
@@ -220,7 +221,7 @@ func findResourceGVK(resource string) (schema.GroupVersionKind, bool, error) {
 		}
 	}
 	if len(apiVersion) == 0 || len(kind) == 0 {
-		return schema.GroupVersionKind{}, false, nil
+		return schema.GroupVersionKind{}, false, errors.New("apiVersion or kind not found")
 	}
 
 	groupVersion, err := schema.ParseGroupVersion(apiVersion)
