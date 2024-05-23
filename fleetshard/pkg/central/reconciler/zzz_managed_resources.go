@@ -12,5 +12,6 @@ var tenantChartResourceGVKs = []schema.GroupVersionKind{
 	schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ConfigMap"},
 	schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"},
 	schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
+	schema.GroupVersionKind{Group: "autoscaling.k8s.io", Version: "v1", Kind: "VerticalPodAutoscaler"},
 	schema.GroupVersionKind{Group: "networking.k8s.io", Version: "v1", Kind: "NetworkPolicy"},
 }

@@ -28,6 +28,9 @@ tenantResources:
           memory: 275Mi
         limits:
           memory: 275Mi
+    verticalPodAutoscalers:
+      central:
+        enabled: true
 centrals:
   overrides:
     - instanceIds:
