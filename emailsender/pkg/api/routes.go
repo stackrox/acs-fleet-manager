@@ -2,13 +2,15 @@ package api
 
 import (
 	"github.com/gorilla/mux"
+
+	loggingMiddleware "github.com/stackrox/acs-fleet-manager/pkg/server/logging"
 )
 
 // SetupRoutes configures API route mapping
 func SetupRoutes(router *mux.Router) {
 	// add middlewares
-	router.Use(LogRequest, EnsureJSONContentType)
+	router.Use(loggingMiddleware.RequestLoggingMiddleware, EnsureJSONContentType)
 
 	router.HandleFunc("/health", HealthCheckHandler).Methods("GET")
-	router.HandleFunc("/v1/acscsemail", SendEmailHandler).Methods("POST")
+	router.HandleFunc("/api/rhacs/v1/acscsemail", SendEmailHandler).Methods("POST")
 }
