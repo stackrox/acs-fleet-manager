@@ -143,8 +143,8 @@ func Test_dinosaurService_Get(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "central_requests" WHERE id = $1 AND owner = $2`).
-					WithArgs(testID, testUser).
+					WithQuery(`SELECT * FROM "central_requests" WHERE id = $1 AND owner = $2 AND "central_requests"."deleted_at" IS NULL ORDER BY "central_requests"."id" LIMIT $3`).
+					WithArgs(testID, testUser, int64(1)).
 					WithReply(converters.ConvertDinosaurRequest(buildCentralRequest(nil)))
 			},
 		},
@@ -190,8 +190,9 @@ func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 
 	m := mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "central_requests" ` +
 		`SET "deletion_timestamp"=$1,"status"=$2,"updated_at"=$3 WHERE ` +
-		`(expired_at IS NOT NULL AND expired_at < $4 OR instance_type = $5 AND created_at <= $6) ` +
-		`AND status NOT IN ($7,$8) AND "central_requests"."deleted_at" IS NULL`).
+		`(expired_at IS NOT NULL AND expired_at < $4 OR instance_type = $5 AND created_at <= $6 ` +
+		`AND (expired_at IS NOT NULL AND expired_at < $7 OR instance_type = $8 AND created_at <= $9) ` +
+		`AND status NOT IN ($10,$11)) AND "central_requests"."deleted_at" IS NULL`).
 		OneTime()
 
 	svcErr := k.DeprovisionExpiredDinosaurs()
@@ -275,10 +276,10 @@ func Test_dinosaurService_ChangeBillingParameters(t *testing.T) {
 	})
 
 	catcher := mocket.Catcher.Reset()
-	m0 := catcher.NewMock().WithQuery(`SELECT * FROM "central_requests" ` +
-		`WHERE id = $1 AND "central_requests"."deleted_at" IS NULL ` +
-		`ORDER BY "central_requests"."id" LIMIT 1`).
-		OneTime().WithArgs(testID).
+	m0 := catcher.NewMock().WithQuery(`SELECT * FROM "central_requests" `+
+		`WHERE id = $1 AND "central_requests"."deleted_at" IS NULL `+
+		`ORDER BY "central_requests"."id" LIMIT $2`).
+		OneTime().WithArgs(testID, int64(1)).
 		WithReply(converters.ConvertDinosaurRequest(central))
 	m1 := catcher.NewMock().WithQuery(`UPDATE "central_requests" ` +
 		`SET "updated_at"=$1,"deleted_at"=$2,"region"=$3,"cluster_id"=$4,` +
