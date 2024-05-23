@@ -179,7 +179,7 @@ func findGVKsInChart(chartDir string, seen resourceMap) error {
 		}
 
 		if err := findGVKsInFile(fileBytes, seen); err != nil {
-			return err
+			return fmt.Errorf("failed to parse file %q: %w", path, err)
 		}
 
 		return nil
@@ -198,8 +198,11 @@ func findGVKsInFile(fileBytes []byte, seen resourceMap) error {
 	resources := splitFileIntoResources(fileBytes)
 	for _, resource := range resources {
 		gvk, ok, err := findResourceGVK(resource)
-		if err != nil || !ok {
-			return err
+		if err != nil {
+			return fmt.Errorf("failed to parse resource: %w", err)
+		}
+		if !ok {
+			return errors.New("resource GVK could not be parsed")
 		}
 		seen[gvk] = true
 	}
@@ -221,7 +224,7 @@ func findResourceGVK(resource string) (schema.GroupVersionKind, bool, error) {
 		}
 	}
 	if len(apiVersion) == 0 || len(kind) == 0 {
-		return schema.GroupVersionKind{}, false, errors.New("apiVersion or kind not found")
+		return schema.GroupVersionKind{}, false, nil
 	}
 
 	groupVersion, err := schema.ParseGroupVersion(apiVersion)
