@@ -15,6 +15,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/emailsender/config"
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/metrics"
 )
 
@@ -40,11 +41,7 @@ func main() {
 
 	// base router
 	router := mux.NewRouter()
-
-	// example handler
-	router.HandleFunc("/test", func(rw http.ResponseWriter, req *http.Request) {
-		glog.Info("called /test endpoint")
-	})
+	api.SetupRoutes(router)
 
 	server := http.Server{Addr: cfg.ServerAddress, Handler: router}
 
