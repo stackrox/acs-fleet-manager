@@ -68,7 +68,7 @@ func checkAudience(allowedAudiences []string) mux.MiddlewareFunc {
 			for _, audience := range allowedAudiences {
 				if claims.VerifyAudience(audience) {
 					next.ServeHTTP(writer, request)
-					break
+					return
 				}
 			}
 
