@@ -1,0 +1,14 @@
+# For development we use ocm tokens issued by RH SSO to authenticate to emailsender API
+# for prod we use serviceaccount issued by the OSD cluster for centrals
+# this file should be replaced by a secret/configmap mounted to emailsender
+# with the fitting values per cluster through the fleetshard addon
+---
+jwks_urls:
+  - "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
+allowed_issuers:
+  - "https://sso.redhat.com/auth/realms/redhat-external"
+allowed_org_ids:
+  # RH ACS Organization (returned for personal tokens obtained by ocm token).
+  - "11009103"
+allowed_audiences:
+  - "cloud-services"

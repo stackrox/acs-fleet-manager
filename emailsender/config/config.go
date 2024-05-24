@@ -2,9 +2,13 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/caarlos0/env/v6"
+	"gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/stackrox/rox/pkg/errorhelpers"
 )
 
@@ -16,6 +20,8 @@ type Config struct {
 	HTTPSCertFile  string `env:"HTTPS_CERT_FILE" envDefault:""`
 	HTTPSKeyFile   string `env:"HTTPS_KEY_FILE" envDefault:""`
 	MetricsAddress string `env:"METRICS_ADDRESS" envDefault:":9090"`
+	AuthConfigFile string `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
+	AuthConfig     AuthConfig
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.
@@ -37,8 +43,39 @@ func GetConfig() (*Config, error) {
 		}
 	}
 
+	auth := &AuthConfig{file: c.AuthConfigFile}
+	if err := auth.ReadFile(); err != nil {
+		configErrors.AddError(err)
+	}
+
+	c.AuthConfig = *auth
+
 	if cfgErr := configErrors.ToError(); cfgErr != nil {
 		return nil, errors.Wrap(cfgErr, "invalid configuration settings")
 	}
 	return &c, nil
+}
+
+// AuthConfig is the configuration for authn/authz for the emailsender
+type AuthConfig struct {
+	file             string
+	JwksURLs         []string `yaml:"jwks_urls"`
+	AllowedIssuer    []string `yaml:"allowed_issuers"`
+	AllowedOrgIDs    []string `yaml:"allowed_org_ids"`
+	AllowedAudiences []string `yaml:"allowed_audiences"`
+}
+
+// ReadFile reads the config
+func (c *AuthConfig) ReadFile() error {
+	fileContents, err := shared.ReadFile(c.file)
+	if err != nil {
+		return fmt.Errorf("failed to read emailsender authz config: %w", err)
+	}
+
+	err = yaml.UnmarshalStrict([]byte(fileContents), c)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal emailsender authz config: %w", err)
+	}
+
+	return nil
 }

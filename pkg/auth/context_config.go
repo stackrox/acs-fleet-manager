@@ -26,6 +26,7 @@ var (
 	alternateSubClaim = "deprecated_sub"
 
 	audienceClaim = "aud"
+	issuerClaim   = "iss"
 )
 
 // ContextConfig ...
