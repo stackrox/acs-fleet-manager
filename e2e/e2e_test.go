@@ -224,6 +224,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should backup important secrets in FM database", func() {
+			Skip("TODO(ROX-23709): Change private API client authentication")
 			expectedSecrets := k8s.NewSecretBackup(k8sClient, false).GetWatchedSecrets()
 			Eventually(assertStoredSecrets(ctx, client, centralRequestID, expectedSecrets)).
 				WithTimeout(waitTimeout).
