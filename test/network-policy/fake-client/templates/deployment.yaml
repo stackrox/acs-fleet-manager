@@ -1,0 +1,41 @@
+# templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Release.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      containers:
+        - name: {{ .Values.name }}
+          image: curlimages/curl
+          command: ["sh", "-c"]
+          args: [
+            "while true; do \
+            response=$(curl --connect-timeout 10 -sf -w '%{http_code}' {{ .Values.service.host }}:{{ .Values.service.port }} -o /dev/null); \
+            status=$?; \
+            if [ $status -ne 0 ]; then \
+              echo \"Connection failed with error $status, retrying in 1 second...\"; \
+              rm -rf /tmp/ready; \
+              sleep 1; \
+              continue; \
+            fi; \
+            echo 'Connection successful'; \
+            touch /tmp/ready; \
+            sleep 1; \
+          done"
+          ]
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/ready
+            periodSeconds: 1

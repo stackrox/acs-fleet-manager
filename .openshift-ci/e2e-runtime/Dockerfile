@@ -35,6 +35,11 @@ RUN curl -L --retry 10 --silent --show-error --fail -o "/usr/local/bin/ocm" \
     "https://github.com/openshift-online/ocm-cli/releases/download/v${OCM_VERSION}/ocm-linux-amd64" && \
     chmod +x /usr/local/bin/ocm
 
+RUN curl -L --retry 10 --silent --show-error --fail -o /usr/local/bin/helm \
+    "https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64" && \
+    chmod +x /usr/local/bin/helm && \
+    helm version
+
 RUN mkdir /src $GOPATH
 WORKDIR /src
 

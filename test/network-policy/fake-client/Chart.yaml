@@ -1,0 +1,6 @@
+# Chart.yaml
+apiVersion: v2
+name: fake-client
+description: A Helm chart for deploying a configurable client deployment, for testing connectivity
+version: 0.1.0
+appVersion: "1.0"
