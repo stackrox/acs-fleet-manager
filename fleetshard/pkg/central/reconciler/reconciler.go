@@ -1565,6 +1565,10 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		return fmt.Errorf("obtaining values for resources chart: %w", err)
 	}
 
+	if features.PrintTenantResourcesChartValues.Enabled() {
+		glog.Infof("Tenant resources for central %q: %s", remoteCentral.Metadata.Name, vals)
+	}
+
 	objs, err := charts.RenderToObjects(helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
 	if err != nil {
 		return fmt.Errorf("rendering resources chart: %w", err)
@@ -1589,9 +1593,11 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		labels[helmChartLabelKey] = helmChartLabelValue
 		labels[helmChartNameLabel] = r.resourcesChart.Name()
 		obj.SetLabels(labels)
-		err := charts.InstallOrUpdateChart(ctx, obj, r.client)
-		if err != nil {
-			return fmt.Errorf("failed to update central tenant object %w", err)
+
+		objectKey := ctrlClient.ObjectKey{Namespace: remoteCentral.Metadata.Namespace, Name: obj.GetName()}
+		glog.Infof("Upserting object %v of type %v", objectKey, obj.GroupVersionKind())
+		if err := charts.InstallOrUpdateChart(ctx, obj, r.client); err != nil {
+			return fmt.Errorf("Failed to upsert object %v of type %v: %w", objectKey, obj.GroupVersionKind(), err)
 		}
 	}
 
@@ -1617,14 +1623,17 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 			// Re-check that the helm label is present & namespace matches.
 			// Failsafe against some potential k8s-client bug when listing objects with a label selector
 			if !r.isTenantResourcesChartObject(existingObject, &remoteCentral) {
+				glog.Infof("Object %v of type %v is not managed by the resources chart", existingObject.GetName(), gvk)
 				continue
 			}
 
 			if existingObject.GetDeletionTimestamp() != nil {
+				glog.Infof("Object %v of type %v is already being deleted", existingObject.GetName(), gvk)
 				continue
 			}
 
 			// The object exists but it should not. Delete it.
+			glog.Infof("Deleting object %v of type %v", existingObject.GetName(), gvk)
 			if err := r.client.Delete(ctx, existingObject); err != nil {
 				if !apiErrors.IsNotFound(err) {
 					return fmt.Errorf("failed to delete central tenant object %v %q in namespace %s: %w", gvk, existingObject.GetName(), remoteCentral.Metadata.Namespace, err)
