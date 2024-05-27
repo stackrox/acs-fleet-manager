@@ -185,7 +185,10 @@ func (ic *IAMConfig) ReadFiles() error {
 	if err := readIssuersFile(ic.DataPlaneOIDCIssuers.File, ic.DataPlaneOIDCIssuers); err != nil {
 		return err
 	}
-	return ic.DataPlaneOIDCIssuers.resolveURIs()
+	if len(ic.DataPlaneOIDCIssuers.JWKSURIs) == 0 {
+		return ic.DataPlaneOIDCIssuers.resolveURIs()
+	}
+	return nil
 }
 
 const (
