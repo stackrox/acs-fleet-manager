@@ -1593,10 +1593,11 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		labels[helmChartLabelKey] = helmChartLabelValue
 		labels[helmChartNameLabel] = r.resourcesChart.Name()
 		obj.SetLabels(labels)
-		nsKey := ctrlClient.ObjectKey{Namespace: remoteCentral.Metadata.Namespace, Name: obj.GetName()}
-		glog.Infof("Upserting object %v of type %v", nsKey, obj.GroupVersionKind())
+
+		objectKey := ctrlClient.ObjectKey{Namespace: remoteCentral.Metadata.Namespace, Name: obj.GetName()}
+		glog.Infof("Upserting object %v of type %v", objectKey, obj.GroupVersionKind())
 		if err := charts.InstallOrUpdateChart(ctx, obj, r.client); err != nil {
-			return fmt.Errorf("Failed to upsert object %v of type %v: %w", nsKey, obj.GroupVersionKind(), err)
+			return fmt.Errorf("Failed to upsert object %v of type %v: %w", objectKey, obj.GroupVersionKind(), err)
 		}
 	}
 
