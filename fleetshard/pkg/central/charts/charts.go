@@ -132,25 +132,28 @@ func MustGetChart(name string, urls []string) *chart.Chart {
 // InstallOrUpdateChart installs a new object from helm chart or update an existing object with the same Name, Namespace and Kind
 func InstallOrUpdateChart(ctx context.Context, obj *unstructured.Unstructured, client ctrlClient.Client) error {
 	key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
+	gvk := obj.GroupVersionKind()
+
 	var out unstructured.Unstructured
-	out.SetGroupVersionKind(obj.GroupVersionKind())
+	out.SetGroupVersionKind(gvk)
+
 	err := client.Get(ctx, key, &out)
 	if err == nil {
-		glog.V(10).Infof("Updating object %v of type %v", key, obj.GroupVersionKind())
+		glog.V(10).Infof("Updating object %v of type %v", key, gvk)
 		obj.SetResourceVersion(out.GetResourceVersion())
 		if err := client.Update(ctx, obj); err != nil {
-			return fmt.Errorf("failed to update object %v of type %v: %w", key, obj.GetKind(), err)
+			return fmt.Errorf("failed to update object %v of type %v: %w", key, gvk, err)
 		}
 	} else {
 		if !apiErrors.IsNotFound(err) {
-			return fmt.Errorf("failed to retrieve object %v of type %v: %w", key, obj.GetKind(), err)
+			return fmt.Errorf("failed to retrieve object %v of type %v: %w", key, gvk, err)
 		}
-		glog.Infof("Creating object %v of type %v", key, obj.GroupVersionKind())
+		glog.Infof("Creating object %v of type %v", key, gvk)
 		if err := client.Create(ctx, obj); err != nil {
 			if !apiErrors.IsAlreadyExists(err) {
-				return fmt.Errorf("failed to create object %v of type %v: %w", key, obj.GroupVersionKind(), err)
+				return fmt.Errorf("failed to create object %v of type %v: %w", key, gvk, err)
 			} else {
-				glog.Infof("Object %v of type %v already exists", key, obj.GroupVersionKind())
+				glog.Infof("Object %v of type %v already exists", key, gvk)
 			}
 		}
 	}
