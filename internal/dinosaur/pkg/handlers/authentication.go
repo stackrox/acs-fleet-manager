@@ -20,8 +20,8 @@ type compositeAuthenticationHandler struct {
 }
 
 var (
-	adminAPIPrefix   = fmt.Sprintf("^%s/%s/%s%s", routes.APIEndpoint, routes.FleetManagementAPIPrefix, routes.Version, routes.AdminAPIPrefix)
-	privateAPIPrefix = fmt.Sprintf("^%s/%s/%s%s", routes.APIEndpoint, routes.FleetManagementAPIPrefix, routes.Version, routes.PrivateAPIPrefix)
+	adminAPIPrefix   = fmt.Sprintf("%s/%s/%s%s", routes.APIEndpoint, routes.FleetManagementAPIPrefix, routes.Version, routes.AdminAPIPrefix)
+	privateAPIPrefix = fmt.Sprintf("%s/%s/%s%s", routes.APIEndpoint, routes.FleetManagementAPIPrefix, routes.Version, routes.PrivateAPIPrefix)
 )
 
 func (h *compositeAuthenticationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
