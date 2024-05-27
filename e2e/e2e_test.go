@@ -77,7 +77,12 @@ var _ = Describe("Central", Ordered, func() {
 		Expect(err).ToNot(HaveOccurred())
 		adminAPI = adminClient.AdminAPI()
 
-		privateAPIAuth, err := fmImpl.NewRHSSOAuth(context.Background(), fmImpl.RHSSOOption{ClientID: option.Sso.ClientID, ClientSecret: option.Sso.ClientSecret})
+		privateAPIAuth, err := fmImpl.NewRHSSOAuth(context.Background(), fmImpl.RHSSOOption{
+			ClientID:     option.Sso.ClientID,
+			ClientSecret: option.Sso.ClientSecret, // pragma: allowlist secret
+			Realm:        option.Sso.Realm,
+			Endpoint:     option.Sso.Endpoint,
+		})
 		Expect(err).ToNot(HaveOccurred())
 		privateClient, err := fmImpl.NewClient(fleetManagerEndpoint, privateAPIAuth)
 		Expect(err).ToNot(HaveOccurred())
