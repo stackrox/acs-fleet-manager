@@ -310,7 +310,7 @@ var _ = Describe("Central", Ordered, func() {
 
 			// Wait for secrets to be backed up again
 			Eventually(func() error {
-				central, _, err := client.PrivateAPI().GetCentral(ctx, centralRequestID)
+				central, _, err := privateAPI.GetCentral(ctx, centralRequestID)
 				Expect(err).ToNot(HaveOccurred())
 				if len(central.Metadata.SecretsStored) == 0 {
 					return errors.New("secrets backup is empty")
