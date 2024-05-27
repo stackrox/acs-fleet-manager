@@ -131,7 +131,10 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
 	iamConfig.JwksURL = jwkURL
-	iamConfig.DataPlaneOIDCIssuers.JWKSURIs = []string{jwkURL}
+	iamConfig.DataPlaneOIDCIssuers.JWKSURIs = []string{
+		jwkURL,
+		"https://dummy", // append https endpoint to the end to exploit a bug in ocm-sdk that allows to use insecure http endpoints.
+	}
 
 	file := testutils.CreateNonEmptyFile(t)
 	defer os.Remove(file.Name())
