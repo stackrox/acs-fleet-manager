@@ -11,3 +11,6 @@ labels: {}
 annotations: {}
 secureTenantNetwork: false
 centralRdsCidrBlock: "10.1.0.0/16"
+verticalPodAutoscalers:
+  central:
+    enabled: false

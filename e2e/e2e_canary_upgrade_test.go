@@ -19,9 +19,10 @@ import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	errors2 "k8s.io/apimachinery/pkg/api/errors"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	verticalpodautoscalingv1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -262,6 +263,44 @@ egressProxy:
 				Should(Succeed())
 		})
 
+		It("deploys an autoscaler", func() {
+			_, err := getVPA(ctx, centralNamespace, "central-vpa")
+			Expect(err).To(HaveOccurred())
+			Expect(k8sErrors.IsNotFound(err)).To(BeTrue(), "central-vpa VerticalPodAutoscaler should not exist: %v", err)
+			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
+				config.TenantResources.Default = tenantResourcesWithCentralVpaEnabled()
+				return config
+			})).To(Succeed())
+			debugGitopsConfig(ctx)
+			Eventually(func() error {
+				_, err := getVPA(ctx, centralNamespace, "central-vpa")
+				return err
+			}).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+		})
+
+		It("removes the autoscaler", func() {
+			_, err := getVPA(ctx, centralNamespace, "central-vpa")
+			Expect(err).ToNot(HaveOccurred(), "central-vpa VerticalPodAutoscaler should exist: %v", err)
+			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
+				config.TenantResources.Default = defaultTenantResourceValues()
+				return config
+			})).To(Succeed())
+			debugGitopsConfig(ctx)
+			Eventually(func() error {
+				_, err := getVPA(ctx, centralNamespace, "central-vpa")
+				if !k8sErrors.IsNotFound(err) {
+					return fmt.Errorf("vpa not removed")
+				}
+				return nil
+			}).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+		})
+
 		It("delete central", func() {
 			Expect(deleteCentralByID(ctx, client, createdCentral.Id)).
 				To(Succeed())
@@ -329,7 +368,7 @@ func putGitopsConfig(ctx context.Context, config gitops.Config) error {
 		},
 	}
 	if err := k8sClient.Update(ctx, configMap); err != nil {
-		if !errors2.IsNotFound(err) {
+		if !k8sErrors.IsNotFound(err) {
 			return err
 		}
 	} else {
@@ -341,7 +380,7 @@ func putGitopsConfig(ctx context.Context, config gitops.Config) error {
 func debugGitopsConfig(ctx context.Context) {
 	var configMap v1.ConfigMap
 	if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: gitopsConfigmapName}, &configMap); err != nil {
-		if errors2.IsNotFound(err) {
+		if k8sErrors.IsNotFound(err) {
 			GinkgoLogr.Info("configmap not found")
 			return
 		}
@@ -361,7 +400,7 @@ func updateGitopsConfig(ctx context.Context, updateFn func(config gitops.Config)
 	var configMap v1.ConfigMap
 	var config gitops.Config
 	if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: gitopsConfigmapName}, &configMap); err != nil {
-		if !errors2.IsNotFound(err) {
+		if !k8sErrors.IsNotFound(err) {
 			return err
 		}
 		exists = false
@@ -420,6 +459,12 @@ func getDeployment(ctx context.Context, namespace string, name string) (*appsv1.
 	deployment := &appsv1.Deployment{}
 	err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: name}, deployment)
 	return deployment, err
+}
+
+func getVPA(ctx context.Context, namespace string, name string) (*verticalpodautoscalingv1.VerticalPodAutoscaler, error) {
+	autoscaler := &verticalpodautoscalingv1.VerticalPodAutoscaler{}
+	err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: name}, autoscaler)
+	return autoscaler, err
 }
 
 func getContainer(name string, containers []v1.Container) (*v1.Container, error) {
@@ -605,6 +650,33 @@ egressProxy:
       memory: 275Mi
     limits:
       memory: 275Mi`
+}
+
+func tenantResourcesWithCentralVpaEnabled() string {
+	return `
+labels:
+  app.kubernetes.io/managed-by: "rhacs-fleetshard"
+  app.kubernetes.io/instance: "{{ .Name }}"
+  rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
+  rhacs.redhat.com/tenant: "{{ .ID }}"
+  rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
+annotations:
+  rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
+secureTenantNetwork: false
+centralRdsCidrBlock: "10.1.0.0/16"
+egressProxy:
+  image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.14"
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 275Mi
+    limits:
+      memory: 275Mi
+verticalPodAutoscalers:
+  central:
+    enabled: true
+`
 }
 
 func defaultGitopsConfig() gitops.Config {
