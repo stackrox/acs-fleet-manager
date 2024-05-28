@@ -1,4 +1,4 @@
-{{- if eq .Values.emailsender.enabled false }}
+{{- if .Values.emailsender.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
