@@ -1,4 +1,3 @@
-# syntax = docker/dockerfile:1.4
 FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.21 AS build
 
 USER root
