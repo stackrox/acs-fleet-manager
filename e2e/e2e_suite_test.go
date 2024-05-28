@@ -198,9 +198,9 @@ func obtainCentralRequest(ctx context.Context, client *fleetmanager.Client, id s
 	return nil
 }
 
-func assertStoredSecrets(ctx context.Context, client *fleetmanager.Client, centralRequestID string, expected []string) func() error {
+func assertStoredSecrets(ctx context.Context, privateAPI fleetmanager.PrivateAPI, centralRequestID string, expected []string) func() error {
 	return func() error {
-		privateCentral, _, err := client.PrivateAPI().GetCentral(ctx, centralRequestID)
+		privateCentral, _, err := privateAPI.GetCentral(ctx, centralRequestID)
 		if err != nil {
 			return err
 		}

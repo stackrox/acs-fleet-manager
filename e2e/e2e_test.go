@@ -53,6 +53,7 @@ var (
 var _ = Describe("Central", Ordered, func() {
 	var client *fleetmanager.Client
 	var adminAPI fleetmanager.AdminAPI
+	var privateAPI fleetmanager.PrivateAPI
 	var notes []string
 	var ctx = context.Background()
 
@@ -75,6 +76,17 @@ var _ = Describe("Central", Ordered, func() {
 		adminClient, err := fmImpl.NewClient(fleetManagerEndpoint, adminAuth)
 		Expect(err).ToNot(HaveOccurred())
 		adminAPI = adminClient.AdminAPI()
+
+		privateAPIAuth, err := fmImpl.NewRHSSOAuth(context.Background(), fmImpl.RHSSOOption{
+			ClientID:     option.Sso.ClientID,
+			ClientSecret: option.Sso.ClientSecret, // pragma: allowlist secret
+			Realm:        option.Sso.Realm,
+			Endpoint:     option.Sso.Endpoint,
+		})
+		Expect(err).ToNot(HaveOccurred())
+		privateClient, err := fmImpl.NewClient(fleetManagerEndpoint, privateAPIAuth)
+		Expect(err).ToNot(HaveOccurred())
+		privateAPI = privateClient.PrivateAPI()
 
 		GinkgoWriter.Printf("Current time: %s\n", time.Now().String())
 		printNotes(notes)
@@ -224,9 +236,8 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should backup important secrets in FM database", func() {
-			Skip("TODO(ROX-23709): Change private API client authentication")
 			expectedSecrets := k8s.NewSecretBackup(k8sClient, false).GetWatchedSecrets()
-			Eventually(assertStoredSecrets(ctx, client, centralRequestID, expectedSecrets)).
+			Eventually(assertStoredSecrets(ctx, privateAPI, centralRequestID, expectedSecrets)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -299,7 +310,7 @@ var _ = Describe("Central", Ordered, func() {
 
 			// Wait for secrets to be backed up again
 			Eventually(func() error {
-				central, _, err := client.PrivateAPI().GetCentral(ctx, centralRequestID)
+				central, _, err := privateAPI.GetCentral(ctx, centralRequestID)
 				Expect(err).ToNot(HaveOccurred())
 				if len(central.Metadata.SecretsStored) == 0 {
 					return errors.New("secrets backup is empty")

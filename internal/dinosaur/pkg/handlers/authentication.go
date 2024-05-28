@@ -72,7 +72,7 @@ func NewAuthenticationHandler(IAMConfig *iam.IAMConfig, next http.Handler) (http
 	privateAPIHandlerBuilder := authentication.NewHandler().
 		Logger(authnLogger).
 		KeysURL(IAMConfig.RedhatSSORealm.JwksEndpointURI).
-		Error(fmt.Sprint(errors.ErrorUnauthenticated)).
+		Error(fmt.Sprint(errors.NotFound(""))).
 		Service(errors.ErrorCodePrefix)
 
 	// Add additional JWKS endpoints to the builder if there are any.
