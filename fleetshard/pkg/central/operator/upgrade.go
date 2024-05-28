@@ -56,18 +56,32 @@ func RenderChart(operators OperatorConfigs) ([]*unstructured.Unstructured, error
 	}
 
 	resourcesChart, err := charts.GetChart("rhacs-operator", operators.CRDURLs)
-	operatorValues := resourcesChart.Values["operator"].(map[string]interface{})
-	defaultValues := operatorValues["default"].(map[string]interface{})
+	if err != nil {
+		return nil, fmt.Errorf("failed getting chart: %w", err)
+	}
+
+	operatorValuesIntf, ok := resourcesChart.Values["operator"]
+	if !ok {
+		return nil, fmt.Errorf("failed getting operator values from chart")
+	}
+	operatorValues, ok := operatorValuesIntf.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("operator values are not a map")
+	}
+	defaultValuesIntf, ok := operatorValues["default"]
+	if !ok {
+		return nil, fmt.Errorf("failed getting default values from chart")
+	}
+	defaultValues, ok := defaultValuesIntf.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("default values are not a map")
+	}
 
 	chartVals := chartutil.Values{
 		"operator": chartutil.Values{
 			"images":  valuesArr,
 			"default": chartutil.Values(defaultValues),
 		},
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("failed getting chart: %w", err)
 	}
 
 	objs, err := charts.RenderToObjects(releaseName, ACSOperatorNamespace, resourcesChart, chartVals)
