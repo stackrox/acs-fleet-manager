@@ -1552,11 +1552,23 @@ func (r *CentralReconciler) ensureCentralPodTerminated(ctx context.Context, cent
 			return false, fmt.Errorf("listing Central pods: %w", err)
 		}
 
-		if len(pods.Items) == 0 {
+		// Make sure that the returned pods are central pods in the correct namespace
+		var filteredPods []corev1.Pod
+		for _, pod := range pods.Items {
+			if pod.Namespace != central.GetNamespace() {
+				continue
+			}
+			if val, exists := pod.Labels["app"]; !exists || val != "central" {
+				continue
+			}
+			filteredPods = append(filteredPods, pod)
+		}
+
+		if len(filteredPods) == 0 {
 			return true, nil
 		}
 
-		glog.Info("Waiting for Central pod to terminate..")
+		glog.Infof("Waiting for pod %s to terminate.", filteredPods[0].Name)
 		return false, nil
 	})
 
