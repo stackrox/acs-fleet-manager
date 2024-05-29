@@ -1055,11 +1055,11 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && centralDeleted
 
-	centralTerminated, err := r.ensureInstancePodsTerminated(ctx, central)
+	podsTerminated, err := r.ensureInstancePodsTerminated(ctx, central)
 	if err != nil {
 		return false, err
 	}
-	globalDeleted = globalDeleted && centralTerminated
+	globalDeleted = globalDeleted && podsTerminated
 
 	if err := r.ensureDeclarativeConfigurationSecretCleaned(ctx, central.GetNamespace()); err != nil {
 		return false, nil
