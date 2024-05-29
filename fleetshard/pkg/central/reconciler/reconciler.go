@@ -1055,6 +1055,12 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && centralDeleted
 
+	centralTerminated, err := r.ensureCentralPodTerminated(ctx, central)
+	if err != nil {
+		return false, err
+	}
+	globalDeleted = globalDeleted && centralTerminated
+
 	if err := r.ensureDeclarativeConfigurationSecretCleaned(ctx, central.GetNamespace()); err != nil {
 		return false, nil
 	}
@@ -1530,6 +1536,34 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 		return false, errors.Wrapf(err, "waiting for central CR %v to be deleted", centralKey)
 	}
 	glog.Infof("Central CR %v is deleted", centralKey)
+	return true, nil
+}
+
+func (r *CentralReconciler) ensureCentralPodTerminated(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+	err := wait.PollUntilContextCancel(ctx, centralDeletePollInterval, true, func(ctx context.Context) (bool, error) {
+		pods := &corev1.PodList{}
+		labels := map[string]string{"app": "central"}
+		err := r.client.List(ctx, pods,
+			ctrlClient.InNamespace(central.GetNamespace()),
+			ctrlClient.MatchingLabels(labels),
+		)
+
+		if err != nil {
+			return false, fmt.Errorf("listing Central pods: %w", err)
+		}
+
+		if len(pods.Items) == 0 {
+			return true, nil
+		}
+
+		glog.Info("Waiting for Central pod to terminate..")
+		return false, nil
+	})
+
+	if err != nil {
+		return false, fmt.Errorf("waiting for central pod to be terminated: %w", err)
+	}
+	glog.Info("Central pod is terminated.")
 	return true, nil
 }
 
