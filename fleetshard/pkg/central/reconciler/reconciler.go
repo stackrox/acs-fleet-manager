@@ -1055,7 +1055,7 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && centralDeleted
 
-	centralTerminated, err := r.ensureCentralPodTerminated(ctx, central)
+	centralTerminated, err := r.ensureInstancePodsTerminated(ctx, central)
 	if err != nil {
 		return false, err
 	}
@@ -1539,26 +1539,28 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 	return true, nil
 }
 
-func (r *CentralReconciler) ensureCentralPodTerminated(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, central *v1alpha1.Central) (bool, error) {
 	err := wait.PollUntilContextCancel(ctx, centralDeletePollInterval, true, func(ctx context.Context) (bool, error) {
 		pods := &corev1.PodList{}
-		labels := map[string]string{"app": "central"}
+		labelKey := "app.kubernetes.io/part-of"
+		labelValue := "stackrox-central-services"
+		labels := map[string]string{labelKey: labelValue}
 		err := r.client.List(ctx, pods,
 			ctrlClient.InNamespace(central.GetNamespace()),
 			ctrlClient.MatchingLabels(labels),
 		)
 
 		if err != nil {
-			return false, fmt.Errorf("listing Central pods: %w", err)
+			return false, fmt.Errorf("listing instance pods: %w", err)
 		}
 
-		// Make sure that the returned pods are central pods in the correct namespace
+		// Make sure that the returned pods are central service pods in the correct namespace
 		var filteredPods []corev1.Pod
 		for _, pod := range pods.Items {
 			if pod.Namespace != central.GetNamespace() {
 				continue
 			}
-			if val, exists := pod.Labels["app"]; !exists || val != "central" {
+			if val, exists := pod.Labels[labelKey]; !exists || val != labelValue {
 				continue
 			}
 			filteredPods = append(filteredPods, pod)
@@ -1568,14 +1570,19 @@ func (r *CentralReconciler) ensureCentralPodTerminated(ctx context.Context, cent
 			return true, nil
 		}
 
-		glog.Infof("Waiting for pod %s to terminate.", filteredPods[0].Name)
+		var podNames string
+		for _, filteredPod := range filteredPods {
+			podNames += filteredPod.Name + " "
+		}
+
+		glog.Infof("Waiting for pods to terminate: %s", podNames)
 		return false, nil
 	})
 
 	if err != nil {
-		return false, fmt.Errorf("waiting for central pod to be terminated: %w", err)
+		return false, fmt.Errorf("waiting for pods to terminate: %w", err)
 	}
-	glog.Info("Central pod is terminated.")
+	glog.Infof("All pods terminated for tenant %s in namespace %s.", central.GetName(), central.GetNamespace())
 	return true, nil
 }
 
