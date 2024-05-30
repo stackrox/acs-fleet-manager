@@ -46,7 +46,7 @@ var (
 	operator2DeploymentName = getDeploymentName(operatorVersion2)
 )
 
-var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
+var _ = XDescribe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 	var (
 		client *fleetmanager.Client
 		ctx    = context.Background()

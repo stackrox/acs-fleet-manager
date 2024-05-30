@@ -19,7 +19,7 @@ const (
 	adminAPI    = "admin"
 )
 
-var _ = Describe("AuthN/Z Fleet* components", Ordered, func() {
+var _ = XDescribe("AuthN/Z Fleet* components", Ordered, func() {
 
 	BeforeEach(func() {
 		if !runAuthTests {

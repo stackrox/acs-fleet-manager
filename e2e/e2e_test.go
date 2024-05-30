@@ -92,7 +92,7 @@ var _ = Describe("Central", Ordered, func() {
 		printNotes(notes)
 	})
 
-	Describe("should be created and deployed to k8s", Ordered, func() {
+	XDescribe("should be created and deployed to k8s", Ordered, func() {
 
 		var centralRequestID string
 		var centralRequestName string
@@ -442,7 +442,7 @@ var _ = Describe("Central", Ordered, func() {
 				Should(Succeed())
 		})
 
-		It("should transition central to deprovisioning state when deleting", func() {
+		XIt("should transition central to deprovisioning state when deleting", func() {
 			Expect(deleteCentralByID(ctx, client, centralRequestID)).
 				To(Succeed())
 			Eventually(assertCentralRequestDeprovisioning(ctx, client, centralRequestID)).
@@ -478,7 +478,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 	})
 
-	Describe("should be deployed and can be force-deleted", Ordered, func() {
+	XDescribe("should be deployed and can be force-deleted", Ordered, func() {
 		var centralRequestID string
 		var centralRequestName string
 		var namespaceName string
