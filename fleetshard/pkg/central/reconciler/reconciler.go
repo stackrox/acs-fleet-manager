@@ -84,6 +84,7 @@ const (
 	centralDbSecretName        = "central-db-password" // pragma: allowlist secret
 	centralDbOverrideConfigMap = "central-db-override"
 	centralDeletePollInterval  = 5 * time.Second
+	centralReadyPollInterval   = 5 * time.Second
 
 	centralEncryptionKeySecretName = "central-encryption-key-chain" // pragma: allowlist secret
 
@@ -260,8 +261,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
-	// Check whether deployment is ready.
-	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral.Metadata.Namespace)
+	// Wait for deployment to be ready.
+	centralDeploymentReady, err := waitForCentralDeploymentReady(ctx, r.client, remoteCentral.Metadata.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -735,6 +736,23 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 	}
 
 	return nil
+}
+
+func waitForCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, namespace string) (bool, error) {
+	err := wait.PollUntilContextCancel(ctx, centralReadyPollInterval, true, func(ctx context.Context) (bool, error) {
+		centralDeploymentReady, err := isCentralDeploymentReady(ctx, client, namespace)
+		if err != nil {
+			return false, err
+		}
+
+		return centralDeploymentReady, nil
+	})
+
+	if err != nil {
+		return false, fmt.Errorf("waiting for Central deployment to be ready: %w", err)
+	}
+
+	return true, nil
 }
 
 func mergeLabelsAndAnnotations(from, into *v1alpha1.Central) {
