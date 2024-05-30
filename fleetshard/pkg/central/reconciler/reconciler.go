@@ -1055,12 +1055,6 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && centralDeleted
 
-	podsTerminated, err := r.ensureInstancePodsTerminated(ctx, central)
-	if err != nil {
-		return false, err
-	}
-	globalDeleted = globalDeleted && podsTerminated
-
 	if err := r.ensureDeclarativeConfigurationSecretCleaned(ctx, central.GetNamespace()); err != nil {
 		return false, nil
 	}
@@ -1536,53 +1530,6 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 		return false, errors.Wrapf(err, "waiting for central CR %v to be deleted", centralKey)
 	}
 	glog.Infof("Central CR %v is deleted", centralKey)
-	return true, nil
-}
-
-func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, central *v1alpha1.Central) (bool, error) {
-	err := wait.PollUntilContextCancel(ctx, centralDeletePollInterval, true, func(ctx context.Context) (bool, error) {
-		pods := &corev1.PodList{}
-		labelKey := "app.kubernetes.io/part-of"
-		labelValue := "stackrox-central-services"
-		labels := map[string]string{labelKey: labelValue}
-		err := r.client.List(ctx, pods,
-			ctrlClient.InNamespace(central.GetNamespace()),
-			ctrlClient.MatchingLabels(labels),
-		)
-
-		if err != nil {
-			return false, fmt.Errorf("listing instance pods: %w", err)
-		}
-
-		// Make sure that the returned pods are central service pods in the correct namespace
-		var filteredPods []corev1.Pod
-		for _, pod := range pods.Items {
-			if pod.Namespace != central.GetNamespace() {
-				continue
-			}
-			if val, exists := pod.Labels[labelKey]; !exists || val != labelValue {
-				continue
-			}
-			filteredPods = append(filteredPods, pod)
-		}
-
-		if len(filteredPods) == 0 {
-			return true, nil
-		}
-
-		var podNames string
-		for _, filteredPod := range filteredPods {
-			podNames += filteredPod.Name + " "
-		}
-
-		glog.Infof("Waiting for pods to terminate: %s", podNames)
-		return false, nil
-	})
-
-	if err != nil {
-		return false, fmt.Errorf("waiting for pods to terminate: %w", err)
-	}
-	glog.Infof("All pods terminated for tenant %s in namespace %s.", central.GetName(), central.GetNamespace())
 	return true, nil
 }
 

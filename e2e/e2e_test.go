@@ -424,24 +424,23 @@ var _ = Describe("Central", Ordered, func() {
 				Should(Succeed())
 		})
 
-		//TODO: Tenant name change breaks deletion, uncomment when fixed
-		// It("should patch the Central name", func() {
-		//	centralRequestName = newCentralName()
-		//	_, _, err := adminAPI.UpdateCentralNameById(ctx,
-		//		centralRequestID,
-		//		private.CentralUpdateNameRequest{
-		//			Name: centralRequestName, Reason: "e2e test",
-		//		},
-		//	)
-		//	Expect(err).To(BeNil())
-		// })
-		//
-		// It("should transition to central's new name", func() {
-		//	Eventually(assertCentralRequestName(ctx, client, centralRequestID, centralRequestName)).
-		//		WithTimeout(waitTimeout).
-		//		WithPolling(defaultPolling).
-		//		Should(Succeed())
-		// })
+		It("should patch the Central name", func() {
+			centralRequestName = newCentralName()
+			_, _, err := adminAPI.UpdateCentralNameById(ctx,
+				centralRequestID,
+				private.CentralUpdateNameRequest{
+					Name: centralRequestName, Reason: "e2e test",
+				},
+			)
+			Expect(err).To(BeNil())
+		})
+
+		It("should transition to central's new name", func() {
+			Eventually(assertCentralRequestName(ctx, client, centralRequestID, centralRequestName)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+		})
 
 		It("should transition central to deprovisioning state when deleting", func() {
 			Expect(deleteCentralByID(ctx, client, centralRequestID)).
