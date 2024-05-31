@@ -24,6 +24,7 @@ func TestHelmTemplate_FleetshardSyncDeployment_ServiceAccountTokenAuthType(t *te
 		SetValues: map[string]string{
 			"secured-cluster.enabled":          "false",
 			"fleetshardSync.managedDB.enabled": "false",
+			"fleetshardSync.authType":          "SERVICE_ACCOUNT_TOKEN",
 		},
 		KubectlOptions: k8s.NewKubectlOptions("", "", namespaceName),
 	}
