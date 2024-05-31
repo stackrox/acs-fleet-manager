@@ -31,14 +31,14 @@ const (
 	namespace              = "rhacs"
 	gitopsConfigmapName    = "gitops-config"
 	gitopsConfigmapDataKey = "config.yaml"
-	operatorVersion1       = "4.3.3"
-	operatorVersion2       = "4.3.4"
+	operatorVersion1       = "4.4.1"
+	operatorVersion2       = "4.4.2"
 )
 
 var (
 	defaultCRDUrls = []string{
-		"https://raw.githubusercontent.com/stackrox/stackrox/4.3.4/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
-		"https://raw.githubusercontent.com/stackrox/stackrox/4.3.4/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
+		"https://raw.githubusercontent.com/stackrox/stackrox/4.4.2/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
+		"https://raw.githubusercontent.com/stackrox/stackrox/4.4.2/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
 	}
 	operatorConfig1         = operatorConfigForVersion(operatorVersion1)
 	operatorConfig2         = operatorConfigForVersion(operatorVersion2)
@@ -688,9 +688,9 @@ func defaultGitopsConfig() gitops.Config {
 			CRDURLs: defaultCRDUrls,
 			Configs: []operator.OperatorConfig{
 				{
-					"deploymentName":                  "rhacs-operator-4.3.4",
-					"image":                           "quay.io/rhacs-eng/stackrox-operator:4.3.4",
-					"centralLabelSelector":            "rhacs.redhat.com/version-selector=4.3.4",
+					"deploymentName":                  "rhacs-operator-4.4.2",
+					"image":                           "quay.io/rhacs-eng/stackrox-operator:4.4.2",
+					"centralLabelSelector":            "rhacs.redhat.com/version-selector=4.4.2",
 					"securedClusterReconcilerEnabled": false,
 				},
 			},
@@ -702,7 +702,7 @@ func defaultGitopsConfig() gitops.Config {
 					Patch: `
 metadata:
   labels:
-    rhacs.redhat.com/version-selector: "4.3.4"`,
+    rhacs.redhat.com/version-selector: "4.4.2"`,
 				}, {
 					InstanceIDs: []string{"*"},
 					Patch: `
