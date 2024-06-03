@@ -31,6 +31,7 @@ func NewSES(ctx context.Context) (*SES, error) {
 // SESClient is an interface that sends email using provided function
 type SESClient interface {
 	SendEmail(ctx context.Context, params *ses.SendEmailInput, optFns ...func(*ses.Options)) (*ses.SendEmailOutput, error)
+	SendRawEmail(ctx context.Context, params *ses.SendRawEmailInput, optFns ...func(*ses.Options)) (*ses.SendRawEmailOutput, error)
 }
 
 // SendEmail sends email via AWS SES API
@@ -59,6 +60,26 @@ func (s *SES) SendEmail(ctx context.Context, sender string, to []string, subject
 	if err != nil {
 		glog.Errorf("Failed sending email: %v", err)
 		return "", fmt.Errorf("failed to send email: %v", err)
+	}
+
+	return *result.MessageId, nil
+}
+
+// SendRawEmail sends raw email message via AWS SES API
+// this is a flexible method which allows sending multipart MINE emails with attachments
+func (s *SES) SendRawEmail(ctx context.Context, sender string, to []string, rawMessage []byte) (string, error) {
+	input := &ses.SendRawEmailInput{
+		Source:       aws.String(sender),
+		Destinations: to,
+		RawMessage: &types.RawMessage{
+			Data: rawMessage,
+		},
+	}
+
+	result, err := s.sesClient.SendRawEmail(ctx, input)
+	if err != nil {
+		glog.Errorf("Failed sending raw email: %v", err)
+		return "", fmt.Errorf("failed to send raw email: %v", err)
 	}
 
 	return *result.MessageId, nil
