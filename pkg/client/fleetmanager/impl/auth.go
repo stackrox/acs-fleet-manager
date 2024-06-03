@@ -26,9 +26,10 @@ type authFactory interface {
 
 // Option for the different Auth types.
 type Option struct {
-	Sso    RHSSOOption
-	Ocm    OCMOption
-	Static StaticOption
+	Sso            RHSSOOption
+	Ocm            OCMOption
+	Static         StaticOption
+	ServiceAccount ServiceAccountOption
 }
 
 // RHSSOOption for the RH SSO Auth type.
@@ -50,13 +51,19 @@ type StaticOption struct {
 	StaticToken string `env:"STATIC_TOKEN"`
 }
 
+// ServiceAccountOption for the Service Account Token Auth type
+type ServiceAccountOption struct {
+	TokenFile string `env:"FLEET_MANAGER_TOKEN_FILE"`
+}
+
 var authFactoryRegistry map[string]authFactory
 
 func init() {
 	authFactoryRegistry = map[string]authFactory{
-		ocmFactory.GetName():         ocmFactory,
-		rhSSOFactory.GetName():       rhSSOFactory,
-		staticTokenFactory.GetName(): staticTokenFactory,
+		ocmFactory.GetName():                 ocmFactory,
+		rhSSOFactory.GetName():               rhSSOFactory,
+		staticTokenFactory.GetName():         staticTokenFactory,
+		serviceAccountTokenFactory.GetName(): serviceAccountTokenFactory,
 	}
 }
 
