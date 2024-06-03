@@ -71,7 +71,7 @@ emailsender:
   enabled: false
   replicas: 3
   image:
-    repo: "quay.io/app-sre/emailsender"
+    repo: "quay.io/app-sre/acscs-emailsender"
     tag: "main"
   clusterId: ""
   clusterName: ""
