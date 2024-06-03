@@ -13,7 +13,7 @@ import (
 )
 
 const ocmIssuer = "https://sso.redhat.com/auth/realms/redhat-external"
-const centralServiceAccountRegEx = "system:serviceaccount:rhacs-[a-z]*:central"
+const centralServiceAccountRegEx = "system:serviceaccount:rhacs-[a-z0-9]*:central"
 
 // EnsureJSONContentType enforces Content-Type: application/json header
 func EnsureJSONContentType(next http.Handler) http.Handler {
