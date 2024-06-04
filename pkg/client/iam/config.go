@@ -220,7 +220,7 @@ func (ic *IAMConfig) ReadFiles() error {
 
 // GetDataPlaneIssuerURIs returns data plane issuer URIs configured for the service account token validation
 func (ic *IAMConfig) GetDataPlaneIssuerURIs() []string {
-	uris := make([]string, 0)
+	uris := make([]string, len(ic.DataPlaneOIDCIssuers.URIs))
 	copy(uris, ic.DataPlaneOIDCIssuers.URIs)
 	if ic.KubernetesIssuer.Enabled {
 		uris = append(uris, kubernetesIssuer)
