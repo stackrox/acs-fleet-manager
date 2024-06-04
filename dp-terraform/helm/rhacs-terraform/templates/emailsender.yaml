@@ -21,7 +21,8 @@ spec:
       serviceAccountName: emailsender
       containers:
         - name: emailsender
-          image: "{{ .Values.emailsender.image.repo }}:{{ .Values.emailsender.image.tag }}"
+          # reuse an automatically updated `fleetshardSync.image.tag`
+          image: "{{ .Values.emailsender.image.repo }}:{{ .Values.fleetshardSync.image.tag }}"
           imagePullPolicy: IfNotPresent
           command:
             - /usr/local/bin/emailsender
