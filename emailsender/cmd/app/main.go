@@ -16,6 +16,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/emailsender/config"
 	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/email"
 	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/metrics"
 )
 
@@ -39,9 +40,19 @@ func main() {
 
 	ctx := context.Background()
 
+	// initialize components
+	sesClient, err := email.NewSES(ctx)
+	if err != nil {
+		glog.Errorf("Failed to initialise SES Client: %v", err)
+		os.Exit(1)
+	}
+	temporarySenderName := "noreply@mail.acs.rhcloud.com"
+	emailSender := email.NewEmailSender(temporarySenderName, sesClient)
+	emailHandler := api.NewEmailHandler(emailSender)
+
 	// base router
 	router := mux.NewRouter()
-	api.SetupRoutes(router)
+	api.SetupRoutes(router, emailHandler)
 
 	server := http.Server{Addr: cfg.ServerAddress, Handler: router}
 
