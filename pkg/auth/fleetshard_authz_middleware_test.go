@@ -129,7 +129,7 @@ func TestUseFleetShardAuthorizationMiddleware_NoTokenSet(t *testing.T) {
 
 func TestUseFleetShardAuthorizationMiddleware_DataPlaneOIDCIssuers(t *testing.T) {
 	const validIssuer = "http://localhost"
-	const kubernetesIssuer = "https://kubernetes.default.svc.cluster.local"
+	const kubernetesIssuer = "https://kubernetes.default.svc"
 	validAudience := []string{"acs-fleet-manager-private-api"}
 	validIssuers := []string{validIssuer}
 

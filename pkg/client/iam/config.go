@@ -230,11 +230,12 @@ func (ic *IAMConfig) GetDataPlaneIssuerURIs() []string {
 
 const (
 	openidConfigurationPath = "/.well-known/openid-configuration"
-	kubernetesIssuer        = "https://kubernetes.default.svc.cluster.local"
+	kubernetesIssuer        = "https://kubernetes.default.svc"
 	jwksTempFilePattern     = "k8s-jwks-*.json"
 )
 
 type openIDConfiguration struct {
+	Issuer  string `json:"issuer"`
 	JwksURI string `json:"jwks_uri"`
 }
 
@@ -316,6 +317,10 @@ func (i *KubernetesIssuer) getJwksURI(client *http.Client) (string, error) {
 		return "", errors.Wrapf(err, "retrieving open-id configuration for %q", i.IssuerURI)
 	}
 	jwksURI := cfg.JwksURI
+	if cfg.Issuer != i.IssuerURI {
+		glog.V(5).Infof("Configured issuer URI does't match the issuer URI configured in the discovery document, overriding: [configured: %s, got: %s]", i.IssuerURI, cfg.Issuer)
+		i.IssuerURI = cfg.Issuer
+	}
 	if i.isLocalCluster() {
 		// kube api-server returns an internal IP, need to override it.
 		return i.overrideJwksURIForLocalCluster(jwksURI), nil

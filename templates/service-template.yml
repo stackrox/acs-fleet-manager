@@ -412,8 +412,8 @@ parameters:
   value: "false"
 
 - name: KUBERNETES_ISSUER_URI
-  description: Kubernetes issuer URIs for verifying service account tokens
-  value: "https://kubernetes.default.svc.cluster.local"
+  description: Kubernetes issuer URI for verifying service account tokens
+  value: "https://kubernetes.default.svc"
 
 objects:
   - kind: ConfigMap
