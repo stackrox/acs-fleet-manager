@@ -1,4 +1,4 @@
-{{- if eq .Values.emailsender.enabled false }}
+{{- if .Values.emailsender.enabled }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
