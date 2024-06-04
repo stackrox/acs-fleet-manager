@@ -223,7 +223,7 @@ func (ic *IAMConfig) GetDataPlaneIssuerURIs() []string {
 	uris := make([]string, len(ic.DataPlaneOIDCIssuers.URIs))
 	copy(uris, ic.DataPlaneOIDCIssuers.URIs)
 	if ic.KubernetesIssuer.Enabled {
-		uris = append(uris, kubernetesIssuer)
+		uris = append(uris, ic.KubernetesIssuer.IssuerURI)
 	}
 	return uris
 }
@@ -275,6 +275,7 @@ func (i *KubernetesIssuer) writeJwksFile() error {
 		return fmt.Errorf("write jwks to the temp file %v: %w", tempFile.Name(), err)
 	}
 	i.JWKSFile = tempFile.Name()
+	glog.V(5).Infof("Wrote JWKs to the temp file %v", i.JWKSFile)
 	return nil
 }
 
@@ -317,13 +318,13 @@ func (i *KubernetesIssuer) getJwksURI(client *http.Client) (string, error) {
 		return "", errors.Wrapf(err, "retrieving open-id configuration for %q", i.IssuerURI)
 	}
 	jwksURI := cfg.JwksURI
+	if i.isLocalCluster() {
+		// kube api-server returns an internal IP, need to override it.
+		jwksURI = i.overrideJwksURIForLocalCluster(jwksURI)
+	}
 	if cfg.Issuer != i.IssuerURI {
 		glog.V(5).Infof("Configured issuer URI does't match the issuer URI configured in the discovery document, overriding: [configured: %s, got: %s]", i.IssuerURI, cfg.Issuer)
 		i.IssuerURI = cfg.Issuer
-	}
-	if i.isLocalCluster() {
-		// kube api-server returns an internal IP, need to override it.
-		return i.overrideJwksURIForLocalCluster(jwksURI), nil
 	}
 	return jwksURI, nil
 }
