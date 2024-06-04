@@ -16,6 +16,9 @@ import (
 	loggingMiddleware "github.com/stackrox/acs-fleet-manager/pkg/server/logging"
 )
 
+const emailsenderPrefix = "ACSCS-EMAIL"
+const emailsenderErrorHREF = "/api/v1/acscsemail/errors/"
+
 type authnHandlerBuilder func(router http.Handler, cfg config.AuthConfig) (http.Handler, error)
 
 var _ authnHandlerBuilder = buildAuthnHandler
@@ -45,6 +48,11 @@ func setupRoutes(authnHandlerFunc authnHandlerBuilder, authConfig config.AuthCon
 	router.HandleFunc("/health", HealthCheckHandler).Methods("GET")
 	apiRouter.HandleFunc("/v1/acscsemail", emailHandler.SendEmail).Methods("POST")
 
+	// this settings are to make sure the middlewares shared with acs-fleet-manager
+	// print a prefix and href matching to the emailsender application
+	acscsErrors.ErrorCodePrefixOverride = emailsenderPrefix
+	acscsErrors.ErrorHREFOverride = emailsenderErrorHREF
+
 	return authnHandlerFunc(router, authConfig)
 }
 
@@ -61,7 +69,7 @@ func buildAuthnHandler(router http.Handler, cfg config.AuthConfig) (http.Handler
 	authnHandlerBuilder := authentication.NewHandler().
 		Logger(authnLogger).
 		Error(fmt.Sprint(acscsErrors.ErrorUnauthenticated)).
-		Service("ACSCS-EMAIL").
+		Service(emailsenderPrefix).
 		Next(router).
 		Public("/health")
 
