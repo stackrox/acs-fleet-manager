@@ -21,7 +21,9 @@ spec:
       serviceAccountName: emailsender
       containers:
         - name: emailsender
-          image: "{{ .Values.emailsender.image.repo }}:{{ .Values.emailsender.image.tag }}"
+          # reuse an automatically updated `fleetshardSync.image.tag`
+          # TODO(ROX-24499): rename FSS image tag to more generic name because it is used by other services
+          image: "{{ .Values.emailsender.image.repo }}:{{ .Values.fleetshardSync.image.tag }}"
           imagePullPolicy: IfNotPresent
           command:
             - /usr/local/bin/emailsender
