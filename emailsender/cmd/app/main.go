@@ -46,7 +46,7 @@ func main() {
 		glog.Errorf("Failed to initialise SES Client: %v", err)
 		os.Exit(1)
 	}
-	temporarySenderName := "sender@example.com"
+	temporarySenderName := "noreply@mail.acs.rhcloud.com"
 	emailSender := email.NewEmailSender(temporarySenderName, sesClient)
 	emailHandler := api.NewEmailHandler(emailSender)
 
