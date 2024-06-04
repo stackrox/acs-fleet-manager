@@ -12,7 +12,7 @@ import (
 func TestHealthSuccessWithNoAuth(t *testing.T) {
 	handler, err := SetupRoutes(config.AuthConfig{
 		JwksURLs: []string{"test-key-url.test"},
-	})
+	}, nil)
 	require.NoError(t, err, "failed to setup router")
 
 	rec := httptest.NewRecorder()
@@ -25,7 +25,7 @@ func TestHealthSuccessWithNoAuth(t *testing.T) {
 }
 
 func TestAuthnHandlerIsUsed(t *testing.T) {
-	handler, err := setupRoutes(buildAlwaysDenyAuthnHandler, config.AuthConfig{})
+	handler, err := setupRoutes(buildAlwaysDenyAuthnHandler, config.AuthConfig{}, nil)
 	require.NoError(t, err, "failed to setup router")
 
 	rec := httptest.NewRecorder()
