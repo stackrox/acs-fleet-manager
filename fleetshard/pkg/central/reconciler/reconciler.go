@@ -252,12 +252,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	centralTLSSecretFound := true // pragma: allowlist secret
 	if r.useRoutes {
-		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
-			if k8s.IsCentralTLSNotFound(err) {
-				centralTLSSecretFound = false // pragma: allowlist secret
-			} else {
-				return nil, errors.Wrap(err, "updating routes")
-			}
+		centralTLSSecretFound, err = r.waitForCentralTLSSecretToAppear(ctx, remoteCentral)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -736,6 +733,25 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 	}
 
 	return nil
+}
+
+func (r *CentralReconciler) waitForCentralTLSSecretToAppear(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
+	err := wait.PollUntilContextCancel(ctx, centralReadyPollInterval, true, func(ctx context.Context) (bool, error) {
+		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
+			if k8s.IsCentralTLSNotFound(err) {
+				return false, nil
+			}
+			return false, fmt.Errorf("updating routes: %w", err)
+		}
+
+		return true, nil
+	})
+
+	if err != nil {
+		return false, fmt.Errorf("waiting for Central deployment to be ready: %w", err)
+	}
+
+	return true, nil
 }
 
 func waitForCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, namespace string) (bool, error) {
