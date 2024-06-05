@@ -336,7 +336,7 @@ func (r *cachedCentralRenderer) render(gitopsConfig gitops.Config, centralParams
 		if err != nil {
 			return RenderedCentral{}, errors.Wrap(err, "failed to marshal Central CR")
 		}
-		values, err := r.renderValuesFn(centralParams, gitopsConfig)
+		values, err = r.renderValuesFn(centralParams, gitopsConfig)
 		if err != nil {
 			return RenderedCentral{}, errors.Wrap(err, "failed to render tenant resource values")
 		}
