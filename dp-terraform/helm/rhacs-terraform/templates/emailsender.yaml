@@ -24,7 +24,7 @@ spec:
           image: "{{ .Values.emailsender.image.repo }}:{{ .Values.emailsender.image.tag }}"
           imagePullPolicy: IfNotPresent
           command:
-            - /usr/local/bin/emailsender
+            - /acscs/emailsender
           env:
             - name: CLUSTER_ID
               value: {{ .Values.emailsender.clusterId }}
