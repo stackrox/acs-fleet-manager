@@ -24,7 +24,7 @@ type Config struct {
 	HTTPSKeyFile                 string `env:"HTTPS_KEY_FILE" envDefault:""`
 	MetricsAddress               string `env:"METRICS_ADDRESS" envDefault:":9090"`
 	AuthConfigFile               string `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
-	AuthConfigFromServiceAccount bool   `env:"AUTH_CONFIG_FROM_SERVICE_ACCOUNT" envDefault:"true"`
+	AuthConfigFromServiceAccount bool   `env:"AUTH_CONFIG_FROM_SERVICE_ACCOUNT" envDefault:"false"`
 	AuthConfig                   AuthConfig
 }
 
