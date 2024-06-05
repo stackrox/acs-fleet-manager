@@ -315,12 +315,32 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 	r.applyTelemetry(remoteCentral, central)
 	r.applyRoutes(central)
-	if !r.secureTenantNetwork {
+	shouldApplyEgressProxyConfig, err := r.shouldApplyEgressProxyConfig(remoteCentral)
+	if err != nil {
+		return err
+	}
+	if shouldApplyEgressProxyConfig {
 		r.applyProxyConfig(central)
 	}
 	r.applyDeclarativeConfig(central)
 	r.applyAnnotations(remoteCentral, central)
 	return nil
+}
+
+func (r *CentralReconciler) shouldApplyEgressProxyConfig(remoteCentral *private.ManagedCentral) (bool, error) {
+	defaultValue := !r.secureTenantNetwork
+	if len(remoteCentral.Spec.TenantResourcesValues) > 0 {
+		secureTenantNetworkIntf, ok := remoteCentral.Spec.TenantResourcesValues["secureTenantNetwork"]
+		if !ok {
+			return defaultValue, nil
+		}
+		secureTenantNetwork, ok := secureTenantNetworkIntf.(bool)
+		if !ok {
+			return defaultValue, fmt.Errorf("secureTenantNetwork value is not a boolean")
+		}
+		return !secureTenantNetwork, nil
+	}
+	return defaultValue, nil
 }
 
 func (r *CentralReconciler) applyAnnotations(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) {
