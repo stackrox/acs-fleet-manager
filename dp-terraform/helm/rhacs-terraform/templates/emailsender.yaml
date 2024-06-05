@@ -32,8 +32,10 @@ spec:
               value: {{ .Values.emailsender.clusterName }}
             - name: ENVIRONMENT
               value: {{ .Values.emailsender.environment }}
+          {{- if .Values.emailsender.authConfigFromServiceAccount }}
             - name: AUTH_CONFIG_FROM_SERVICE_ACCOUNT
-              value: {{ .Values.emailsender.authConfigFromServiceAccount }}
+              value: "true"
+          {{- end }}
           ports:
             - name: monitoring
               containerPort: 9090
