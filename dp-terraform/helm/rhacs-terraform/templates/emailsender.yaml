@@ -32,6 +32,10 @@ spec:
               value: {{ .Values.emailsender.clusterName }}
             - name: ENVIRONMENT
               value: {{ .Values.emailsender.environment }}
+            - name: HTTPS_CERT_FILE
+              value: "/var/run/certs/tls.crt"
+            - name: HTTPS_KEY_FILE
+              value: "/var/run/certs/tls.key"
           {{- if .Values.emailsender.authConfigFromKubernetes }}
             - name: AUTH_CONFIG_FROM_KUBERNETES
               value: "true"
@@ -47,4 +51,31 @@ spec:
             requests:
               cpu: {{ .Values.emailsender.resources.requests.cpu | quote }}
               memory: {{ .Values.emailsender.resources.requests.memory | quote }}
+          volumeMounts:
+          - name: emailsender-tls
+            mountPath: /var/run/certs
+            readOnly: true
+      volumes:
+        - name: emailsender-tls
+          secret:
+            secretName: emailsender-tls # pragma: allowlist secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: emailsender
+  name: emailsender
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: emailsender-tls
+spec:
+  ports:
+  - name: 443-8080
+    port: 443
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: emailsender
+  type: ClusterIP
 {{- end }}
