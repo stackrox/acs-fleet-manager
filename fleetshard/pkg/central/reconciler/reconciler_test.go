@@ -2889,7 +2889,7 @@ func TestChartValues(t *testing.T) {
 
 }
 
-func Test_shouldApplyEgressProxyConfig(t *testing.T) {
+func Test_shouldApplyProxyConfig(t *testing.T) {
 
 	tests := []struct {
 		name                 string
@@ -2943,7 +2943,7 @@ func Test_shouldApplyEgressProxyConfig(t *testing.T) {
 			r := &CentralReconciler{
 				secureTenantNetwork: tt.flag,
 			}
-			got, err := r.shouldApplyEgressProxyConfig(&private.ManagedCentral{
+			got, err := r.shouldApplyProxyConfig(&private.ManagedCentral{
 				Spec: private.ManagedCentralAllOfSpec{
 					TenantResourcesValues: tt.tenantResourceValues,
 				},

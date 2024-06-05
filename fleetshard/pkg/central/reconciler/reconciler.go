@@ -315,11 +315,11 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 	r.applyTelemetry(remoteCentral, central)
 	r.applyRoutes(central)
-	shouldApplyEgressProxyConfig, err := r.shouldApplyEgressProxyConfig(remoteCentral)
+	shouldApplyProxyConfig, err := r.shouldApplyProxyConfig(remoteCentral)
 	if err != nil {
 		return err
 	}
-	if shouldApplyEgressProxyConfig {
+	if shouldApplyProxyConfig {
 		r.applyProxyConfig(central)
 	}
 	r.applyDeclarativeConfig(central)
@@ -327,7 +327,7 @@ func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCen
 	return nil
 }
 
-func (r *CentralReconciler) shouldApplyEgressProxyConfig(remoteCentral *private.ManagedCentral) (bool, error) {
+func (r *CentralReconciler) shouldApplyProxyConfig(remoteCentral *private.ManagedCentral) (bool, error) {
 	defaultValue := !r.secureTenantNetwork
 	if len(remoteCentral.Spec.TenantResourcesValues) > 0 {
 		secureTenantNetworkIntf, ok := remoteCentral.Spec.TenantResourcesValues["secureTenantNetwork"]
@@ -1900,7 +1900,9 @@ func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Val
 	// includes the tenant resource values, we will use them. Otherwise, defaults to the previous
 	// implementation.
 	if len(c.Spec.TenantResourcesValues) > 0 {
-		return chartutil.CoalesceTables(c.Spec.TenantResourcesValues, src), nil
+		values := chartutil.CoalesceTables(c.Spec.TenantResourcesValues, src)
+		glog.Infof("Values: %v", values)
+		return values, nil
 	}
 
 	dst := map[string]interface{}{
