@@ -21,7 +21,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: fleetshard-sync-role
-# // TODO(create-ticket): Replace with least privileges permissions
+# // TODO(ROX-24548): Replace with least privileges permissions
 rules:
 - apiGroups:
   - '*'

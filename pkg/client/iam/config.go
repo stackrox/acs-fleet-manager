@@ -69,15 +69,16 @@ type IAMRealmConfig struct {
 }
 
 // KubernetesIssuer specific to service account issuer discovery.
-// Unlike OIDCIssuers used in cases where unauthorised/anonymous access to the issuer endpoint is not permitted.
+// Use this type of issuer if the issuer endpoint requires authorization.
+// When the issuer URL is publicly accessible, use OIDCIssuers instead.
 // The purpose of this issuer is to support local k8s clusters.
 // see: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#service-account-issuer-discovery.
 type KubernetesIssuer struct {
-	// Enabled add to the server configuration if true
+	// Enabled add to the server configuration if true.
 	Enabled bool
-	// IssuerURI - uri of the issuer endpoint
+	// IssuerURI - URI of the issuer endpoint.
 	IssuerURI string
-	// JWKSFile location of the file to which the JWKs content is written
+	// JWKSFile location of the file to which the JWKs content is written.
 	JWKSFile string
 }
 

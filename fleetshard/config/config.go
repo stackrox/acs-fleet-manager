@@ -25,7 +25,7 @@ type Config struct {
 	ClusterName             string        `env:"CLUSTER_NAME"`
 	Environment             string        `env:"ENVIRONMENT"`
 	RuntimePollPeriod       time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
-	AuthType                string        `env:"AUTH_TYPE" envDefault:"SERVICE_ACCOUNT_TOKEN"`
+	AuthType                string        `env:"AUTH_TYPE" envDefault:"RHSSO"`
 	RHSSOClientID           string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
 	RHSSOClientSecret       string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
 	RHSSORealm              string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
