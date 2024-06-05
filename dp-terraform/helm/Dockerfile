@@ -25,7 +25,8 @@ RUN microdnf install gzip tar && \
 
 ARG FLEETSHARD_OPERATOR_IMAGE_TAG=main
 RUN yq -i ".fleetshardSync.image.tag = strenv(FLEETSHARD_OPERATOR_IMAGE_TAG)" rhacs-terraform/values.yaml
-RUN yq -i ".emailsender.image.tag = strenv(FLEETSHARD_OPERATOR_IMAGE_TAG)" rhacs-terraform/values.yaml
+ARG EMAILSENDER_IMAGE_TAG=main
+RUN yq -i ".emailsender.image.tag = strenv(EMAILSENDER_IMAGE_TAG)" rhacs-terraform/values.yaml
 
 FROM quay.io/operator-framework/helm-operator:v1.33.0
 
