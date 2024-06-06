@@ -146,6 +146,9 @@ func (c *AuthConfig) readFromKubernetes() error {
 	}
 
 	jwksFilePath := path.Join(c.jwksDir, "jwks.json")
+	// We store this in a file because the OCM SDK middleware we use for auth
+	// isn't able to call a jwks URL that requires authentication.
+	// As a workaround we can pre-load the jwks to a file and use the JwksFile option of that SDK.
 	if err := os.WriteFile(jwksFilePath, jwksBytes, 0644); err != nil {
 		return fmt.Errorf("failed to store jwks file in temp dir: %w", err)
 	}
