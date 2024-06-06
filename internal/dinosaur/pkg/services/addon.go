@@ -116,11 +116,11 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 			continue
 		}
 		if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
-			metrics.UpdateClusterAddonMismatchDurationMetric(clusterID, installedOnCluster, versionInstalledInOCM, time.Since(installedInOCM.UpdatedTimestamp()))
+			updateClusterAddonMismatchDurationMetric(clusterID, installedOnCluster, versionInstalledInOCM, time.Since(installedInOCM.UpdatedTimestamp()))
 			multiErr = multierror.Append(multiErr, p.updateAddon(clusterID, expectedConfig))
 		} else {
 			glog.V(10).Infof("Addon %s is already up-to-date", installedOnCluster.ID)
-			metrics.UpdateClusterAddonMismatchDurationMetric(clusterID, installedOnCluster, versionInstalledInOCM, 0)
+			updateClusterAddonMismatchDurationMetric(clusterID, installedOnCluster, versionInstalledInOCM, 0)
 			multiErr = validateUpToDateAddon(multiErr, installedInOCM, installedOnCluster)
 		}
 	}
@@ -131,6 +131,20 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 	}
 
 	return errorOrNil(multiErr)
+}
+
+func updateClusterAddonMismatchDurationMetric(clusterID string, installedOnCluster dbapi.AddonInstallation, versionInstalledInOCM *clustersmgmtv1.AddOnVersion, duration time.Duration) {
+	metrics.UpdateClusterAddonMismatchDurationMetric(
+		installedOnCluster.ID,
+		clusterID,
+		versionInstalledInOCM.ID(),
+		versionInstalledInOCM.SourceImage(),
+		versionInstalledInOCM.PackageImage(),
+		installedOnCluster.Version,
+		installedOnCluster.SourceImage,
+		installedOnCluster.PackageImage,
+		duration,
+	)
 }
 
 func validateUpToDateAddon(multiErr *multierror.Error, ocmInstallation *clustersmgmtv1.AddOnInstallation, dataPlaneInstallation dbapi.AddonInstallation) *multierror.Error {

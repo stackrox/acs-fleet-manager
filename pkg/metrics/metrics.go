@@ -5,10 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -741,16 +738,17 @@ var clusterAddonMismatchDurationMetric = prometheus.NewGaugeVec(
 )
 
 // UpdateClusterAddonMismatchDurationMetric updates ClusterAddonMismatchDuration Metric
-func UpdateClusterAddonMismatchDurationMetric(clusterID string, installedOnCluster dbapi.AddonInstallation, versionInstalledInOCM *clustersmgmtv1.AddOnVersion, duration time.Duration) {
+func UpdateClusterAddonMismatchDurationMetric(addonID, clusterID, ocmVersion, ocmSourceImage, ocmPackageImage,
+	clusterVersion, clusterSourceImage, clusterPackageImage string, duration time.Duration) {
 	labels := prometheus.Labels{
-		LabelID:                       installedOnCluster.ID,
+		LabelID:                       addonID,
 		LabelClusterID:                clusterID,
-		labelAddonOCMVersion:          versionInstalledInOCM.ID(),
-		labelAddonOCMSourceImage:      versionInstalledInOCM.SourceImage(),
-		labelAddonOCMPackageImage:     versionInstalledInOCM.PackageImage(),
-		labelAddonClusterVersion:      installedOnCluster.Version,
-		labelAddonClusterSourceImage:  installedOnCluster.SourceImage,
-		labelAddonClusterPackageImage: installedOnCluster.PackageImage,
+		labelAddonOCMVersion:          ocmVersion,
+		labelAddonOCMSourceImage:      ocmSourceImage,
+		labelAddonOCMPackageImage:     ocmPackageImage,
+		labelAddonClusterVersion:      clusterVersion,
+		labelAddonClusterSourceImage:  clusterSourceImage,
+		labelAddonClusterPackageImage: clusterPackageImage,
 	}
 	clusterAddonMismatchDurationMetric.With(labels).Set(duration.Seconds())
 }
