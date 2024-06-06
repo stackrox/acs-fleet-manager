@@ -77,6 +77,10 @@ func buildAuthnHandler(router http.Handler, cfg config.AuthConfig) (http.Handler
 		authnHandlerBuilder.KeysURL(keyURL)
 	}
 
+	for _, keyFile := range cfg.JwksFiles {
+		authnHandlerBuilder.KeysFile(keyFile)
+	}
+
 	authHandler, err := authnHandlerBuilder.Build()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create authentication handler")

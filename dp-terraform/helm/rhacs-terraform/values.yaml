@@ -76,6 +76,7 @@ emailsender:
   clusterId: ""
   clusterName: ""
   environment: ""
+  authConfigFromKubernetes: true
   resources:
     requests:
       cpu: "100m"
