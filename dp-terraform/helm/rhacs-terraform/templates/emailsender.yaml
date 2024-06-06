@@ -39,6 +39,10 @@ spec:
           {{- if .Values.emailsender.authConfigFromKubernetes }}
             - name: AUTH_CONFIG_FROM_KUBERNETES
               value: "true"
+          {{- end }}    
+          {{- if .Values.emailsender.enableHTTPS }}
+            - name: ENABLE_HTTPS
+              value: "true"
           {{- end }}
           ports:
             - name: monitoring
@@ -51,14 +55,18 @@ spec:
             requests:
               cpu: {{ .Values.emailsender.resources.requests.cpu | quote }}
               memory: {{ .Values.emailsender.resources.requests.memory | quote }}
+        {{- if .Values.emailsender.enableHTTPS }}
           volumeMounts:
           - name: emailsender-tls
             mountPath: /var/run/certs
             readOnly: true
+        {{- end }}
+    {{- if .Values.emailsender.enableHTTPS }}
       volumes:
         - name: emailsender-tls
           secret:
             secretName: emailsender-tls # pragma: allowlist secret
+    {{- end-}}
 ---
 apiVersion: v1
 kind: Service

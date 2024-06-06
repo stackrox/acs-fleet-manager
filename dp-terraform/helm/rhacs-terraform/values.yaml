@@ -69,6 +69,9 @@ fleetshardSync:
 # - enabled flag is used to completely enable/disable email sender service
 emailsender:
   enabled: false
+  # Use this in case you apply this manifest against a cluster without service-ca operator
+  # to turn of HTTPS and mounting the service-ca certs since they'll not be created
+  enableHTTPS: true
   replicas: 3
   image:
     repo: "quay.io/app-sre/acscs-emailsender"
