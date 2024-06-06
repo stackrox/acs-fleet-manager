@@ -10,12 +10,18 @@ import (
 
 // Config contains this application's runtime configuration.
 type Config struct {
-	ClusterID      string `env:"CLUSTER_ID"`
-	ServerAddress  string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	EnableHTTPS    bool   `env:"ENABLE_HTTPS" envDefault:"false"`
-	HTTPSCertFile  string `env:"HTTPS_CERT_FILE" envDefault:""`
-	HTTPSKeyFile   string `env:"HTTPS_KEY_FILE" envDefault:""`
-	MetricsAddress string `env:"METRICS_ADDRESS" envDefault:":9090"`
+	ClusterID        string `env:"CLUSTER_ID"`
+	ServerAddress    string `env:"SERVER_ADDRESS" envDefault:":8080"`
+	EnableHTTPS      bool   `env:"ENABLE_HTTPS" envDefault:"false"`
+	HTTPSCertFile    string `env:"HTTPS_CERT_FILE" envDefault:""`
+	HTTPSKeyFile     string `env:"HTTPS_KEY_FILE" envDefault:""`
+	MetricsAddress   string `env:"METRICS_ADDRESS" envDefault:":9090"`
+	DatabaseHost     string `env:"DATABASE_HOST" envDefault:"localhost"`
+	DatabasePort     int    `env:"DATABASE_PORT" envDefault:"5432"`
+	DatabaseName     string `env:"DATABASE_NAME" envDefault:"postgres"`
+	DatabaseUser     string `env:"DATABASE_USER" envDefault:"postgres"`
+	DatabasePassword string `env:"DATABASE_PASSWORD" envDefault:"postgres"`
+	DatabaseSSLMode  string `env:"DATABASE_SSL_MODE" envDefault:"disable"`
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.
