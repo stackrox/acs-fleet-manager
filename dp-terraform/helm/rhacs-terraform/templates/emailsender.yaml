@@ -32,8 +32,8 @@ spec:
               value: {{ .Values.emailsender.clusterName }}
             - name: ENVIRONMENT
               value: {{ .Values.emailsender.environment }}
-          {{- if .Values.emailsender.authConfigFromServiceAccount }}
-            - name: AUTH_CONFIG_FROM_SERVICE_ACCOUNT
+          {{- if .Values.emailsender.authConfigFromKubernetes }}
+            - name: AUTH_CONFIG_FROM_KUBERNETES
               value: "true"
           {{- end }}
           ports:
