@@ -2,9 +2,10 @@ package db
 
 import (
 	"fmt"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"time"
+
+	commonDB "github.com/stackrox/acs-fleet-manager/pkg/db"
 )
 
 // DatabaseClient defines methods for fetching or updating models in DB
@@ -22,15 +23,16 @@ type DatabaseConnection struct {
 
 // NewDatabaseConnection creates a new DB connection
 func NewDatabaseConnection(host string, port int, user, password, database, SSLMode string) (*DatabaseConnection, error) {
-	dsn := fmt.Sprintf(
-		"host=%s port=%d user=%s password='%s' dbname=%s sslmode=%s",
-		host, port, user, password, database, SSLMode,
-	)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return nil, fmt.Errorf("unable to connect to database: %v", err)
+	dbConfig := &commonDB.DatabaseConfig{
+		Host:     host,
+		Port:     port,
+		Username: user,
+		Password: password,
+		Name:     database,
+		SSLMode:  SSLMode,
 	}
-	return &DatabaseConnection{DB: db}, nil
+	connection, _ := commonDB.NewConnectionFactory(dbConfig)
+	return &DatabaseConnection{DB: connection.DB}, nil
 }
 
 // Migrate automatically migrates listed models in the database
