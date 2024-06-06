@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -140,7 +141,7 @@ type fakeK8sRoundTripper struct {
 
 func (f fakeK8sRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	token := req.Header.Get("Authorization")
-	require.Equal(f.t, f.expectedToken, token, "request token did not match expected token")
+	require.Equal(f.t, fmt.Sprintf("Bearer %s", f.expectedToken), token, "request token did not match expected token")
 
 	res := &http.Response{}
 

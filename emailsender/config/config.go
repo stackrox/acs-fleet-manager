@@ -220,7 +220,7 @@ func jwksPathFromURL(url string) string {
 }
 
 func addAuthHeader(req *http.Request, token string) {
-	req.Header.Add("Authorization", token)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 }
 
 func k8sSvcClient() (*http.Client, error) {
