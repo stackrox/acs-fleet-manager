@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"time"
 
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
@@ -74,6 +76,9 @@ const (
 	// ClusterStatusCapacityUsed - metric name for the current number of instances
 	ClusterStatusCapacityUsed = "cluster_status_capacity_used"
 
+	// ClusterAddonMismatchDuration - metric name for the time period after the addon is upgraded in OCM but not yet installed on a cluster in seconds
+	ClusterAddonMismatchDuration = "cluster_addon_version_mismatch_duration"
+
 	// GitopsConfigProviderErrorCount - metric name for the number of errors encountered while fetching GitOps config
 	GitopsConfigProviderErrorCount = "gitops_config_provider_error_count"
 
@@ -85,6 +90,13 @@ const (
 	LabelDatabaseQueryType   = "query"
 	LabelRegion              = "region"
 	LabelInstanceType        = "instance_type"
+
+	labelAddonOCMVersion          = "ocm_version"
+	labelAddonOCMSourceImage      = "ocm_source_image"
+	labelAddonOCMPackageImage     = "ocm_package_image"
+	labelAddonClusterVersion      = "cluster_version"
+	labelAddonClusterSourceImage  = "cluster_source_image"
+	labelAddonClusterPackageImage = "cluster_package_image"
 )
 
 // JobType metric to capture
@@ -169,6 +181,17 @@ var clusterStatusCapacityLabels = []string{
 	LabelRegion,
 	LabelInstanceType,
 	LabelClusterID,
+}
+
+var clusterAddonMismatchDurationLabels = []string{
+	LabelID,
+	LabelClusterID,
+	labelAddonOCMVersion,
+	labelAddonOCMSourceImage,
+	labelAddonOCMPackageImage,
+	labelAddonClusterVersion,
+	labelAddonClusterSourceImage,
+	labelAddonClusterPackageImage,
 }
 
 // #### Metrics for Dataplane clusters - Start ####
@@ -707,6 +730,31 @@ func init() {
 	GitopsConfigProviderErrorCounter.WithLabelValues().Add(0)
 }
 
+// clusterAddonMismatchDurationMetric create a new GaugeVec for cluster addon mismatch duration
+var clusterAddonMismatchDurationMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: FleetManager,
+		Name:      ClusterAddonMismatchDuration,
+		Help:      "metric name for the time period after the addon is upgraded in OCM but not yet installed on a cluster in seconds",
+	},
+	clusterAddonMismatchDurationLabels,
+)
+
+// UpdateClusterAddonMismatchDurationMetric updates ClusterAddonMismatchDuration Metric
+func UpdateClusterAddonMismatchDurationMetric(clusterID string, installedOnCluster dbapi.AddonInstallation, versionInstalledInOCM *clustersmgmtv1.AddOnVersion, duration time.Duration) {
+	labels := prometheus.Labels{
+		LabelID:                       installedOnCluster.ID,
+		LabelClusterID:                clusterID,
+		labelAddonOCMVersion:          versionInstalledInOCM.ID(),
+		labelAddonOCMSourceImage:      versionInstalledInOCM.SourceImage(),
+		labelAddonOCMPackageImage:     versionInstalledInOCM.PackageImage(),
+		labelAddonClusterVersion:      installedOnCluster.Version,
+		labelAddonClusterSourceImage:  installedOnCluster.SourceImage,
+		labelAddonClusterPackageImage: installedOnCluster.PackageImage,
+	}
+	clusterAddonMismatchDurationMetric.With(labels).Set(duration.Seconds())
+}
+
 // UpdateDatabaseQueryDurationMetric Update the observatorium request duration metric with the following labels:
 //   - status: (i.e. "success" or "failure")
 //   - queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
@@ -731,6 +779,7 @@ func init() {
 	prometheus.MustRegister(centralPerClusterCountMetric)
 	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
+	prometheus.MustRegister(clusterAddonMismatchDurationMetric)
 	prometheus.MustRegister(GitopsConfigProviderErrorCounter)
 
 	// metrics for Centrals
@@ -801,6 +850,7 @@ func Reset() {
 	centralPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
+	clusterAddonMismatchDurationMetric.Reset()
 	GitopsConfigProviderErrorCounter.Reset()
 
 	requestCentralCreationDurationMetric.Reset()

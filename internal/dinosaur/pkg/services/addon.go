@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/hashicorp/go-multierror"
@@ -13,6 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	ocmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"golang.org/x/exp/maps"
 )
@@ -114,9 +116,11 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 			continue
 		}
 		if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
+			metrics.UpdateClusterAddonMismatchDurationMetric(clusterID, installedOnCluster, versionInstalledInOCM, time.Since(installedInOCM.UpdatedTimestamp()))
 			multiErr = multierror.Append(multiErr, p.updateAddon(clusterID, expectedConfig))
 		} else {
 			glog.V(10).Infof("Addon %s is already up-to-date", installedOnCluster.ID)
+			metrics.UpdateClusterAddonMismatchDurationMetric(clusterID, installedOnCluster, versionInstalledInOCM, 0)
 			multiErr = validateUpToDateAddon(multiErr, installedInOCM, installedOnCluster)
 		}
 	}
