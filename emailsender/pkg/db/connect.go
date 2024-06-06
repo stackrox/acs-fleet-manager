@@ -27,7 +27,7 @@ func NewDatabaseConnection(host string, port int, user, password, database, SSLM
 		Host:     host,
 		Port:     port,
 		Username: user,
-		Password: password,
+		Password: password, // pragma: allowlist secret
 		Name:     database,
 		SSLMode:  SSLMode,
 	}
