@@ -3,7 +3,6 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/golang/glog"
 	"github.com/hashicorp/go-multierror"
@@ -116,12 +115,12 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 			continue
 		}
 		if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
-			updateClusterAddonMismatchDurationMetric(clusterID, installedOnCluster, versionInstalledInOCM, installedInOCM.UpdatedTimestamp())
 			multiErr = multierror.Append(multiErr, p.updateAddon(clusterID, expectedConfig))
+			updateAddonStatusMetric(clusterID, installedOnCluster, versionInstalledInOCM, metrics.AddonUpgrade)
 		} else {
 			glog.V(10).Infof("Addon %s is already up-to-date", installedOnCluster.ID)
-			updateClusterAddonMismatchDurationMetric(clusterID, installedOnCluster, versionInstalledInOCM, time.Unix(0, 0))
 			multiErr = validateUpToDateAddon(multiErr, installedInOCM, installedOnCluster)
+			updateAddonStatusMetric(clusterID, installedOnCluster, versionInstalledInOCM, metrics.AddonUp)
 		}
 	}
 
@@ -133,8 +132,8 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 	return errorOrNil(multiErr)
 }
 
-func updateClusterAddonMismatchDurationMetric(clusterID string, installedOnCluster dbapi.AddonInstallation, versionInstalledInOCM *clustersmgmtv1.AddOnVersion, updatedTimestamp time.Time) {
-	metrics.UpdateClusterAddonUpgradeStartedTimestampMetric(
+func updateAddonStatusMetric(clusterID string, installedOnCluster dbapi.AddonInstallation, versionInstalledInOCM *clustersmgmtv1.AddOnVersion, status metrics.AddonStatus) {
+	metrics.UpdateClusterAddonStatusMetric(
 		installedOnCluster.ID,
 		clusterID,
 		versionInstalledInOCM.ID(),
@@ -143,7 +142,7 @@ func updateClusterAddonMismatchDurationMetric(clusterID string, installedOnClust
 		installedOnCluster.Version,
 		installedOnCluster.SourceImage,
 		installedOnCluster.PackageImage,
-		updatedTimestamp,
+		status,
 	)
 }
 

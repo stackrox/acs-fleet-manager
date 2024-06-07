@@ -73,8 +73,8 @@ const (
 	// ClusterStatusCapacityUsed - metric name for the current number of instances
 	ClusterStatusCapacityUsed = "cluster_status_capacity_used"
 
-	// ClusterAddonUpgradeStartedTimestamp - metric name for the timestamp when the addon is upgraded in OCM but not yet installed on a cluster in seconds
-	ClusterAddonUpgradeStartedTimestamp = "cluster_addon_upgrade_started_timestamp_seconds"
+	// ClusterAddonStatusMetric - metric name for the cluster addon status represented by ClusterAddonStatus
+	ClusterAddonStatusMetric = "cluster_addon_status"
 
 	// GitopsConfigProviderErrorCount - metric name for the number of errors encountered while fetching GitOps config
 	GitopsConfigProviderErrorCount = "gitops_config_provider_error_count"
@@ -180,7 +180,7 @@ var clusterStatusCapacityLabels = []string{
 	LabelClusterID,
 }
 
-var clusterAddonUpgradeStartedTimestampLabels = []string{
+var clusterAddonStatusLabels = []string{
 	LabelID,
 	LabelClusterID,
 	labelAddonOCMVersion,
@@ -727,19 +727,29 @@ func init() {
 	GitopsConfigProviderErrorCounter.WithLabelValues().Add(0)
 }
 
-// clusterAddonUpgradeStartedTimestampMetric create a new GaugeVec for cluster addon upgrade started timestamp
-var clusterAddonUpgradeStartedTimestampMetric = prometheus.NewGaugeVec(
-	prometheus.GaugeOpts{
-		Subsystem: FleetManager,
-		Name:      ClusterAddonUpgradeStartedTimestamp,
-		Help:      "metric name for the time period after the addon is upgraded in OCM but not yet installed on a cluster in seconds",
-	},
-	clusterAddonUpgradeStartedTimestampLabels,
+// AddonStatus represents the status of the addon installation on a Data Plane cluster
+type AddonStatus int
+
+const (
+	// AddonUp the addon is up and running
+	AddonUp AddonStatus = iota
+	// AddonUpgrade the addon is upgrading
+	AddonUpgrade
 )
 
-// UpdateClusterAddonUpgradeStartedTimestampMetric updates ClusterAddonUpgradeStartedTimestamp Metric
-func UpdateClusterAddonUpgradeStartedTimestampMetric(addonID, clusterID, ocmVersion, ocmSourceImage, ocmPackageImage,
-	clusterVersion, clusterSourceImage, clusterPackageImage string, updatedTimestamp time.Time) {
+// clusterAddonStatusMetric create a new GaugeVec for cluster addon upgrade started timestamp
+var clusterAddonStatusMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: FleetManager,
+		Name:      ClusterAddonStatusMetric,
+		Help:      "metric name for the time period after the addon is upgraded in OCM but not yet installed on a cluster in seconds",
+	},
+	clusterAddonStatusLabels,
+)
+
+// UpdateClusterAddonStatusMetric updates ClusterAddonStatusMetric Metric
+func UpdateClusterAddonStatusMetric(addonID, clusterID, ocmVersion, ocmSourceImage, ocmPackageImage,
+	clusterVersion, clusterSourceImage, clusterPackageImage string, status AddonStatus) {
 	labels := prometheus.Labels{
 		LabelID:                       addonID,
 		LabelClusterID:                clusterID,
@@ -750,7 +760,7 @@ func UpdateClusterAddonUpgradeStartedTimestampMetric(addonID, clusterID, ocmVers
 		labelAddonClusterSourceImage:  clusterSourceImage,
 		labelAddonClusterPackageImage: clusterPackageImage,
 	}
-	clusterAddonUpgradeStartedTimestampMetric.With(labels).Set(float64(updatedTimestamp.Unix()))
+	clusterAddonStatusMetric.With(labels).Set(float64(status))
 }
 
 // UpdateDatabaseQueryDurationMetric Update the observatorium request duration metric with the following labels:
@@ -777,7 +787,7 @@ func init() {
 	prometheus.MustRegister(centralPerClusterCountMetric)
 	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
-	prometheus.MustRegister(clusterAddonUpgradeStartedTimestampMetric)
+	prometheus.MustRegister(clusterAddonStatusMetric)
 	prometheus.MustRegister(GitopsConfigProviderErrorCounter)
 
 	// metrics for Centrals
@@ -848,7 +858,7 @@ func Reset() {
 	centralPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
-	clusterAddonUpgradeStartedTimestampMetric.Reset()
+	clusterAddonStatusMetric.Reset()
 	GitopsConfigProviderErrorCounter.Reset()
 
 	requestCentralCreationDurationMetric.Reset()
