@@ -134,6 +134,13 @@ spec:
         - name: FLEET_MANAGER_TOKEN_FILE
           value: "/var/run/secrets/tokens/fleet-manager-token"
         {{- end }}
+        {{- if .Values.fleetshardSync.tenantImagePullSecret.ref }}
+        - name: TENANT_IMAGE_PULL_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.fleetshardSync.tenantImagePullSecret.ref | quote }}
+              key: {{ .Values.fleetshardSync.tenantImagePullSecret.key | quote }}
+        {{- end }}
         volumeMounts:
           - mountPath: /var/run/secrets/tokens
             name: aws-token

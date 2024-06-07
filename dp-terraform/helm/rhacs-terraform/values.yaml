@@ -64,6 +64,9 @@ fleetshardSync:
       effect: NoSchedule
   addonAutoUpgradeEnabled: true
   addonName: acs-fleetshard
+  tenantImagePullSecret:
+    ref: ""
+    key: .dockerconfigjson
 
 # Email sender service parameters
 # - enabled flag is used to completely enable/disable email sender service
