@@ -13,6 +13,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	ocmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"golang.org/x/exp/maps"
 )
@@ -115,9 +116,11 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 		}
 		if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
 			multiErr = multierror.Append(multiErr, p.updateAddon(clusterID, expectedConfig))
+			updateAddonStatusMetric(clusterID, installedOnCluster, versionInstalledInOCM, metrics.AddonUpgrade)
 		} else {
 			glog.V(10).Infof("Addon %s is already up-to-date", installedOnCluster.ID)
 			multiErr = validateUpToDateAddon(multiErr, installedInOCM, installedOnCluster)
+			updateAddonStatusMetric(clusterID, installedOnCluster, versionInstalledInOCM, metrics.AddonUp)
 		}
 	}
 
@@ -127,6 +130,20 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 	}
 
 	return errorOrNil(multiErr)
+}
+
+func updateAddonStatusMetric(clusterID string, installedOnCluster dbapi.AddonInstallation, versionInstalledInOCM *clustersmgmtv1.AddOnVersion, status metrics.AddonStatus) {
+	metrics.UpdateClusterAddonStatusMetric(
+		installedOnCluster.ID,
+		clusterID,
+		versionInstalledInOCM.ID(),
+		versionInstalledInOCM.SourceImage(),
+		versionInstalledInOCM.PackageImage(),
+		installedOnCluster.Version,
+		installedOnCluster.SourceImage,
+		installedOnCluster.PackageImage,
+		status,
+	)
 }
 
 func validateUpToDateAddon(multiErr *multierror.Error, ocmInstallation *clustersmgmtv1.AddOnInstallation, dataPlaneInstallation dbapi.AddonInstallation) *multierror.Error {
