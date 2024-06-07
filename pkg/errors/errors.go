@@ -17,6 +17,14 @@ type stackTracer interface {
 	StackTrace() errors.StackTrace
 }
 
+// ErrorCodePrefixOverride is a variable to override the ErrorCodePrefix used in error messages for ServiceErrors
+// use this in case you are using the service errors defined in this package for other services
+var ErrorCodePrefixOverride = ""
+
+// ErrorHREFOverride is used to override the ErrorHREF used in error messages for ServiceErrors
+// use this in case you are using the service errors defined in this package for other services
+var ErrorHREFOverride = ""
+
 // ErrorCodePrefix ...
 const (
 	ErrorCodePrefix = "RHACS-MGMT"
@@ -486,12 +494,20 @@ func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compa
 
 // CodeStr ...
 func CodeStr(code ServiceErrorCode) string {
-	return fmt.Sprintf("%s-%d", ErrorCodePrefix, code)
+	prefix := ErrorCodePrefix
+	if ErrorCodePrefixOverride != "" {
+		prefix = ErrorCodePrefixOverride
+	}
+	return fmt.Sprintf("%s-%d", prefix, code)
 }
 
 // Href ...
 func Href(code ServiceErrorCode) string {
-	return fmt.Sprintf("%s%d", ErrorHREF, code)
+	href := ErrorHREF
+	if ErrorHREFOverride != "" {
+		href = ErrorHREFOverride
+	}
+	return fmt.Sprintf("%s%d", href, code)
 }
 
 // NotFound ...

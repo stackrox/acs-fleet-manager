@@ -30,12 +30,12 @@ func fleetShardAuthorizationMiddleware(iamConfig *iam.IAMConfig, fleetShardAuthZ
 
 			if claims.VerifyIssuer(iamConfig.RedhatSSORealm.ValidIssuerURI, true) {
 				// middlewares must be applied in REVERSE order (last comes first)
-				next = checkAllowedOrgIDs(fleetShardAuthZConfig.AllowedOrgIDs)(next)
+				next = CheckAllowedOrgIDs(fleetShardAuthZConfig.AllowedOrgIDs)(next)
 				next = NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorNotFound)(next)
 			} else {
 				// middlewares must be applied in REVERSE order (last comes first)
 				next = checkSubject(fleetShardAuthZConfig.AllowedSubjects)(next)
-				next = checkAudience(fleetShardAuthZConfig.AllowedAudiences)(next)
+				next = CheckAudience(fleetShardAuthZConfig.AllowedAudiences)(next)
 				next = NewRequireIssuerMiddleware().RequireIssuer(iamConfig.DataPlaneOIDCIssuers.URIs, errors.ErrorNotFound)(next)
 			}
 
@@ -44,15 +44,13 @@ func fleetShardAuthorizationMiddleware(iamConfig *iam.IAMConfig, fleetShardAuthZ
 	}
 }
 
-func checkAllowedOrgIDs(allowedOrgIDs []string) mux.MiddlewareFunc {
-	return checkClaim(tenantIDClaim, (*ACSClaims).GetOrgID, allowedOrgIDs)
-}
-
 func checkSubject(allowedSubjects []string) mux.MiddlewareFunc {
 	return checkClaim(tenantSubClaim, (*ACSClaims).GetSubject, allowedSubjects)
 }
 
-func checkAudience(allowedAudiences []string) mux.MiddlewareFunc {
+// CheckAudience is a middleware to check if the aud claim in a given request
+// matches the allowedAudiences
+func CheckAudience(allowedAudiences []string) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			ctx := request.Context()
