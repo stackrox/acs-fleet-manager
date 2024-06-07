@@ -76,6 +76,7 @@ emailsender:
   clusterId: ""
   clusterName: ""
   environment: ""
+  senderAddress: "noreply@mail.rhacs-dev.com"
   authConfigFromKubernetes: true
   resources:
     requests:

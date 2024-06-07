@@ -36,6 +36,7 @@ type Config struct {
 	MetricsAddress           string `env:"METRICS_ADDRESS" envDefault:":9090"`
 	AuthConfigFile           string `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
 	AuthConfigFromKubernetes bool   `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
+	SenderAddress            string `env:"SENDER_ADDRESS" envDefault:"noreply@mail.rhacs-dev.com"`
 	AuthConfig               AuthConfig
 }
 
