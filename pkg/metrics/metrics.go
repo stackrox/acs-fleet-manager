@@ -73,8 +73,8 @@ const (
 	// ClusterStatusCapacityUsed - metric name for the current number of instances
 	ClusterStatusCapacityUsed = "cluster_status_capacity_used"
 
-	// ClusterAddonMismatchDuration - metric name for the time period after the addon is upgraded in OCM but not yet installed on a cluster in seconds
-	ClusterAddonMismatchDuration = "cluster_addon_version_mismatch_duration"
+	// ClusterAddonUpgradeStartedTimestamp - metric name for the timestamp when the addon is upgraded in OCM but not yet installed on a cluster in seconds
+	ClusterAddonUpgradeStartedTimestamp = "cluster_addon_upgrade_started_timestamp_seconds"
 
 	// GitopsConfigProviderErrorCount - metric name for the number of errors encountered while fetching GitOps config
 	GitopsConfigProviderErrorCount = "gitops_config_provider_error_count"
@@ -180,7 +180,7 @@ var clusterStatusCapacityLabels = []string{
 	LabelClusterID,
 }
 
-var clusterAddonMismatchDurationLabels = []string{
+var clusterAddonUpgradeStartedTimestampLabels = []string{
 	LabelID,
 	LabelClusterID,
 	labelAddonOCMVersion,
@@ -727,19 +727,19 @@ func init() {
 	GitopsConfigProviderErrorCounter.WithLabelValues().Add(0)
 }
 
-// clusterAddonMismatchDurationMetric create a new GaugeVec for cluster addon mismatch duration
-var clusterAddonMismatchDurationMetric = prometheus.NewGaugeVec(
+// clusterAddonUpgradeStartedTimestampMetric create a new GaugeVec for cluster addon upgrade started timestamp
+var clusterAddonUpgradeStartedTimestampMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: FleetManager,
-		Name:      ClusterAddonMismatchDuration,
+		Name:      ClusterAddonUpgradeStartedTimestamp,
 		Help:      "metric name for the time period after the addon is upgraded in OCM but not yet installed on a cluster in seconds",
 	},
-	clusterAddonMismatchDurationLabels,
+	clusterAddonUpgradeStartedTimestampLabels,
 )
 
-// UpdateClusterAddonMismatchDurationMetric updates ClusterAddonMismatchDuration Metric
-func UpdateClusterAddonMismatchDurationMetric(addonID, clusterID, ocmVersion, ocmSourceImage, ocmPackageImage,
-	clusterVersion, clusterSourceImage, clusterPackageImage string, duration time.Duration) {
+// UpdateClusterAddonUpgradeStartedTimestampMetric updates ClusterAddonUpgradeStartedTimestamp Metric
+func UpdateClusterAddonUpgradeStartedTimestampMetric(addonID, clusterID, ocmVersion, ocmSourceImage, ocmPackageImage,
+	clusterVersion, clusterSourceImage, clusterPackageImage string, updatedTimestamp time.Time) {
 	labels := prometheus.Labels{
 		LabelID:                       addonID,
 		LabelClusterID:                clusterID,
@@ -750,7 +750,7 @@ func UpdateClusterAddonMismatchDurationMetric(addonID, clusterID, ocmVersion, oc
 		labelAddonClusterSourceImage:  clusterSourceImage,
 		labelAddonClusterPackageImage: clusterPackageImage,
 	}
-	clusterAddonMismatchDurationMetric.With(labels).Set(duration.Seconds())
+	clusterAddonUpgradeStartedTimestampMetric.With(labels).Set(float64(updatedTimestamp.Unix()))
 }
 
 // UpdateDatabaseQueryDurationMetric Update the observatorium request duration metric with the following labels:
@@ -777,7 +777,7 @@ func init() {
 	prometheus.MustRegister(centralPerClusterCountMetric)
 	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
-	prometheus.MustRegister(clusterAddonMismatchDurationMetric)
+	prometheus.MustRegister(clusterAddonUpgradeStartedTimestampMetric)
 	prometheus.MustRegister(GitopsConfigProviderErrorCounter)
 
 	// metrics for Centrals
@@ -848,7 +848,7 @@ func Reset() {
 	centralPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
-	clusterAddonMismatchDurationMetric.Reset()
+	clusterAddonUpgradeStartedTimestampMetric.Reset()
 	GitopsConfigProviderErrorCounter.Reset()
 
 	requestCentralCreationDurationMetric.Reset()
