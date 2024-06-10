@@ -37,7 +37,7 @@ type Config struct {
 	AuthConfigFile           string `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
 	AuthConfigFromKubernetes bool   `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
 	AuthConfig               AuthConfig
-	
+
 	DatabaseHost         string `env:"DATABASE_HOST" envDefault:"localhost"`
 	DatabasePort         int    `env:"DATABASE_PORT" envDefault:"5432"`
 	DatabaseName         string `env:"DATABASE_NAME" envDefault:"postgres"`
