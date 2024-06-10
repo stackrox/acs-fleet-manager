@@ -28,15 +28,16 @@ const (
 
 // Config contains this application's runtime configuration.
 type Config struct {
-	ClusterID                string `env:"CLUSTER_ID"`
-	ServerAddress            string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	EnableHTTPS              bool   `env:"ENABLE_HTTPS" envDefault:"false"`
-	HTTPSCertFile            string `env:"HTTPS_CERT_FILE" envDefault:""`
-	HTTPSKeyFile             string `env:"HTTPS_KEY_FILE" envDefault:""`
-	MetricsAddress           string `env:"METRICS_ADDRESS" envDefault:":9090"`
-	AuthConfigFile           string `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
-	AuthConfigFromKubernetes bool   `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
-	AuthConfig               AuthConfig
+	ClusterID                  string `env:"CLUSTER_ID"`
+	ServerAddress              string `env:"SERVER_ADDRESS" envDefault:":8080"`
+	EnableHTTPS                bool   `env:"ENABLE_HTTPS" envDefault:"false"`
+	HTTPSCertFile              string `env:"HTTPS_CERT_FILE" envDefault:""`
+	HTTPSKeyFile               string `env:"HTTPS_KEY_FILE" envDefault:""`
+	MetricsAddress             string `env:"METRICS_ADDRESS" envDefault:":9090"`
+	AuthConfigFile             string `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
+	AuthConfigFromKubernetes   bool   `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
+	SendEmailBackoffMaxMinutes int    `env:"SEND_EMAIL_BACKOFF_MAX_MINUTES" envDefault:"30"`
+	AuthConfig                 AuthConfig
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -39,7 +40,8 @@ func main() {
 	ctx := context.Background()
 
 	// initialize components
-	sesClient, err := email.NewSES(ctx)
+	backoffMaxDuration := time.Duration(cfg.SendEmailBackoffMaxMinutes) * time.Minute
+	sesClient, err := email.NewSES(ctx, backoffMaxDuration)
 	if err != nil {
 		glog.Errorf("Failed to initialise SES Client: %v", err)
 		os.Exit(1)

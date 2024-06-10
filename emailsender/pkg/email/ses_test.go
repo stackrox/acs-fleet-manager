@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ses"
@@ -78,7 +79,7 @@ func TestSendEmail_Failure(t *testing.T) {
 			return nil, errors.New(errorText)
 		},
 	}
-	mockedSES := SES{sesClient: mockClient}
+	mockedSES := SES{sesClient: mockClient, backoffMaxDuration: 1 * time.Second}
 
 	messageID, err := mockedSES.SendEmail(
 		context.Background(),
@@ -130,7 +131,7 @@ func TestSendRawEmail_Failure(t *testing.T) {
 			return nil, errors.New(errorText)
 		},
 	}
-	mockedSES := SES{sesClient: mockClient}
+	mockedSES := SES{sesClient: mockClient, backoffMaxDuration: 1 * time.Second}
 
 	buf := bytes.NewBuffer(nil)
 	buf.WriteString(fmt.Sprintf("Subject: %s\r\n", "Test Subject"))
