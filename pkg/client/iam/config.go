@@ -31,6 +31,7 @@ type IAMConfig struct {
 	InternalSSORealm     *IAMRealmConfig
 	AdditionalSSOIssuers *OIDCIssuers
 	DataPlaneOIDCIssuers *OIDCIssuers
+	KubernetesIssuer     *KubernetesIssuer
 }
 
 // OIDCIssuers is a list of issuers that the Fleet Manager server trusts.
@@ -65,6 +66,20 @@ type IAMRealmConfig struct {
 	JwksEndpointURI  string `json:"jwks_endpoint_uri"`
 	ValidIssuerURI   string `json:"valid_issuer_uri"`
 	APIEndpointURI   string `json:"api_endpoint_uri"`
+}
+
+// KubernetesIssuer specific to service account issuer discovery.
+// Use this type of issuer if the issuer endpoint requires authorization.
+// When the issuer URL is publicly accessible, use OIDCIssuers instead.
+// The purpose of this issuer is to support local k8s clusters.
+// see: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#service-account-issuer-discovery.
+type KubernetesIssuer struct {
+	// Enabled add to the server configuration if true.
+	Enabled bool
+	// IssuerURI - URI of the issuer endpoint.
+	IssuerURI string
+	// JWKSFile location of the file to which the JWKs content is written.
+	JWKSFile string
 }
 
 func (c *IAMRealmConfig) setDefaultURIs(baseURL string) {
@@ -126,6 +141,10 @@ func NewIAMConfig() *IAMConfig {
 			Enabled: true,
 			File:    "config/dataplane-oidc-issuers.yaml",
 		},
+		KubernetesIssuer: &KubernetesIssuer{
+			Enabled:   true,
+			IssuerURI: kubernetesIssuer,
+		},
 	}
 	return kc
 }
@@ -141,6 +160,8 @@ func (ic *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&ic.AdditionalSSOIssuers.Enabled, "enable-additional-sso-issuers", ic.AdditionalSSOIssuers.Enabled, "Enable additional SSO issuer URIs for verifying tokens")
 	fs.StringVar(&ic.AdditionalSSOIssuers.File, "additional-sso-issuers-file", ic.AdditionalSSOIssuers.File, "File containing a list of SSO issuer URIs to include for verifying tokens")
 	fs.StringVar(&ic.DataPlaneOIDCIssuers.File, "dataplane-oidc-issuers-file", ic.DataPlaneOIDCIssuers.File, "File containing a list of OIDC issuer URIs to include for verifying tokens")
+	fs.BoolVar(&ic.KubernetesIssuer.Enabled, "kubernetes-issuer-enabled", ic.KubernetesIssuer.Enabled, "Enables kubernetes issuer for verifying service account tokens. Use it ONLY when the cluster issuer URI is NOT public. Otherwise, use dataplane-oidc-issuers-file instead")
+	fs.StringVar(&ic.KubernetesIssuer.IssuerURI, "kubernetes-issuer-uri", ic.KubernetesIssuer.IssuerURI, "Kubernetes issuer URIs for verifying service account tokens")
 }
 
 // ReadFiles ...
@@ -186,17 +207,36 @@ func (ic *IAMConfig) ReadFiles() error {
 		return err
 	}
 	if len(ic.DataPlaneOIDCIssuers.JWKSURIs) == 0 {
-		return ic.DataPlaneOIDCIssuers.resolveURIs()
+		if err := ic.DataPlaneOIDCIssuers.resolveURIs(); err != nil {
+			return err
+		}
+	}
+	if ic.KubernetesIssuer.Enabled {
+		if err := ic.KubernetesIssuer.writeJwksFile(); err != nil {
+			glog.Errorf("Failed to create a temp JWKS file, skipping: %v", err)
+		}
 	}
 	return nil
+}
+
+// GetDataPlaneIssuerURIs returns data plane issuer URIs configured for the service account token validation
+func (ic *IAMConfig) GetDataPlaneIssuerURIs() []string {
+	uris := make([]string, len(ic.DataPlaneOIDCIssuers.URIs))
+	copy(uris, ic.DataPlaneOIDCIssuers.URIs)
+	if ic.KubernetesIssuer.Enabled {
+		uris = append(uris, ic.KubernetesIssuer.IssuerURI)
+	}
+	return uris
 }
 
 const (
 	openidConfigurationPath = "/.well-known/openid-configuration"
 	kubernetesIssuer        = "https://kubernetes.default.svc"
+	jwksTempFilePattern     = "k8s-jwks-*.json"
 )
 
 type openIDConfiguration struct {
+	Issuer  string `json:"issuer"`
 	JwksURI string `json:"jwks_uri"`
 }
 
@@ -204,11 +244,10 @@ type openIDConfiguration struct {
 // jwks URI dynamically
 func (a *OIDCIssuers) resolveURIs() error {
 	jwksURIs := make([]string, 0, len(a.URIs))
+	client := &http.Client{
+		Timeout: time.Minute,
+	}
 	for _, issuerURI := range a.URIs {
-		client, err := createHTTPClient(issuerURI)
-		if err != nil {
-			return err
-		}
 		cfg, err := getOpenIDConfiguration(client, issuerURI)
 		if err != nil {
 			return errors.Wrapf(err, "retrieving open-id configuration for %q", issuerURI)
@@ -222,48 +261,116 @@ func (a *OIDCIssuers) resolveURIs() error {
 	return nil
 }
 
-func createHTTPClient(url string) (*http.Client, error) {
-	// Special case for dev/test environments: Fleet Manager runs on the Data Plane cluster
-	if url == kubernetesIssuer {
-		config, err := rest.InClusterConfig()
-		if err != nil {
-			return nil, fmt.Errorf("create in-cluster k8s config: %w", err)
-		}
-		client, err := rest.HTTPClientFor(config)
-		if err != nil {
-			return nil, fmt.Errorf("create http client for in-cluster k8s issuer: %w", err)
-		}
-		return client, nil
+func (i *KubernetesIssuer) writeJwksFile() error {
+	jwks, err := i.fetchJwks()
+	if err != nil {
+		return fmt.Errorf("fetch jwks: %w", err)
 	}
-	// Special case for local dev environments: Fleet Manager manages a local cluster, assuming kubeconfig exists
-	if isLocalCluster(url) {
+	tempFile, err := os.CreateTemp("", jwksTempFilePattern)
+	if err != nil {
+		return fmt.Errorf("create temp jwks file for a k8s issuer: %w", err)
+	}
+	defer tempFile.Close()
+	_, err = tempFile.Write(jwks)
+	if err != nil {
+		return fmt.Errorf("write jwks to the temp file %v: %w", tempFile.Name(), err)
+	}
+	i.JWKSFile = tempFile.Name()
+	glog.V(5).Infof("Wrote JWKs to the temp file %v", i.JWKSFile)
+	return nil
+}
+
+func (i *KubernetesIssuer) fetchJwks() ([]byte, error) {
+	client, err := i.createHTTPClient()
+	if err != nil {
+		return nil, fmt.Errorf("create http client for k8s issuer %s: %w", i.IssuerURI, err)
+	}
+	jwksURI, err := i.getJwksURI(client)
+	if err != nil {
+		return nil, fmt.Errorf("get JWKS URI for k8s issuer %s: %w", i.IssuerURI, err)
+	}
+	resp, err := client.Get(jwksURI)
+	if err != nil {
+		return nil, fmt.Errorf("fetch jwks from k8s issuer %s: %w", i.IssuerURI, err)
+	}
+	defer resp.Body.Close()
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading JWKS response: %w", err)
+	}
+	return bytes, nil
+}
+
+func (i *KubernetesIssuer) createHTTPClient() (*http.Client, error) {
+	config, err := i.buildK8sConfig()
+	if err != nil {
+		return nil, fmt.Errorf("build k8s config for issuer %s: %w", i.IssuerURI, err)
+	}
+	client, err := rest.HTTPClientFor(config)
+	if err != nil {
+		return nil, fmt.Errorf("create http client for k8s issuer %s: %w", i.IssuerURI, err)
+	}
+	return client, nil
+}
+
+func (i *KubernetesIssuer) getJwksURI(client *http.Client) (string, error) {
+	cfg, err := getOpenIDConfiguration(client, i.IssuerURI)
+	if err != nil {
+		return "", errors.Wrapf(err, "retrieving open-id configuration for %q", i.IssuerURI)
+	}
+	jwksURI := cfg.JwksURI
+	if i.isLocalCluster() {
+		// kube api-server returns an internal IP, need to override it.
+		jwksURI = i.overrideJwksURIForLocalCluster(jwksURI)
+	}
+	if cfg.Issuer != i.IssuerURI {
+		glog.V(5).Infof("Configured issuer URI does't match the issuer URI configured in the discovery document, overriding: [configured: %s, got: %s]", i.IssuerURI, cfg.Issuer)
+		i.IssuerURI = cfg.Issuer
+	}
+	return jwksURI, nil
+}
+
+func (i *KubernetesIssuer) overrideJwksURIForLocalCluster(jwksURI string) string {
+	jwksURL, err := url.Parse(jwksURI)
+	if err != nil {
+		glog.Errorf("Failed to override JWKs URL of the local k8s cluster %s: %v", jwksURI, err)
+		return jwksURI
+	}
+	if jwksURL.Port() != "" {
+		jwksURL.Host = "127.0.0.1:" + jwksURL.Port()
+	} else {
+		jwksURL.Host = "127.0.0.1"
+	}
+	return jwksURL.String()
+}
+
+func (i *KubernetesIssuer) buildK8sConfig() (*rest.Config, error) {
+	// Special case for local dev environments: Fleet Manager manages local cluster, assuming kubeconfig exists
+	if i.isLocalCluster() {
 		kubeconfig := os.Getenv("KUBECONFIG")
 		if len(kubeconfig) == 0 {
 			kubeconfig = filepath.Join(os.Getenv("HOME"), ".kube/config")
 		}
-		config, err := clientcmd.BuildConfigFromFlags(url, kubeconfig)
+		config, err := clientcmd.BuildConfigFromFlags(i.IssuerURI, kubeconfig)
 		if err != nil {
 			return nil, fmt.Errorf("create local cluster k8s config: %w", err)
 		}
-		client, err := rest.HTTPClientFor(config)
-		if err != nil {
-			return nil, fmt.Errorf("create http client for local k8s issuer")
-		}
-		return client, nil
+		return config, nil
 	}
-	// default client
-	return &http.Client{
-		Timeout: time.Minute,
-	}, nil
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, fmt.Errorf("create in-cluster k8s config: %w", err)
+	}
+	return config, nil
 }
 
-func isLocalCluster(uri string) bool {
-	url, err := url.Parse(uri)
+func (i *KubernetesIssuer) isLocalCluster() bool {
+	issuerURL, err := url.Parse(i.IssuerURI)
 	if err != nil {
-		glog.V(10).Infof("Unable to parse the issuer URI %v, consider it a non-local cluster", uri)
+		glog.V(10).Infof("Unable to parse the issuer URI %v, consider it a non-local cluster", i.IssuerURI)
 		return false
 	}
-	return netutil.IsLocalHost(url.Hostname())
+	return netutil.IsLocalHost(issuerURL.Hostname())
 }
 
 func getOpenIDConfiguration(c *http.Client, baseURL string) (*openIDConfiguration, error) {

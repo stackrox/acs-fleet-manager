@@ -407,6 +407,14 @@ parameters:
   description: List of DataPlane OpenID Connect issuers that should be verified for issued tokens.
   value: "[]"
 
+- name: KUBERNETES_ISSUER_ENABLED
+  description: Enables kubernetes issuer for verifying service account tokens. Use it ONLY when the cluster issuer URI is NOT public. Otherwise, use dataplane-oidc-issuers-file instead
+  value: "false"
+
+- name: KUBERNETES_ISSUER_URI
+  description: Kubernetes issuer URI for verifying service account tokens
+  value: "https://kubernetes.default.svc"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -1059,6 +1067,8 @@ objects:
             - --telemetry-endpoint=${TELEMETRY_ENDPONT}
             - --telemetry-storage-key-secret-file=/secrets/fleet-manager-credentials/telemetry.storageKey
             - --enable-leader-election=${ENABLE_LEADER_ELECTION}
+            - --kubernetes-issuer-enabled=${KUBERNETES_ISSUER_ENABLED}
+            - --kubernetes-issuer-uri=${KUBERNETES_ISSUER_URI}
             - -v=${GLOG_V}
             resources:
               requests:

@@ -78,6 +78,9 @@ func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient
 		Static: fleetmanager.StaticOption{
 			StaticToken: config.StaticToken,
 		},
+		ServiceAccount: fleetmanager.ServiceAccountOption{
+			TokenFile: config.ServiceAccountTokenFile,
+		},
 	}
 	auth, err := fleetmanager.NewAuth(ctx, config.AuthType, authOption)
 	if err != nil {

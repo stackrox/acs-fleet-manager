@@ -85,6 +85,9 @@ func TestUseFleetShardAuthorizationMiddleware(t *testing.T) {
 						ValidIssuerURI: validIssuer,
 					},
 					DataPlaneOIDCIssuers: &iam.OIDCIssuers{},
+					KubernetesIssuer: &iam.KubernetesIssuer{
+						Enabled: false,
+					},
 				},
 				&FleetShardAuthZConfig{
 					AllowedOrgIDs: tt.allowedOrgIDs,
@@ -126,11 +129,15 @@ func TestUseFleetShardAuthorizationMiddleware_NoTokenSet(t *testing.T) {
 
 func TestUseFleetShardAuthorizationMiddleware_DataPlaneOIDCIssuers(t *testing.T) {
 	const validIssuer = "http://localhost"
+	const kubernetesIssuer = "https://kubernetes.default.svc"
 	validAudience := []string{"acs-fleet-manager-private-api"}
+	validIssuers := []string{validIssuer}
 
 	tests := map[string]struct {
-		token              *jwt.Token
-		expectedStatusCode int
+		token                  *jwt.Token
+		expectedStatusCode     int
+		enableKubernetesIssuer bool
+		dataplaneOIDCIssuers   []string
 	}{
 		"should succeed when sub is equal the allowed subject": {
 			token: &jwt.Token{
@@ -205,6 +212,40 @@ func TestUseFleetShardAuthorizationMiddleware_DataPlaneOIDCIssuers(t *testing.T)
 			},
 			expectedStatusCode: http.StatusOK,
 		},
+		"should succeed when kubernetes issuer enabled": {
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{
+					"iss": kubernetesIssuer,
+					"sub": "fleetshard-sync",
+					"aud": []string{"acs-fleet-manager-private-api"},
+				},
+			},
+			expectedStatusCode:     http.StatusOK,
+			enableKubernetesIssuer: true,
+		},
+		"should succeed when kubernetes issuer enabled and no dataplane oidc issuers": {
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{
+					"iss": kubernetesIssuer,
+					"sub": "fleetshard-sync",
+					"aud": []string{"acs-fleet-manager-private-api"},
+				},
+			},
+			expectedStatusCode:     http.StatusOK,
+			enableKubernetesIssuer: true,
+			dataplaneOIDCIssuers:   []string{},
+		},
+		"should succeed when kubernetes issuer enabled and use dataplane oidc issuer": {
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{
+					"iss": validIssuer,
+					"sub": "fleetshard-sync",
+					"aud": []string{"acs-fleet-manager-private-api"},
+				},
+			},
+			expectedStatusCode:     http.StatusOK,
+			enableKubernetesIssuer: true,
+		},
 	}
 
 	for name, tt := range tests {
@@ -217,12 +258,21 @@ func TestUseFleetShardAuthorizationMiddleware_DataPlaneOIDCIssuers(t *testing.T)
 				return setContextToken(handler, tt.token)
 			})
 
+			dataPlaneOIDCIssuers := validIssuers
+			if tt.dataplaneOIDCIssuers != nil {
+				dataPlaneOIDCIssuers = tt.dataplaneOIDCIssuers
+			}
+
 			UseFleetShardAuthorizationMiddleware(route,
 				&iam.IAMConfig{
 					RedhatSSORealm: &iam.IAMRealmConfig{
 						ValidIssuerURI: "http://rhssorealm.local",
 					},
-					DataPlaneOIDCIssuers: &iam.OIDCIssuers{URIs: []string{validIssuer}},
+					DataPlaneOIDCIssuers: &iam.OIDCIssuers{URIs: dataPlaneOIDCIssuers},
+					KubernetesIssuer: &iam.KubernetesIssuer{
+						Enabled:   tt.enableKubernetesIssuer,
+						IssuerURI: kubernetesIssuer,
+					},
 				},
 				&FleetShardAuthZConfig{
 					AllowedSubjects:  []string{"fleetshard-sync"},

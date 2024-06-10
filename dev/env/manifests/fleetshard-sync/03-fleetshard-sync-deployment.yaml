@@ -17,6 +17,7 @@ spec:
       labels:
         application: fleetshard-sync
     spec:
+      serviceAccountName: fleetshard-sync
       containers:
         - command:
           - "sh"
@@ -78,16 +79,24 @@ spec:
                 secretKeyRef:
                   name: fleetshard-sync
                   key: "tenant-image-pull-secret"
+            - name: AUTH_TYPE
+              value: "SERVICE_ACCOUNT_TOKEN"
+            - name: FLEET_MANAGER_TOKEN_FILE
+              value: "/var/run/secrets/tokens/fleet-manager-token"
           image: "${FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
           name: fleetshard-sync
           resources: $FLEETSHARD_SYNC_RESOURCES
           volumeMounts:
-            - mountPath: /secrets
-              name: secrets
+            - mountPath: /var/run/secrets/tokens
+              name: fleet-manager-token
+              readOnly: true
       restartPolicy: Always
       volumes:
-        - name: secrets
-          secret:
-            secretName: fleetshard-sync # pragma: allowlist secret
-            optional: false
+        - name: fleet-manager-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: fleet-manager-token
+                  audience: acs-fleet-manager-private-api
+                  expirationSeconds: 3600

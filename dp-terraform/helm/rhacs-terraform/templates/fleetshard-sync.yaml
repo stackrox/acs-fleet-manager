@@ -137,9 +137,11 @@ spec:
         volumeMounts:
           - mountPath: /var/run/secrets/tokens
             name: aws-token
+            readOnly: true
           {{- if eq "SERVICE_ACCOUNT_TOKEN" .Values.fleetshardSync.authType }}
           - mountPath: /var/run/secrets/tokens
             name: fleet-manager-token
+            readOnly: true
           {{- end }}
         ports:
         - name: monitoring
