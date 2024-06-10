@@ -6,10 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/email"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/email"
 )
 
 type MockEmailSender struct {
@@ -42,6 +45,15 @@ func TestEmailHandler_SendEmail(t *testing.T) {
 	invalidJsonReq, _ := json.Marshal(map[string]string{
 		"invalid": "JSON",
 	})
+
+	defaultToken := &jwt.Token{
+		Claims: jwt.MapClaims{
+			"iss":    "https://sso.redhat.com/auth/realms/redhat-external",
+			"aud":    "test-audience",
+			"sub":    "test-sub",
+			"org_id": "test-org",
+		},
+	}
 
 	tests := []struct {
 		name        string
@@ -82,7 +94,10 @@ func TestEmailHandler_SendEmail(t *testing.T) {
 				emailSender: tt.emailSender,
 			}
 			resp := httptest.NewRecorder()
-			eh.SendEmail(resp, tt.req)
+
+			ctx := authentication.ContextWithToken(tt.req.Context(), defaultToken)
+			req := tt.req.WithContext(ctx)
+			eh.SendEmail(resp, req)
 
 			if resp.Result().StatusCode != tt.wantCode {
 				t.Errorf("expected status code %d, got %d", tt.wantCode, resp.Result().StatusCode)

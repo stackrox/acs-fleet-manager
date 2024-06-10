@@ -112,7 +112,7 @@ func TestUseFleetShardAuthorizationMiddleware_NoTokenSet(t *testing.T) {
 		return setContextToken(handler, nil)
 	})
 
-	route.Use(checkAllowedOrgIDs(allowedOrgIds))
+	route.Use(CheckAllowedOrgIDs(allowedOrgIds))
 
 	req := httptest.NewRequest("GET", "http://example.com/agent-clusters/1234", nil)
 	recorder := httptest.NewRecorder()

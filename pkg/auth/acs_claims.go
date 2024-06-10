@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
+	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 )
 
@@ -13,8 +14,8 @@ import (
 type ACSClaims jwt.MapClaims
 
 // VerifyIssuer verifies the issuer claim of the access token
-func (c *ACSClaims) VerifyIssuer(cmp string, req bool) bool {
-	return jwt.MapClaims(*c).VerifyIssuer(cmp, req)
+func (c *ACSClaims) VerifyIssuer(cmp string, reqired bool) bool {
+	return jwt.MapClaims(*c).VerifyIssuer(cmp, reqired)
 }
 
 // VerifyAudience verifies the audience claim of the access token.
@@ -112,4 +113,10 @@ func (c *ACSClaims) GetAudience() ([]string, error) {
 func (c *ACSClaims) IsOrgAdmin() bool {
 	isOrgAdmin, _ := (*c)[tenantOrgAdminClaim].(bool)
 	return isOrgAdmin
+}
+
+// CheckAllowedOrgIDs is a middleware to check if org id claim in a
+// given request matches the allowedOrgIDs
+func CheckAllowedOrgIDs(allowedOrgIDs []string) mux.MiddlewareFunc {
+	return checkClaim(tenantIDClaim, (*ACSClaims).GetOrgID, allowedOrgIDs)
 }

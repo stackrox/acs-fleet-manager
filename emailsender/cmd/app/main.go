@@ -9,8 +9,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/gorilla/mux"
-
 	"golang.org/x/sys/unix"
 
 	"github.com/golang/glog"
@@ -50,9 +48,11 @@ func main() {
 	emailSender := email.NewEmailSender(temporarySenderName, sesClient)
 	emailHandler := api.NewEmailHandler(emailSender)
 
-	// base router
-	router := mux.NewRouter()
-	api.SetupRoutes(router, emailHandler)
+	router, err := api.SetupRoutes(cfg.AuthConfig, emailHandler)
+	if err != nil {
+		glog.Errorf("Failed to set up router: %v", err)
+		os.Exit(1)
+	}
 
 	server := http.Server{Addr: cfg.ServerAddress, Handler: router}
 

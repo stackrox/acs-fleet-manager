@@ -6,7 +6,6 @@ import (
 	"time"
 
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -74,6 +73,9 @@ const (
 	// ClusterStatusCapacityUsed - metric name for the current number of instances
 	ClusterStatusCapacityUsed = "cluster_status_capacity_used"
 
+	// ClusterAddonStatusMetric - metric name for the cluster addon status represented by ClusterAddonStatus
+	ClusterAddonStatusMetric = "cluster_addon_status"
+
 	// GitopsConfigProviderErrorCount - metric name for the number of errors encountered while fetching GitOps config
 	GitopsConfigProviderErrorCount = "gitops_config_provider_error_count"
 
@@ -85,6 +87,13 @@ const (
 	LabelDatabaseQueryType   = "query"
 	LabelRegion              = "region"
 	LabelInstanceType        = "instance_type"
+
+	labelAddonOCMVersion          = "ocm_version"
+	labelAddonOCMSourceImage      = "ocm_source_image"
+	labelAddonOCMPackageImage     = "ocm_package_image"
+	labelAddonClusterVersion      = "cluster_version"
+	labelAddonClusterSourceImage  = "cluster_source_image"
+	labelAddonClusterPackageImage = "cluster_package_image"
 )
 
 // JobType metric to capture
@@ -169,6 +178,17 @@ var clusterStatusCapacityLabels = []string{
 	LabelRegion,
 	LabelInstanceType,
 	LabelClusterID,
+}
+
+var clusterAddonStatusLabels = []string{
+	LabelID,
+	LabelClusterID,
+	labelAddonOCMVersion,
+	labelAddonOCMSourceImage,
+	labelAddonOCMPackageImage,
+	labelAddonClusterVersion,
+	labelAddonClusterSourceImage,
+	labelAddonClusterPackageImage,
 }
 
 // #### Metrics for Dataplane clusters - Start ####
@@ -707,6 +727,42 @@ func init() {
 	GitopsConfigProviderErrorCounter.WithLabelValues().Add(0)
 }
 
+// AddonStatus represents the status of the addon installation on a Data Plane cluster
+type AddonStatus int
+
+const (
+	// AddonUp the addon is up and running
+	AddonUp AddonStatus = iota
+	// AddonUpgrade the addon is upgrading
+	AddonUpgrade
+)
+
+// clusterAddonStatusMetric create a new GaugeVec for cluster addon upgrade started timestamp
+var clusterAddonStatusMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: FleetManager,
+		Name:      ClusterAddonStatusMetric,
+		Help:      "metric name for the time period after the addon is upgraded in OCM but not yet installed on a cluster in seconds",
+	},
+	clusterAddonStatusLabels,
+)
+
+// UpdateClusterAddonStatusMetric updates ClusterAddonStatusMetric Metric
+func UpdateClusterAddonStatusMetric(addonID, clusterID, ocmVersion, ocmSourceImage, ocmPackageImage,
+	clusterVersion, clusterSourceImage, clusterPackageImage string, status AddonStatus) {
+	labels := prometheus.Labels{
+		LabelID:                       addonID,
+		LabelClusterID:                clusterID,
+		labelAddonOCMVersion:          ocmVersion,
+		labelAddonOCMSourceImage:      ocmSourceImage,
+		labelAddonOCMPackageImage:     ocmPackageImage,
+		labelAddonClusterVersion:      clusterVersion,
+		labelAddonClusterSourceImage:  clusterSourceImage,
+		labelAddonClusterPackageImage: clusterPackageImage,
+	}
+	clusterAddonStatusMetric.With(labels).Set(float64(status))
+}
+
 // UpdateDatabaseQueryDurationMetric Update the observatorium request duration metric with the following labels:
 //   - status: (i.e. "success" or "failure")
 //   - queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
@@ -731,6 +787,7 @@ func init() {
 	prometheus.MustRegister(centralPerClusterCountMetric)
 	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
+	prometheus.MustRegister(clusterAddonStatusMetric)
 	prometheus.MustRegister(GitopsConfigProviderErrorCounter)
 
 	// metrics for Centrals
@@ -801,6 +858,7 @@ func Reset() {
 	centralPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
+	clusterAddonStatusMetric.Reset()
 	GitopsConfigProviderErrorCounter.Reset()
 
 	requestCentralCreationDurationMetric.Reset()

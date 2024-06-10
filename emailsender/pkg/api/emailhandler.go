@@ -3,9 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/email"
-	"net/http"
+	"github.com/stackrox/acs-fleet-manager/pkg/auth"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 type EmailHandler struct {
@@ -36,6 +40,21 @@ func (eh *EmailHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 		eh.errorResponse(w, "Cannot decode send email request payload", http.StatusBadRequest)
 		return
 	}
+
+	claims, err := auth.GetClaimsFromContext(r.Context())
+	if err != nil {
+		shared.HandleError(r, w, errors.Unauthenticated("failed to get token claims"))
+		return
+	}
+
+	sub, err := claims.GetSubject()
+	if err != nil {
+		shared.HandleError(r, w, errors.Unauthenticated("failed to get sub claim"))
+		return
+	}
+
+	// TODO: use sub for rate limiting later on instead of printing it here
+	glog.Info(sub)
 
 	if err := eh.emailSender.Send(r.Context(), request.To, request.RawMessage); err != nil {
 		eh.errorResponse(w, "Cannot send email", http.StatusInternalServerError)
