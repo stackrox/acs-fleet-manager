@@ -82,8 +82,9 @@ type CentralOverride struct {
 
 // DataPlaneClusterConfig represents the configuration to be applied for a data plane cluster.
 type DataPlaneClusterConfig struct {
-	ClusterID string        `json:"clusterID"`
-	Addons    []AddonConfig `json:"addons"`
+	ClusterID   string        `json:"clusterID"`
+	ClusterName string        `json:"clusterName"`
+	Addons      []AddonConfig `json:"addons"`
 }
 
 // AddonConfig represents the addon configuration to be installed on a cluster
