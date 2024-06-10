@@ -39,7 +39,7 @@ type Config struct {
 	DefaultBaseCRDURL       string        `env:"DEFAULT_BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
 	// TenantImagePullSecret can be used to inject a Kubernetes image pull secret into tenant namespaces.
 	// If it is empty, nothing is injected (for example, it is not required when running on OpenShift).
-	// It is however required in some situations (such as remote GKE clusters) when central images need to fetched from a private Quay registry.
+	// It is required when central images need to fetched from a private Quay registry.
 	// It needs to given as Docker Config JSON object.
 	TenantImagePullSecret string `env:"TENANT_IMAGE_PULL_SECRET"`
 	ManagedDB             ManagedDB
