@@ -71,30 +71,30 @@ func TestHelmTemplate_FleetshardSyncDeployment_Tenant(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		ref          string
-		wantNoEnvVar bool
-		expectedRef  string
-		key          string
-		expectedKey  string
+		name               string
+		secretName         string
+		wantNoEnvVar       bool
+		expectedSecretName string
+		key                string
+		expectedKey        string
 	}{
 		{
-			name:         "should not add env var if ref value is not set",
+			name:         "should not add env var if secret name value is not set",
 			wantNoEnvVar: true,
 		},
 		{
-			name:        "should add env var if ref value is set",
-			ref:         "stackrox",
-			expectedRef: "stackrox",
+			name:               "should add env var if secret name value is set",
+			secretName:         "stackrox", // pragma: allowlist secret
+			expectedSecretName: "stackrox", // pragma: allowlist secret
 		},
 		{
-			name:        "should set default key if ref value is set",
-			ref:         "stackrox",
+			name:        "should set default key if secret name value is set",
+			secretName:  "stackrox", // pragma: allowlist secret
 			expectedKey: ".dockerconfigjson",
 		},
 		{
-			name:        "should set key if ref and key is set",
-			ref:         "stackrox",
+			name:        "should set key if secret name and key is set",
+			secretName:  "stackrox", // pragma: allowlist secret
 			key:         "customkey",
 			expectedKey: "customkey",
 		},
@@ -107,8 +107,8 @@ func TestHelmTemplate_FleetshardSyncDeployment_Tenant(t *testing.T) {
 				"fleetshardSync.managedDB.enabled": "false",
 			}
 
-			if tt.ref != "" {
-				values["fleetshardSync.tenantImagePullSecret.ref"] = tt.ref
+			if tt.secretName != "" {
+				values["fleetshardSync.tenantImagePullSecret.name"] = tt.secretName
 			}
 			if tt.key != "" {
 				values["fleetshardSync.tenantImagePullSecret.key"] = tt.key
@@ -130,8 +130,8 @@ func TestHelmTemplate_FleetshardSyncDeployment_Tenant(t *testing.T) {
 				return
 			}
 			require.NotEmpty(t, tenantImagePullSecret)
-			if tt.expectedRef != "" {
-				require.Equal(t, tt.expectedRef, tenantImagePullSecret.ValueFrom.SecretKeyRef.Name)
+			if tt.expectedSecretName != "" {
+				require.Equal(t, tt.expectedSecretName, tenantImagePullSecret.ValueFrom.SecretKeyRef.Name)
 			}
 			if tt.expectedKey != "" {
 				require.Equal(t, tt.expectedKey, tenantImagePullSecret.ValueFrom.SecretKeyRef.Key)

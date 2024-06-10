@@ -65,7 +65,7 @@ fleetshardSync:
   addonAutoUpgradeEnabled: true
   addonName: acs-fleetshard
   tenantImagePullSecret:
-    ref: ""
+    name: ""
     key: .dockerconfigjson
 
 # Email sender service parameters
