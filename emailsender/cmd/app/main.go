@@ -39,7 +39,7 @@ func main() {
 	ctx := context.Background()
 
 	// initialize components
-	sesClient, err := email.NewSES(ctx)
+	sesClient, err := email.NewSES(ctx, cfg.SesMaxBackoffDelay, cfg.SesMaxAttempts)
 	if err != nil {
 		glog.Errorf("Failed to initialise SES Client: %v", err)
 		os.Exit(1)

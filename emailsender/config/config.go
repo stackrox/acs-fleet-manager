@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/caarlos0/env/v6"
 	"gopkg.in/yaml.v2"
@@ -51,7 +52,9 @@ type Config struct {
 	DatabaseUserFile     string `env:"DATABASE_USER_FILE" envDefault:"postgres"`
 	DatabasePasswordFile string `env:"DATABASE_PASSWORD_FILE" envDefault:"postgres"`
 
-	LimitEmailPerTenant int `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
+	LimitEmailPerTenant int           `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
+	SesMaxBackoffDelay  time.Duration `env:"SES_MAX_BACKOFF_DELAY" envDefault:"5s"`
+	SesMaxAttempts      int           `env:"SES_MAX_ATTEMPTS" envDefault:"3"`
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.

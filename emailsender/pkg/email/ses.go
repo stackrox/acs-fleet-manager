@@ -4,6 +4,8 @@ package email
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -18,8 +20,12 @@ type SES struct {
 }
 
 // NewSES creates a new SES instance with initialised AWS SES client using AWS Config
-func NewSES(ctx context.Context) (*SES, error) {
-	cfg, err := config.LoadDefaultConfig(ctx)
+func NewSES(ctx context.Context, maxBackoffDelay time.Duration, maxAttempts int) (*SES, error) {
+	retryerWithBackoff := retry.AddWithMaxBackoffDelay(retry.NewStandard(), maxBackoffDelay)
+	awsRetryer := config.WithRetryer(func() aws.Retryer {
+		return retry.AddWithMaxAttempts(retryerWithBackoff, maxAttempts)
+	})
+	cfg, err := config.LoadDefaultConfig(ctx, awsRetryer)
 	if err != nil {
 		return nil, fmt.Errorf("unable to laod AWS SDK config: %v", err)
 	}
