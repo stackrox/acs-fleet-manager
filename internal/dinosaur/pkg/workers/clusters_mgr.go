@@ -918,7 +918,7 @@ func (c *ClusterManager) reconcileClusterAddons(cluster api.Cluster, clusterConf
 		// There's no such cluster in gitops config, skipping
 		return nil
 	}
-	if err := c.AddonProvisioner.Provision(cluster, clusterConfig.Addons); err != nil {
+	if err := c.AddonProvisioner.Provision(cluster, clusterConfig); err != nil {
 		return fmt.Errorf("provision addons: %w", err)
 	}
 	return nil

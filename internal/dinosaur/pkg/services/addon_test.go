@@ -21,8 +21,8 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 		ocmClient *ocm.ClientMock
 	}
 	type args struct {
-		cluster api.Cluster
-		addons  []gitops.AddonConfig
+		cluster       api.Cluster
+		clusterConfig gitops.DataPlaneClusterConfig
 	}
 	tests := []struct {
 		name    string
@@ -49,14 +49,18 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 			},
 			args: args{
-				addons: []gitops.AddonConfig{
-					{
-						ID: "acs-fleetshard",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID: "acs-fleetshard",
+						},
 					},
 				},
 			},
 			want: func(mock *ocm.ClientMock) {
-				Expect(len(mock.GetAddonInstallationCalls())).To(Equal(1))
+				Expect(mock.GetAddonInstallationCalls()).To(HaveLen(1))
 			},
 		},
 		{
@@ -69,9 +73,13 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 			},
 			args: args{
-				addons: []gitops.AddonConfig{
-					{
-						ID: "acs-fleetshard",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID: "acs-fleetshard",
+						},
 					},
 				},
 			},
@@ -90,9 +98,13 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 			},
 			args: args{
-				addons: []gitops.AddonConfig{
-					{
-						ID: "acs-fleetshard",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID: "acs-fleetshard",
+						},
 					},
 				},
 			},
@@ -114,18 +126,22 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 			},
 			args: args{
-				addons: []gitops.AddonConfig{
-					{
-						ID: "alpha",
-					},
-					{
-						ID: "beta",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID: "alpha",
+						},
+						{
+							ID: "beta",
+						},
 					},
 				},
 			},
 			wantErr: true,
 			want: func(mock *ocm.ClientMock) {
-				Expect(len(mock.CreateAddonInstallationCalls())).To(Equal(1))
+				Expect(mock.CreateAddonInstallationCalls()).To(HaveLen(1))
 			},
 		},
 		{
@@ -144,18 +160,22 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 			},
 			args: args{
-				addons: []gitops.AddonConfig{
-					{
-						ID: "alpha",
-					},
-					{
-						ID: "beta",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID: "alpha",
+						},
+						{
+							ID: "beta",
+						},
 					},
 				},
 			},
 			wantErr: true,
 			want: func(mock *ocm.ClientMock) {
-				Expect(len(mock.CreateAddonInstallationCalls())).To(Equal(2))
+				Expect(mock.CreateAddonInstallationCalls()).To(HaveLen(2))
 			},
 		},
 		{
@@ -174,15 +194,19 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 			},
 			args: args{
-				addons: []gitops.AddonConfig{
-					{
-						ID:      "acs-fleetshard",
-						Version: "0.2.0",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID:      "acs-fleetshard",
+							Version: "0.2.0",
+						},
 					},
 				},
 			},
 			want: func(mock *ocm.ClientMock) {
-				Expect(len(mock.UpdateAddonInstallationCalls())).To(BeZero())
+				Expect(mock.UpdateAddonInstallationCalls()).To(BeEmpty())
 			},
 		},
 		{
@@ -221,18 +245,22 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						},
 					}),
 				},
-				addons: []gitops.AddonConfig{
-					{
-						ID:      "acs-fleetshard",
-						Version: "0.2.0",
-						Parameters: map[string]string{
-							"acscsEnvironment": "test",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID:      "acs-fleetshard",
+							Version: "0.2.0",
+							Parameters: map[string]string{
+								"acscsEnvironment": "test",
+							},
 						},
 					},
 				},
 			},
 			want: func(mock *ocm.ClientMock) {
-				Expect(len(mock.UpdateAddonInstallationCalls())).To(BeZero())
+				Expect(mock.UpdateAddonInstallationCalls()).To(BeEmpty())
 			},
 		},
 		{
@@ -271,12 +299,16 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						},
 					}),
 				},
-				addons: []gitops.AddonConfig{
-					{
-						ID:      "acs-fleetshard",
-						Version: "0.2.0",
-						Parameters: map[string]string{
-							"acscsEnvironment": "test",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID:      "acs-fleetshard",
+							Version: "0.2.0",
+							Parameters: map[string]string{
+								"acscsEnvironment": "test",
+							},
 						},
 					},
 				},
@@ -322,18 +354,22 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						},
 					}),
 				},
-				addons: []gitops.AddonConfig{
-					{
-						ID:      "acs-fleetshard",
-						Version: "0.2.0",
-						Parameters: map[string]string{
-							"acscsEnvironment": "outdated",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID:      "acs-fleetshard",
+							Version: "0.2.0",
+							Parameters: map[string]string{
+								"acscsEnvironment": "outdated",
+							},
 						},
 					},
 				},
 			},
 			want: func(mock *ocm.ClientMock) {
-				Expect(len(mock.UpdateAddonInstallationCalls())).To(Equal(1))
+				Expect(mock.UpdateAddonInstallationCalls()).To(HaveLen(1))
 			},
 		},
 		{
@@ -375,18 +411,22 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						},
 					}),
 				},
-				addons: []gitops.AddonConfig{
-					{
-						ID:      "acs-fleetshard",
-						Version: "0.3.0",
-						Parameters: map[string]string{
-							"acscsEnvironment": "test",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID:      "acs-fleetshard",
+							Version: "0.3.0",
+							Parameters: map[string]string{
+								"acscsEnvironment": "test",
+							},
 						},
 					},
 				},
 			},
 			want: func(mock *ocm.ClientMock) {
-				Expect(len(mock.UpdateAddonInstallationCalls())).To(Equal(1))
+				Expect(mock.UpdateAddonInstallationCalls()).To(HaveLen(1))
 			},
 		},
 		{
@@ -428,18 +468,22 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						},
 					}),
 				},
-				addons: []gitops.AddonConfig{
-					{
-						ID:      "acs-fleetshard",
-						Version: "0.2.0",
-						Parameters: map[string]string{
-							"acscsEnvironment": "test",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID:      "acs-fleetshard",
+							Version: "0.3.0",
+							Parameters: map[string]string{
+								"acscsEnvironment": "test",
+							},
 						},
 					},
 				},
 			},
 			want: func(mock *ocm.ClientMock) {
-				Expect(len(mock.UpdateAddonInstallationCalls())).To(Equal(1))
+				Expect(mock.UpdateAddonInstallationCalls()).To(HaveLen(1))
 			},
 		},
 		{
@@ -481,18 +525,22 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						},
 					}),
 				},
-				addons: []gitops.AddonConfig{
-					{
-						ID:      "acs-fleetshard",
-						Version: "0.2.0",
-						Parameters: map[string]string{
-							"acscsEnvironment": "test",
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID:      "acs-fleetshard",
+							Version: "0.3.0",
+							Parameters: map[string]string{
+								"acscsEnvironment": "test",
+							},
 						},
 					},
 				},
 			},
 			want: func(mock *ocm.ClientMock) {
-				Expect(len(mock.UpdateAddonInstallationCalls())).To(Equal(1))
+				Expect(mock.UpdateAddonInstallationCalls()).To(HaveLen(1))
 			},
 		},
 		{
@@ -534,10 +582,14 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						},
 					}),
 				},
-				addons: []gitops.AddonConfig{},
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons:      []gitops.AddonConfig{},
+				},
 			},
 			want: func(mock *ocm.ClientMock) {
-				Expect(len(mock.DeleteAddonInstallationCalls())).To(Equal(1))
+				Expect(mock.DeleteAddonInstallationCalls()).To(HaveLen(1))
 			},
 		},
 	}
@@ -549,7 +601,7 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			p := &AddonProvisioner{
 				ocmClient: tt.fields.ocmClient,
 			}
-			err := p.Provision(tt.args.cluster, tt.args.addons)
+			err := p.Provision(tt.args.cluster, tt.args.clusterConfig)
 			if tt.wantErr {
 				Expect(err).To(HaveOccurred())
 			} else {
@@ -613,14 +665,19 @@ func TestAddonProvisioner_Provision_NonFinalState(t *testing.T) {
 						ParametersSHA256Sum: "f54d2c5cb370f4f87a31ccd8f72d97a85d89838720bd69278d1d40ee1cea00dc", // pragma: allowlist secret
 					},
 				}),
-			}, []gitops.AddonConfig{
-				{
-					ID:      "acs-fleetshard",
-					Version: "0.2.0",
-				},
-			})
+			},
+				gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID:      "acs-fleetshard",
+							Version: "0.2.0",
+						},
+					},
+				})
 			Expect(err).To(Not(HaveOccurred()))
-			Expect(len(ocmMock.UpdateAddonInstallationCalls())).To(BeZero())
+			Expect(ocmMock.UpdateAddonInstallationCalls()).To(BeEmpty())
 		})
 	}
 }
@@ -642,14 +699,16 @@ func TestAddonProvisioner_Provision_AutoUpgradeDisabled(t *testing.T) {
 		p := &AddonProvisioner{
 			ocmClient: &mock,
 		}
-		err := p.Provision(api.Cluster{}, []gitops.AddonConfig{
-			{
-				ID:      "acs-fleetshard",
-				Version: "0.2.0",
+		err := p.Provision(api.Cluster{}, gitops.DataPlaneClusterConfig{
+			Addons: []gitops.AddonConfig{
+				{
+					ID:      "acs-fleetshard",
+					Version: "0.2.0",
+				},
 			},
 		})
 		Expect(err).To(Not(HaveOccurred()))
-		Expect(len(mock.UpdateAddonInstallationCalls())).To(BeZero())
+		Expect(mock.UpdateAddonInstallationCalls()).To(BeEmpty())
 	})
 }
 
@@ -672,16 +731,18 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Install(t *testing
 		ocmClient:      ocmMock,
 		customizations: initCustomizations(addonConfig),
 	}
-	err := p.Provision(api.Cluster{}, []gitops.AddonConfig{
-		{
-			ID: "acs-fleetshard-dev",
-			Parameters: map[string]string{
-				"fleetshardSyncImageTag": "inherit",
+	err := p.Provision(api.Cluster{}, gitops.DataPlaneClusterConfig{
+		Addons: []gitops.AddonConfig{
+			{
+				ID: "acs-fleetshard-dev",
+				Parameters: map[string]string{
+					"fleetshardSyncImageTag": "inherit",
+				},
 			},
 		},
 	})
 	Expect(err).To(Not(HaveOccurred()))
-	Expect(len(ocmMock.CreateAddonInstallationCalls())).To(Equal(1))
+	Expect(ocmMock.CreateAddonInstallationCalls()).To(HaveLen(1))
 	Expect(ocmMock.CreateAddonInstallationCalls()[0].Addon.Parameters().Len()).To(Equal(1))
 	Expect(ocmMock.CreateAddonInstallationCalls()[0].Addon.Parameters().Get(0).ID()).To(Equal("fleetshardSyncImageTag"))
 	Expect(ocmMock.CreateAddonInstallationCalls()[0].Addon.Parameters().Get(0).Value()).To(Equal("0307e03"))
@@ -731,17 +792,20 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Upgrade(t *testing
 			},
 		}),
 	},
-		[]gitops.AddonConfig{
-			{
-				ID:      "acs-fleetshard",
-				Version: "0.3.0",
-				Parameters: map[string]string{
-					"fleetshardSyncImageTag": "inherit",
+		gitops.DataPlaneClusterConfig{
+			Addons: []gitops.AddonConfig{
+				{
+					ID:      "acs-fleetshard",
+					Version: "0.3.0",
+					Parameters: map[string]string{
+						"fleetshardSyncImageTag": "inherit",
+					},
 				},
 			},
 		})
+
 	Expect(err).To(Not(HaveOccurred()))
-	Expect(len(ocmMock.UpdateAddonInstallationCalls())).To(Equal(1))
+	Expect(ocmMock.UpdateAddonInstallationCalls()).To(HaveLen(1))
 	Expect(ocmMock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Len()).To(Equal(1))
 	Expect(ocmMock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).ID()).To(Equal("fleetshardSyncImageTag"))
 	Expect(ocmMock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).Value()).To(Equal("0307e03"))
@@ -769,6 +833,7 @@ func TestAddonProvisioner_NewAddonProvisioner(t *testing.T) {
 		ClientSecret: "base-client-secret", // pragma: allowlist secret
 		SelfToken:    "base-token",
 	}
+
 	_, err := NewAddonProvisioner(addonConfigPtr, baseConfigPtr)
 
 	Expect(err).To(Not(HaveOccurred()))
