@@ -44,6 +44,15 @@ spec:
             - name: ENABLE_HTTPS
               value: "true"
           {{- end }}
+            # Reusing fleetshardSync.aws.region here since the Values file defines multiple
+            # aws region for different components and the emailsender should always use the same as FS
+            - name: AWS_REGION
+              value: {{ .Values.fleetshardSync.aws.region }}
+            - name: AWS_ROLE_ARN
+              valueFrom:
+                secretKeyRef:
+                  name: emailsender-parameters
+                  key: "aws-role-arn"
           ports:
             - name: monitoring
               containerPort: 9090
