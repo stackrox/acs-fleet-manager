@@ -26,6 +26,8 @@ spec:
       ports:
         - port: 9090
           protocol: TCP
+        - port: 9091
+          protocol: TCP
   egress:
     - to:  # Allow egress to Scanner-v4-db for normal function
         - podSelector:
@@ -81,6 +83,8 @@ spec:
       ports:
         - port: 9090
           protocol: TCP
+        - port: 9091
+          protocol: TCP
   egress:
     - to:  # Allow egress to Scanner-v4-db for normal function
         - podSelector:
@@ -126,6 +130,8 @@ spec:
               - { key: kubernetes.io/metadata.name, operator: In, values: [ rhacs-observability, openshift-monitoring ] }
       ports:
         - port: 9090
+          protocol: TCP
+        - port: 9091
           protocol: TCP
   policyTypes:
     - Ingress
