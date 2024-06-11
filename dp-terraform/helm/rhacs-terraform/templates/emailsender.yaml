@@ -53,6 +53,8 @@ spec:
                 secretKeyRef:
                   name: emailsender-parameters
                   key: "aws-role-arn"
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: "/var/run/secrets/tokens/aws-token"
           ports:
             - name: monitoring
               containerPort: 9090
@@ -69,12 +71,22 @@ spec:
           - name: emailsender-tls
             mountPath: /var/run/certs
             readOnly: true
+          - name: aws-token
+            mountPath: /var/run/secrets/tokens
+            readOnly: true
         {{- end }}
     {{- if .Values.emailsender.enableHTTPS }}
       volumes:
         - name: emailsender-tls
           secret:
             secretName: emailsender-tls # pragma: allowlist secret
+        - name: aws-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: aws-token
+                  audience: sts.amazonaws.com
+                  expirationSeconds: 3600
     {{- end }}
 ---
 apiVersion: v1
