@@ -38,7 +38,7 @@ type Config struct {
 	MetricsAddress           string        `env:"METRICS_ADDRESS" envDefault:":9090"`
 	AuthConfigFile           string        `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
 	AuthConfigFromKubernetes bool          `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
-  SenderAddress            string        `env:"SENDER_ADDRESS" envDefault:"noreply@mail.rhacs-dev.com"`
+	SenderAddress            string        `env:"SENDER_ADDRESS" envDefault:"noreply@mail.rhacs-dev.com"`
 	LimitEmailPerTenant      int           `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
 	SesMaxBackoffDelay       time.Duration `env:"SES_MAX_BACKOFF_DELAY" envDefault:"5s"`
 	SesMaxAttempts           int           `env:"SES_MAX_ATTEMPTS" envDefault:"3"`
@@ -70,13 +70,13 @@ func (d *DbConfig) GetDbConfig() *commonDbConfig.DatabaseConfig {
 	cfg.PortFile = d.PortFile
 	cfg.NameFile = d.NameFile
 	cfg.UsernameFile = d.UserFile
-	cfg.PasswordFile = d.PasswordFile
+	cfg.PasswordFile = d.PasswordFile // pragma: allowlist secret
 	cfg.DatabaseCaCertFile = d.CaCertFile
 	cfg.Host = d.Host
 	cfg.Port = d.Port
 	cfg.Name = d.Name
 	cfg.Username = d.User
-	cfg.Password = d.Password
+	cfg.Password = d.Password // pragma: allowlist secret
 	return cfg
 }
 
