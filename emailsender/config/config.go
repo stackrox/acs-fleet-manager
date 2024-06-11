@@ -15,6 +15,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"
+	commonDbConfig "github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/stackrox/rox/pkg/errorhelpers"
 	"github.com/stackrox/rox/pkg/utils"
@@ -29,32 +30,53 @@ const (
 
 // Config contains this application's runtime configuration.
 type Config struct {
-	ClusterID                string `env:"CLUSTER_ID"`
-	ServerAddress            string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	EnableHTTPS              bool   `env:"ENABLE_HTTPS" envDefault:"false"`
-	HTTPSCertFile            string `env:"HTTPS_CERT_FILE" envDefault:""`
-	HTTPSKeyFile             string `env:"HTTPS_KEY_FILE" envDefault:""`
-	MetricsAddress           string `env:"METRICS_ADDRESS" envDefault:":9090"`
-	AuthConfigFile           string `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
-	AuthConfigFromKubernetes bool   `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
+	ClusterID                string        `env:"CLUSTER_ID"`
+	ServerAddress            string        `env:"SERVER_ADDRESS" envDefault:":8080"`
+	EnableHTTPS              bool          `env:"ENABLE_HTTPS" envDefault:"false"`
+	HTTPSCertFile            string        `env:"HTTPS_CERT_FILE" envDefault:""`
+	HTTPSKeyFile             string        `env:"HTTPS_KEY_FILE" envDefault:""`
+	MetricsAddress           string        `env:"METRICS_ADDRESS" envDefault:":9090"`
+	AuthConfigFile           string        `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
+	AuthConfigFromKubernetes bool          `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
+	LimitEmailPerTenant      int           `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
+	SesMaxBackoffDelay       time.Duration `env:"SES_MAX_BACKOFF_DELAY" envDefault:"5s"`
+	SesMaxAttempts           int           `env:"SES_MAX_ATTEMPTS" envDefault:"3"`
 	AuthConfig               AuthConfig
+	DatabaseConfig           DbConfig
+}
 
-	DatabaseHost         string `env:"DATABASE_HOST" envDefault:"localhost"`
-	DatabasePort         int    `env:"DATABASE_PORT" envDefault:"5432"`
-	DatabaseName         string `env:"DATABASE_NAME" envDefault:"postgres"`
-	DatabaseUser         string `env:"DATABASE_USER" envDefault:"postgres"`
-	DatabasePassword     string `env:"DATABASE_PASSWORD" envDefault:"postgres"`
-	DatabaseSSLMode      string `env:"DATABASE_SSL_MODE" envDefault:"disable"`
-	MaxOpenConnections   int    `env:"DATABASE_MAX_CONNECTIONS" envDefault:"50"`
-	DatabaseHostFile     string `env:"DATABASE_HOST_FILE" envDefault:"localhost"`
-	DatabasePortFile     int    `env:"DATABASE_PORT_FILE" envDefault:"5432"`
-	DatabaseNameFile     string `env:"DATABASE_NAME_FILE" envDefault:"postgres"`
-	DatabaseUserFile     string `env:"DATABASE_USER_FILE" envDefault:"postgres"`
-	DatabasePasswordFile string `env:"DATABASE_PASSWORD_FILE" envDefault:"postgres"`
+type DbConfig struct {
+	HostFile           string `env:"DATABASE_HOST_FILE" envDefault:"secrets/db.host"`
+	PortFile           string `env:"DATABASE_PORT_FILE" envDefault:"secrets/db.port"`
+	NameFile           string `env:"DATABASE_NAME_FILE" envDefault:"secrets/db.name"`
+	UserFile           string `env:"DATABASE_USER_FILE" envDefault:"secrets/db.user"`
+	PasswordFile       string `env:"DATABASE_PASSWORD_FILE" envDefault:"secrets/db.password"`
+	CaCertFile         string `env:"DATABASE_CA_CERT_FILE" envDefault:"secrets/db.ca_cert"`
+	Host               string `env:"DATABASE_HOST" envDefault:"localhost"`
+	Port               int    `env:"DATABASE_PORT" envDefault:"5432"`
+	Name               string `env:"DATABASE_NAME" envDefault:"postgres"`
+	User               string `env:"DATABASE_USER" envDefault:"postgres"`
+	Password           string `env:"DATABASE_PASSWORD" envDefault:"postgres"`
+	SSLMode            string `env:"DATABASE_SSL_MODE" envDefault:"disable"`
+	MaxOpenConnections int    `env:"DATABASE_MAX_CONNECTIONS" envDefault:"50"`
+}
 
-	LimitEmailPerTenant int           `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
-	SesMaxBackoffDelay  time.Duration `env:"SES_MAX_BACKOFF_DELAY" envDefault:"5s"`
-	SesMaxAttempts      int           `env:"SES_MAX_ATTEMPTS" envDefault:"3"`
+func (d *DbConfig) GetDbConfig() *commonDbConfig.DatabaseConfig {
+	cfg := commonDbConfig.NewDatabaseConfig()
+	cfg.SSLMode = d.SSLMode
+	cfg.MaxOpenConnections = d.MaxOpenConnections
+	cfg.HostFile = d.HostFile
+	cfg.PortFile = d.PortFile
+	cfg.NameFile = d.NameFile
+	cfg.UsernameFile = d.UserFile
+	cfg.PasswordFile = d.PasswordFile
+	cfg.DatabaseCaCertFile = d.CaCertFile
+	cfg.Host = d.Host
+	cfg.Port = d.Port
+	cfg.Name = d.Name
+	cfg.Username = d.User
+	cfg.Password = d.Password
+	return cfg
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.

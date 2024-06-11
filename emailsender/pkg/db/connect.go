@@ -11,7 +11,7 @@ import (
 // DatabaseClient defines methods for fetching or updating models in DB
 type DatabaseClient interface {
 	InsertEmailSentByTenant(tenantID string) error
-	CountEmailSentByTenantFrom(tenantID string, from time.Time) (int64, error)
+	CountEmailSentByTenantSince(tenantID string, since time.Time) (int64, error)
 }
 
 // DatabaseConnection contains dependency for communicating with DB
@@ -20,15 +20,9 @@ type DatabaseConnection struct {
 }
 
 // NewDatabaseConnection creates a new DB connection
-func NewDatabaseConnection(dbConfig *commonDB.DatabaseConfig) (*DatabaseConnection, error) {
-	if dbConfig.HostFile != "" && dbConfig.PortFile != "" &&
-		dbConfig.UsernameFile != "" && dbConfig.PasswordFile != "" && dbConfig.NameFile != "" {
-		if err := dbConfig.ReadFiles(); err != nil {
-			return nil, fmt.Errorf("failed reading db config file: %v", err)
-		}
-	}
+func NewDatabaseConnection(dbConfig *commonDB.DatabaseConfig) *DatabaseConnection {
 	connection, _ := commonDB.NewConnectionFactory(dbConfig)
-	return &DatabaseConnection{DB: connection.DB}, nil
+	return &DatabaseConnection{DB: connection.DB}
 }
 
 // Migrate automatically migrates listed models in the database
@@ -46,11 +40,11 @@ func (d *DatabaseConnection) InsertEmailSentByTenant(tenantID string) error {
 	return nil
 }
 
-// CountEmailSentByTenantFrom counts how many emails tenant sent since provided timestamp
-func (d *DatabaseConnection) CountEmailSentByTenantFrom(tenantID string, from time.Time) (int64, error) {
+// CountEmailSentByTenantSince counts how many emails tenant sent since provided timestamp
+func (d *DatabaseConnection) CountEmailSentByTenantSince(tenantID string, since time.Time) (int64, error) {
 	var count int64
 	if result := d.DB.Model(&EmailSentByTenant{}).
-		Where("tenant_id = ? AND created_at > ?", tenantID, from).
+		Where("tenant_id = ? AND created_at > ?", tenantID, since).
 		Count(&count); result.Error != nil {
 		return count, fmt.Errorf("failed count items in email_sent_by_tenant: %v", result.Error)
 	}

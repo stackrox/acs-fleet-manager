@@ -22,7 +22,7 @@ func (m *MockDatabaseClient) InsertEmailSentByTenant(tenantID string) error {
 	return m.InsertEmailSentByTenantFunc(tenantID)
 }
 
-func (m *MockDatabaseClient) CountEmailSentByTenantFrom(tenantID string, from time.Time) (int64, error) {
+func (m *MockDatabaseClient) CountEmailSentByTenantSince(tenantID string, from time.Time) (int64, error) {
 	m.calledCountEmailSentByTenantFrom = true
 	return m.CountEmailSentByTenantFromFunc(tenantID, from)
 }
@@ -39,7 +39,7 @@ func TestAllowTrue_Success(t *testing.T) {
 		dbConnection:   mockDatabaseClient,
 	}
 
-	allowed := service.Allow(testTenantID)
+	allowed := service.IsAllowed(testTenantID)
 
 	assert.True(t, allowed)
 	assert.True(t, mockDatabaseClient.calledCountEmailSentByTenantFrom)
@@ -57,13 +57,13 @@ func TestAllowFalse_LimitReached(t *testing.T) {
 		dbConnection:   mockDatabaseClient,
 	}
 
-	allowed := service.Allow(testTenantID)
+	allowed := service.IsAllowed(testTenantID)
 
 	assert.False(t, allowed)
 	assert.True(t, mockDatabaseClient.calledCountEmailSentByTenantFrom)
 }
 
-func TestRegister(t *testing.T) {
+func TestPersistEmailSendEvent(t *testing.T) {
 	mockDatabaseClient := &MockDatabaseClient{
 		InsertEmailSentByTenantFunc: func(tenantID string) error {
 			return nil
@@ -75,7 +75,7 @@ func TestRegister(t *testing.T) {
 		dbConnection:   mockDatabaseClient,
 	}
 
-	err := service.Register(testTenantID)
+	err := service.PersistEmailSendEvent(testTenantID)
 
 	assert.NoError(t, err)
 	assert.True(t, mockDatabaseClient.calledInsertEmailSentByTenant)

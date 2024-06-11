@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/db"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,9 +37,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	dbCfg := cfg.DatabaseConfig.GetDbConfig()
+	if err = dbCfg.ReadFiles(); err != nil {
+		glog.Warningf("Failed to read DB configuration from files: %v", err)
+		glog.Warningf("Use DB configuration from plain environment variables, SSLMode: %s", dbCfg.SSLMode)
+	}
+
 	ctx := context.Background()
 
 	// initialize components
+	dbConnection := db.NewDatabaseConnection(dbCfg)
+	_ = email.NewRateLimiterService(dbConnection)
 	sesClient, err := email.NewSES(ctx, cfg.SesMaxBackoffDelay, cfg.SesMaxAttempts)
 	if err != nil {
 		glog.Errorf("Failed to initialise SES Client: %v", err)

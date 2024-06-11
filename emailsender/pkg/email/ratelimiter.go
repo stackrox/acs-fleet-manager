@@ -13,7 +13,8 @@ const (
 
 // RateLimiter defines an exact methods for rate limiter
 type RateLimiter interface {
-	Allow(tenantID string) bool
+	IsAllowed(tenantID string) bool
+	PersistEmailSendEvent(tenantID string) error
 }
 
 // RateLimiterService contains configuration and dependency for rate limiter
@@ -29,11 +30,11 @@ func NewRateLimiterService(dbConnection *db.DatabaseConnection) *RateLimiterServ
 	}
 }
 
-// Allow checks whether specified tenant can send an email for current timestamp
-func (r *RateLimiterService) Allow(tenantID string) bool {
+// IsAllowed checks whether specified tenant can send an email for current timestamp
+func (r *RateLimiterService) IsAllowed(tenantID string) bool {
 	now := time.Now()
 	dayAgo := now.Add(time.Duration(-windowSizeHours) * time.Hour)
-	sentDuringWindow, err := r.dbConnection.CountEmailSentByTenantFrom(tenantID, dayAgo)
+	sentDuringWindow, err := r.dbConnection.CountEmailSentByTenantSince(tenantID, dayAgo)
 	if err != nil {
 		glog.Errorf("Cannot count sent emails during window for tenant %s: %v", tenantID, err)
 		return false
@@ -47,8 +48,8 @@ func (r *RateLimiterService) Allow(tenantID string) bool {
 	return true
 }
 
-// Register persists email sent event
-func (r *RateLimiterService) Register(tenantID string) error {
+// PersistEmailSendEvent stores email sent event
+func (r *RateLimiterService) PersistEmailSendEvent(tenantID string) error {
 	err := r.dbConnection.InsertEmailSentByTenant(tenantID)
 	if err != nil {
 		return fmt.Errorf("failed register sent email: %v", err)
