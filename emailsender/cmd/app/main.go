@@ -40,7 +40,7 @@ func main() {
 	dbCfg := cfg.DatabaseConfig.GetDbConfig()
 	if err = dbCfg.ReadFiles(); err != nil {
 		glog.Warningf("Failed to read DB configuration from files: %v", err)
-		glog.Warningf("Use DB configuration from plain environment variables, SSLMode: %s", dbCfg.SSLMode)
+		glog.Warning("Use DB configuration from plain environment variables")
 	}
 
 	ctx := context.Background()
