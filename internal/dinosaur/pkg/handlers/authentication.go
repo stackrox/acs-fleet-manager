@@ -79,6 +79,9 @@ func NewAuthenticationHandler(IAMConfig *iam.IAMConfig, next http.Handler) (http
 	for _, jwksEndpointURI := range IAMConfig.DataPlaneOIDCIssuers.JWKSURIs {
 		privateAPIHandlerBuilder.KeysURL(jwksEndpointURI)
 	}
+	if IAMConfig.KubernetesIssuer.Enabled {
+		privateAPIHandlerBuilder.KeysFile(IAMConfig.KubernetesIssuer.JWKSFile)
+	}
 
 	privateAPIHandler, err := privateAPIHandlerBuilder.Next(next).Build()
 	if err != nil {

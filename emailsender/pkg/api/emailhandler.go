@@ -18,8 +18,8 @@ type EmailHandler struct {
 
 // SendEmailRequest represents API requests for sending email
 type SendEmailRequest struct {
-	To         []string
-	RawMessage []byte
+	To         []string `json:"to"`
+	RawMessage []byte   `json:"rawMessage"`
 }
 
 type Envelope map[string]interface{}

@@ -36,7 +36,7 @@ func fleetShardAuthorizationMiddleware(iamConfig *iam.IAMConfig, fleetShardAuthZ
 				// middlewares must be applied in REVERSE order (last comes first)
 				next = checkSubject(fleetShardAuthZConfig.AllowedSubjects)(next)
 				next = CheckAudience(fleetShardAuthZConfig.AllowedAudiences)(next)
-				next = NewRequireIssuerMiddleware().RequireIssuer(iamConfig.DataPlaneOIDCIssuers.URIs, errors.ErrorNotFound)(next)
+				next = NewRequireIssuerMiddleware().RequireIssuer(iamConfig.GetDataPlaneIssuerURIs(), errors.ErrorNotFound)(next)
 			}
 
 			next.ServeHTTP(w, req)

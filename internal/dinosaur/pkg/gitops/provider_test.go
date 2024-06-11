@@ -204,10 +204,12 @@ func TestProviderGet_DataPlaneClusters(t *testing.T) {
 			file: `
 dataPlaneClusters:
   - clusterID: 1234567890abcdef1234567890abcdef
+    clusterName: acs-dev-dp-01
 `,
 			expectedConfigs: []DataPlaneClusterConfig{
 				{
-					ClusterID: "1234567890abcdef1234567890abcdef", // pragma: allowlist secret
+					ClusterID:   "1234567890abcdef1234567890abcdef", // pragma: allowlist secret
+					ClusterName: "acs-dev-dp-01",
 				},
 			},
 		},

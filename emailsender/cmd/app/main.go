@@ -53,8 +53,8 @@ func main() {
 		glog.Errorf("Failed to initialise SES Client: %v", err)
 		os.Exit(1)
 	}
-	temporarySenderName := "noreply@mail.acs.rhcloud.com"
-	emailSender := email.NewEmailSender(temporarySenderName, sesClient)
+
+	emailSender := email.NewEmailSender(cfg.SenderAddress, sesClient)
 	emailHandler := api.NewEmailHandler(emailSender)
 
 	router, err := api.SetupRoutes(cfg.AuthConfig, emailHandler)

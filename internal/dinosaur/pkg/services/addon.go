@@ -61,7 +61,7 @@ func initCustomizations(config ocmImpl.AddonConfig) []addonCustomization {
 type addonCustomization func(gitops.AddonConfig) gitops.AddonConfig
 
 // Provision installs, upgrades or uninstalls the addons based on a given config
-func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gitops.AddonConfig) error {
+func (p *AddonProvisioner) Provision(cluster api.Cluster, dataplaneClusterConfig gitops.DataPlaneClusterConfig) error {
 	var multiErr *multierror.Error
 	clusterID := cluster.ClusterID
 
@@ -70,7 +70,7 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 		multiErr = multierror.Append(multiErr, err)
 	}
 
-	for _, expectedConfig := range expectedConfigs {
+	for _, expectedConfig := range dataplaneClusterConfig.Addons {
 		for _, customization := range p.customizations {
 			expectedConfig = customization(expectedConfig)
 		}
@@ -116,11 +116,11 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 		}
 		if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
 			multiErr = multierror.Append(multiErr, p.updateAddon(clusterID, expectedConfig))
-			updateAddonStatusMetric(clusterID, installedOnCluster, versionInstalledInOCM, metrics.AddonUpgrade)
+			p.updateAddonStatusMetric(dataplaneClusterConfig.ClusterName, installedOnCluster, versionInstalledInOCM, metrics.AddonUpgrade)
 		} else {
 			glog.V(10).Infof("Addon %s is already up-to-date", installedOnCluster.ID)
 			multiErr = validateUpToDateAddon(multiErr, installedInOCM, installedOnCluster)
-			updateAddonStatusMetric(clusterID, installedOnCluster, versionInstalledInOCM, metrics.AddonUp)
+			p.updateAddonStatusMetric(dataplaneClusterConfig.ClusterName, installedOnCluster, versionInstalledInOCM, metrics.AddonUp)
 		}
 	}
 
@@ -132,10 +132,10 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, expectedConfigs []gito
 	return errorOrNil(multiErr)
 }
 
-func updateAddonStatusMetric(clusterID string, installedOnCluster dbapi.AddonInstallation, versionInstalledInOCM *clustersmgmtv1.AddOnVersion, status metrics.AddonStatus) {
+func (p *AddonProvisioner) updateAddonStatusMetric(clusterName string, installedOnCluster dbapi.AddonInstallation, versionInstalledInOCM *clustersmgmtv1.AddOnVersion, status metrics.AddonStatus) {
 	metrics.UpdateClusterAddonStatusMetric(
 		installedOnCluster.ID,
-		clusterID,
+		clusterName,
 		versionInstalledInOCM.ID(),
 		versionInstalledInOCM.SourceImage(),
 		versionInstalledInOCM.PackageImage(),

@@ -38,6 +38,7 @@ type Config struct {
 	MetricsAddress           string        `env:"METRICS_ADDRESS" envDefault:":9090"`
 	AuthConfigFile           string        `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
 	AuthConfigFromKubernetes bool          `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
+  SenderAddress            string        `env:"SENDER_ADDRESS" envDefault:"noreply@mail.rhacs-dev.com"`
 	LimitEmailPerTenant      int           `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
 	SesMaxBackoffDelay       time.Duration `env:"SES_MAX_BACKOFF_DELAY" envDefault:"5s"`
 	SesMaxAttempts           int           `env:"SES_MAX_ATTEMPTS" envDefault:"3"`

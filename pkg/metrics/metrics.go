@@ -26,6 +26,7 @@ const (
 	LabelStatus            = "status"
 	LabelClusterID         = "cluster_id"
 	LabelClusterExternalID = "external_id"
+	LabelClusterName       = "cluster_name"
 
 	// CentralOperationsSuccessCount - name of the metric for Central-related successful operations
 	CentralOperationsSuccessCount = "central_operations_success_count"
@@ -182,7 +183,7 @@ var clusterStatusCapacityLabels = []string{
 
 var clusterAddonStatusLabels = []string{
 	LabelID,
-	LabelClusterID,
+	LabelClusterName,
 	labelAddonOCMVersion,
 	labelAddonOCMSourceImage,
 	labelAddonOCMPackageImage,
@@ -748,11 +749,11 @@ var clusterAddonStatusMetric = prometheus.NewGaugeVec(
 )
 
 // UpdateClusterAddonStatusMetric updates ClusterAddonStatusMetric Metric
-func UpdateClusterAddonStatusMetric(addonID, clusterID, ocmVersion, ocmSourceImage, ocmPackageImage,
+func UpdateClusterAddonStatusMetric(addonID, clusterName, ocmVersion, ocmSourceImage, ocmPackageImage,
 	clusterVersion, clusterSourceImage, clusterPackageImage string, status AddonStatus) {
 	labels := prometheus.Labels{
 		LabelID:                       addonID,
-		LabelClusterID:                clusterID,
+		LabelClusterName:              clusterName,
 		labelAddonOCMVersion:          ocmVersion,
 		labelAddonOCMSourceImage:      ocmSourceImage,
 		labelAddonOCMPackageImage:     ocmPackageImage,

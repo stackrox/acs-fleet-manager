@@ -444,8 +444,7 @@ code/fix:
 
 run: fleet-manager db/migrate
 	./fleet-manager serve \
-		--dataplane-cluster-config-file $(DATAPLANE_CLUSTER_CONFIG_FILE) \
-		--dataplane-oidc-issuers-file ./dev/config/dataplane-oidc-issuers.yaml
+		--dataplane-cluster-config-file $(DATAPLANE_CLUSTER_CONFIG_FILE)
 .PHONY: run
 
 # Run Swagger and host the api docs
@@ -793,6 +792,7 @@ deploy/service: MEMORY_REQUEST ?= "300Mi"
 deploy/service: CPU_LIMIT ?= "200m"
 deploy/service: MEMORY_LIMIT ?= "300Mi"
 deploy/service: CENTRAL_DOMAIN_NAME ?= "rhacs-dev.com"
+deploy/service: KUBERNETES_ISSUER_ENABLED ?= "true"
 deploy/service: deploy/envoy deploy/route deploy/gitops
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q fleet-manager; do echo 'waiting for fleet-manager route to be created'; sleep 1; done"
 ifeq (,$(wildcard $(PROVIDERS_CONFIG_FILE)))
@@ -836,6 +836,7 @@ endif
 		-p CENTRAL_DOMAIN_NAME="$(CENTRAL_DOMAIN_NAME)" \
 		-p SUPPORTED_CLOUD_PROVIDERS='$(shell yq .supported_providers $(PROVIDERS_CONFIG_FILE) -r -o=j -I=0)' \
 		-p REGISTERED_USERS_PER_ORGANISATION='$(shell yq .registered_users_per_organisation $(QUOTA_MANAGEMENT_LIST_CONFIG_FILE) -r -o=j -I=0)' \
+		-p KUBERNETES_ISSUER_ENABLED="$(KUBERNETES_ISSUER_ENABLED)" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
