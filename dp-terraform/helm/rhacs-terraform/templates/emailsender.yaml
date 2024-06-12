@@ -57,7 +57,7 @@ spec:
               memory: {{ .Values.emailsender.resources.requests.memory | quote }}
           volumeMounts:
           - name: emailsender-db
-            mountPath: /secrets/db
+            mountPath: /secrets
             readOnly: true
         {{- if .Values.emailsender.enableHTTPS }}
           - name: emailsender-tls
