@@ -66,20 +66,21 @@ spec:
             requests:
               cpu: {{ .Values.emailsender.resources.requests.cpu | quote }}
               memory: {{ .Values.emailsender.resources.requests.memory | quote }}
-        {{- if .Values.emailsender.enableHTTPS }}
           volumeMounts:
-          - name: emailsender-tls
-            mountPath: /var/run/certs
-            readOnly: true
           - name: aws-token
             mountPath: /var/run/secrets/tokens
             readOnly: true
-        {{- end }}
-    {{- if .Values.emailsender.enableHTTPS }}
+          {{- if .Values.emailsender.enableHTTPS }}
+          - name: emailsender-tls
+            mountPath: /var/run/certs
+            readOnly: true
+          {{- end }}
       volumes:
+        {{- if .Values.emailsender.enableHTTPS }}
         - name: emailsender-tls
           secret:
             secretName: emailsender-tls # pragma: allowlist secret
+        {{- end }}
         - name: aws-token
           projected:
             sources:
@@ -87,7 +88,6 @@ spec:
                   path: aws-token
                   audience: sts.amazonaws.com
                   expirationSeconds: 3600
-    {{- end }}
 ---
 apiVersion: v1
 kind: Service
