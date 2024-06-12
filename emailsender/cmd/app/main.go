@@ -47,6 +47,7 @@ func main() {
 
 	// initialize components
 	dbConnection := db.NewDatabaseConnection(dbCfg)
+	// TODO(ROX-23260): connect Rate Limiter to Email Sender
 	_ = email.NewRateLimiterService(dbConnection)
 	sesClient, err := email.NewSES(ctx, cfg.SesMaxBackoffDelay, cfg.SesMaxAttempts)
 	if err != nil {
