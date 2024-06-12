@@ -52,6 +52,18 @@ spec:
             cidr: ::/0
             except:
               {{- include "localNetworkCidrRangesIPv6" . | nindent 14 }}
+    - to: # Allow egress to Kube API for mTLS setup for OpenShift monitoring
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-kube-apiserver
+          podSelector:
+            matchLabels:
+              app: openshift-kube-apiserver
+      ports:
+        - port: 443
+          protocol: TCP
+        - port: 6443
+          protocol: TCP
   policyTypes:
     - Ingress
     - Egress
@@ -99,6 +111,18 @@ spec:
               - { key: app, operator: In, values: [central, scanner-v4-indexer] }
       ports:
         - port: 8443
+          protocol: TCP
+    - to: # Allow egress to Kube API for mTLS setup for OpenShift monitoring
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-kube-apiserver
+          podSelector:
+            matchLabels:
+              app: openshift-kube-apiserver
+      ports:
+        - port: 443
+          protocol: TCP
+        - port: 6443
           protocol: TCP
   policyTypes:
     - Ingress
