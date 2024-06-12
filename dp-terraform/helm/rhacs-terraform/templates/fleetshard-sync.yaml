@@ -142,11 +142,13 @@ spec:
               key: {{ .Values.fleetshardSync.tenantImagePullSecret.key | quote }}
         {{- end }}
         volumeMounts:
-          - mountPath: /var/run/secrets/tokens
+          - mountPath: /var/run/secrets/tokens/aws-token
+            subPath: aws-token
             name: aws-token
             readOnly: true
           {{- if eq "SERVICE_ACCOUNT_TOKEN" .Values.fleetshardSync.authType }}
-          - mountPath: /var/run/secrets/tokens
+          - mountPath: /var/run/secrets/tokens/fleet-manager-token
+            subPath: fleet-manager-token
             name: fleet-manager-token
             readOnly: true
           {{- end }}
