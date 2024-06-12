@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/db"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,10 +37,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	dbCfg := cfg.DatabaseConfig.GetDbConfig()
+	if err = dbCfg.ReadFiles(); err != nil {
+		glog.Warningf("Failed to read DB configuration from files: %v", err)
+		glog.Warning("Use DB configuration from plain environment variables")
+	}
+
 	ctx := context.Background()
 
 	// initialize components
-	sesClient, err := email.NewSES(ctx)
+	dbConnection := db.NewDatabaseConnection(dbCfg)
+	// TODO(ROX-23260): connect Rate Limiter to Email Sender
+	_ = email.NewRateLimiterService(dbConnection)
+	sesClient, err := email.NewSES(ctx, cfg.SesMaxBackoffDelay, cfg.SesMaxAttempts)
 	if err != nil {
 		glog.Errorf("Failed to initialise SES Client: %v", err)
 		os.Exit(1)
