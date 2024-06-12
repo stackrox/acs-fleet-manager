@@ -1,4 +1,4 @@
-apiVersion: "operators.coreos.com/v1alpha1"
+apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   name: compliance-operator
@@ -6,6 +6,7 @@ metadata:
 spec:
   channel: stable
   installPlanApproval: Automatic
-  name: openshift-compliance
+  name: compliance-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
+  startingCSV: compliance-operator.v1.5.0
