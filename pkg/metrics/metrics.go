@@ -88,13 +88,6 @@ const (
 	LabelDatabaseQueryType   = "query"
 	LabelRegion              = "region"
 	LabelInstanceType        = "instance_type"
-
-	labelAddonOCMVersion          = "ocm_version"
-	labelAddonOCMSourceImage      = "ocm_source_image"
-	labelAddonOCMPackageImage     = "ocm_package_image"
-	labelAddonClusterVersion      = "cluster_version"
-	labelAddonClusterSourceImage  = "cluster_source_image"
-	labelAddonClusterPackageImage = "cluster_package_image"
 )
 
 // JobType metric to capture
@@ -184,12 +177,6 @@ var clusterStatusCapacityLabels = []string{
 var clusterAddonStatusLabels = []string{
 	LabelID,
 	LabelClusterName,
-	labelAddonOCMVersion,
-	labelAddonOCMSourceImage,
-	labelAddonOCMPackageImage,
-	labelAddonClusterVersion,
-	labelAddonClusterSourceImage,
-	labelAddonClusterPackageImage,
 }
 
 // #### Metrics for Dataplane clusters - Start ####
@@ -749,17 +736,10 @@ var clusterAddonStatusMetric = prometheus.NewGaugeVec(
 )
 
 // UpdateClusterAddonStatusMetric updates ClusterAddonStatusMetric Metric
-func UpdateClusterAddonStatusMetric(addonID, clusterName, ocmVersion, ocmSourceImage, ocmPackageImage,
-	clusterVersion, clusterSourceImage, clusterPackageImage string, status AddonStatus) {
+func UpdateClusterAddonStatusMetric(addonID, clusterName string, status AddonStatus) {
 	labels := prometheus.Labels{
-		LabelID:                       addonID,
-		LabelClusterName:              clusterName,
-		labelAddonOCMVersion:          ocmVersion,
-		labelAddonOCMSourceImage:      ocmSourceImage,
-		labelAddonOCMPackageImage:     ocmPackageImage,
-		labelAddonClusterVersion:      clusterVersion,
-		labelAddonClusterSourceImage:  clusterSourceImage,
-		labelAddonClusterPackageImage: clusterPackageImage,
+		LabelID:          addonID,
+		LabelClusterName: clusterName,
 	}
 	clusterAddonStatusMetric.With(labels).Set(float64(status))
 }
