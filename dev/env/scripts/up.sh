@@ -29,6 +29,7 @@ KUBE_CONFIG=$(assemble_kubeconfig | yq e . -o=json - | jq -c . -)
 export KUBE_CONFIG
 
 ensure_fleet_manager_image_exists
+ensure_fleetshard_operator_image_exists
 
 # Apply cluster type specific manifests, if any.
 if [[ -d "${MANIFESTS_DIR}/cluster-type-${CLUSTER_TYPE}" ]]; then
@@ -71,17 +72,14 @@ fi
 export TENANT_IMAGE_PULL_SECRET
 
 exec_fleetshard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
+apply "${MANIFESTS_DIR}/fleetshard-operator"
 
-wait_for_container_to_appear "$ACSCS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync"
+wait_for_container_to_appear "$ACSCS_NAMESPACE" "app=fleetshard-sync" "fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
     $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
 fi
 
-
-if [[ "$ENABLE_EMAIL_SENDER" == "true" ]]; then # pragma: allowlist secret
-    log "Deploying emailsender"
-    exec_emailsender.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
-
+if [[ "$ENABLE_EMAIL_SENDER" == "true" ]]; then
     wait_for_container_to_appear "$ACSCS_NAMESPACE" "application=emailsender" "emailsender"
     if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
         $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=emailsender --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_emailsender_emailsender.txt" 2>&1 &
@@ -89,9 +87,13 @@ if [[ "$ENABLE_EMAIL_SENDER" == "true" ]]; then # pragma: allowlist secret
 fi
 
 # Sanity check.
-wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync" 500
+wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "app=fleetshard-sync" "fleetshard-sync" 500
 # Prerequisite for port-forwarding are pods in ready state.
 wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "app=fleet-manager" "service"
+
+if [[ "$ENABLE_EMAIL_SENDER" == "true" ]]; then
+    wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=emailsender" "emailsender"
+fi
 
 if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" ]]; then
     log "Starting port-forwarding for fleet-manager"

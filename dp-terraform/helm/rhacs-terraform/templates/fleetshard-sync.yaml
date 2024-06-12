@@ -20,19 +20,28 @@ spec:
       labels:
         app: fleetshard-sync
     spec:
-      {{- if .Values.fleetshardSync.affinity }}
-      affinity: {{ toYaml .Values.fleetshardSync.affinity | nindent 8 }}
+      {{- with .Values.fleetshardSync.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.fleetshardSync.tolerations }}
-      tolerations: {{ toYaml .Values.fleetshardSync.tolerations | nindent 8 }}
+      {{- with .Values.fleetshardSync.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.fleetshardSync.nodeSelector }}
-      nodeSelector: {{ toYaml .Values.fleetshardSync.nodeSelector | nindent 8 }}
+      {{- with .Values.fleetshardSync.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: fleetshard-sync
       containers:
       - name: fleetshard-sync
-        image: "{{ .Values.fleetshardSync.image.repo }}:{{ .Values.fleetshardSync.image.tag }}"
+        {{- with .Values.fleetshardSync.image }}
+        {{- if .ref }}
+        image: "{{ .ref }}"
+        {{- else }}
+        image: "{{ .repo }}:{{ .tag }}"
+        {{- end }}
+        {{- end }}
         imagePullPolicy: IfNotPresent
         command:
         - /usr/local/bin/fleetshard-sync
@@ -139,19 +148,17 @@ spec:
               name: {{ .Values.fleetshardSync.tenantImagePullSecret.name | quote }}
               key: {{ .Values.fleetshardSync.tenantImagePullSecret.key | quote }}
         {{- end }}
+        - name: RHACS_PRINT_CENTRAL_UPDATE_DIFF
+          value: {{ .Values.fleetshardSync.printCentralUpdateDiff | quote }}
         volumeMounts:
           - mountPath: /var/run/secrets/tokens
             name: tokens
         ports:
         - name: monitoring
           containerPort: 8080
-        resources:
-          limits:
-            cpu: {{ .Values.fleetshardSync.resources.limits.cpu | quote }}
-            memory: {{ .Values.fleetshardSync.resources.limits.memory | quote }}
-          requests:
-            cpu: {{ .Values.fleetshardSync.resources.requests.cpu | quote }}
-            memory: {{ .Values.fleetshardSync.resources.requests.memory | quote }}
+        {{- with .Values.fleetshardSync.resources }}
+        resources: {{- toYaml . | nindent 10 }}
+        {{- end }}
       volumes:
         - name: tokens
           projected:

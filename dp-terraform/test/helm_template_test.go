@@ -139,3 +139,64 @@ func TestHelmTemplate_FleetshardSyncDeployment_Tenant(t *testing.T) {
 		})
 	}
 }
+
+func TestHelmTemplate_FleetshardSyncDeployment_Image(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		ref       string
+		repo      string
+		tag       string
+		wantImage string
+	}{
+		{
+			name:      "should set default image repo and tag when no values set",
+			wantImage: "quay.io/app-sre/acs-fleet-manager:main",
+		},
+		{
+			name:      "should set default image repo when tag is set",
+			tag:       "custom",
+			wantImage: "quay.io/app-sre/acs-fleet-manager:custom",
+		},
+		{
+			name:      "should set image when repo and tag are set",
+			repo:      "quay.io/johndoe/my-fleet-manager",
+			tag:       "feature1",
+			wantImage: "quay.io/johndoe/my-fleet-manager:feature1",
+		},
+		{
+			name:      "should set image when ref is set",
+			ref:       "fleet-manager@sha256:12345abcdef",
+			wantImage: "fleet-manager@sha256:12345abcdef",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			values := map[string]string{
+				"secured-cluster.enabled":          "false",
+				"fleetshardSync.managedDB.enabled": "false",
+			}
+
+			if tt.repo != "" {
+				values["fleetshardSync.image.repo"] = tt.repo
+			}
+			if tt.tag != "" {
+				values["fleetshardSync.image.tag"] = tt.tag
+			}
+			if tt.ref != "" {
+				values["fleetshardSync.image.ref"] = tt.ref
+			}
+
+			output := renderTemplate(t, values)
+
+			var deployment appsv1.Deployment
+			helm.UnmarshalK8SYaml(t, output, &deployment)
+
+			container := deployment.Spec.Template.Spec.Containers[0]
+			require.Equal(t, "fleetshard-sync", container.Name)
+			require.Equal(t, tt.wantImage, container.Image)
+		})
+	}
+}

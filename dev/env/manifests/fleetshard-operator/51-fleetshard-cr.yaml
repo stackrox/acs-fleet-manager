@@ -1,0 +1,57 @@
+apiVersion: cloud.stackrox.io/v1alpha1
+kind: Fleetshard
+metadata:
+  name: rhacs-terraform
+  namespace: "$ACSCS_NAMESPACE"
+spec:
+  acsOperator:
+    enabled: false
+  fleetshardSync:
+    image:
+      ref: "$FLEET_MANAGER_IMAGE"
+    authType: "SERVICE_ACCOUNT_TOKEN"
+    clusterId: "1234567890abcdef1234567890abcdef" # pragma: allowlist secret
+    clusterName: "acs-dev-dp-01"
+    environment: "dev"
+    fleetManagerEndpoint: "http://fleet-manager:8000"
+    secureTenantNetwork: $SECURE_TENANT_NETWORK
+    managedDB:
+      enabled: $MANAGED_DB_ENABLED
+      subnetGroup: "$MANAGED_DB_SUBNET_GROUP"
+      securityGroup: "$MANAGED_DB_SECURITY_GROUP"
+    aws:
+      region: "$AWS_REGION"
+    gitops:
+      enabled: true
+    targetedOperatorUpgrades:
+      enabled: true
+    secretEncryption:
+      type: "local"
+    tenantImagePullSecret:
+      name: "fleetshard-sync"
+      key: "tenant-image-pull-secret"
+    nodeSelector: null
+    tolerations: null
+    addonAutoUpgradeEnabled: false
+    printCentralUpdateDiff: true
+    resources: $FLEETSHARD_SYNC_RESOURCES
+  emailsender:
+    enabled: $ENABLE_EMAIL_SENDER
+    enableHTTPS: false
+    replicas: 1
+  cloudwatch:
+    enabled: false
+  logging:
+    enabled: false
+  observability:
+    enabled: false
+  audit-logs:
+    enabled: false
+  secured-cluster:
+    enabled: false
+  external-secrets:
+    enabled: false
+  scc:
+    enabled: false
+  verticalPodAutoscaler:
+    enabled: $INSTALL_VERTICAL_POD_AUTOSCALER_OLM

@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: acs-fleetshard
+  namespace: "$ACSCS_NAMESPACE"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: acs-fleetshard
+subjects:
+  - kind: ServiceAccount
+    name: acs-fleetshard-operator

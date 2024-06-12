@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acs-fleetshard-operator
+  namespace: "$ACSCS_NAMESPACE"
+spec:
+  progressDeadlineSeconds: 1800
+  replicas: 1
+  selector:
+    matchLabels:
+      name: acs-fleetshard-operator
+  template:
+    metadata:
+      labels:
+        name: acs-fleetshard-operator
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - args:
+          - --leader-elect
+          - --leader-election-id=acs-fleetshard-operator
+        image: "${FLEETSHARD_OPERATOR_IMAGE}"
+        name: manager
+        env:
+          - name: WATCH_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: ADDON_NAME
+            value: acs-fleetshard-dev
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+      serviceAccountName: acs-fleetshard-operator
+      terminationGracePeriodSeconds: 10
