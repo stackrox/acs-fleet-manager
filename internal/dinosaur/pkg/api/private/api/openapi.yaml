@@ -399,17 +399,14 @@ components:
           format: float
           type: number
         checkpointsTimeout:
-          format: duration
           type: string
         minCheckpoints:
           type: integer
         memorySaver:
           type: boolean
         recommenderInterval:
-          format: duration
           type: string
         checkpointsGcInterval:
-          format: duration
           type: string
         prometheusAddress:
           type: string
