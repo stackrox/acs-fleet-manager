@@ -3,6 +3,7 @@ package gitops
 
 import (
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -10,10 +11,11 @@ import (
 
 // Config represents the gitops configuration
 type Config struct {
-	TenantResources   TenantResourceConfig     `json:"tenantResources"`
-	Centrals          CentralsConfig           `json:"centrals"`
-	RHACSOperators    operator.OperatorConfigs `json:"rhacsOperators"`
-	DataPlaneClusters []DataPlaneClusterConfig `json:"dataPlaneClusters"`
+	TenantResources        TenantResourceConfig           `json:"tenantResources"`
+	Centrals               CentralsConfig                 `json:"centrals"`
+	RHACSOperators         operator.OperatorConfigs       `json:"rhacsOperators"`
+	DataPlaneClusters      []DataPlaneClusterConfig       `json:"dataPlaneClusters"`
+	VerticalPodAutoscaling private.VerticalPodAutoscaling `json:"verticalPodAutoscaling"`
 }
 
 // AuthProviderAddition represents tenant's additional auth provider gitops configuration
@@ -114,6 +116,7 @@ func ValidateConfig(config Config) field.ErrorList {
 	errs = append(errs, validateTenantResourcesConfig(field.NewPath("tenantResources"), config.TenantResources)...)
 	errs = append(errs, operator.Validate(field.NewPath("rhacsOperators"), config.RHACSOperators)...)
 	errs = append(errs, validateDataPlaneClusterConfigs(field.NewPath("dataPlaneClusters"), config.DataPlaneClusters)...)
+	errs = append(errs, validateVpaConfig(field.NewPath("verticalPodAutoscaling"), &config.VerticalPodAutoscaling)...)
 	return errs
 }
 

@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 
 	"github.com/stretchr/testify/assert"
@@ -41,10 +40,7 @@ func TestTenantResourcesChart(t *testing.T) {
 }
 
 func TestInstallOrUpdateChartCreateNew(t *testing.T) {
-	chartFiles, err := TraverseChart(testdata, "testdata/test-chart")
-	require.NoError(t, err)
-	chart, err := loader.LoadFiles(chartFiles)
-	require.NoError(t, err)
+	chart := mustGetChart(t, "test-chart")
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	ctx := context.Background()
 
@@ -70,10 +66,7 @@ func TestInstallOrUpdateChartCreateNew(t *testing.T) {
 }
 
 func TestInstallOrUpdateChartUpdateExisting(t *testing.T) {
-	chartFiles, err := TraverseChart(testdata, "testdata/test-chart")
-	require.NoError(t, err)
-	chart, err := loader.LoadFiles(chartFiles)
-	require.NoError(t, err)
+	chart := mustGetChart(t, "test-chart")
 	fakeClient := testutils.NewFakeClientBuilder(t, dummyDeployment).Build()
 	ctx := context.Background()
 

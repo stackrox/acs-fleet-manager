@@ -1,0 +1,195 @@
+{{- range .Values.recommenders }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: "rhacs-vpa-recommender"
+    app.kubernetes.io/instance: {{ $.Release.Name | quote }}
+    app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service | quote }}
+    helm.sh/chart: "{{ $.Chart.Name }}-{{ $.Chart.Version | replace "+" "_"}}"
+    meta.helm.sh/release-name: {{ $.Release.Name | quote }}
+    meta.helm.sh/release-namespace: {{ $.Release.Namespace | quote }}
+  name: {{ .name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vpa-recommender
+      vertical-pod-autoscaler: {{ .name | quote }}
+  template:
+    metadata:
+      labels:
+        app: vpa-recommender
+        vertical-pod-autoscaler: {{ .name | quote }}
+    spec:
+      {{ if .nodeSelector }}
+      {{ toYaml .nodeSelector | nindent 6 }}
+      {{- end }}
+      serviceAccountName: rhacs-vpa-recommender
+      terminationGracePeriodSeconds: 30
+      {{ if .tolerations }}
+      {{ toYaml .tolerations | nindent 6 }}
+      {{end }}
+      {{ if .priorityClassName }}
+      {{ toYaml .priorityClassName | nindent 6 }}
+      {{- end }}
+      {{ if .imagePullSecrets }}
+      imagePullSecrets: {{ toYaml .imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: recommender
+          image: {{ .image | quote }}
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            runAsUser: 1001080000
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: [ALL]
+          {{ if .resources }}
+          resources: {{ toYaml .resources | nindent 12 }}
+          {{- end }}
+          command:
+            - recommender
+          args:
+            - --recommender-name={{ .name }}
+            - --logtostderr
+            - --v=1
+            {{- if .recommendationMarginFraction }}
+            - --recommendation-margin-fraction={{ .recommendationMarginFraction }}
+            {{- end }}
+            {{- if .podRecommendationMinCpuMillicores }}
+            - --pod-recommendation-min-cpu-millicores={{ .podRecommendationMinCpuMillicores }}
+            {{- end }}
+            {{- if .podRecommendationMinMemoryMb }}
+            - --pod-recommendation-min-memory-mb={{ .podRecommendationMinMemoryMb }}
+            {{- end }}
+            {{- if .targetCpuPercentile }}
+            - --target-cpu-percentile={{ .targetCpuPercentile }}
+            {{- end }}
+            {{- if .recommendationLowerBoundCpuPercentile }}
+            - --recommendation-lower-bound-cpu-percentile={{ .recommendationLowerBoundCpuPercentile }}
+            {{- end }}
+            {{- if .recommendationUpperBoundCpuPercentile }}
+            - --recommendation-upper-bound-cpu-percentile={{ .recommendationUpperBoundCpuPercentile }}
+            {{- end }}
+            {{- if .targetMemoryPercentile }}
+            - --target-memory-percentile={{ .targetMemoryPercentile }}
+            {{- end }}
+            {{- if .recommendationLowerBoundMemoryPercentile }}
+            - --recommendation-lower-bound-memory-percentile={{ .recommendationLowerBoundMemoryPercentile }}
+            {{- end }}
+            {{- if .recommendationUpperBoundMemoryPercentile }}
+            - --recommendation-upper-bound-memory-percentile={{ .recommendationUpperBoundMemoryPercentile }}
+            {{- end }}
+            {{- if .checkpointsTimeout }}
+            - --checkpoints-timeout={{ .checkpointsTimeout }}
+            {{- end }}
+            {{- if .minCheckpoints }}
+            - --min-checkpoints={{ .minCheckpoints }}
+            {{- end }}
+            {{- if .memorySaver }}
+            - --memory-saver
+            {{- end }}
+            {{- if .recommenderInterval }}
+            - --recommender-interval={{ .recommenderInterval }}
+            {{- end }}
+            {{- if .checkpointsGcInterval }}
+            - --checkpoints-gc-interval={{ .checkpointsGcInterval }}
+            {{- end }}
+            {{- if .prometheusAddress }}
+            - --prometheus-address={{ .prometheusAddress }}
+            {{- end }}
+            {{- if .prometheusCadvisorJobName }}
+            - --prometheus-cadvisor-job-name={{ .prometheusCadvisorJobName }}
+            {{- end }}
+            {{- if .address }}
+            - --address={{ .address }}
+            {{- end }}
+            {{- if .kubeconfig }}
+            - --kubeconfig={{ .kubeconfig }}
+            {{- end }}
+            {{- if .kubeApiQps }}
+            - --kube-api-qps={{ .kubeApiQps }}
+            {{- end }}
+            {{- if .kubeApiBurst }}
+            - --kube-api-burst={{ .kubeApiBurst }}
+            {{- end }}
+            {{- if .storage }}
+            - --storage={{ .storage }}
+            {{- end }}
+            {{- if .historyLength }}
+            - --history-length={{ .historyLength }}
+            {{- end }}
+            {{- if .historyResolution }}
+            - --history-resolution={{ .historyResolution }}
+            {{- end }}
+            {{- if .prometheusQueryTimeout }}
+            - --prometheus-query-timeout={{ .prometheusQueryTimeout }}
+            {{- end }}
+            {{- if .podLabelPrefix }}
+            - --pod-label-prefix={{ .podLabelPrefix }}
+            {{- end }}
+            {{- if .metricForPodLabels }}
+            - --metric-for-pod-labels={{ .metricForPodLabels }}
+            {{- end }}
+            {{- if .podNamespaceLabel }}
+            - --pod-namespace-label={{ .podNamespaceLabel }}
+            {{- end }}
+            {{- if .podNameLabel }}
+            - --pod-name-label={{ .podNameLabel }}
+            {{- end }}
+            {{- if .containerNamespaceLabel }}
+            - --container-namespace-label={{ .containerNamespaceLabel }}
+            {{- end }}
+            {{- if .containerPodNameLabel }}
+            - --container-pod-name-label={{ .containerPodNameLabel }}
+            {{- end }}
+            {{- if .containerNameLabel }}
+            - --container-name-label={{ .containerNameLabel }}
+            {{- end }}
+            {{- if .vpaObjectNamespace }}
+            - --vpa-object-namespace={{ .vpaObjectNamespace }}
+            {{- end }}
+            {{- if .memoryAggregationInterval }}
+            - --memory-aggregation-interval={{ .memoryAggregationInterval }}
+            {{- end }}
+            {{- if .memoryAggregationIntervalCount }}
+            - --memory-aggregation-interval-count={{ .memoryAggregationIntervalCount }}
+            {{- end }}
+            {{- if .memoryHistogramDecayHalfLife }}
+            - --memory-histogram-decay-half-life={{ .memoryHistogramDecayHalfLife }}
+            {{- end }}
+            {{- if .cpuHistogramDecayHalfLife }}
+            - --cpu-histogram-decay-half-life={{ .cpuHistogramDecayHalfLife }}
+            {{- end }}
+            {{- if .cpuIntegerPostProcessorEnabled }}
+            - --cpu-integer-post-processor-enabled={{ .cpuIntegerPostProcessorEnabled }}
+            {{- end }}
+            {{- if .useExternalMetrics }}
+            - --use-external-metrics={{ .useExternalMetrics }}
+            {{- end }}
+            {{- if .externalMetricsCpuMetric }}
+            - --external-metrics-cpu-metric={{ .externalMetricsCpuMetric }}
+            {{- end }}
+            {{- if .externalMetricsMemoryMetric }}
+            - --external-metrics-memory-metric={{ .externalMetricsMemoryMetric }}
+            {{- end }}
+            {{- if .oomBumpUpRatio }}
+            - --oom-bump-up-ratio={{ .oomBumpUpRatio }}
+            {{- end }}
+            {{- if .oomMinBumpUpBytes }}
+            - --oom-min-bump-up-bytes={{ .oomMinBumpUpBytes }}
+            {{- end }}
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+---
+{{- end }}
