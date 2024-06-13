@@ -2,7 +2,9 @@ package runtime
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"helm.sh/helm/v3/pkg/chart"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -26,21 +28,32 @@ type vpaReconciler struct {
 }
 
 // reconcile runs the reconciliation of the VPA chart.
-func (r *vpaReconciler) reconcile(ctx context.Context, config map[string]interface{}) error {
-	if config == nil {
-		return nil
+func (r *vpaReconciler) reconcile(ctx context.Context, config private.VerticalPodAutoscaling) error {
+	params, err := r.getParamsForConfig(config)
+	if err != nil {
+		return err
 	}
-	return charts.Reconcile(ctx, r.getParamsForConfig(config))
+	return charts.Reconcile(ctx, params)
 }
 
 // getParamsForConfig returns the parameters for the Helm reconciler for the VPA chart.
-func (r *vpaReconciler) getParamsForConfig(config map[string]interface{}) charts.HelmReconcilerParams {
+func (r *vpaReconciler) getParamsForConfig(config private.VerticalPodAutoscaling) (charts.HelmReconcilerParams, error) {
+
+	jsonBytes, err := json.Marshal(config)
+	if err != nil {
+		return charts.HelmReconcilerParams{}, err
+	}
+	values := make(map[string]interface{})
+	if err := json.Unmarshal(jsonBytes, &values); err != nil {
+		return charts.HelmReconcilerParams{}, err
+	}
+
 	return charts.HelmReconcilerParams{
 		ReleaseName:     "rhacs-vpa",
 		Namespace:       "rhacs-vertical-pod-autoscaling",
 		ManagerName:     "fleetshard",
 		Chart:           r.chart,
-		Values:          config,
+		Values:          values,
 		Client:          r.cli,
 		RestMapper:      r.restMapper,
 		CreateNamespace: true,
@@ -66,7 +79,7 @@ func (r *vpaReconciler) getParamsForConfig(config map[string]interface{}) charts
 				Version: "v1",
 			},
 		},
-	}
+	}, nil
 }
 
 // vpaChart is the Helm chart for the VPA configuration.
