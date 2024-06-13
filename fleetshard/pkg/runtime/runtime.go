@@ -27,7 +27,6 @@ import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/concurrency"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -56,7 +55,6 @@ type Runtime struct {
 	clusterID              string
 	reconcilers            reconcilerRegistry
 	k8sClient              ctrlClient.Client
-	k8sRestMapper          meta.RESTMapper
 	dbProvisionClient      cloudprovider.DBClient
 	statusResponseCh       chan private.DataPlaneCentralStatus
 	operatorManager        *operator.ACSOperatorManager
