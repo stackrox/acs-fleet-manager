@@ -10,6 +10,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -58,6 +59,8 @@ func Test_vpaReconciler_Reconcile(t *testing.T) {
 						"memory": "100Mi",
 					},
 				},
+				RecommendationMarginFraction: 0.3,
+				CpuHistogramDecayHalfLife:    "1h",
 			},
 		},
 	})
@@ -71,6 +74,16 @@ func Test_vpaReconciler_Reconcile(t *testing.T) {
 	assert.Equal(t, "recommender-1", deployments.Items[0].Name)
 	require.Len(t, deployments.Items[0].Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, "image-1", deployments.Items[0].Spec.Template.Spec.Containers[0].Image)
+
+	hasArg := func(value string) {
+		assert.Contains(t, deployments.Items[0].Spec.Template.Spec.Containers[0].Args, value)
+	}
+
+	hasArg("--recommendation-margin-fraction=0.3")
+	hasArg("--cpu-histogram-decay-half-life=1h")
+
+	// check resources
+	assert.True(t, deployments.Items[0].Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceCPU].Equal(resource.MustParse("100m")))
 
 	var sa v1.ServiceAccount
 	err = cli.Get(context.Background(), client.ObjectKey{Namespace: "rhacs-vertical-pod-autoscaling", Name: "rhacs-vpa-recommender"}, &sa)
