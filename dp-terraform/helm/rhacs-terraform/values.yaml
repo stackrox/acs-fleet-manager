@@ -275,6 +275,9 @@ secretStore:
 verticalPodAutoscaler:
   enabled: true
 
+complianceOperator:
+  enabled: false
+
 global:
   secretStore:
     aws:
