@@ -4,9 +4,6 @@ package main
 import (
 	"context"
 	"flag"
-	"os"
-	"os/signal"
-
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
@@ -14,6 +11,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"golang.org/x/sys/unix"
+	"os"
+	"os/signal"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 

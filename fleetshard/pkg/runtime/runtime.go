@@ -27,6 +27,7 @@ import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/concurrency"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -55,12 +56,14 @@ type Runtime struct {
 	clusterID              string
 	reconcilers            reconcilerRegistry
 	k8sClient              ctrlClient.Client
+	k8sRestMapper          meta.RESTMapper
 	dbProvisionClient      cloudprovider.DBClient
 	statusResponseCh       chan private.DataPlaneCentralStatus
 	operatorManager        *operator.ACSOperatorManager
 	secretCipher           cipher.Cipher
 	encryptionKeyGenerator cipher.KeyGenerator
 	addonService           cluster.AddonService
+	vpaReconciler          *vpaReconciler
 }
 
 // NewRuntime creates a new runtime
@@ -121,6 +124,7 @@ func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient
 		secretCipher:           secretCipher, // pragma: allowlist secret
 		encryptionKeyGenerator: encryptionKeyGen,
 		addonService:           addonService,
+		vpaReconciler:          newVPAReconciler(k8sClient, k8sClient.RESTMapper()),
 	}, nil
 }
 
@@ -158,12 +162,15 @@ func (r *Runtime) Start() error {
 		}
 
 		if features.TargetedOperatorUpgrades.Enabled() {
-			err := r.upgradeOperator(list)
-			if err != nil {
+			if err := r.upgradeOperator(list); err != nil {
 				err = errors.Wrapf(err, "Upgrading operator")
 				glog.Error(err)
 				return 0, err
 			}
+		}
+
+		if err := r.vpaReconciler.reconcile(ctx, list.VerticalPodAutoscaling); err != nil {
+			glog.Errorf("failed to reconcile verticalPodAutoscaling: %v", err)
 		}
 
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
