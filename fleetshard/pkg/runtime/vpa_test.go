@@ -43,24 +43,21 @@ var fakeRestMapper meta.RESTMapper = &fakeRESTMapper{scopeForGvk: map[schema.Gro
 func Test_vpaReconciler_Reconcile(t *testing.T) {
 	cli := fake.NewFakeClient()
 	v := newVPAReconciler(cli, fakeRestMapper)
-	err := v.reconcile(context.Background(), map[string]interface{}{
-		"recommenders": []interface{}{
-			map[string]interface{}{
-				"name":  "recommender-1",
-				"image": "image-1",
-				"resources": map[string]interface{}{
-					"requests": map[string]string{
+	err := v.reconcile(context.Background(), private.VerticalPodAutoscaling{
+		Recommenders: []private.VpaRecommenderConfig{
+			{
+				Name:  "recommender-1",
+				Image: "image-1",
+				Resources: private.ResourceRequirements{
+					Requests: map[string]string{
 						"cpu":    "100m",
 						"memory": "100Mi",
 					},
-					"limits": map[string]string{
+					Limits: map[string]string{
 						"cpu":    "100m",
 						"memory": "100Mi",
 					},
 				},
-				"command": []string{"command-1"},
-				"args":    []string{"arg-1"},
-				"env":     []private.EnvVar{{Name: "env-1", Value: "value-1"}},
 			},
 		},
 	})
@@ -74,20 +71,17 @@ func Test_vpaReconciler_Reconcile(t *testing.T) {
 	assert.Equal(t, "recommender-1", deployments.Items[0].Name)
 	require.Len(t, deployments.Items[0].Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, "image-1", deployments.Items[0].Spec.Template.Spec.Containers[0].Image)
-	assert.Equal(t, []string{"command-1"}, deployments.Items[0].Spec.Template.Spec.Containers[0].Command)
-	assert.Equal(t, []string{"arg-1"}, deployments.Items[0].Spec.Template.Spec.Containers[0].Args)
-	assert.Equal(t, []v1.EnvVar{{Name: "env-1", Value: "value-1"}}, deployments.Items[0].Spec.Template.Spec.Containers[0].Env)
 
 	var sa v1.ServiceAccount
-	err = cli.Get(context.Background(), client.ObjectKey{Namespace: "rhacs-vertical-pod-autoscaling", Name: "vpa-recommender"}, &sa)
+	err = cli.Get(context.Background(), client.ObjectKey{Namespace: "rhacs-vertical-pod-autoscaling", Name: "rhacs-vpa-recommender"}, &sa)
 	require.NoError(t, err)
 
 	var clusterRole rbacv1.ClusterRole
-	err = cli.Get(context.Background(), client.ObjectKey{Name: "vpa-recommender"}, &clusterRole)
+	err = cli.Get(context.Background(), client.ObjectKey{Name: "rhacs-vpa-recommender"}, &clusterRole)
 	require.NoError(t, err)
 
 	var clusterRoleBinding rbacv1.ClusterRoleBinding
-	err = cli.Get(context.Background(), client.ObjectKey{Name: "vpa-recommender"}, &clusterRoleBinding)
+	err = cli.Get(context.Background(), client.ObjectKey{Name: "rhacs-vpa-recommender"}, &clusterRoleBinding)
 	require.NoError(t, err)
 
 }

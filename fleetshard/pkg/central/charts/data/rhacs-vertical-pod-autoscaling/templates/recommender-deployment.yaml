@@ -10,7 +10,7 @@ metadata:
     helm.sh/chart: "{{ $.Chart.Name }}-{{ $.Chart.Version | replace "+" "_"}}"
     meta.helm.sh/release-name: {{ $.Release.Name | quote }}
     meta.helm.sh/release-namespace: {{ $.Release.Namespace | quote }}
-  name: vpa-recommender-{{ .name }}
+  name: {{ .name | quote }}
   namespace: {{ $.Release.Namespace | quote }}
 spec:
   replicas: 1
@@ -171,7 +171,6 @@ spec:
             {{- if .cpuIntegerPostProcessorEnabled }}
             - --cpu-integer-post-processor-enabled={{ .cpuIntegerPostProcessorEnabled }}
             {{- end }}
-          {{ if .env }}
           env:
             - name: NAMESPACE
               valueFrom:
