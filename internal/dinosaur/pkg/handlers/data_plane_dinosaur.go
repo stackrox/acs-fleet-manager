@@ -81,11 +81,7 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 				managedDinosaurList.RhacsOperators = gitopsConfig.RHACSOperators.ToAPIResponse()
 			}
 
-			autoscalingConfig, convertErr := gitopsConfig.VerticalPodAutoscaling.ToApiResponse()
-			if convertErr != nil {
-				return nil, errors.GeneralError("failed to convert VPA configuration to API response: %v", err)
-			}
-			managedDinosaurList.VerticalPodAutoscaling = autoscalingConfig
+			managedDinosaurList.VerticalPodAutoscaling = gitopsConfig.VerticalPodAutoscaling
 
 			managedCentrals, presentErr := h.presenter.PresentManagedCentrals(r.Context(), centralRequests)
 			if presentErr != nil {
