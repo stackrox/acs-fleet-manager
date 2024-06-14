@@ -11,8 +11,9 @@ test_central_connectivity_from_different_namespace() {
     local CENTRAL_NS="$1"
     local CLIENT_NS="$2"
     local CLIENT_NAME="$3"
+    local SERVICE_HOST="$4"
 
-    helm install fake-client "${GITROOT}/test/network-policy/fake-client" --set name="${CLIENT_NAME}" --namespace "${CLIENT_NS}" --create-namespace
+    helm install fake-client "${GITROOT}/test/network-policy/fake-client" --set name="${CLIENT_NAME}" --set service.host="${SERVICE_HOST}" --namespace "${CLIENT_NS}" --create-namespace
     $KUBECTL -n "${CLIENT_NS}" wait --for=condition=Available deployment/"${CLIENT_NAME}"
 
     helm install client-netpol "${GITROOT}/fleetshard/pkg/central/charts/data/tenant-resources" --namespace "${CLIENT_NS}" --set secureTenantNetwork=true
@@ -33,17 +34,34 @@ test_central_connectivity_from_same_namespace()
 {
     local CLIENT_NS="$1"
     local CLIENT_NAME="$2"
+    local SERVICE_HOST="$3"
 
-    helm install fake-client "${GITROOT}/test/network-policy/fake-client" --set name="${CLIENT_NAME}" --namespace "${CLIENT_NS}"
+    helm install fake-client "${GITROOT}/test/network-policy/fake-client" --set name="${CLIENT_NAME}" --namespace "${CLIENT_NS}" --set service.host="${SERVICE_HOST}"
     $KUBECTL -n "${CLIENT_NS}" wait --for=condition=Available deployment/"${CLIENT_NAME}"
 
-    helm install client-netpol "${GITROOT}/fleetshard/pkg/central/charts/data/tenant-resources" --namespace "${CLIENT_NS}" --set secureTenantNetwork=true
+    helm install tenant-netpol "${GITROOT}/fleetshard/pkg/central/charts/data/tenant-resources" --namespace "${CLIENT_NS}" --set secureTenantNetwork=true
     $KUBECTL -n "${CLIENT_NS}" wait --for=condition=Available=false deployment/"${CLIENT_NAME}"
 
-    helm uninstall client-netpol --namespace "${CLIENT_NS}"
+    helm uninstall tenant-netpol --namespace "${CLIENT_NS}"
     helm uninstall fake-client --namespace "${CLIENT_NS}"
 }
 
+# Tests that a connection is allowed even with the network policies applied
+test_central_connection_allowed()
+{
+    local CLIENT_NS="$1"
+    local CLIENT_NAME="$2"
+    local SERVICE_HOST="$3"
+
+    helm install tenant-netpol "${GITROOT}/fleetshard/pkg/central/charts/data/tenant-resources" --namespace "${CLIENT_NS}" --set secureTenantNetwork=true
+    helm install fake-client "${GITROOT}/test/network-policy/fake-client" --set name="${CLIENT_NAME}" --namespace "${CLIENT_NS}" --set service.host="${SERVICE_HOST}"
+    $KUBECTL -n "${CLIENT_NS}" wait --for=condition=Available deployment/"${CLIENT_NAME}"
+
+    helm uninstall tenant-netpol --namespace "${CLIENT_NS}"
+    helm uninstall fake-client --namespace "${CLIENT_NS}"
+}
+
+# Tests connectivity to a fake Central from various different sources
 test_central_connectivity() {
     local CENTRAL_NS="rhacs-fake-service"
     local CLIENT_NS="rhacs-fake-client"
@@ -51,17 +69,28 @@ test_central_connectivity() {
     helm install fake-central "${GITROOT}/test/network-policy/fake-service" --namespace "${CENTRAL_NS}" --create-namespace
     $KUBECTL -n "${CENTRAL_NS}" wait --for=condition=Available deployment/central
 
-    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" central
-    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" scanner
-    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" scanner-db
-    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" scanner-v4-indexer
-    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" scanner-v4-matcher
-    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" scanner-v4-db
-    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" other-app
+    # use the IP to make sure access is denied because of the policy (as opposed to the client not having DNS access)
+    local SERVICE_IP
+    SERVICE_IP=$($KUBECTL -n rhacs-fake-service get service central-service -o jsonpath='{.spec.clusterIP}')
 
-    test_central_connectivity_from_same_namespace "${CENTRAL_NS}" scanner-db
-    test_central_connectivity_from_same_namespace "${CENTRAL_NS}" scanner-v4-db
-    test_central_connectivity_from_same_namespace "${CENTRAL_NS}" other-app
+    # no connections between tenant namespaces should be allowed
+    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" central "${SERVICE_IP}"
+    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" scanner "${SERVICE_IP}"
+    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" scanner-db "${SERVICE_IP}"
+    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" scanner-v4-indexer "${SERVICE_IP}"
+    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" scanner-v4-matcher "${SERVICE_IP}"
+    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" scanner-v4-db "${SERVICE_IP}"
+    test_central_connectivity_from_different_namespace "${CENTRAL_NS}" "${CLIENT_NS}" other-app "${SERVICE_IP}"
+
+    # connections from these apps should be allowed within the same namespace
+    test_central_connection_allowed "${CENTRAL_NS}" scanner "${SERVICE_IP}"
+    test_central_connection_allowed "${CENTRAL_NS}" scanner-v4-indexer "${SERVICE_IP}"
+    test_central_connection_allowed "${CENTRAL_NS}" scanner-v4-matcher "${SERVICE_IP}"
+
+    # connections from these apps should *not* be allowed within the same namespace
+    test_central_connectivity_from_same_namespace "${CENTRAL_NS}" scanner-db "${SERVICE_IP}"
+    test_central_connectivity_from_same_namespace "${CENTRAL_NS}" scanner-v4-db "${SERVICE_IP}"
+    test_central_connectivity_from_same_namespace "${CENTRAL_NS}" other-app "${SERVICE_IP}"
 
     $KUBECTL delete ns "${CENTRAL_NS}"
     $KUBECTL delete ns "${CLIENT_NS}"
