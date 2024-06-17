@@ -47,16 +47,13 @@ func (eh *EmailHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sub, err := claims.GetSubject()
+	tenantID, err := claims.GetSubject()
 	if err != nil {
 		shared.HandleError(r, w, errors.Unauthenticated("failed to get sub claim"))
 		return
 	}
 
-	// TODO: use sub for rate limiting later on instead of printing it here
-	glog.Info(sub)
-
-	if err := eh.emailSender.Send(r.Context(), request.To, request.RawMessage); err != nil {
+	if err := eh.emailSender.Send(r.Context(), request.To, request.RawMessage, tenantID); err != nil {
 		eh.errorResponse(w, "Cannot send email", http.StatusInternalServerError)
 		return
 	}

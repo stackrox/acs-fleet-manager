@@ -47,15 +47,14 @@ func main() {
 
 	// initialize components
 	dbConnection := db.NewDatabaseConnection(dbCfg)
-	// TODO(ROX-23260): connect Rate Limiter to Email Sender
-	_ = email.NewRateLimiterService(dbConnection)
+	rateLimiter := email.NewRateLimiterService(dbConnection)
 	sesClient, err := email.NewSES(ctx, cfg.SesMaxBackoffDelay, cfg.SesMaxAttempts)
 	if err != nil {
 		glog.Errorf("Failed to initialise SES Client: %v", err)
 		os.Exit(1)
 	}
 
-	emailSender := email.NewEmailSender(cfg.SenderAddress, sesClient)
+	emailSender := email.NewEmailSender(cfg.SenderAddress, sesClient, rateLimiter)
 	emailHandler := api.NewEmailHandler(emailSender)
 
 	router, err := api.SetupRoutes(cfg.AuthConfig, emailHandler)

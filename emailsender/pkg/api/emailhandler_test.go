@@ -19,7 +19,7 @@ type MockEmailSender struct {
 	SendFunc func(ctx context.Context, to []string, rawMessage []byte) error
 }
 
-func (m *MockEmailSender) Send(ctx context.Context, to []string, rawMessage []byte) error {
+func (m *MockEmailSender) Send(ctx context.Context, to []string, rawMessage []byte, tenantID string) error {
 	return m.SendFunc(ctx, to, rawMessage)
 }
 
