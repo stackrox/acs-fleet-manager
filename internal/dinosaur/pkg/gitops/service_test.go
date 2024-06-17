@@ -272,15 +272,6 @@ annotations:
   rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
 secureTenantNetwork: true
 centralRdsCidrBlock: "10.1.0.0/16"
-egressProxy:
-  image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.14"
-  replicas: 2
-  resources:
-    requests:
-      cpu: 100m
-      memory: 275Mi
-    limits:
-      memory: 275Mi
 `,
 					Overrides: []TenantResourceOverride{
 						{

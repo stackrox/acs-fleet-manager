@@ -228,13 +228,6 @@ var _ = Describe("Central", Ordered, func() {
 			}
 		})
 
-		It("should spin up an egress proxy with two healthy replicas", func() {
-			Eventually(assertDeploymentHealthyReplicas(ctx, namespaceName, "egress-proxy", 2)).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(Succeed())
-		})
-
 		It("should backup important secrets in FM database", func() {
 			expectedSecrets := k8s.NewSecretBackup(k8sClient, false).GetWatchedSecrets()
 			Eventually(assertStoredSecrets(ctx, privateAPI, centralRequestID, expectedSecrets)).
@@ -348,13 +341,6 @@ var _ = Describe("Central", Ordered, func() {
 
 		It("should delete Central CR", func() {
 			Eventually(assertCentralCRDeleted(ctx, namespaceName, centralRequestName)).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(Succeed())
-		})
-
-		It("should delete the egress proxy", func() {
-			Eventually(assertDeploymentDeleted(ctx, namespaceName, "egress-proxy")).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())

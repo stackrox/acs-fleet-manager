@@ -107,7 +107,6 @@ type areSecretsStoredFunc func(secretsStored []string) bool
 type CentralReconcilerOptions struct {
 	UseRoutes             bool
 	WantsAuthProvider     bool
-	EgressProxyImage      string
 	ManagedDBEnabled      bool
 	Telemetry             config.Telemetry
 	ClusterName           string
@@ -132,7 +131,6 @@ type CentralReconciler struct {
 	routeService           *k8s.RouteService
 	secretBackup           *k8s.SecretBackup
 	secretCipher           cipher.Cipher
-	egressProxyImage       string
 	telemetry              config.Telemetry
 	clusterName            string
 	environment            string
@@ -1873,11 +1871,6 @@ func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Val
 		"labels":      stringMapToMapInterface(getTenantLabels(c)),
 		"annotations": stringMapToMapInterface(getTenantAnnotations(c)),
 	}
-	if r.egressProxyImage != "" {
-		dst["egressProxy"] = map[string]interface{}{
-			"image": r.egressProxyImage,
-		}
-	}
 	dst["secureTenantNetwork"] = r.secureTenantNetwork
 	return chartutil.CoalesceTables(dst, src), nil
 }
@@ -2059,7 +2052,6 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		routeService:           k8s.NewRouteService(k8sClient, &opts.RouteParameters),
 		secretBackup:           k8s.NewSecretBackup(k8sClient, opts.ManagedDBEnabled),
 		secretCipher:           secretCipher, // pragma: allowlist secret
-		egressProxyImage:       opts.EgressProxyImage,
 		telemetry:              opts.Telemetry,
 		clusterName:            opts.ClusterName,
 		environment:            opts.Environment,
