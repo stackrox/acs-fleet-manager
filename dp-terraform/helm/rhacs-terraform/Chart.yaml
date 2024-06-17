@@ -46,6 +46,3 @@ dependencies:
   - name: vertical-pod-autoscaler
     version: "0.1.0"
     condition: verticalPodAutoscaler.enabled
-  - name: compliance-operator
-    version: "0.1.0"
-    condition: complianceOperator.enabled
