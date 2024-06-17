@@ -2210,57 +2210,6 @@ func TestReconciler_applyRoutes(t *testing.T) {
 	}
 }
 
-func TestReconciler_applyProxyConfig(t *testing.T) {
-
-	r := &CentralReconciler{
-		auditLogging: config.AuditLogging{
-			AuditLogTargetHost: "host",
-			AuditLogTargetPort: 9000,
-		},
-	}
-	c := &v1alpha1.Central{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "namespace",
-		},
-	}
-	r.applyProxyConfig(c)
-
-	assert.Equal(t, c.Spec.Customize.EnvVars, []v1.EnvVar{
-		{
-			Name:  "http_proxy",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "HTTP_PROXY",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "https_proxy",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "HTTPS_PROXY",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "all_proxy",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "ALL_PROXY",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "no_proxy",
-			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner-v4-db.namespace.svc:5432,scanner-v4-db.namespace:5432,scanner-v4-db:5432,scanner-v4-indexer.namespace.svc:8443,scanner-v4-indexer.namespace:8443,scanner-v4-indexer:8443,scanner-v4-matcher.namespace.svc:8443,scanner-v4-matcher.namespace:8443,scanner-v4-matcher:8443,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
-		},
-		{
-			Name:  "NO_PROXY",
-			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner-v4-db.namespace.svc:5432,scanner-v4-db.namespace:5432,scanner-v4-db:5432,scanner-v4-indexer.namespace.svc:8443,scanner-v4-indexer.namespace:8443,scanner-v4-indexer:8443,scanner-v4-matcher.namespace.svc:8443,scanner-v4-matcher.namespace:8443,scanner-v4-matcher:8443,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
-		},
-	})
-}
-
 func TestReconciler_applyDeclarativeConfig(t *testing.T) {
 	r := &CentralReconciler{}
 	c := &v1alpha1.Central{}
