@@ -20,8 +20,5 @@ dependencies:
 - name: vertical-pod-autoscaler
   repository: ""
   version: 0.1.0
-- name: compliance-operator
-  repository: ""
-  version: 0.1.0
-digest: sha256:324d9c58d59b0f51e3d547e8825c9bb8415f90d47b5e75ef90d76e844d41a772
-generated: "2024-06-12T12:15:47.378422393+02:00"
+digest: sha256:d935785f613711e133ef1b0e340d5ac480f54b31c586f94abdda4955593c936a
+generated: "2024-06-17T16:30:27.282273206+02:00"
