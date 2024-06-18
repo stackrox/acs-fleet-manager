@@ -1,0 +1,5 @@
+# values.yaml
+name: scanner
+service:
+  host: central-service.rhacs-fake-service.svc.cluster.local
+  port: 8443

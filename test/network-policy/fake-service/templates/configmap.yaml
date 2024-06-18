@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.name }}-nginx-config
+  namespace: {{ .Release.namespace }}
+data:
+  nginx.conf: '
+worker_processes auto;
+pid /tmp/nginx.pid;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    default_type  application/octet-stream;
+
+    server {
+        listen       {{ .Values.port }};
+        server_name  localhost;
+
+        location / {
+            return 200 "rhacs-fake-service reply";
+        }
+    }
+}
+'

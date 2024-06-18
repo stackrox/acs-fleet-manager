@@ -1,0 +1,5 @@
+# values.yaml
+name: central
+labels:
+  app: central
+port: 8443

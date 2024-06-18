@@ -115,6 +115,10 @@ if [[ "$SPAWN_LOGGER" == "true" ]]; then
 fi
 
 FAIL=0
+if ! "${GITROOT}/.openshift-ci/tests/netpol-test.sh"; then
+    FAIL=1
+fi
+
 if ! "${GITROOT}/.openshift-ci/tests/e2e-test.sh"; then
     FAIL=1
 fi

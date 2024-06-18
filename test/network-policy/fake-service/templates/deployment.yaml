@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Release.namespace }}
+  labels:
+    app: {{ .Values.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      containers:
+        - image: nginx:latest
+          name: nginx
+          ports:
+            - containerPort: {{ .Values.port }}
+              name: web
+          volumeMounts:
+            - name: config-vol
+              mountPath: /etc/nginx/
+            - name: cache-volume
+              mountPath: /var/cache/nginx
+      volumes:
+        - name: config-vol
+          configMap:
+            name: {{ .Values.name }}-nginx-config
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+        - name: cache-volume
+          emptyDir: {}
