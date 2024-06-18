@@ -55,8 +55,11 @@ spec:
             requests:
               cpu: {{ .Values.emailsender.resources.requests.cpu | quote }}
               memory: {{ .Values.emailsender.resources.requests.memory | quote }}
-        {{- if .Values.emailsender.enableHTTPS }}
           volumeMounts:
+          - name: emailsender-db
+            mountPath: /secrets
+            readOnly: true
+        {{- if .Values.emailsender.enableHTTPS }}
           - name: emailsender-tls
             mountPath: /var/run/certs
             readOnly: true
@@ -66,6 +69,9 @@ spec:
         - name: emailsender-tls
           secret:
             secretName: emailsender-tls # pragma: allowlist secret
+        - name: emailsender-db
+          secret:
+            secretName: emailsender-db # pragma: allowlist secret
     {{- end }}
 ---
 apiVersion: v1
