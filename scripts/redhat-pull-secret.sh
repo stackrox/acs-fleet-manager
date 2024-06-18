@@ -13,17 +13,16 @@ pull_secret=$(curl -X POST https://api.openshift.com/api/accounts_mgmt/v1/access
 for namespace in "$@"; do
 
     # Create namespace if it does not exist
-    oc get namespace $namespace || oc create namespace $namespace
+    oc get namespace "$namespace" || oc create namespace "$namespace"
 
     echo "Creating secret in namespace $namespace"
-    cat <<EOF | oc apply -n $namespace -f -
+    cat <<EOF | oc apply -n "$namespace" -f -
 kind: Secret
 apiVersion: v1
 type: kubernetes.io/dockerconfigjson
 metadata:
   name: redhat-pull-secret
 data:
-    .dockerconfigjson: $(echo $pull_secret | base64)
+    .dockerconfigjson: $(echo "$pull_secret" | base64)
 EOF
 done
-
