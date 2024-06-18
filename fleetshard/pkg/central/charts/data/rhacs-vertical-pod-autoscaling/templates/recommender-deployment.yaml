@@ -51,15 +51,12 @@ spec:
               type: RuntimeDefault
             capabilities:
               drop: [ALL]
-          {{ if .resources }}
+          {{- if .resources }}
           resources: {{ toYaml .resources | nindent 12 }}
           {{- end }}
-          command:
-            - recommender
+          command: ['recommender']
           args:
             - --recommender-name={{ .name }}
-            - --logtostderr
-            - --v=1
             {{- if .recommendationMarginFraction }}
             - --recommendation-margin-fraction={{ .recommendationMarginFraction }}
             {{- end }}

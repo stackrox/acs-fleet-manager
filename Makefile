@@ -750,13 +750,17 @@ deploy/route:
 	@oc process -f ./templates/route-template.yml --local | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/route
 
+# This will create the redhat-pull-secret secret in the rhacs-vertical-pod-autoscaler namespace if it does not exist
+deploy/vpa-redhat-pull-secret:
+	./scripts/redhat-pull-secret.sh rhacs-vertical-pod-autoscaler
+
 # When making changes to the gitops configuration for development purposes
 # situated here dev/env/manifests/fleet-manager/04-gitops-config.yaml, this
 # target will update the gitops configmap on the dev cluster.
 # It might take a few seconds/minutes for fleet-manager to observe the changes.
 # Changes to the configmap are hot-reloaded
 # See https://kubernetes.io/docs/concepts/configuration/configmap/#mounted-configmaps-are-updated-automatically
-deploy/gitops:
+deploy/gitops: deploy/vpa-redhat-pull-secret
 ifeq (,$(wildcard $(GITOPS_CONFIG_FILE)))
     $(error gitops config file not found at path: '$(GITOPS_CONFIG_FILE)')
 endif

@@ -9,13 +9,13 @@ rhacsOperators:
       securedClusterReconcilerEnabled: false
 verticalPodAutoscaling:
   recommenders:
-    - image: registry.redhat.io/openshift4/ose-vertical-pod-autoscaler-rhel8@sha256:d812f6374fe7f01d7299d0502ead4da86c69a0c38549af66b34d01a367bc1169
-      name: vpa-1
+    - name: vpa-1
+      image: registry.redhat.io/openshift4/ose-vertical-pod-autoscaler-rhel8@sha256:d812f6374fe7f01d7299d0502ead4da86c69a0c38549af66b34d01a367bc1169
       imagePullSecrets: [{ name: redhat-pull-secret }]
       recommendationMarginFraction: 0.30
       podRecommendationMinCpuMillicores: 10
-    - image: registry.redhat.io/openshift4/ose-vertical-pod-autoscaler-rhel8@sha256:d812f6374fe7f01d7299d0502ead4da86c69a0c38549af66b34d01a367bc1169
-      name: vpa-2
+    - name: vpa-2
+      image: registry.redhat.io/openshift4/ose-vertical-pod-autoscaler-rhel8@sha256:d812f6374fe7f01d7299d0502ead4da86c69a0c38549af66b34d01a367bc1169
       imagePullSecrets: [{ name: redhat-pull-secret }]
       recommendationMarginFraction: 0.30
       podRecommendationMinCpuMillicores: 20

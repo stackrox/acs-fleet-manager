@@ -138,10 +138,10 @@ init() {
     fi
 
     if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
-        eval "$(minikube docker-env)"
+        eval "$(minikube docker-env --shell bash)"
     fi
     if [[ "$CLUSTER_TYPE" == "crc" ]]; then
-        eval "$(crc podman-env)"
+        eval "$(crc podman-env --shell bash)"
     fi
 
     if [[ "$EMAIL_SENDER_IMAGE" == "" ]]; then

@@ -31,7 +31,11 @@ rules:
 
   - apiGroups: ["autoscaling.k8s.io"]
     resources: ["verticalpodautoscalercheckpoints"]
-    verbs: ["get", "list", "watch", "patch", "create"]
+    verbs: ["get", "list", "watch", "patch", "create", "delete"]
+
+  - apiGroups: ["autoscaling.k8s.io"]
+    resources: ["verticalpodautoscalers/status"]
+    verbs: ["get", "patch"]
 
   - apiGroups: ["apps.openshift.io"]
     resources: ["scale", "deploymentconfigs"]
@@ -42,7 +46,7 @@ rules:
     verbs: ["get", "list", "watch"]
 
   - apiGroups: ["*"]
-    resources: ["scale"]
+    resources: ["*/scale"]
     verbs: ["get", "watch"]
 
   - apiGroups: [""]

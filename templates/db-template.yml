@@ -113,7 +113,7 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: ${DATABASE_SERVICE_NAME}
-              image: postgres:${POSTGRESQL_VERSION}
+              image: docker.io/postgres:${POSTGRESQL_VERSION}
               imagePullPolicy: IfNotPresent
               name: postgresql
               ports:

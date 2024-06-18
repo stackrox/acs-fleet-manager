@@ -10,3 +10,6 @@ stackrox/
 .pre-commit-config.yaml
 .artifacts/
 .DS_Store
+acsfleetctl
+cover.profile
+e2e-report.json
