@@ -36,14 +36,25 @@ spec:
               value: "/var/run/certs/tls.crt"
             - name: HTTPS_KEY_FILE
               value: "/var/run/certs/tls.key"
-          {{- if .Values.emailsender.authConfigFromKubernetes }}
+            {{- if .Values.emailsender.authConfigFromKubernetes }}
             - name: AUTH_CONFIG_FROM_KUBERNETES
               value: "true"
-          {{- end }}
-          {{- if .Values.emailsender.enableHTTPS }}
+            {{- end }}
+            {{- if .Values.emailsender.enableHTTPS }}
             - name: ENABLE_HTTPS
               value: "true"
-          {{- end }}
+            {{- end }}
+            # Reusing fleetshardSync.aws.region here since the Values file defines multiple
+            # aws region for different components and the emailsender should always use the same as FS
+            - name: AWS_REGION
+              value: {{ .Values.fleetshardSync.aws.region }}
+            - name: AWS_ROLE_ARN
+              valueFrom:
+                secretKeyRef:
+                  name: emailsender-parameters
+                  key: "aws-role-arn"
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: "/var/run/secrets/tokens/aws-token"
           ports:
             - name: monitoring
               containerPort: 9090
@@ -56,23 +67,33 @@ spec:
               cpu: {{ .Values.emailsender.resources.requests.cpu | quote }}
               memory: {{ .Values.emailsender.resources.requests.memory | quote }}
           volumeMounts:
+          - name: aws-token
+            mountPath: /var/run/secrets/tokens
+            readOnly: true
           - name: emailsender-db
             mountPath: /secrets
             readOnly: true
-        {{- if .Values.emailsender.enableHTTPS }}
+          {{- if .Values.emailsender.enableHTTPS }}
           - name: emailsender-tls
             mountPath: /var/run/certs
             readOnly: true
-        {{- end }}
-    {{- if .Values.emailsender.enableHTTPS }}
+          {{- end }}
       volumes:
-        - name: emailsender-tls
-          secret:
-            secretName: emailsender-tls # pragma: allowlist secret
         - name: emailsender-db
           secret:
             secretName: emailsender-db # pragma: allowlist secret
-    {{- end }}
+        {{- if .Values.emailsender.enableHTTPS }}
+        - name: emailsender-tls
+          secret:
+            secretName: emailsender-tls # pragma: allowlist secret
+        {{- end }}
+        - name: aws-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: aws-token
+                  audience: sts.amazonaws.com
+                  expirationSeconds: 3600
 ---
 apiVersion: v1
 kind: Service
