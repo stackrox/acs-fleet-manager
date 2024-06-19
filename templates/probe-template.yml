@@ -29,6 +29,9 @@ parameters:
   - name: CPU_REQUESTS
     displayName: CPU Requests
     value: 100m
+  - name: CPU_LIMITS
+    displayName: CPU Limits
+    value: 1
   - name: MEMORY_REQUESTS
     displayName: Memory Requests
     value: 128Mi
@@ -83,6 +86,7 @@ objects:
                   cpu: ${CPU_REQUESTS}
                   memory: ${MEMORY_REQUESTS}
                 limits:
+                  cpu: ${CPU_LIMITS}
                   memory: ${MEMORY_LIMITS}
           terminationGracePeriodSeconds: 300
   - kind: Service
