@@ -88,6 +88,18 @@ spec:
           protocol: TCP
         - port: 6443
           protocol: TCP
+    - to:  # Allow egress to emailsender
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: rhacs
+          podSelector:
+            matchLabels:
+              app: emailsender
+      ports:
+        - port: 8080
+          protocol: TCP
+        - port: 443
+          protocol: TCP
     - to:  # Allow egress to external Internet
         - ipBlock:
             cidr: 0.0.0.0/0
