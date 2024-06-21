@@ -51,7 +51,7 @@ func main() {
 		glog.Errorf("Failed to migrate database: %v", err)
 		os.Exit(1)
 	}
-	rateLimiter := email.NewRateLimiterService(dbConnection)
+	rateLimiter := email.NewRateLimiterService(dbConnection, cfg.LimitEmailPerTenant)
 	sesClient, err := email.NewSES(ctx, cfg.SesMaxBackoffDelay, cfg.SesMaxAttempts)
 	if err != nil {
 		glog.Errorf("Failed to initialise SES Client: %v", err)
