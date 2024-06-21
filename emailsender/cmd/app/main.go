@@ -47,6 +47,10 @@ func main() {
 
 	// initialize components
 	dbConnection := db.NewDatabaseConnection(dbCfg)
+	if err = dbConnection.Migrate(); err != nil {
+		glog.Errorf("Failed to migrate database: %v", err)
+		os.Exit(1)
+	}
 	rateLimiter := email.NewRateLimiterService(dbConnection)
 	sesClient, err := email.NewSES(ctx, cfg.SesMaxBackoffDelay, cfg.SesMaxAttempts)
 	if err != nil {
