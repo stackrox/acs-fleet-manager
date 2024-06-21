@@ -53,8 +53,6 @@ spec:
           value: {{ .Values.fleetshardSync.authType }}
         - name: STATIC_TOKEN
           value: {{ .Values.fleetshardSync.staticToken }}
-        - name: EGRESS_PROXY_IMAGE
-          value: {{ .Values.fleetshardSync.egressProxy.image | quote }}
         - name: SECURE_TENANT_NETWORK
           value: {{ .Values.fleetshardSync.secureTenantNetwork | quote }}
         {{- if eq "RHSSO" .Values.fleetshardSync.authType }}

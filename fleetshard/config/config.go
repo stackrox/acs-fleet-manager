@@ -35,7 +35,6 @@ type Config struct {
 	ServiceAccountTokenFile string        `env:"FLEET_MANAGER_TOKEN_FILE"`
 	CreateAuthProvider      bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
 	MetricsAddress          string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
-	EgressProxyImage        string        `env:"EGRESS_PROXY_IMAGE"`
 	DefaultBaseCRDURL       string        `env:"DEFAULT_BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
 	// TenantImagePullSecret can be used to inject a Kubernetes image pull secret into tenant namespaces.
 	// If it is empty, nothing is injected (for example, it is not required when running on OpenShift).

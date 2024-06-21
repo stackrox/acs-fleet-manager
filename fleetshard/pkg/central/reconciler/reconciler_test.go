@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -861,12 +860,12 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
 
-	var dummySvc v1.Service
-	dummySvcKey := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: "dummy"}
-	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
+	var dummyObj networkingv1.NetworkPolicy
+	dummyObjKey := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: "dummy"}
+	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
 	assert.NoError(t, err)
 
-	assert.Equal(t, k8s.ManagedByFleetshardValue, dummySvc.GetLabels()[k8s.ManagedByLabelKey])
+	assert.Equal(t, k8s.ManagedByFleetshardValue, dummyObj.GetLabels()[k8s.ManagedByLabelKey])
 
 	deletedCentral := simpleManagedCentral
 	deletedCentral.Metadata.DeletionTimestamp = time.Now().Format(time.RFC3339)
@@ -877,7 +876,7 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 	}
 	require.NoError(t, err)
 
-	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
+	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
 	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
@@ -927,125 +926,27 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
 
-	var dummySvc v1.Service
-	dummySvcKey := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: "dummy"}
-	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
+	var dummyObj networkingv1.NetworkPolicy
+	dummyObjKey := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: "dummy"}
+	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
 	assert.NoError(t, err)
 
-	dummySvc.SetAnnotations(map[string]string{"dummy-annotation": "test"})
-	err = fakeClient.Update(context.TODO(), &dummySvc)
+	dummyObj.SetAnnotations(map[string]string{"dummy-annotation": "test"})
+	err = fakeClient.Update(context.TODO(), &dummyObj)
 	assert.NoError(t, err)
 
-	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
+	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
 	assert.NoError(t, err)
-	assert.Equal(t, "test", dummySvc.GetAnnotations()["dummy-annotation"])
+	assert.Equal(t, "test", dummyObj.GetAnnotations()["dummy-annotation"])
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
-	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
+	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
 	assert.NoError(t, err)
 
 	// verify that the chart resource was updated, by checking that the manually added annotation
 	// is no longer present
-	assert.Equal(t, "", dummySvc.GetAnnotations()["dummy-annotation"])
-}
-
-func TestEgressProxyIsDeployed(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	expectedObjs := []client.Object{
-		&v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy-config",
-			},
-		},
-		&v1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy",
-			},
-		},
-		&appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy",
-			},
-		},
-		&networkingv1.NetworkPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy",
-			},
-		},
-	}
-
-	for _, expectedObj := range expectedObjs {
-		actualObj := expectedObj.DeepCopyObject().(client.Object)
-		if !assert.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKeyFromObject(expectedObj), actualObj)) {
-			continue
-		}
-		assert.Equal(t, k8s.ManagedByFleetshardValue, actualObj.GetLabels()[k8s.ManagedByLabelKey])
-
-		if dep, ok := actualObj.(*appsv1.Deployment); ok {
-			t.Run("verify deployment has desired properties", func(t *testing.T) {
-				require.Len(t, dep.Spec.Template.Spec.Containers, 1, "expected exactly 1 container")
-				assert.NotEmpty(t, dep.Spec.Template.Spec.Containers[0].Image, "container should define an image to be used")
-			})
-		}
-	}
-}
-
-func TestEgressProxyIsNotDeployedWhenSecureTenantNetwork(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		secureTenantNetworkReconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	unexpectedObjs := []client.Object{
-		&v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy-config",
-			},
-		},
-		&v1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy",
-			},
-		},
-		&appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy",
-			},
-		},
-		&networkingv1.NetworkPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy",
-			},
-		},
-	}
-
-	for _, unexpectedObj := range unexpectedObjs {
-		actualObj := unexpectedObj.DeepCopyObject().(client.Object)
-		assert.Error(t, fakeClient.Get(context.TODO(), client.ObjectKeyFromObject(unexpectedObj), actualObj))
-	}
+	assert.Equal(t, "", dummyObj.GetAnnotations()["dummy-annotation"])
 }
 
 func TestTenantNetworkIsSecured(t *testing.T) {
@@ -1111,36 +1012,6 @@ func TestTenantNetworkIsSecured(t *testing.T) {
 		}
 		assert.Equal(t, k8s.ManagedByFleetshardValue, actualObj.GetLabels()[k8s.ManagedByLabelKey])
 	}
-}
-
-func TestEgressProxyCustomImage(t *testing.T) {
-	reconcilerOptions := CentralReconcilerOptions{
-		EgressProxyImage: "registry.redhat.io/openshift4/ose-egress-http-proxy:version-for-test",
-	}
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		reconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	dep := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: simpleManagedCentral.Metadata.Namespace,
-			Name:      "egress-proxy",
-		},
-	}
-
-	err = fakeClient.Get(context.TODO(), client.ObjectKeyFromObject(dep), dep)
-	require.NoError(t, err)
-
-	containers := dep.Spec.Template.Spec.Containers
-	require.Len(t, containers, 1)
-
-	assert.Equal(t, "registry.redhat.io/openshift4/ose-egress-http-proxy:version-for-test", containers[0].Image)
 }
 
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
@@ -1719,51 +1590,6 @@ func TestEnsureSecretExists(t *testing.T) {
 	})
 }
 
-func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
-	testCases := []struct {
-		auditLoggingConfig config.AuditLogging
-	}{
-		{
-			auditLoggingConfig: defaultAuditLogConfig,
-		},
-		{
-			auditLoggingConfig: vectorAuditLogConfig,
-		},
-		{
-			auditLoggingConfig: disabledAuditLogConfig,
-		},
-	}
-	for _, testCase := range testCases {
-		reconcilerOptions := CentralReconcilerOptions{
-			AuditLogging: testCase.auditLoggingConfig,
-		}
-		_, _, r := getClientTrackerAndReconciler(
-			t,
-			simpleManagedCentral,
-			nil,
-			reconcilerOptions,
-		)
-		centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
-		assert.NoError(t, err)
-		require.NotNil(t, centralConfig)
-		require.NotNil(t, centralConfig.Spec.Customize)
-		noProxyEnvLowerCaseFound := false
-		noProxyEnvUpperCaseFound := false
-		for _, envVar := range centralConfig.Spec.Customize.EnvVars {
-			switch envVar.Name {
-			case "no_proxy":
-				noProxyEnvLowerCaseFound = true
-				assert.Contains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint(false))
-			case "NO_PROXY":
-				noProxyEnvUpperCaseFound = true
-				assert.Contains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint(false))
-			}
-		}
-		assert.True(t, noProxyEnvLowerCaseFound)
-		assert.True(t, noProxyEnvUpperCaseFound)
-	}
-}
-
 func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
 	reconcilerOptions := CentralReconcilerOptions{
 		AuditLogging: defaultAuditLogConfig,
@@ -2210,57 +2036,6 @@ func TestReconciler_applyRoutes(t *testing.T) {
 	}
 }
 
-func TestReconciler_applyProxyConfig(t *testing.T) {
-
-	r := &CentralReconciler{
-		auditLogging: config.AuditLogging{
-			AuditLogTargetHost: "host",
-			AuditLogTargetPort: 9000,
-		},
-	}
-	c := &v1alpha1.Central{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "namespace",
-		},
-	}
-	r.applyProxyConfig(c)
-
-	assert.Equal(t, c.Spec.Customize.EnvVars, []v1.EnvVar{
-		{
-			Name:  "http_proxy",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "HTTP_PROXY",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "https_proxy",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "HTTPS_PROXY",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "all_proxy",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "ALL_PROXY",
-			Value: "http://egress-proxy.namespace.svc:3128",
-		},
-		{
-			Name:  "no_proxy",
-			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner-v4-db.namespace.svc:5432,scanner-v4-db.namespace:5432,scanner-v4-db:5432,scanner-v4-indexer.namespace.svc:8443,scanner-v4-indexer.namespace:8443,scanner-v4-indexer:8443,scanner-v4-matcher.namespace.svc:8443,scanner-v4-matcher.namespace:8443,scanner-v4-matcher:8443,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
-		},
-		{
-			Name:  "NO_PROXY",
-			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner-v4-db.namespace.svc:5432,scanner-v4-db.namespace:5432,scanner-v4-db:5432,scanner-v4-indexer.namespace.svc:8443,scanner-v4-indexer.namespace:8443,scanner-v4-indexer:8443,scanner-v4-matcher.namespace.svc:8443,scanner-v4-matcher.namespace:8443,scanner-v4-matcher:8443,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
-		},
-	})
-}
-
 func TestReconciler_applyDeclarativeConfig(t *testing.T) {
 	r := &CentralReconciler{}
 	c := &v1alpha1.Central{}
@@ -2361,33 +2136,6 @@ metadata:
 						Annotations: map[string]string{
 							"rhacs.redhat.com/environment":  "",
 							"rhacs.redhat.com/cluster-name": "",
-						},
-						EnvVars: []v1.EnvVar{
-							{
-								Name:  "http_proxy",
-								Value: "http://egress-proxy.rhacs.svc:3128",
-							}, {
-								Name:  "HTTP_PROXY",
-								Value: "http://egress-proxy.rhacs.svc:3128",
-							}, {
-								Name:  "https_proxy",
-								Value: "http://egress-proxy.rhacs.svc:3128",
-							}, {
-								Name:  "HTTPS_PROXY",
-								Value: "http://egress-proxy.rhacs.svc:3128",
-							}, {
-								Name:  "all_proxy",
-								Value: "http://egress-proxy.rhacs.svc:3128",
-							}, {
-								Name:  "ALL_PROXY",
-								Value: "http://egress-proxy.rhacs.svc:3128",
-							}, {
-								Name:  "no_proxy",
-								Value: ":0,central.rhacs.svc:443,central.rhacs:443,central:443,kubernetes.default.svc.cluster.local.:443,scanner-db.rhacs.svc:5432,scanner-db.rhacs:5432,scanner-db:5432,scanner-v4-db.rhacs.svc:5432,scanner-v4-db.rhacs:5432,scanner-v4-db:5432,scanner-v4-indexer.rhacs.svc:8443,scanner-v4-indexer.rhacs:8443,scanner-v4-indexer:8443,scanner-v4-matcher.rhacs.svc:8443,scanner-v4-matcher.rhacs:8443,scanner-v4-matcher:8443,scanner.rhacs.svc:8080,scanner.rhacs.svc:8443,scanner.rhacs:8080,scanner.rhacs:8443,scanner:8080,scanner:8443",
-							}, {
-								Name:  "NO_PROXY",
-								Value: ":0,central.rhacs.svc:443,central.rhacs:443,central:443,kubernetes.default.svc.cluster.local.:443,scanner-db.rhacs.svc:5432,scanner-db.rhacs:5432,scanner-db:5432,scanner-v4-db.rhacs.svc:5432,scanner-v4-db.rhacs:5432,scanner-v4-db:5432,scanner-v4-indexer.rhacs.svc:8443,scanner-v4-indexer.rhacs:8443,scanner-v4-indexer:8443,scanner-v4-matcher.rhacs.svc:8443,scanner-v4-matcher.rhacs:8443,scanner-v4-matcher:8443,scanner.rhacs.svc:8080,scanner.rhacs.svc:8443,scanner.rhacs:8080,scanner.rhacs:8443,scanner:8080,scanner:8443",
-							},
 						},
 					},
 				},
@@ -2601,35 +2349,6 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestReconciler_ensureChartResourcesExist_labelsAndAnnotations(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, nil, defaultReconcilerOptions)
-	require.NoError(t, r.ensureChartResourcesExist(context.Background(), simpleManagedCentral))
-
-	var egressProxyDeployment appsv1.Deployment
-	err := fakeClient.Get(context.Background(), client.ObjectKey{
-		Namespace: simpleManagedCentral.Metadata.Namespace,
-		Name:      "egress-proxy",
-	}, &egressProxyDeployment)
-	require.NoError(t, err)
-
-	assert.Equal(t, map[string]string{
-		"app.kubernetes.io/instance":     "test-central",
-		"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
-		"rhacs.redhat.com/instance-type": "standard",
-		"rhacs.redhat.com/org-id":        "12345",
-		"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
-		"app.kubernetes.io/component":    "egress-proxy",
-		"app.kubernetes.io/name":         "central-tenant-resources",
-		"helm.sh/chart-name":             "central-tenant-resources",
-		"helm.sh/chart":                  "central-tenant-resources-0.0.0",
-	}, egressProxyDeployment.ObjectMeta.Labels)
-
-	assert.Equal(t, map[string]string{
-		"rhacs.redhat.com/org-name": "org-name",
-	}, egressProxyDeployment.ObjectMeta.Annotations)
-
 }
 
 func TestReconciler_needsReconcile(t *testing.T) {
@@ -2884,76 +2603,6 @@ func TestChartValues(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			values, err := r.chartValues(tt.managedCentral)
 			tt.assertFn(t, values, err)
-		})
-	}
-
-}
-
-func Test_shouldApplyProxyConfig(t *testing.T) {
-
-	tests := []struct {
-		name                 string
-		tenantResourceValues map[string]interface{}
-		flag                 bool
-		want                 bool
-		wantErr              bool
-	}{
-		{
-			name: "false when secureTenantNetwork is true on helm values",
-			tenantResourceValues: map[string]interface{}{
-				"secureTenantNetwork": true,
-			},
-			want: false,
-		},
-		{
-			name: "true when secureTenantNetwork is false on helm values",
-			tenantResourceValues: map[string]interface{}{
-				"secureTenantNetwork": false,
-			},
-			want: true,
-		},
-		{
-			name: "flag (true) when secureTenantNetwork is not provided",
-			tenantResourceValues: map[string]interface{}{
-				"foo": "bar",
-			},
-			want: true,
-		},
-		{
-			name: "true when no tenantResourcesValues are provided",
-			want: true,
-		},
-		{
-			name: "false when secureTenantNetwork flag is true",
-			flag: true,
-			want: false,
-		},
-		{
-			name: "error when bad value from tenantResourcesValues",
-			tenantResourceValues: map[string]interface{}{
-				"secureTenantNetwork": "bad",
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			r := &CentralReconciler{
-				secureTenantNetwork: tt.flag,
-			}
-			got, err := r.shouldApplyProxyConfig(&private.ManagedCentral{
-				Spec: private.ManagedCentralAllOfSpec{
-					TenantResourcesValues: tt.tenantResourceValues,
-				},
-			})
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.want, got)
-			}
 		})
 	}
 

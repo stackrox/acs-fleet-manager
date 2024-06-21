@@ -141,7 +141,6 @@ func (r *Runtime) Start() error {
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
 		UseRoutes:             routesAvailable,
 		WantsAuthProvider:     r.config.CreateAuthProvider,
-		EgressProxyImage:      r.config.EgressProxyImage,
 		ManagedDBEnabled:      r.config.ManagedDB.Enabled,
 		Telemetry:             r.config.Telemetry,
 		ClusterName:           r.config.ClusterName,

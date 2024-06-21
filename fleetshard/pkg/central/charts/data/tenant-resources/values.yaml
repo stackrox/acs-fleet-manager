@@ -1,12 +1,3 @@
-egressProxy:
-  image: ubuntu/squid:5.2-22.04_beta
-  replicas: 2
-  resources:
-    requests:
-      cpu: 100m
-      memory: 275Mi
-    limits:
-      memory: 275Mi
 labels: {}
 annotations: {}
 secureTenantNetwork: false
