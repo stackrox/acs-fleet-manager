@@ -26,12 +26,13 @@ spec:
           command:
             - /acscs/emailsender
           env:
+            # TODO(ROX-23260): use emailsender values once their are available via the Addon flow
             - name: CLUSTER_ID
-              value: {{ .Values.emailsender.clusterId }}
+              value: {{ .Values.fleetshardSync.clusterId }}
             - name: CLUSTER_NAME
-              value: {{ .Values.emailsender.clusterName }}
+              value: {{ .Values.fleetshardSync.clusterName }}
             - name: ENVIRONMENT
-              value: {{ .Values.emailsender.environment }}
+              value: {{ .Values.fleetshardSync.environment }}
             - name: HTTPS_CERT_FILE
               value: "/var/run/certs/tls.crt"
             - name: HTTPS_KEY_FILE
