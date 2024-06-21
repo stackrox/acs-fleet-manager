@@ -24,9 +24,10 @@ type RateLimiterService struct {
 }
 
 // NewRateLimiterService creates a new instance of RateLimiterService
-func NewRateLimiterService(dbConnection *db.DatabaseConnection) *RateLimiterService {
+func NewRateLimiterService(dbConnection *db.DatabaseConnection, limitPerTenant int) *RateLimiterService {
 	return &RateLimiterService{
-		dbConnection: dbConnection,
+		limitPerTenant: limitPerTenant,
+		dbConnection:   dbConnection,
 	}
 }
 
