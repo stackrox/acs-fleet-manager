@@ -47,9 +47,9 @@ func (eh *EmailHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantID, err := claims.GetSubject()
+	tenantID, err := claims.GetTenantID()
 	if err != nil {
-		shared.HandleError(r, w, errors.Unauthenticated("failed to get sub claim"))
+		shared.HandleError(r, w, errors.Unauthenticated("failed to get tenantID"))
 		return
 	}
 

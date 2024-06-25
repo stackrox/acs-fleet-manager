@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -207,6 +208,43 @@ func TestACSClaims_GetUserId(t *testing.T) {
 
 			assert.Equal(t, tt.error, err != nil)
 			assert.Equal(t, tt.userID, userID)
+		})
+	}
+}
+
+func TestACSClaims_GetTenantID(t *testing.T) {
+	const (
+		claimTenantID        = "12345"
+		personalTokenSubject = "personal_token_sub"
+	)
+	var tests = map[string]struct {
+		claims   ACSClaims
+		tenantID string
+		error    bool
+	}{
+		"should return tenantID when claim has subject with personal token": {
+			claims: ACSClaims(jwt.MapClaims{
+				"sub": personalTokenSubject,
+			}),
+			tenantID: personalTokenSubject,
+		},
+		"should return tenantID when claim has colon separated subject": {
+			claims: ACSClaims(jwt.MapClaims{
+				"sub": fmt.Sprintf("system:%s:%s%s:central", serviceAccountKey, rhacsNamespacePrefix, claimTenantID),
+			}),
+			tenantID: claimTenantID,
+		},
+		"should return error when subject is empty": {
+			claims: ACSClaims(jwt.MapClaims{}),
+			error:  true,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			tenantID, err := tt.claims.GetTenantID()
+
+			assert.Equal(t, tt.error, err != nil)
+			assert.Equal(t, tt.tenantID, tenantID)
 		})
 	}
 }
