@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -213,34 +214,29 @@ func TestACSClaims_GetUserId(t *testing.T) {
 
 func TestACSClaims_GetTenantID(t *testing.T) {
 	const (
-		claimTenantID = "12345"
+		claimTenantID        = "12345"
+		personalTokenSubject = "personal_token_sub"
 	)
 	var tests = map[string]struct {
 		claims   ACSClaims
 		tenantID string
 		error    bool
 	}{
-		"should return tenantID when claim has subject with rhacs namespace prefix in it": {
+		"should return tenantID when claim has subject with personal token": {
 			claims: ACSClaims(jwt.MapClaims{
-				"sub": rhacsNamespacePrefix + claimTenantID,
+				"sub": personalTokenSubject,
 			}),
-			tenantID: claimTenantID,
+			tenantID: personalTokenSubject,
 		},
 		"should return tenantID when claim has colon separated subject": {
 			claims: ACSClaims(jwt.MapClaims{
-				"sub": "system:service_account:" + rhacsNamespacePrefix + claimTenantID + ":central",
+				"sub": fmt.Sprintf("system:%s:%s%s:central", serviceAccountKey, rhacsNamespacePrefix, claimTenantID),
 			}),
 			tenantID: claimTenantID,
 		},
 		"should return error when subject is empty": {
 			claims: ACSClaims(jwt.MapClaims{}),
 			error:  true,
-		},
-		"should yield error when subject does not have rhacs namespace prefix key": {
-			claims: ACSClaims(jwt.MapClaims{
-				"sub": "non_rhacs_prefix_value",
-			}),
-			error: true,
 		},
 	}
 	for name, tt := range tests {

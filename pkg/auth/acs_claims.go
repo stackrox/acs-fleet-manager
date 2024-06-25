@@ -12,6 +12,7 @@ import (
 )
 
 const rhacsNamespacePrefix = "rhacs-"
+const serviceAccountKey = "serviceaccount"
 
 // ACSClaims claims of the JWT access token specific to ACS.
 type ACSClaims jwt.MapClaims
@@ -119,19 +120,22 @@ func (c *ACSClaims) IsOrgAdmin() bool {
 }
 
 // GetTenantID returns tenantID parsed from subject claim of the token.
-// The subject claim can consist of colon separated keys.
-// This method assumes that subject has key which starts with `rhacs-` prefix.
+// The subject claim can consist of colon separated keys (e.g. k8s service account subject).
+// This method assumes that subject might have key which starts with `rhacs-` prefix.
+// If it cannot find `rhacs-` key then it returns subject itself. This cover personal token cases.
 func (c *ACSClaims) GetTenantID() (string, error) {
 	sub, err := c.GetSubject()
 	if err != nil {
 		return "", fmt.Errorf("can't find subject: %v", err)
 	}
-	for _, key := range strings.Split(sub, ":") {
-		if strings.HasPrefix(key, rhacsNamespacePrefix) {
-			return strings.TrimPrefix(key, rhacsNamespacePrefix), nil
+	if strings.Contains(sub, serviceAccountKey) {
+		for _, key := range strings.Split(sub, ":") {
+			if strings.HasPrefix(key, rhacsNamespacePrefix) {
+				return strings.TrimPrefix(key, rhacsNamespacePrefix), nil
+			}
 		}
 	}
-	return "", fmt.Errorf("can't find tenant ID in subject %q", sub)
+	return sub, nil
 }
 
 // CheckAllowedOrgIDs is a middleware to check if org id claim in a
