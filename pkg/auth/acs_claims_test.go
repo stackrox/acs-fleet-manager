@@ -211,6 +211,48 @@ func TestACSClaims_GetUserId(t *testing.T) {
 	}
 }
 
+func TestACSClaims_GetTenantID(t *testing.T) {
+	const (
+		claimTenantID = "12345"
+	)
+	var tests = map[string]struct {
+		claims   ACSClaims
+		tenantID string
+		error    bool
+	}{
+		"should return tenantID when claim has subject with rhacs namespace prefix in it": {
+			claims: ACSClaims(jwt.MapClaims{
+				"sub": rhacsNamespacePrefix + claimTenantID,
+			}),
+			tenantID: claimTenantID,
+		},
+		"should return tenantID when claim has colon separated subject": {
+			claims: ACSClaims(jwt.MapClaims{
+				"sub": "system:service_account:" + rhacsNamespacePrefix + claimTenantID + ":central",
+			}),
+			tenantID: claimTenantID,
+		},
+		"should return error when subject is empty": {
+			claims: ACSClaims(jwt.MapClaims{}),
+			error:  true,
+		},
+		"should yield error when subject does not have rhacs namespace prefix key": {
+			claims: ACSClaims(jwt.MapClaims{
+				"sub": "non_rhacs_prefix_value",
+			}),
+			error: true,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			tenantID, err := tt.claims.GetTenantID()
+
+			assert.Equal(t, tt.error, err != nil)
+			assert.Equal(t, tt.tenantID, tenantID)
+		})
+	}
+}
+
 func TestACSClaims_IsOrgAdmin(t *testing.T) {
 	const (
 		claimOrgAdmin = true

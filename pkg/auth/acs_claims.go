@@ -3,12 +3,15 @@ package auth
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 )
+
+const rhacsNamespacePrefix = "rhacs-"
 
 // ACSClaims claims of the JWT access token specific to ACS.
 type ACSClaims jwt.MapClaims
@@ -113,6 +116,22 @@ func (c *ACSClaims) GetAudience() ([]string, error) {
 func (c *ACSClaims) IsOrgAdmin() bool {
 	isOrgAdmin, _ := (*c)[tenantOrgAdminClaim].(bool)
 	return isOrgAdmin
+}
+
+// GetTenantID returns tenantID parsed from subject claim of the token.
+// The subject claim can consist of colon separated keys.
+// This method assumes that subject has key which starts with `rhacs-` prefix.
+func (c *ACSClaims) GetTenantID() (string, error) {
+	sub, err := c.GetSubject()
+	if err != nil {
+		return "", fmt.Errorf("can't find subject: %v", err)
+	}
+	for _, key := range strings.Split(sub, ":") {
+		if strings.HasPrefix(key, rhacsNamespacePrefix) {
+			return strings.TrimPrefix(key, rhacsNamespacePrefix), nil
+		}
+	}
+	return "", fmt.Errorf("can't find tenant ID in subject %q", sub)
 }
 
 // CheckAllowedOrgIDs is a middleware to check if org id claim in a
