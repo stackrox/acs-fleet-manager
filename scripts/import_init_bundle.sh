@@ -22,7 +22,7 @@ usage() {
 
 write_secret() {
     local pem
-    pem=$(yq -r "$2"  "$init_bundle_file")
+    pem=$(yq -r "$2" "$init_bundle_file")
     if [[ -n "$dry_run" ]]; then
         echo "(dry-run) Write $1"
         printf "%.15s...\n" "$pem"
@@ -68,10 +68,10 @@ if [ "$confirmation" != "y" ]; then
     exit 1
 fi
 
-write_secret CA_CERT '.ca.pem'
-write_secret ADMISSION_CONTROL_CERT '.admissionControl.serviceTLS.pem'
+write_secret CA_CERT '.ca.cert'
+write_secret ADMISSION_CONTROL_CERT '.admissionControl.serviceTLS.cert'
 write_secret ADMISSION_CONTROL_KEY '.admissionControl.serviceTLS.key'
-write_secret COLLECTOR_CERT '.collector.serviceTLS.pem'
+write_secret COLLECTOR_CERT '.collector.serviceTLS.cert'
 write_secret COLLECTOR_KEY '.collector.serviceTLS.key'
-write_secret SENSOR_CERT '.sensor.serviceTLS.pem'
+write_secret SENSOR_CERT '.sensor.serviceTLS.cert'
 write_secret SENSOR_KEY '.sensor.serviceTLS.key'
