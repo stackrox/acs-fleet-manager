@@ -12,7 +12,7 @@ import (
 )
 
 const rhacsNamespacePrefix = "rhacs-"
-const serviceAccountKey = "serviceaccount"
+const serviceAccountKey = "serviceaccount" // pragma: allowlist secret
 
 // ACSClaims claims of the JWT access token specific to ACS.
 type ACSClaims jwt.MapClaims
