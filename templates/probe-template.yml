@@ -31,7 +31,7 @@ parameters:
     value: 100m
   - name: CPU_LIMITS
     displayName: CPU Limits
-    value: 1
+    value: 1000m
   - name: MEMORY_REQUESTS
     displayName: Memory Requests
     value: 128Mi
