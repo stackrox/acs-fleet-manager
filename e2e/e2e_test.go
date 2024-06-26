@@ -58,10 +58,6 @@ var _ = Describe("Central", Ordered, func() {
 	var ctx = context.Background()
 
 	BeforeEach(func() {
-		Expect(restoreDefaultGitopsConfig()).To(Succeed())
-	})
-
-	BeforeEach(func() {
 		SkipIf(!runCentralTests, "Skipping Central tests")
 
 		option := fmImpl.OptionFromEnv()
@@ -97,6 +93,10 @@ var _ = Describe("Central", Ordered, func() {
 		var centralRequestID string
 		var centralRequestName string
 		var namespaceName string
+
+		BeforeAll(func() {
+			Expect(restoreDefaultGitopsConfig()).To(Succeed())
+		})
 
 		BeforeAll(func() {
 			resp, _, err := client.PublicAPI().CreateCentral(ctx, true, public.CentralRequestPayload{
@@ -365,7 +365,7 @@ var _ = Describe("Central", Ordered, func() {
 				Should(BeEmpty(), "Started at %s", time.Now())
 		})
 
-		It("should restore the default gitops config", func() {
+		AfterAll(func() {
 			Expect(restoreDefaultGitopsConfig()).To(Succeed())
 		})
 	})
