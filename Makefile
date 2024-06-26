@@ -497,12 +497,12 @@ docker/login: docker/login/fleet-manager
 .PHONY: docker/login
 
 docker/login/fleet-manager:
-	@docker logout quay.io
+	$(DOCKER) logout quay.io || true  # Swallog podman error if not logged in
 	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
 .PHONY: docker/login/fleet-manager
 
 docker/login/probe:
-	@docker logout quay.io
+	$(DOCKER) logout quay.io || true  # Swallow podman error if not logged in
 	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_PROBE_USER}" --password-stdin <<< "${QUAY_PROBE_TOKEN}" quay.io
 .PHONY: docker/login/probe
 
@@ -563,7 +563,7 @@ image/push: image/push/fleet-manager image/push/probe
 
 image/push/fleet-manager: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/push/fleet-manager:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(IMAGE_REF) --platform $(IMAGE_PLATFORM) --push .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(IMAGE_REF) --platform $(IMAGE_PLATFORM) --output "type=image,push=true" .
 	@echo
 	@echo "Image was pushed as $(IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(IMAGE_REF)"
@@ -579,7 +579,7 @@ image/push/probe: image/build/probe
 # push the image to the OpenShift internal registry
 image/push/internal: IMAGE_TAG ?= $(image_tag)
 image/push/internal: docker/login/internal
-	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)" --platform linux/amd64 --push .
+	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)" --platform linux/amd64 --output "type=registry,push=true" .
 .PHONY: image/push/internal
 
 image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"

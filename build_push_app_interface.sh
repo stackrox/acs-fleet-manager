@@ -41,6 +41,7 @@ source ./scripts/build_setup.sh
 # Push the image:
 echo "Quay.io user and token is set, will push images to $IMAGE_REPOSITORY"
 make \
+  DOCKER=podman \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
   QUAY_TOKEN="${QUAY_TOKEN}" \
@@ -51,6 +52,7 @@ make \
   image/push/fleet-manager
 
 make \
+  DOCKER=podman \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
   QUAY_TOKEN="${QUAY_TOKEN}" \
@@ -62,6 +64,7 @@ make \
   image/push/fleet-manager
 
 make \
+  DOCKER=podman \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_PROBE_USER="${QUAY_USER}" \
   QUAY_PROBE_TOKEN="${QUAY_TOKEN}" \
@@ -72,6 +75,7 @@ make \
   image/push/probe
 
 make \
+  DOCKER=podman \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_PROBE_USER="${QUAY_USER}" \
   QUAY_PROBE_TOKEN="${QUAY_TOKEN}" \
@@ -83,6 +87,7 @@ make \
   image/push/probe
 
 make \
+  DOCKER=podman \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
   QUAY_TOKEN="${QUAY_TOKEN}" \
@@ -93,6 +98,7 @@ make \
   image/push/emailsender
 
 make \
+  DOCKER=podman \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
   QUAY_TOKEN="${QUAY_TOKEN}" \
@@ -102,3 +108,4 @@ make \
   emailsender_image_repository="${EMAILSENDER_IMAGE_REPOSITORY}" \
   docker/login/fleet-manager \
   image/push/emailsender
+
