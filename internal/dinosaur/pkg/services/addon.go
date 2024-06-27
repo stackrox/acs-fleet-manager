@@ -63,7 +63,6 @@ type addonCustomization func(gitops.AddonConfig) gitops.AddonConfig
 // Provision installs, upgrades or uninstalls the addons based on a given config
 func (p *AddonProvisioner) Provision(cluster api.Cluster, dataplaneClusterConfig gitops.DataPlaneClusterConfig) error {
 	var errs []error
-	clusterID := cluster.ClusterID
 
 	installedAddons, err := p.getInstalledAddons(cluster)
 	if err != nil {
@@ -74,62 +73,80 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, dataplaneClusterConfig
 		for _, customization := range p.customizations {
 			expectedConfig = customization(expectedConfig)
 		}
-		installedInOCM, addonErr := p.ocmClient.GetAddonInstallation(clusterID, expectedConfig.ID)
 		installedOnCluster, existOnCluster := installedAddons[expectedConfig.ID]
 		if existOnCluster {
 			delete(installedAddons, expectedConfig.ID) // retained installations are absent in GitOps - we need to uninstall them
 		}
-		if addonErr != nil {
-			if addonErr.Is404() {
-				// addon does not exist, install it
-				errs = append(errs, p.installAddon(clusterID, expectedConfig))
-			} else {
-				errs = append(errs, fmt.Errorf("failed to get addon %s: %w", expectedConfig.ID, addonErr))
-			}
-			continue
-		}
-		if updateInProgress(installedInOCM) {
-			glog.V(10).Infof("Addon %s is not in a final state: %s, skip until the next worker iteration", installedInOCM.ID(), installedInOCM.State())
-			continue
-		}
-		if expectedConfig.Version == "" {
-			addon, err := p.ocmClient.GetAddon(expectedConfig.ID)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("get addon %s with the latest version: %w", expectedConfig.ID, err))
-				continue
-			}
-			expectedConfig.Version = addon.Version().ID()
-		}
-		if gitOpsConfigDifferent(expectedConfig, installedInOCM) {
-			errs = append(errs, p.updateAddon(clusterID, expectedConfig))
-			continue
-		}
-		versionInstalledInOCM, err := p.ocmClient.GetAddonVersion(installedInOCM.ID(), installedInOCM.AddonVersion().ID())
-		if err != nil {
-			errs = append(errs, fmt.Errorf("get addon version object for addon %s with version %s: %w",
-				installedInOCM.ID(), installedInOCM.AddonVersion().ID(), err))
-			continue
-		}
-		if !existOnCluster {
-			glog.V(10).Infof("Addon %s is not installed on the data plane", installedInOCM.ID())
-			continue
-		}
-		if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
-			errs = append(errs, p.updateAddon(clusterID, expectedConfig))
-			metrics.UpdateClusterAddonStatusMetric(installedOnCluster.ID, dataplaneClusterConfig.ClusterName, metrics.AddonUpgrade)
-		} else {
-			glog.V(10).Infof("Addon %s is already up-to-date", installedOnCluster.ID)
-			errs = append(errs, validateUpToDateAddon(installedInOCM, installedOnCluster))
-			metrics.UpdateClusterAddonStatusMetric(installedOnCluster.ID, dataplaneClusterConfig.ClusterName, metrics.AddonHealthy)
-		}
+		errs = append(errs, p.provisionAddon(dataplaneClusterConfig, expectedConfig, installedOnCluster, existOnCluster)...)
 	}
 
 	for _, installedAddon := range installedAddons {
 		// addon is installed on the cluster but not present in gitops config - uninstall it
-		errs = append(errs, p.uninstallAddon(clusterID, installedAddon.ID))
+		errs = append(errs, p.uninstallAddon(cluster.ClusterID, installedAddon.ID))
+		metrics.UpdateClusterAddonStatusMetric(installedAddon.ID, dataplaneClusterConfig.ClusterName, 0)
 	}
 
 	return errors.Join(errs...)
+}
+
+func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlaneClusterConfig, expectedConfig gitops.AddonConfig, installedOnCluster dbapi.AddonInstallation, existOnCluster bool) (errs []error) {
+	clusterID := dataplaneClusterConfig.ClusterID
+	installedInOCM, addonErr := p.ocmClient.GetAddonInstallation(clusterID, expectedConfig.ID)
+	status := metrics.AddonHealthy
+
+	defer func() {
+		if len(errs) > 0 {
+			status = metrics.AddonUnhealthy
+		}
+		metrics.UpdateClusterAddonStatusMetric(expectedConfig.ID, dataplaneClusterConfig.ClusterName, status)
+	}()
+
+	if addonErr != nil {
+		if addonErr.Is404() {
+			// addon does not exist, install it
+			errs = append(errs, p.installAddon(clusterID, expectedConfig))
+			status = metrics.AddonUpgrade
+		} else {
+			errs = append(errs, fmt.Errorf("failed to get addon %s: %w", expectedConfig.ID, addonErr))
+		}
+		return
+	}
+	if updateInProgress(installedInOCM) {
+		glog.V(10).Infof("Addon %s is not in a final state: %s, skip until the next worker iteration", installedInOCM.ID(), installedInOCM.State())
+		return
+	}
+	if expectedConfig.Version == "" {
+		addon, err := p.ocmClient.GetAddon(expectedConfig.ID)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("get addon %s with the latest version: %w", expectedConfig.ID, err))
+			return
+		}
+		expectedConfig.Version = addon.Version().ID()
+	}
+	if gitOpsConfigDifferent(expectedConfig, installedInOCM) {
+		errs = append(errs, p.updateAddon(clusterID, expectedConfig))
+		status = metrics.AddonUpgrade
+		return
+	}
+	if !existOnCluster {
+		glog.V(10).Infof("Addon %s is not installed on the data plane", installedInOCM.ID())
+		status = metrics.AddonUnhealthy
+		return
+	}
+	versionInstalledInOCM, err := p.ocmClient.GetAddonVersion(installedInOCM.ID(), installedInOCM.AddonVersion().ID())
+	if err != nil {
+		errs = append(errs, fmt.Errorf("get addon version object for addon %s with version %s: %w",
+			installedInOCM.ID(), installedInOCM.AddonVersion().ID(), err))
+		return
+	}
+	if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
+		errs = append(errs, p.updateAddon(clusterID, expectedConfig))
+		status = metrics.AddonUpgrade
+	} else {
+		glog.V(10).Infof("Addon %s is already up-to-date", installedOnCluster.ID)
+		errs = append(errs, validateUpToDateAddon(installedInOCM, installedOnCluster))
+	}
+	return
 }
 
 func validateUpToDateAddon(ocmInstallation *clustersmgmtv1.AddOnInstallation, dataPlaneInstallation dbapi.AddonInstallation) error {
