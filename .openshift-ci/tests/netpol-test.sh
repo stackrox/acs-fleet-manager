@@ -158,7 +158,7 @@ test_connectivity_from_central() {
     test_central_connectivity_to_different_namespace "${SERVICE_NS}" "${CLIENT_NS}" scanner-v4-db
     test_central_connectivity_to_different_namespace "${SERVICE_NS}" "${CLIENT_NS}" other-app
 
-    # connections from these apps should *not* be allowed within the same namespace
+    # connections to these apps should not be allowed within the same namespace
     test_central_connectivity_into_same_namespace "${SERVICE_NS}" scanner-db
     test_central_connectivity_into_same_namespace "${SERVICE_NS}" scanner-v4-db
     test_central_connectivity_into_same_namespace "${SERVICE_NS}" other-app
