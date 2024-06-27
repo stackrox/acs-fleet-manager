@@ -120,7 +120,7 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, dataplaneClusterConfig
 		} else {
 			glog.V(10).Infof("Addon %s is already up-to-date", installedOnCluster.ID)
 			multiErr = validateUpToDateAddon(multiErr, installedInOCM, installedOnCluster)
-			metrics.UpdateClusterAddonStatusMetric(installedOnCluster.ID, dataplaneClusterConfig.ClusterName, metrics.AddonUp)
+			metrics.UpdateClusterAddonStatusMetric(installedOnCluster.ID, dataplaneClusterConfig.ClusterName, metrics.AddonHealthy)
 		}
 	}
 

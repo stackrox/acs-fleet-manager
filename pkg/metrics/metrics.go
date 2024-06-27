@@ -719,10 +719,12 @@ func init() {
 type AddonStatus int
 
 const (
-	// AddonUp the addon is up and running
-	AddonUp AddonStatus = iota
+	// AddonHealthy the addon is healthy and up-to-date with the existing config
+	AddonHealthy AddonStatus = iota
 	// AddonUpgrade the addon is upgrading
 	AddonUpgrade
+	// AddonUnhealthy the addon is unhealthy, something goes wrong
+	AddonUnhealthy
 )
 
 // clusterAddonStatusMetric create a new GaugeVec for cluster addon upgrade started timestamp
