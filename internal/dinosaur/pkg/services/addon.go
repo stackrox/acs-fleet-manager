@@ -20,6 +20,8 @@ import (
 
 const fleetshardImageTagParameter = "fleetshardSyncImageTag"
 
+var updateAddonStatusMetric = metrics.UpdateClusterAddonStatusMetric
+
 // AddonProvisioner keeps addon installations on the data plane clusters up-to-date
 type AddonProvisioner struct {
 	ocmClient      ocm.Client
@@ -77,28 +79,30 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, dataplaneClusterConfig
 		if existOnCluster {
 			delete(installedAddons, expectedConfig.ID) // retained installations are absent in GitOps - we need to uninstall them
 		}
-		errs = append(errs, p.provisionAddon(dataplaneClusterConfig, expectedConfig, installedOnCluster, existOnCluster)...)
+		errs = append(errs, p.provisionAddon(dataplaneClusterConfig, expectedConfig, installedOnCluster, existOnCluster))
 	}
 
 	for _, installedAddon := range installedAddons {
 		// addon is installed on the cluster but not present in gitops config - uninstall it
 		errs = append(errs, p.uninstallAddon(cluster.ClusterID, installedAddon.ID))
-		metrics.UpdateClusterAddonStatusMetric(installedAddon.ID, dataplaneClusterConfig.ClusterName, 0)
+		updateAddonStatusMetric(installedAddon.ID, dataplaneClusterConfig.ClusterName, metrics.AddonHealthy)
 	}
 
 	return errors.Join(errs...)
 }
 
-func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlaneClusterConfig, expectedConfig gitops.AddonConfig, installedOnCluster dbapi.AddonInstallation, existOnCluster bool) (errs []error) {
+func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlaneClusterConfig, expectedConfig gitops.AddonConfig, installedOnCluster dbapi.AddonInstallation, existOnCluster bool) (provisionError error) {
+	var errs []error
 	clusterID := dataplaneClusterConfig.ClusterID
 	installedInOCM, addonErr := p.ocmClient.GetAddonInstallation(clusterID, expectedConfig.ID)
 	status := metrics.AddonHealthy
 
 	defer func() {
-		if len(errs) > 0 {
+		provisionError = errors.Join(errs...)
+		if provisionError != nil {
 			status = metrics.AddonUnhealthy
 		}
-		metrics.UpdateClusterAddonStatusMetric(expectedConfig.ID, dataplaneClusterConfig.ClusterName, status)
+		updateAddonStatusMetric(expectedConfig.ID, dataplaneClusterConfig.ClusterName, status)
 	}()
 
 	if addonErr != nil {
@@ -113,6 +117,7 @@ func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlan
 	}
 	if updateInProgress(installedInOCM) {
 		glog.V(10).Infof("Addon %s is not in a final state: %s, skip until the next worker iteration", installedInOCM.ID(), installedInOCM.State())
+		status = metrics.AddonUpgrade
 		return
 	}
 	if expectedConfig.Version == "" {

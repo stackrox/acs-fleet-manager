@@ -12,11 +12,16 @@ import (
 	ocmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/mocks"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
 func TestAddonProvisioner_Provision(t *testing.T) {
 	RegisterTestingT(t)
-
+	type statusUpdate struct {
+		clusterName string
+		addonID     string
+		status      metrics.AddonStatus
+	}
 	type fields struct {
 		ocmClient *ocm.ClientMock
 	}
@@ -25,12 +30,13 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 		clusterConfig gitops.DataPlaneClusterConfig
 	}
 	tests := []struct {
-		name    string
-		setup   func()
-		fields  fields
-		args    args
-		wantErr bool
-		want    func(mock *ocm.ClientMock)
+		name         string
+		setup        func()
+		fields       fields
+		args         args
+		wantErr      bool
+		wantStatuses []statusUpdate
+		want         func(mock *ocm.ClientMock)
 	}{
 		{
 			name:    "should return no error when no addons have to be installed",
@@ -62,6 +68,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			want: func(mock *ocm.ClientMock) {
 				Expect(mock.GetAddonInstallationCalls()).To(HaveLen(1))
 			},
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonUpgrade},
+			},
 		},
 		{
 			name: "should return error when ocmClient.GetAddonInstallation returns error",
@@ -84,6 +93,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 			},
 			wantErr: true,
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonUnhealthy},
+			},
 		},
 		{
 			name: "should return error when ocmClient.CreateAddonInstallation returns error",
@@ -109,6 +121,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 			},
 			wantErr: true,
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonUnhealthy},
+			},
 		},
 		{
 			name: "should install one addon if failed to request another one from ocm",
@@ -142,6 +157,10 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			wantErr: true,
 			want: func(mock *ocm.ClientMock) {
 				Expect(mock.CreateAddonInstallationCalls()).To(HaveLen(1))
+			},
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "alpha", status: metrics.AddonUnhealthy},
+				{clusterName: "acs-dev-dp-01", addonID: "beta", status: metrics.AddonUpgrade},
 			},
 		},
 		{
@@ -177,6 +196,10 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			want: func(mock *ocm.ClientMock) {
 				Expect(mock.CreateAddonInstallationCalls()).To(HaveLen(2))
 			},
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "alpha", status: metrics.AddonUnhealthy},
+				{clusterName: "acs-dev-dp-01", addonID: "beta", status: metrics.AddonUpgrade},
+			},
 		},
 		{
 			name: "should NOT upgrade when no addons installed yet",
@@ -207,6 +230,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			},
 			want: func(mock *ocm.ClientMock) {
 				Expect(mock.UpdateAddonInstallationCalls()).To(BeEmpty())
+			},
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonUpgrade},
 			},
 		},
 		{
@@ -262,6 +288,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			want: func(mock *ocm.ClientMock) {
 				Expect(mock.UpdateAddonInstallationCalls()).To(BeEmpty())
 			},
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonHealthy},
+			},
 		},
 		{
 			name: "should return error when checksum mismatch",
@@ -314,6 +343,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				},
 			},
 			wantErr: true,
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonUnhealthy},
+			},
 		},
 		{
 			name: "should upgrade when parameters changed",
@@ -370,6 +402,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			},
 			want: func(mock *ocm.ClientMock) {
 				Expect(mock.UpdateAddonInstallationCalls()).To(HaveLen(1))
+			},
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonUpgrade},
 			},
 		},
 		{
@@ -428,6 +463,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			want: func(mock *ocm.ClientMock) {
 				Expect(mock.UpdateAddonInstallationCalls()).To(HaveLen(1))
 			},
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonUpgrade},
+			},
 		},
 		{
 			name: "should upgrade when sourceImage changed",
@@ -484,6 +522,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			},
 			want: func(mock *ocm.ClientMock) {
 				Expect(mock.UpdateAddonInstallationCalls()).To(HaveLen(1))
+			},
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonUpgrade},
 			},
 		},
 		{
@@ -542,6 +583,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			want: func(mock *ocm.ClientMock) {
 				Expect(mock.UpdateAddonInstallationCalls()).To(HaveLen(1))
 			},
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonUpgrade},
+			},
 		},
 		{
 			name: "should uninstall when no addon declared in gitops",
@@ -591,6 +635,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			want: func(mock *ocm.ClientMock) {
 				Expect(mock.DeleteAddonInstallationCalls()).To(HaveLen(1))
 			},
+			wantStatuses: []statusUpdate{
+				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonHealthy},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -598,6 +645,13 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup()
 			}
+			var updates []statusUpdate
+			updateAddonStatusMetric = func(addonID, clusterName string, status metrics.AddonStatus) {
+				updates = append(updates, statusUpdate{addonID: addonID, clusterName: clusterName, status: status})
+			}
+			defer func() {
+				updateAddonStatusMetric = metrics.UpdateClusterAddonStatusMetric
+			}()
 			p := &AddonProvisioner{
 				ocmClient: tt.fields.ocmClient,
 			}
@@ -610,6 +664,7 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			if tt.want != nil {
 				tt.want(tt.fields.ocmClient)
 			}
+			Expect(updates).To(Equal(tt.wantStatuses))
 		})
 	}
 }
