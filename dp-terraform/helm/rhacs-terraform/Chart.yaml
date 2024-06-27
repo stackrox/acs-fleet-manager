@@ -43,6 +43,7 @@ dependencies:
   - name: external-secrets
     version: "0.9.5"
     repository: https://charts.external-secrets.io/
+    condition: external-secrets.enabled
   - name: vertical-pod-autoscaler
     version: "0.1.0"
     condition: verticalPodAutoscaler.enabled

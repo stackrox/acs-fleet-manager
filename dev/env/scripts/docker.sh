@@ -92,6 +92,28 @@ ensure_fleet_manager_image_exists() {
     fi
 }
 
+ensure_fleetshard_operator_image_exists() {
+    if ! is_local_deploy; then
+        if [[ -z "${FLEETSHARD_OPERATOR_IMAGE:-}" ]]; then
+            die "FLEET_MANAGER_IMAGE is not set"
+        fi
+        return
+    fi
+
+    if [[ -z "${FLEETSHARD_OPERATOR_IMAGE:-}" ]]; then
+        FLEETSHARD_OPERATOR_IMAGE="fleetshard-operator:$(make tag)"
+        export FLEETSHARD_OPERATOR_IMAGE
+        log "Building fleetshard operator image ${FLEETSHARD_OPERATOR_IMAGE}..."
+        make -C "${GITROOT}" image/build/fleetshard-operator IMAGE_REF="${FLEETSHARD_OPERATOR_IMAGE}"
+        if [[ "${CLUSTER_TYPE}" == "kind" ]]; then
+            kind load docker-image "$FLEETSHARD_OPERATOR_IMAGE"
+        fi
+        if [[ "${CLUSTER_TYPE}" == "crc" ]]; then
+            docker tag "$FLEETSHARD_OPERATOR_IMAGE" "${ACSCS_NAMESPACE}/$FLEETSHARD_OPERATOR_IMAGE"
+        fi
+    fi
+}
+
 is_local_deploy() {
     if [[ "$CLUSTER_TYPE" == "openshift-ci" \
         || "$CLUSTER_TYPE" == "infra-openshift" \

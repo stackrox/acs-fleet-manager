@@ -16,6 +16,7 @@ port-forwarding stop fleet-manager-db 5432 || true
 
 log "Cleanup files..."
 make -C "${GITROOT}" undeploy
+delete "${MANIFESTS_DIR}/fleetshard-operator" || true
 delete "${MANIFESTS_DIR}/fleetshard-sync" || true
 
 log "Cleanup namespaces..."

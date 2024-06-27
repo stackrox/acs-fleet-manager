@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/go/.cache/ \
     make fleet-manager fleetshard-sync GOOS=linux GOARCH=${TARGETARCH}
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10 as standard
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10 AS standard
 
 RUN microdnf install shadow-utils
 

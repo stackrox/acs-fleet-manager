@@ -49,13 +49,6 @@ else
     log "Skipping installation of Vertical Pod Autoscaler"
 fi
 
-if [[ "$INSTALL_VERTICAL_POD_AUTOSCALER_OLM" == "true" ]]; then
-    log "Installing Vertical Pod Autoscaler using OLM"
-    apply "${MANIFESTS_DIR}/vertical-pod-autoscaler-olm"
-else
-    log "Skipping installation of Vertical Pod Autoscaler using OLM"
-fi
-
 apply "${MANIFESTS_DIR}/monitoring"
 apply "${MANIFESTS_DIR}/addons"
 

@@ -59,7 +59,8 @@ log
 
 log "Cluster type: ${CLUSTER_TYPE}"
 log "Cluster name: ${CLUSTER_NAME}"
-log "Image: ${FLEET_MANAGER_IMAGE}"
+log "Fleet Manager Image: ${FLEET_MANAGER_IMAGE}"
+log "Fleetshard Operator Image: ${FLEETSHARD_OPERATOR_IMAGE:-latest}"
 log "Log directory: ${LOG_DIR:-(none)}"
 log "Executing Auth E2E tests: ${RUN_AUTH_E2E}"
 

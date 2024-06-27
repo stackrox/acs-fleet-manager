@@ -10,7 +10,7 @@ log "Resetting state of control-plane and data-plane..."
 
 port-forwarding start fleet-manager 8000 8000
 port-forwarding start fleet-manager-db 5432 5432
-$KUBECTL -n "$ACSCS_NAMESPACE" exec -it deploy/fleet-manager-db -- psql -h localhost -U "$DATABASE_USER" -p "$DATABASE_PORT" -d "$DATABASE_NAME" -c "DELETE FROM central_requests;"
+$KUBECTL -n "$ACSCS_NAMESPACE" exec -it deploy/fleet-manager-db -- psql -h localhost -U "${DATABASE_USER:-ocm}" -p "${DATABASE_PORT:-5432}" -d "${DATABASE_NAME:-fleet-manager}" -c "DELETE FROM central_requests;"
 sleep 1
 
 delete_tenant_namespaces
@@ -21,6 +21,6 @@ $KUBECTL -n "${STACKROX_OPERATOR_NAMESPACE}" delete deploy -l app=rhacs-operator
 log "Apply default gitops..."
 make -C "${GITROOT}" deploy/gitops
 
-$KUBECTL -n "${ACSCS_NAMESPACE}" delete pod -l application=fleetshard-sync
+$KUBECTL -n "${ACSCS_NAMESPACE}" delete pod -l app=fleetshard-sync
 
 log "Resetting complete."

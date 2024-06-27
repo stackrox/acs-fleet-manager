@@ -4,6 +4,8 @@
 
 fleetshardSync:
   image:
+    # can be either a full image reference represented by `ref` or a combination of `repo:tag`. `ref` has a higher priority (if set).
+    ref: ""
     repo: "quay.io/app-sre/acs-fleet-manager"
     tag: "main"
   # Can be either OCM, RHSSO, STATIC_TOKEN, SERVICE_ACCOUNT_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses RHSSO.
@@ -54,6 +56,7 @@ fleetshardSync:
     enabled: false
   targetedOperatorUpgrades:
     enabled: false
+  affinity: {}
   nodeSelector:
     node-role.kubernetes.io/acscs-infra: ""
   tolerations:
@@ -65,6 +68,7 @@ fleetshardSync:
   tenantImagePullSecret:
     name: ""
     key: .dockerconfigjson
+  printCentralUpdateDiff: false
 
 # Email sender service parameters
 # - enabled flag is used to completely enable/disable email sender service
@@ -243,6 +247,7 @@ secured-cluster:
         node-role.kubernetes.io/acscs-infra: ""
 
 external-secrets:
+  enabled: true
   fullnameOverride: rhacs-external-secrets
   installCRDs: false
   image:
@@ -271,6 +276,9 @@ secretStore:
     secretAccessKey: ""
 
 verticalPodAutoscaler:
+  enabled: true
+
+scc:
   enabled: true
 
 global:
