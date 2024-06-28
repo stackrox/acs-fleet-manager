@@ -40,26 +40,7 @@ source ./scripts/build_setup.sh
 
 # Push the image:
 echo "Quay.io user and token is set, will push images to $IMAGE_REPOSITORY"
-make \
-  DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_USER="${QUAY_USER}" \
-  QUAY_TOKEN="${QUAY_TOKEN}" \
-  external_image_registry="quay.io" \
-  internal_image_registry="quay.io" \
-  image_repository="${IMAGE_REPOSITORY}" \
-  docker/login/fleet-manager \
-  image/push/fleet-manager
-
-make \
-  DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_USER="${QUAY_USER}" \
-  QUAY_TOKEN="${QUAY_TOKEN}" \
-  TAG="${BRANCH}" \
-  external_image_registry="quay.io" \
-  internal_image_registry="quay.io" \
-  image_repository="${IMAGE_REPOSITORY}" \
-  docker/login/fleet-manager \
-  image/push/fleet-manager
+make app-interface/image/push
 
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \

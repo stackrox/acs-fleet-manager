@@ -501,6 +501,11 @@ docker/login/fleet-manager:
 	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
 .PHONY: docker/login/fleet-manager
 
+podman/login:
+	@podman logout quay.io
+	@DOCKER_CONFIG=${DOCKER_CONFIG} podman login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
+.PHONY: podman/login
+
 docker/login/probe:
 	@docker logout quay.io
 	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_PROBE_USER}" --password-stdin <<< "${QUAY_PROBE_TOKEN}" quay.io
@@ -568,6 +573,22 @@ image/push/fleet-manager:
 	@echo "Image was pushed as $(IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(IMAGE_REF)"
 .PHONY: image/push/fleet-manager
+
+app-interface/image/push: BRANCH ?= main
+app-interface/image/push: podman/login
+	@podman run \
+        --rm \
+        --privileged \
+        -v "${PWD}":/tmp/work \
+        --entrypoint buildctl-daemonless.sh \
+        quay.io/app-sre/buildkit:v0.14.1 \
+            build \
+            --frontend dockerfile.v0 \
+            --local context=/tmp/work \
+            --local dockerfile=/tmp/work \
+            --output type=image,name=quay.io/app-sre/acs-fleet-manager:$(BRANCH),push=true \
+            --output type=image,name=quay.io/app-sre/acs-fleet-manager:$(image_tag),push=true
+.PHONY: app-interface/image/push
 
 image/push/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
 image/push/probe: image/build/probe
