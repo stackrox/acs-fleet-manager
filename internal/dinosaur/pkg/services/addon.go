@@ -20,12 +20,13 @@ import (
 
 const fleetshardImageTagParameter = "fleetshardSyncImageTag"
 
-var updateAddonStatusMetric = metrics.UpdateClusterAddonStatusMetric
+type updateAddonStatusMetricFunc func(addonID, clusterName string, status metrics.AddonStatus)
 
 // AddonProvisioner keeps addon installations on the data plane clusters up-to-date
 type AddonProvisioner struct {
-	ocmClient      ocm.Client
-	customizations []addonCustomization
+	ocmClient                   ocm.Client
+	customizations              []addonCustomization
+	updateAddonStatusMetricFunc updateAddonStatusMetricFunc
 }
 
 // NewAddonProvisioner creates a new instance of AddonProvisioner
@@ -42,8 +43,9 @@ func NewAddonProvisioner(addonConfig *ocmImpl.AddonConfig, baseConfig *ocmImpl.O
 		return nil, fmt.Errorf("addon service ocm connection: %w", err)
 	}
 	return &AddonProvisioner{
-		ocmClient:      ocmImpl.NewClient(conn),
-		customizations: initCustomizations(*addonConfig),
+		ocmClient:                   ocmImpl.NewClient(conn),
+		customizations:              initCustomizations(*addonConfig),
+		updateAddonStatusMetricFunc: metrics.UpdateClusterAddonStatusMetric,
 	}, nil
 }
 
@@ -85,7 +87,7 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, dataplaneClusterConfig
 	for _, installedAddon := range installedAddons {
 		// addon is installed on the cluster but not present in gitops config - uninstall it
 		errs = append(errs, p.uninstallAddon(cluster.ClusterID, installedAddon.ID))
-		updateAddonStatusMetric(installedAddon.ID, dataplaneClusterConfig.ClusterName, metrics.AddonHealthy)
+		p.updateAddonStatusMetric(installedAddon.ID, dataplaneClusterConfig.ClusterName, metrics.AddonHealthy)
 	}
 
 	return errors.Join(errs...)
@@ -102,7 +104,7 @@ func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlan
 		if provisionError != nil {
 			status = metrics.AddonUnhealthy
 		}
-		updateAddonStatusMetric(expectedConfig.ID, dataplaneClusterConfig.ClusterName, status)
+		p.updateAddonStatusMetric(expectedConfig.ID, dataplaneClusterConfig.ClusterName, status)
 	}()
 
 	if addonErr != nil {
@@ -239,6 +241,12 @@ func (p *AddonProvisioner) uninstallAddon(clusterID string, addonID string) erro
 	}
 	glog.V(5).Infof("Addon %s has been uninstalled from the cluster %s", addonID, clusterID)
 	return nil
+}
+
+func (p *AddonProvisioner) updateAddonStatusMetric(addonID string, clusterName string, status metrics.AddonStatus) {
+	if p.updateAddonStatusMetricFunc != nil {
+		p.updateAddonStatusMetricFunc(addonID, clusterName, status)
+	}
 }
 
 func isFinalState(state clustersmgmtv1.AddOnInstallationState) bool {

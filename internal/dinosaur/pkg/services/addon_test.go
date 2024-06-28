@@ -646,14 +646,11 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				tt.setup()
 			}
 			var updates []statusUpdate
-			updateAddonStatusMetric = func(addonID, clusterName string, status metrics.AddonStatus) {
-				updates = append(updates, statusUpdate{addonID: addonID, clusterName: clusterName, status: status})
-			}
-			defer func() {
-				updateAddonStatusMetric = metrics.UpdateClusterAddonStatusMetric
-			}()
 			p := &AddonProvisioner{
 				ocmClient: tt.fields.ocmClient,
+				updateAddonStatusMetricFunc: func(addonID, clusterName string, status metrics.AddonStatus) {
+					updates = append(updates, statusUpdate{addonID: addonID, clusterName: clusterName, status: status})
+				},
 			}
 			err := p.Provision(tt.args.cluster, tt.args.clusterConfig)
 			if tt.wantErr {
