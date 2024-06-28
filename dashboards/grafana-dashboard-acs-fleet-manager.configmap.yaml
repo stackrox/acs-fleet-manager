@@ -754,12 +754,17 @@ data:
                     "0": {
                       "color": "green",
                       "index": 0,
-                      "text": "Up"
+                      "text": "Healthy"
                     },
                     "1": {
                       "color": "orange",
                       "index": 1,
                       "text": "Upgrade"
+                    },
+                    "2": {
+                      "color": "red",
+                      "index": 1,
+                      "text": "Unhealthy"
                     }
                   },
                   "type": "value"
