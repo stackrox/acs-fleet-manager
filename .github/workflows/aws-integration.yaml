@@ -66,6 +66,7 @@ jobs:
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_AUTH_HELPER: "none"
+          FLEETSHARD_SYNC_SECRET_NAME: "aws-integration-tests" # pragma: allowlist secret
         run: |
           ./dev/env/scripts/exec_fleetshard_sync.sh make test/aws
         timeout-minutes: 50

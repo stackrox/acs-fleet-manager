@@ -16,6 +16,8 @@ if [[ "$ENABLE_EXTERNAL_CONFIG" != "true" ]]; then
 fi
 
 export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-saml}"
+export FLEETSHARD_SYNC_SECRET_NAME=${FLEETSHARD_SYNC_SECRET_NAME:-fleetshard-sync}
+
 # shellcheck source=scripts/lib/external_config.sh
 source "${GITROOT}/scripts/lib/external_config.sh"
 init_chamber
@@ -29,4 +31,4 @@ ARGS="CLUSTER_ID=${CLUSTER_ID:-$(chamber read "${CLUSTER_NAME}" ID -q -b ssm)} \
     AWS_ROLE_ARN=${FLEETSHARD_SYNC_AWS_ROLE_ARN:-$(chamber read fleetshard-sync AWS_ROLE_ARN -q -b ssm)} \
     $ARGS"
 
-chamber exec fleetshard-sync -b secretsmanager -- sh -c "$ARGS"
+chamber exec "$FLEETSHARD_SYNC_SECRET_NAME" -b secretsmanager -- sh -c "$ARGS"
