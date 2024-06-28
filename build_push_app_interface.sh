@@ -108,4 +108,3 @@ make \
   emailsender_image_repository="${EMAILSENDER_IMAGE_REPOSITORY}" \
   docker/login/fleet-manager \
   image/push/emailsender
-

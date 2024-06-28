@@ -66,10 +66,6 @@ else
 GOBIN=$(shell $(GO) env GOBIN)
 endif
 
-ifeq ($(IMAGE_PLATFORM),)
-IMAGE_PLATFORM=linux/$(shell $(GO) env GOARCH)
-endif
-
 ifeq ($(CLUSTER_DNS),)
 # This makes sure that the "ingresscontroller" kind, which only exists on OpenShift by default, is only queried
 # when CLUSTER_DNS is not set.
@@ -513,7 +509,8 @@ docker/login/internal:
 
 # Build the image
 image/build:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(SHORT_IMAGE_REF) . --load
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(SHORT_IMAGE_REF) .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 ifeq ("$(CLUSTER_TYPE)","kind")
@@ -557,16 +554,11 @@ image/push/emailsender: image/build/emailsender
 	@echo "emailsender image was pushed as $(IMAGE_REF)."
 .PHONY: image/push/emailsender
 
-# Build and push the image
-image/push: image/push/fleet-manager image/push/probe
-.PHONY: image/push
-
 image/push/fleet-manager: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
-image/push/fleet-manager:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(IMAGE_REF) --platform $(IMAGE_PLATFORM) --output "type=image,push=true" .
+image/push/fleet-manager: image/build
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
 	@echo
-	@echo "Image was pushed as $(IMAGE_REF). You might want to"
-	@echo "export FLEET_MANAGER_IMAGE=$(IMAGE_REF)"
+	@echo "Image was pushed as $(IMAGE_REF)."
 .PHONY: image/push/fleet-manager
 
 image/push/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
@@ -579,7 +571,7 @@ image/push/probe: image/build/probe
 # push the image to the OpenShift internal registry
 image/push/internal: IMAGE_TAG ?= $(image_tag)
 image/push/internal: docker/login/internal
-	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)" --platform linux/amd64 --output "type=registry,push=true" .
+	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)" --platform linux/amd64 --push .
 .PHONY: image/push/internal
 
 image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
