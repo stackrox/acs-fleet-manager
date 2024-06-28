@@ -321,7 +321,8 @@ test/aws: $(GOTESTSUM_BIN)
 	RUN_AWS_INTEGRATION=true \
 	$(GOTESTSUM_BIN) --junitfile data/results/aws-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -timeout 45m -count=1 \
 		./fleetshard/pkg/central/cloudprovider/awsclient/... \
-		./fleetshard/pkg/cipher/...
+		./fleetshard/pkg/cipher/... \
+		./emailsender/pkg/email/...
 .PHONY: test/aws
 
 # Runs the integration tests.
