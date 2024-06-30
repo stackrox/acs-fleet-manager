@@ -955,3 +955,8 @@ clean/go-generated:
 cluster-list:
 	@yq '.clusters | .[0].cluster_dns="$(CLUSTER_DNS)"' $(DATAPLANE_CLUSTER_CONFIG_FILE) -r -o=j -I=0
 .PHONY: cluster-list
+
+CLUSTER_ID ?= test
+run/emailsender:
+	@CLUSTER_ID=$(CLUSTER_ID) go run emailsender/cmd/app/main.go
+.PHONY: run/emailsender
