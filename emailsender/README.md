@@ -27,7 +27,9 @@ If you want to send an actual email to your inbox [verify](https://docs.aws.amaz
 
 Emailsender has a rate limit per tenant for sending emails (Default: 250). The tenant is identified by the `sub` claim of the token used to call the API.
 
-[TODO] Reference limit documentation in runbooks repository
+We have this limit to make sure a single tenant can't reach the limit our AWS account has to send emails in a region, because that would block all other tenants from sending emails as well.
+
+All related AWS and emailsender limits and how to change them are document in the [runbooks repository](https://gitlab.cee.redhat.com/stackrox/acs-cloud-service/runbooks/-/blob/master/docs/limits.md):
 
 ## Deployment
 
