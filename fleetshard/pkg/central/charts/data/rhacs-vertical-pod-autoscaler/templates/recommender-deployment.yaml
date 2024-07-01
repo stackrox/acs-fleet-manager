@@ -45,7 +45,6 @@ spec:
           securityContext:
             runAsNonRoot: true
             allowPrivilegeEscalation: false
-            runAsUser: 1001040000
             seccompProfile:
               type: RuntimeDefault
             capabilities:
