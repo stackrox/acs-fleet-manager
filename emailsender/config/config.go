@@ -30,20 +30,22 @@ const (
 
 // Config contains this application's runtime configuration.
 type Config struct {
-	ClusterID                string        `env:"CLUSTER_ID"`
-	ServerAddress            string        `env:"SERVER_ADDRESS" envDefault:":8080"`
-	EnableHTTPS              bool          `env:"ENABLE_HTTPS" envDefault:"false"`
-	HTTPSCertFile            string        `env:"HTTPS_CERT_FILE" envDefault:""`
-	HTTPSKeyFile             string        `env:"HTTPS_KEY_FILE" envDefault:""`
-	MetricsAddress           string        `env:"METRICS_ADDRESS" envDefault:":9090"`
-	AuthConfigFile           string        `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
-	AuthConfigFromKubernetes bool          `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
-	SenderAddress            string        `env:"SENDER_ADDRESS" envDefault:"noreply@mail.rhacs-dev.com"`
-	LimitEmailPerTenant      int           `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
-	SesMaxBackoffDelay       time.Duration `env:"SES_MAX_BACKOFF_DELAY" envDefault:"5s"`
-	SesMaxAttempts           int           `env:"SES_MAX_ATTEMPTS" envDefault:"3"`
-	AuthConfig               AuthConfig
-	DatabaseConfig           DbConfig
+	ClusterID                 string        `env:"CLUSTER_ID"`
+	ServerAddress             string        `env:"SERVER_ADDRESS" envDefault:":8080"`
+	EnableHTTPS               bool          `env:"ENABLE_HTTPS" envDefault:"false"`
+	HTTPSCertFile             string        `env:"HTTPS_CERT_FILE" envDefault:""`
+	HTTPSKeyFile              string        `env:"HTTPS_KEY_FILE" envDefault:""`
+	MetricsAddress            string        `env:"METRICS_ADDRESS" envDefault:":9090"`
+	AuthConfigFile            string        `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
+	AuthConfigFromKubernetes  bool          `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
+	SenderAddress             string        `env:"SENDER_ADDRESS" envDefault:"noreply@mail.rhacs-dev.com"`
+	LimitEmailPerTenant       int           `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
+	SesMaxBackoffDelay        time.Duration `env:"SES_MAX_BACKOFF_DELAY" envDefault:"5s"`
+	SesMaxAttempts            int           `env:"SES_MAX_ATTEMPTS" envDefault:"3"`
+	EmailCleanupPeriodSeconds int           `env:"EMAIL_CLEANUP_PERIOD_SECONDS" envDefault:"300"`
+	EmailCleanupExpiryDays    int           `env:"EMAIL_CLEANUP_EXPIRY_DAYS" envDefault:"2"`
+	AuthConfig                AuthConfig
+	DatabaseConfig            DbConfig
 }
 
 type DbConfig struct {

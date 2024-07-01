@@ -64,8 +64,8 @@ func main() {
 
 	cleanupWorker := workers.CleanupEmailSent{
 		DbConn:       dbConnection,
-		Period:       time.Second * 60,
-		ExpiredAfter: time.Hour * 48,
+		Period:       time.Second * time.Duration(cfg.EmailCleanupPeriodSeconds) * 60,
+		ExpiredAfter: time.Hour * time.Duration(cfg.EmailCleanupExpiryDays) * 24,
 	}
 	go func() {
 		err := cleanupWorker.Run(shutdownCtx)
