@@ -5,10 +5,13 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/db"
 	"net/http"
 	"os"
 	"os/signal"
+	"time"
+
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/workers"
 
 	"golang.org/x/sys/unix"
 
@@ -44,6 +47,7 @@ func main() {
 	}
 
 	ctx := context.Background()
+	shutdownCtx, cancelShutdownCtx := context.WithCancel(context.Background())
 
 	// initialize components
 	dbConnection := db.NewDatabaseConnection(dbCfg)
@@ -57,6 +61,18 @@ func main() {
 		glog.Errorf("Failed to initialise SES Client: %v", err)
 		os.Exit(1)
 	}
+
+	cleanupWorker := workers.CleanupEmailSent{
+		DbConn:       dbConnection,
+		Period:       time.Second * 60,
+		ExpiredAfter: time.Hour * 48,
+	}
+	go func() {
+		err := cleanupWorker.Run(shutdownCtx)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			glog.Errorf("failed to cleanup expired email events: %v", err)
+		}
+	}()
 
 	emailSender := email.NewEmailSender(cfg.SenderAddress, sesClient, rateLimiter)
 	emailHandler := api.NewEmailHandler(emailSender)
@@ -96,6 +112,8 @@ func main() {
 
 	glog.Info("Application started. Will shut down gracefully on interrupt terminated OS signals")
 	sig := <-sigs
+
+	cancelShutdownCtx()
 	if err := server.Shutdown(ctx); err != nil {
 		glog.Errorf("API Shutdown error: %v", err)
 	}
