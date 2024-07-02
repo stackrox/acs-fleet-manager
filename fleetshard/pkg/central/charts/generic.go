@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	jsonpatch "github.com/evanphx/json-patch/v5"
+	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/golang/glog"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -254,12 +254,17 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 				return fmt.Errorf("failed to dry-run create object %q of type %v: %w", objectName, gvk, err)
 			}
 
+			// Then, update the metadata so that it matches the existing object
 			wantClone.SetName(objectName)
 			wantClone.SetResourceVersion(existingObject.GetResourceVersion())
 			wantClone.SetCreationTimestamp(existingObject.GetCreationTimestamp())
 			wantClone.SetUID(existingObject.GetUID())
 			wantClone.SetManagedFields(existingObject.GetManagedFields())
 			wantClone.SetGeneration(existingObject.GetGeneration())
+			if len(wantClone.GetAnnotations()) == 0 {
+				wantClone.SetAnnotations(map[string]string{})
+			}
+			delete(wantClone.Object, "status")
 
 			patch, err := createPatch(existingObject.Object, wantClone.Object)
 			if err != nil {
