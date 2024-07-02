@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"reflect"
 
 	"github.com/golang/glog"
@@ -255,6 +256,9 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 			if reflect.DeepEqual(cloned.Object, wantObj.Object) {
 				glog.Infof("object %q of type %v is up-to-date", objectName, gvk)
 				continue
+			} else {
+				glog.Infof("object %q of type %v is not up-to-date", objectName, gvk)
+				glog.Infof("diff: %v", cmp.Diff(cloned.Object, wantObj.Object))
 			}
 
 			if err := params.Client.Update(ctx, wantObj); err != nil {
