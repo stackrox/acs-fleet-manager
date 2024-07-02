@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
+
 	"github.com/golang/glog"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -244,6 +246,16 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 			}
 
 			wantObj.SetResourceVersion(existingObject.GetResourceVersion())
+
+			cloned := existingObject.DeepCopy()
+			if err := params.Client.Update(ctx, cloned, ctrlClient.DryRunAll); err != nil {
+				return fmt.Errorf("failed to dry-run update object %q of type %v: %w", objectName, gvk, err)
+			}
+
+			if reflect.DeepEqual(cloned.Object, wantObj.Object) {
+				glog.Infof("object %q of type %v is up-to-date", objectName, gvk)
+				continue
+			}
 
 			if err := params.Client.Update(ctx, wantObj); err != nil {
 				return fmt.Errorf("failed to update object %q of type %v: %w", objectName, gvk, err)
