@@ -1,6 +1,7 @@
 package charts
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -252,7 +253,7 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 				return fmt.Errorf("failed to create patch for object %q of type %v: %w", objectName, gvk, err)
 			}
 
-			if len(patch) == 0 {
+			if len(patch) == 0 || bytes.Equal(patch, []byte("{}")) {
 				glog.Infof("object %q of type %v is up-to-date", objectName, gvk)
 				continue
 			} else {
