@@ -8,12 +8,10 @@ WORKDIR /src
 RUN go env -w GOCACHE=/go/.cache; \
     go env -w GOMODCACHE=/go/pkg/mod
 
-RUN --mount=type=cache,target=/go/pkg/mod/ \
-     --mount=type=bind,source=go.sum,target=go.sum \
-     --mount=type=bind,source=go.mod,target=go.mod \
-      go mod download -x
-
 COPY . ./
+
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+      go mod download -x
 
 ARG TARGETARCH
 
