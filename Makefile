@@ -579,24 +579,30 @@ image/push/probe: image/build/probe
 
 build/app-interface/fleet-manager:
 	podman build -t "$(external_image_registry)/$(image_repository):$(image_tag)" -t "$(external_image_registry)/$(image_repository):main" .
+.PHONY: build/app-interface/fleet-manager
 
 push/app-interface/fleet-manager: build/app-interface/fleet-manager
 	podman push "$(external_image_registry)/$(image_repository):$(image_tag)"
 	podman push "$(external_image_registry)/$(image_repository):main"
+.PHONY: push/app-interface/fleet-manager
 
 build/app-interface/emailsender:
 	podman build -t "$(external_image_registry)/$(emailsender_image_repository):$(image_tag)" -t "$(external_image_registry)/$(emailsender_image_repository):main" -f emailsender/Dockerfile .
+.PHONY: build/app-interface/emailsender
 
 push/app-interface/emailsender: build/app-interface/emailsender
 	podman push "$(external_image_registry)/$(emailsender_image_repository):$(image_tag)"
 	podman push "$(external_image_registry)/$(emailsender_image_repository):main"
+.PHONY: push/app-interface/emailsender
 
 build/app-interface/probe:
 	podman build -t "$(external_image_registry)/$(probe_image_repository):$(image_tag)" -t "$(external_image_registry)/$(probe_image_repository):main" -f probe/Dockerfile .
+.PHONY: build/app-interface/probe
 
 push/app-interface/probe: build/app-interface/probe
 	podman push "$(external_image_registry)/$(probe_image_repository):$(image_tag)"
 	podman push "$(external_image_registry)/$(probe_image_repository):main"
+.PHONY: push/app-interface/probe
 
 # push the image to the OpenShift internal registry
 image/push/internal: IMAGE_TAG ?= $(image_tag)
