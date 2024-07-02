@@ -262,7 +262,7 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 			wantClone.SetManagedFields(existingObject.GetManagedFields())
 			wantClone.SetGeneration(existingObject.GetGeneration())
 			if len(wantClone.GetAnnotations()) == 0 {
-				wantClone.SetAnnotations(map[string]string{})
+				wantClone.SetAnnotations(nil)
 			}
 			delete(wantClone.Object, "status")
 
