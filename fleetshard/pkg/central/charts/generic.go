@@ -254,6 +254,7 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 			wantObj.SetCreationTimestamp(existingObject.GetCreationTimestamp())
 			wantObj.SetUID(existingObject.GetUID())
 			wantObj.SetManagedFields(existingObject.GetManagedFields())
+			wantObj.SetGeneration(existingObject.GetGeneration())
 
 			patch, err := createPatch(existingObject.Object, wantObj.Object)
 			if err != nil {
