@@ -247,11 +247,8 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 				return fmt.Errorf("cannot update object %q of type %v because it is being deleted", objectName, gvk)
 			}
 
-			if wantObj.GetAnnotations() == nil {
-				wantObj.SetAnnotations(make(map[string]string))
-			}
-			if wantObj.GetLabels() == nil {
-				wantObj.SetLabels(make(map[string]string))
+			if len(wantObj.GetAnnotations()) == 0 {
+				wantObj.SetAnnotations(nil)
 			}
 			wantObj.SetResourceVersion(existingObject.GetResourceVersion())
 			wantObj.SetCreationTimestamp(existingObject.GetCreationTimestamp())
