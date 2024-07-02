@@ -584,6 +584,13 @@ push/app-interface/fleet-manager: build/app-interface/fleet-manager
 	podman push "$(external_image_registry)/$(image_repository):$(image_tag)"
 	podman push "$(external_image_registry)/$(image_repository):main"
 
+build/app-interface/emailsender:
+	podman build -t "$(external_image_registry)/$(emailsender_image_repository):$(image_tag)" -t "$(external_image_registry)/$(emailsender_image_repository):main" -f emailsender/Dockerfile .
+
+push/app-interface/emailsender: build/app-interface/emailsender
+	podman push "$(external_image_registry)/$(emailsender_image_repository):$(image_tag)"
+	podman push "$(external_image_registry)/$(emailsender_image_repository):main"
+
 build/app-interface/probe:
 	podman build -t "$(external_image_registry)/$(probe_image_repository):$(image_tag)" -t "$(external_image_registry)/$(probe_image_repository):main" -f probe/Dockerfile .
 

@@ -60,9 +60,9 @@ make \
 
 make \
   external_image_registry="quay.io" \
-  image_repository="${EMAILSENDER_IMAGE_REPOSITORY}" \
+  emailsender_image_repository="${EMAILSENDER_IMAGE_REPOSITORY}" \
   TAG="${VERSION}" \
-  push/app-interface/fleet-manager
+  push/app-interface/emailsender
 
 make \
   external_image_registry="quay.io" \
