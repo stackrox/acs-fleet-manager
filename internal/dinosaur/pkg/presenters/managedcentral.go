@@ -120,6 +120,7 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 			},
 			Internal:      from.Internal,
 			SecretsStored: getSecretNames(from), // pragma: allowlist secret
+			SecretDataSum: from.SecretDataSum,   // pragma: allowlist secret
 			ExpiredAt:     dbapi.NullTimeToTimePtr(from.ExpiredAt),
 		},
 		Spec: private.ManagedCentralAllOfSpec{

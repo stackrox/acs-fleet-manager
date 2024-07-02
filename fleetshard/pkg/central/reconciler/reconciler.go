@@ -4,6 +4,7 @@ package reconciler
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -824,14 +825,18 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 	}
 
 	// Only report secrets if Central is ready, to ensure we're not trying to get secrets before they are created.
-	// Only report secrets if not all secrets are already stored to ensure we don't overwrite initial secrets with corrupted secrets
-	// from the cluster state.
-	if isRemoteCentralReady(remoteCentral) && !r.areSecretsStored(remoteCentral.Metadata.SecretsStored) {
-		secrets, err := r.collectSecretsEncrypted(ctx, remoteCentral)
+	if isRemoteCentralReady(remoteCentral) {
+		secrets, secretSum, err := r.collectSecretsEncrypted(ctx, remoteCentral)
 		if err != nil {
 			return nil, err
 		}
-		status.Secrets = secrets // pragma: allowlist secret
+
+		// Only report secrets if data hash differs to make sure we don't produce huge amount of data
+		// if no update is required on the fleet-manager DB
+		if secretSum != remoteCentral.Metadata.SecretDataSum { // pragma: allowlist secret
+			status.Secrets = secrets         // pragma: allowlist secret
+			status.SecretDataSum = secretSum // pragma: allowlist secret
+		}
 	}
 
 	return status, nil
@@ -875,18 +880,18 @@ func (r *CentralReconciler) collectSecrets(ctx context.Context, remoteCentral *p
 	return secrets, nil
 }
 
-func (r *CentralReconciler) collectSecretsEncrypted(ctx context.Context, remoteCentral *private.ManagedCentral) (map[string]string, error) {
+func (r *CentralReconciler) collectSecretsEncrypted(ctx context.Context, remoteCentral *private.ManagedCentral) (map[string]string, string, error) {
 	secrets, err := r.collectSecrets(ctx, remoteCentral)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	encryptedSecrets, err := r.encryptSecrets(secrets)
+	encryptedSecrets, secretDataSha, err := r.encryptSecrets(secrets)
 	if err != nil {
-		return nil, fmt.Errorf("encrypting secrets for namespace: %s: %w", remoteCentral.Metadata.Namespace, err)
+		return nil, "", fmt.Errorf("encrypting secrets for namespace: %s: %w", remoteCentral.Metadata.Namespace, err)
 	}
 
-	return encryptedSecrets, nil
+	return encryptedSecrets, secretDataSha, nil
 }
 
 func (r *CentralReconciler) decryptSecrets(secrets map[string]string) (map[string]*corev1.Secret, error) {
@@ -914,24 +919,34 @@ func (r *CentralReconciler) decryptSecrets(secrets map[string]string) (map[strin
 	return decryptedSecrets, nil
 }
 
-func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (map[string]string, error) {
+// encryptSecrets return the encrypted secrets and a sha256 sum of secret data to check if secrets
+// need update later on
+func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (map[string]string, string, error) {
 	encryptedSecrets := map[string]string{}
 
+	allSecretData := []byte{}
 	for key, secret := range secrets { // pragma: allowlist secret
 		secretBytes, err := json.Marshal(secret)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling secret for encryption: %s: %w", key, err)
+			return nil, "", fmt.Errorf("error marshaling secret for encryption: %s: %w", key, err)
+		}
+
+		for _, data := range secret.Data {
+			allSecretData = append(allSecretData, data...)
 		}
 
 		encryptedBytes, err := r.secretCipher.Encrypt(secretBytes)
 		if err != nil {
-			return nil, fmt.Errorf("encrypting secret: %s: %w", key, err)
+			return nil, "", fmt.Errorf("encrypting secret: %s: %w", key, err)
 		}
 
 		encryptedSecrets[key] = base64.StdEncoding.EncodeToString(encryptedBytes)
 	}
 
-	return encryptedSecrets, nil
+	secretSum := sha256.Sum256(allSecretData)
+	secretShaStr := base64.StdEncoding.EncodeToString(secretSum[:])
+
+	return encryptedSecrets, secretShaStr, nil
 
 }
 

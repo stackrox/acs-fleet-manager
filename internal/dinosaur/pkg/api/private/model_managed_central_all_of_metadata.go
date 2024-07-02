@@ -23,5 +23,6 @@ type ManagedCentralAllOfMetadata struct {
 	DeletionTimestamp string                                 `json:"deletionTimestamp,omitempty"`
 	SecretsStored     []string                               `json:"secretsStored,omitempty"`
 	Secrets           map[string]string                      `json:"secrets,omitempty"`
+	SecretDataSum     string                                 `json:"secretDataSum,omitempty"`
 	ExpiredAt         *time.Time                             `json:"expired-at,omitempty"`
 }

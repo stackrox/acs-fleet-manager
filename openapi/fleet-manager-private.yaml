@@ -269,6 +269,8 @@ components:
                   type: object
                   additionalProperties:
                     type: string
+                secretDataSum:
+                  type: string
                 expired-at:
                   type: string
                   format: date-time
@@ -459,6 +461,9 @@ components:
           type: object
           additionalProperties:
             type: string
+        secretDataSum:
+          description: "Hash of plain text secret data used for equality check"
+          type: string
 
       example:
         $ref: "#/components/examples/DataPlaneCentralStatusRequestExample"

@@ -18,4 +18,6 @@ type DataPlaneCentralStatus struct {
 	Routes []DataPlaneCentralStatusRoutes `json:"routes,omitempty"`
 	// Map of Secrets created for a Central
 	Secrets map[string]string `json:"secrets,omitempty"`
+	// Hash of plain text secret data used for equality check
+	SecretDataSum string `json:"secretDataSum,omitempty"`
 }

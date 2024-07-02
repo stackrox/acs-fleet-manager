@@ -34,7 +34,8 @@ func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralSt
 			CentralClusterID: k,
 			Conditions:       c,
 			Routes:           routes,
-			Secrets:          v.Secrets, // pragma: allowlist secret
+			Secrets:          v.Secrets,       // pragma: allowlist secret
+			SecretDataSum:    v.SecretDataSum, // pragma: allowlist secret
 		})
 	}
 
