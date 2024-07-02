@@ -1,34 +1,18 @@
 package email
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/db"
+	"github.com/stretchr/testify/assert"
 )
 
 var limitPerTenant = 20
 var testTenantID = "test-tenant-id"
 
-type MockDatabaseClient struct {
-	calledInsertEmailSentByTenant    bool
-	calledCountEmailSentByTenantFrom bool
-
-	InsertEmailSentByTenantFunc    func(tenantID string) error
-	CountEmailSentByTenantFromFunc func(tenantID string, from time.Time) (int64, error)
-}
-
-func (m *MockDatabaseClient) InsertEmailSentByTenant(tenantID string) error {
-	m.calledInsertEmailSentByTenant = true
-	return m.InsertEmailSentByTenantFunc(tenantID)
-}
-
-func (m *MockDatabaseClient) CountEmailSentByTenantSince(tenantID string, from time.Time) (int64, error) {
-	m.calledCountEmailSentByTenantFrom = true
-	return m.CountEmailSentByTenantFromFunc(tenantID, from)
-}
-
 func TestAllowTrue_Success(t *testing.T) {
-	mockDatabaseClient := &MockDatabaseClient{
+	mockDatabaseClient := &db.MockDatabaseClient{
 		CountEmailSentByTenantFromFunc: func(tenantID string, from time.Time) (int64, error) {
 			return int64(limitPerTenant - 1), nil
 		},
@@ -42,11 +26,11 @@ func TestAllowTrue_Success(t *testing.T) {
 	allowed := service.IsAllowed(testTenantID)
 
 	assert.True(t, allowed)
-	assert.True(t, mockDatabaseClient.calledCountEmailSentByTenantFrom)
+	assert.True(t, mockDatabaseClient.CalledCountEmailSentByTenantFrom)
 }
 
 func TestAllowFalse_LimitReached(t *testing.T) {
-	mockDatabaseClient := &MockDatabaseClient{
+	mockDatabaseClient := &db.MockDatabaseClient{
 		CountEmailSentByTenantFromFunc: func(tenantID string, from time.Time) (int64, error) {
 			return int64(limitPerTenant + 1), nil
 		},
@@ -60,11 +44,11 @@ func TestAllowFalse_LimitReached(t *testing.T) {
 	allowed := service.IsAllowed(testTenantID)
 
 	assert.False(t, allowed)
-	assert.True(t, mockDatabaseClient.calledCountEmailSentByTenantFrom)
+	assert.True(t, mockDatabaseClient.CalledCountEmailSentByTenantFrom)
 }
 
 func TestPersistEmailSendEvent(t *testing.T) {
-	mockDatabaseClient := &MockDatabaseClient{
+	mockDatabaseClient := &db.MockDatabaseClient{
 		InsertEmailSentByTenantFunc: func(tenantID string) error {
 			return nil
 		},
@@ -78,5 +62,5 @@ func TestPersistEmailSendEvent(t *testing.T) {
 	err := service.PersistEmailSendEvent(testTenantID)
 
 	assert.NoError(t, err)
-	assert.True(t, mockDatabaseClient.calledInsertEmailSentByTenant)
+	assert.True(t, mockDatabaseClient.CalledInsertEmailSentByTenant)
 }
