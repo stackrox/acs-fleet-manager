@@ -66,6 +66,6 @@ make \
 
 make \
   external_image_registry="quay.io" \
-  image_repository="${PROBE_IMAGE_REPOSITORY}" \
+  probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
   TAG="${VERSION}" \
   push/app-interface/probe
