@@ -36,69 +36,36 @@ IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-fleet-manager}"
 PROBE_IMAGE_REPOSITORY="${PROBE_QUAY_IMAGE_REPOSITORY:-app-sre/acscs-probe}"
 EMAILSENDER_IMAGE_REPOSITORY="${PROBE_QUAY_IMAGE_REPOSITORY:-app-sre/acscs-emailsender}"
 
-source ./scripts/build_setup.sh
+# Log in to the image registry:
+if [ -z "${QUAY_USER}" ]; then
+  echo "The quay.io push user name hasn't been provided."
+  echo "Make sure to set the QUAY_USER environment variable."
+  exit 1
+fi
+if [ -z "${QUAY_TOKEN}" ]; then
+  echo "The quay.io push token hasn't been provided."
+  echo "Make sure to set the QUAY_TOKEN environment variable."
+  exit 1
+fi
 
-# Push the image:
-echo "Quay.io user and token is set, will push images to $IMAGE_REPOSITORY"
+VERSION="$(git log --pretty=format:'%H' -n 1 | head -c 7)"
+
+podman login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
+
 make \
-  DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_USER="${QUAY_USER}" \
-  QUAY_TOKEN="${QUAY_TOKEN}" \
   external_image_registry="quay.io" \
-  internal_image_registry="quay.io" \
   image_repository="${IMAGE_REPOSITORY}" \
-  docker/login/fleet-manager \
-  image/push/fleet-manager
+  TAG="${VERSION}" \
+  push/app-interface/fleet-manager
 
 make \
-  DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_USER="${QUAY_USER}" \
-  QUAY_TOKEN="${QUAY_TOKEN}" \
-  TAG="${BRANCH}" \
   external_image_registry="quay.io" \
-  internal_image_registry="quay.io" \
-  image_repository="${IMAGE_REPOSITORY}" \
-  docker/login/fleet-manager \
-  image/push/fleet-manager
-
-make \
-  DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_PROBE_USER="${QUAY_USER}" \
-  QUAY_PROBE_TOKEN="${QUAY_TOKEN}" \
-  external_image_registry="quay.io" \
-  internal_image_registry="quay.io" \
-  probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
-  docker/login/probe \
-  image/push/probe
-
-make \
-  DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_PROBE_USER="${QUAY_USER}" \
-  QUAY_PROBE_TOKEN="${QUAY_TOKEN}" \
-  TAG="main" \
-  external_image_registry="quay.io" \
-  internal_image_registry="quay.io" \
-  probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
-  docker/login/probe \
-  image/push/probe
-
-make \
-  DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_USER="${QUAY_USER}" \
-  QUAY_TOKEN="${QUAY_TOKEN}" \
-  external_image_registry="quay.io" \
-  internal_image_registry="quay.io" \
   emailsender_image_repository="${EMAILSENDER_IMAGE_REPOSITORY}" \
-  docker/login/fleet-manager \
-  image/push/emailsender
+  TAG="${VERSION}" \
+  push/app-interface/emailsender
 
 make \
-  DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_USER="${QUAY_USER}" \
-  QUAY_TOKEN="${QUAY_TOKEN}" \
-  TAG="main" \
   external_image_registry="quay.io" \
-  internal_image_registry="quay.io" \
-  emailsender_image_repository="${EMAILSENDER_IMAGE_REPOSITORY}" \
-  docker/login/fleet-manager \
-  image/push/emailsender
+  image_repository="${PROBE_IMAGE_REPOSITORY}" \
+  TAG="${VERSION}" \
+  push/app-interface/probe
