@@ -8,9 +8,15 @@ WORKDIR /src
 RUN go env -w GOCACHE=/go/.cache; \
     go env -w GOMODCACHE=/go/pkg/mod
 
+# We previously used --mount=type=bind in the next RUN command
+# (see https://docs.docker.com/build/guide/mounts/#add-bind-mounts)
+# but this did not work with SELinux volumes and Docker, as only
+# Podman supports the relabel=shared option
+# (see https://docs.podman.io/en/v4.4/markdown/options/mount.html).
+# This adds a layer but works with Docker and Podman.
+COPY go.mod go.sum ./
+
 RUN --mount=type=cache,target=/go/pkg/mod/ \
-     --mount=type=bind,source=go.sum,target=go.sum \
-     --mount=type=bind,source=go.mod,target=go.mod \
       go mod download -x
 
 COPY . ./
