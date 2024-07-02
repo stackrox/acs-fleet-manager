@@ -247,16 +247,19 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 				return fmt.Errorf("cannot update object %q of type %v because it is being deleted", objectName, gvk)
 			}
 
-			if len(wantObj.GetAnnotations()) == 0 {
-				wantObj.SetAnnotations(nil)
+			wantClone := wantObj.DeepCopy()
+			wantClone.SetName("dummy")
+			if err := params.Client.Create(ctx, wantClone, ctrlClient.DryRunAll); err != nil {
+				return fmt.Errorf("failed to dry-run create object %q of type %v: %w", objectName, gvk, err)
 			}
-			wantObj.SetResourceVersion(existingObject.GetResourceVersion())
-			wantObj.SetCreationTimestamp(existingObject.GetCreationTimestamp())
-			wantObj.SetUID(existingObject.GetUID())
-			wantObj.SetManagedFields(existingObject.GetManagedFields())
-			wantObj.SetGeneration(existingObject.GetGeneration())
 
-			patch, err := createPatch(existingObject.Object, wantObj.Object)
+			wantClone.SetResourceVersion(existingObject.GetResourceVersion())
+			wantClone.SetCreationTimestamp(existingObject.GetCreationTimestamp())
+			wantClone.SetUID(existingObject.GetUID())
+			wantClone.SetManagedFields(existingObject.GetManagedFields())
+			wantClone.SetGeneration(existingObject.GetGeneration())
+
+			patch, err := createPatch(existingObject.Object, wantClone.Object)
 			if err != nil {
 				return fmt.Errorf("failed to create patch for object %q of type %v: %w", objectName, gvk, err)
 			}
