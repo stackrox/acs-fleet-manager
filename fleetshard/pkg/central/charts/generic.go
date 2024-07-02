@@ -2,11 +2,10 @@ package charts
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/go-cmp/cmp"
-	"reflect"
-
+	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/golang/glog"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -248,17 +247,17 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 
 			wantObj.SetResourceVersion(existingObject.GetResourceVersion())
 
-			wantClone := wantObj.DeepCopy()
-			if err := params.Client.Update(ctx, wantClone, ctrlClient.DryRunAll); err != nil {
-				return fmt.Errorf("failed to dry-run update object %q of type %v: %w", objectName, gvk, err)
+			patch, err := createPatch(existingObject.Object, wantObj.Object)
+			if err != nil {
+				return fmt.Errorf("failed to create patch for object %q of type %v: %w", objectName, gvk, err)
 			}
 
-			if reflect.DeepEqual(wantClone.Object, existingObject.Object) {
+			if len(patch) == 0 {
 				glog.Infof("object %q of type %v is up-to-date", objectName, gvk)
 				continue
 			} else {
 				glog.Infof("object %q of type %v is not up-to-date", objectName, gvk)
-				glog.Infof("diff: %v", cmp.Diff(wantClone.Object, existingObject.Object))
+				glog.Infof("diff: %v", string(patch))
 			}
 
 			if err := params.Client.Update(ctx, wantObj); err != nil {
@@ -343,4 +342,22 @@ func applyLabelsToObject(obj *unstructured.Unstructured, labels map[string]strin
 		existing[k] = v
 	}
 	obj.SetLabels(existing)
+}
+
+// getPatchData will return difference between original and modified document
+func createPatch(originalObj, modifiedObj interface{}) ([]byte, error) {
+	originalData, err := json.Marshal(originalObj)
+	if err != nil {
+		return nil, fmt.Errorf("failed marshal original data: %w", err)
+	}
+	modifiedData, err := json.Marshal(modifiedObj)
+	if err != nil {
+		return nil, fmt.Errorf("failed marshal modified data: %w", err)
+	}
+
+	patchBytes, err := jsonpatch.CreateMergePatch(originalData, modifiedData)
+	if err != nil {
+		return nil, fmt.Errorf("CreateMergePatch failed: %w", err)
+	}
+	return patchBytes, nil
 }
