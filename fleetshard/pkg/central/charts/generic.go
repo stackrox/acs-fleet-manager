@@ -247,12 +247,14 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 				return fmt.Errorf("cannot update object %q of type %v because it is being deleted", objectName, gvk)
 			}
 
+			// First, dry-create the object so that it performs defaulting
 			wantClone := wantObj.DeepCopy()
 			wantClone.SetName("dummy")
 			if err := params.Client.Create(ctx, wantClone, ctrlClient.DryRunAll); err != nil {
 				return fmt.Errorf("failed to dry-run create object %q of type %v: %w", objectName, gvk, err)
 			}
 
+			wantClone.SetName(objectName)
 			wantClone.SetResourceVersion(existingObject.GetResourceVersion())
 			wantClone.SetCreationTimestamp(existingObject.GetCreationTimestamp())
 			wantClone.SetUID(existingObject.GetUID())
