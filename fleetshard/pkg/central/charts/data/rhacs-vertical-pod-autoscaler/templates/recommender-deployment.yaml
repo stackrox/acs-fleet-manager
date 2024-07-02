@@ -1,3 +1,14 @@
+{{/*volumeMounts:
+- name: service-ca-bundle
+  mountPath: /etc/pki/ca-trust/extracted/pem/
+
+volumes:
+- name: service-ca-bundle
+  configMap:
+    name: service-ca-bundle
+    items:
+    - key: ca-bundle.crt*/}}
+
 {{- range .Values.recommenders }}
 apiVersion: apps/v1
 kind: Deployment
@@ -38,10 +49,18 @@ spec:
       {{ if .imagePullSecrets }}
       imagePullSecrets: {{ toYaml .imagePullSecrets | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: service-ca-bundle
+          configMap:
+            optional: true
+            name: openshift-service-ca.crt
       containers:
         - name: recommender
           image: {{ .image | quote }}
           imagePullPolicy: Always
+          volumeMounts:
+            - name: service-ca-bundle
+              mountPath: /etc/pki/ca-trust/extracted/pem/
           securityContext:
             runAsNonRoot: true
             allowPrivilegeEscalation: false
