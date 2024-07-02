@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -261,7 +262,7 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 				glog.Infof("diff: %v", string(patch))
 			}
 
-			if err := params.Client.Update(ctx, wantObj); err != nil {
+			if err := params.Client.Patch(ctx, wantObj, ctrlClient.RawPatch(types.StrategicMergePatchType, patch)); err != nil {
 				return fmt.Errorf("failed to update object %q of type %v: %w", objectName, gvk, err)
 			}
 		} else {
