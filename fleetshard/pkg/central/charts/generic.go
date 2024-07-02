@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"reflect"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -247,26 +248,13 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 				return fmt.Errorf("cannot update object %q of type %v because it is being deleted", objectName, gvk)
 			}
 
-			// First, dry-create the object so that it performs defaulting
-			wantClone := wantObj.DeepCopy()
-			wantClone.SetName("dummy")
-			if err := params.Client.Create(ctx, wantClone, ctrlClient.DryRunAll); err != nil {
-				return fmt.Errorf("failed to dry-run create object %q of type %v: %w", objectName, gvk, err)
+			mergedObj := chartutil.CoalesceTables(wantObj.Object, existingObject.Object)
+			if reflect.DeepEqual(wantObj.Object, mergedObj) {
+				glog.Infof("object %q of type %v is up-to-date", objectName, gvk)
+				continue
 			}
 
-			// Then, update the metadata so that it matches the existing object
-			wantClone.SetName(objectName)
-			wantClone.SetResourceVersion(existingObject.GetResourceVersion())
-			wantClone.SetCreationTimestamp(existingObject.GetCreationTimestamp())
-			wantClone.SetUID(existingObject.GetUID())
-			wantClone.SetManagedFields(existingObject.GetManagedFields())
-			wantClone.SetGeneration(existingObject.GetGeneration())
-			if len(wantClone.GetAnnotations()) == 0 {
-				wantClone.SetAnnotations(nil)
-			}
-			delete(wantClone.Object, "status")
-
-			patch, err := createPatch(existingObject.Object, wantClone.Object)
+			patch, err := createPatch(existingObject.Object, mergedObj)
 			if err != nil {
 				return fmt.Errorf("failed to create patch for object %q of type %v: %w", objectName, gvk, err)
 			}
