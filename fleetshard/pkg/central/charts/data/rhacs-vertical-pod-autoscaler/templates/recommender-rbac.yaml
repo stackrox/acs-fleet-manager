@@ -30,6 +30,10 @@ rules:
     verbs: ["get", "list", "watch", "patch"]
 
   - apiGroups: ["autoscaling.k8s.io"]
+    resources: ["verticalpodautoscalers/status"]
+    verbs: ["get", "list", "watch", "patch"]
+
+  - apiGroups: ["autoscaling.k8s.io"]
     resources: ["verticalpodautoscalercheckpoints"]
     verbs: ["get", "list", "watch", "patch", "create"]
 
