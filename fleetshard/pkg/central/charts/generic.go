@@ -248,17 +248,17 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 
 			wantObj.SetResourceVersion(existingObject.GetResourceVersion())
 
-			cloned := existingObject.DeepCopy()
-			if err := params.Client.Update(ctx, cloned, ctrlClient.DryRunAll); err != nil {
+			wantClone := wantObj.DeepCopy()
+			if err := params.Client.Update(ctx, wantClone, ctrlClient.DryRunAll); err != nil {
 				return fmt.Errorf("failed to dry-run update object %q of type %v: %w", objectName, gvk, err)
 			}
 
-			if reflect.DeepEqual(cloned.Object, wantObj.Object) {
+			if reflect.DeepEqual(wantClone.Object, existingObject.Object) {
 				glog.Infof("object %q of type %v is up-to-date", objectName, gvk)
 				continue
 			} else {
 				glog.Infof("object %q of type %v is not up-to-date", objectName, gvk)
-				glog.Infof("diff: %v", cmp.Diff(cloned.Object, wantObj.Object))
+				glog.Infof("diff: %v", cmp.Diff(wantClone.Object, existingObject.Object))
 			}
 
 			if err := params.Client.Update(ctx, wantObj); err != nil {
