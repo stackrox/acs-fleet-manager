@@ -29,15 +29,28 @@ func getMetricSeries(t *testing.T, registry *prometheus.Registry, name string) *
 
 func TestCounterIncrements(t *testing.T) {
 	const expectedIncrement = 1.0
+	const tenantID = "tenant-id"
 
 	tt := []struct {
 		metricName        string
 		callIncrementFunc func(m *Metrics)
 	}{
 		{
-			metricName: "acs_emailsender_email_sent_total",
+			metricName: "acs_emailsender_send_email_total",
 			callIncrementFunc: func(m *Metrics) {
-				m.IncEmailsSent(cfg.ClusterID)
+				m.IncSendEmail(tenantID)
+			},
+		},
+		{
+			metricName: "acs_emailsender_failed_send_email_total",
+			callIncrementFunc: func(m *Metrics) {
+				m.IncFailedSendEmail(tenantID)
+			},
+		},
+		{
+			metricName: "acs_emailsender_throttled_send_email_total",
+			callIncrementFunc: func(m *Metrics) {
+				m.IncThrottledSendEmail(tenantID)
 			},
 		},
 	}
@@ -55,8 +68,8 @@ func TestCounterIncrements(t *testing.T) {
 			value := targetSeries.GetCounter().GetValue()
 			assert.Equalf(t, expectedIncrement, value, "metric %s has unexpected value", tc.metricName)
 			label := targetSeries.GetLabel()[0]
-			assert.Containsf(t, label.GetName(), clusterIDLabelName, "metric %s has unexpected label", tc.metricName)
-			assert.Containsf(t, label.GetValue(), clusterID, "metric %s has unexpected label", tc.metricName)
+			assert.Containsf(t, label.GetName(), tenantIDLabelName, "metric %s has unexpected label", tc.metricName)
+			assert.Containsf(t, label.GetValue(), tenantID, "metric %s has unexpected label", tc.metricName)
 		})
 	}
 }
@@ -65,7 +78,9 @@ func TestMetricsConformity(t *testing.T) {
 	metrics := newMetrics()
 
 	for _, metric := range []prometheus.Collector{
-		metrics.emailsSent,
+		metrics.sendEmail,
+		metrics.failedSendEmail,
+		metrics.throttledSendEmail,
 	} {
 		problems, err := testutil.CollectAndLint(metric)
 		assert.NoError(t, err)
