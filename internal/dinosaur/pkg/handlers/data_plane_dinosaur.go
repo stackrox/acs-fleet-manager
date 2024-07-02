@@ -72,13 +72,16 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 				Items: []private.ManagedCentral{},
 			}
 
+			gitopsConfig, gitopsConfigErr := h.gitopsConfigProvider.Get()
+			if gitopsConfigErr != nil {
+				return nil, errors.GeneralError("failed to get GitOps configuration: %v", gitopsConfigErr)
+			}
+
 			if features.TargetedOperatorUpgrades.Enabled() {
-				gitopsConfig, err := h.gitopsConfigProvider.Get()
-				if err != nil {
-					return nil, errors.GeneralError("failed to get GitOps configuration: %v", err)
-				}
 				managedDinosaurList.RhacsOperators = gitopsConfig.RHACSOperators.ToAPIResponse()
 			}
+
+			managedDinosaurList.VerticalPodAutoscaling = gitopsConfig.VerticalPodAutoscaling
 
 			managedCentrals, presentErr := h.presenter.PresentManagedCentrals(r.Context(), centralRequests)
 			if presentErr != nil {

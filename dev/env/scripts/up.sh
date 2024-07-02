@@ -54,6 +54,8 @@ if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-tls 2> /dev/null || true
     $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-envoy-tls 2> /dev/null || true
     $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-active-tls 2> /dev/null || true
+    # Create the redhat-pull-secret in the rhacs-vertical-pod-autoscaler namespace
+    make -C "$GITROOT" deploy/redhat-pull-secret
 fi
 
 log "Deploying fleet-manager"

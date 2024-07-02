@@ -332,6 +332,178 @@ components:
       - $ref: '#/components/schemas/ListReference'
       - $ref: '#/components/schemas/ManagedCentralList_allOf'
       description: A list of ManagedCentral
+    VerticalPodAutoscaling:
+      properties:
+        recommenders:
+          items:
+            $ref: '#/components/schemas/VPARecommenderConfig'
+          type: array
+      type: object
+    LocalObjectReference:
+      properties:
+        name:
+          type: string
+      type: object
+    ResourceList:
+      additionalProperties:
+        type: string
+      type: object
+    ResourceRequirements:
+      properties:
+        requests:
+          additionalProperties:
+            type: string
+          type: object
+        limits:
+          additionalProperties:
+            type: string
+          type: object
+      type: object
+    Toleration:
+      properties:
+        key:
+          type: string
+        operator:
+          enum:
+          - Exists
+          - Equal
+          type: string
+        value:
+          type: string
+        effect:
+          enum:
+          - NoSchedule
+          - PreferNoSchedule
+          - NoExecute
+          type: string
+        tolerationSeconds:
+          format: int64
+          nullable: true
+          type: integer
+      type: object
+    PodNodeSelector:
+      additionalProperties:
+        type: string
+      type: object
+    VPARecommenderConfig:
+      properties:
+        name:
+          type: string
+        image:
+          type: string
+        imagePullSecrets:
+          items:
+            $ref: '#/components/schemas/LocalObjectReference'
+          type: array
+        resources:
+          $ref: '#/components/schemas/ResourceRequirements'
+        recommendationMarginFraction:
+          format: float
+          type: number
+        podRecommendationMinCpuMillicores:
+          format: float
+          type: number
+        podRecommendationMinMemoryMb:
+          format: float
+          type: number
+        targetCpuPercentile:
+          format: float
+          type: number
+        recommendationLowerBoundCpuPercentile:
+          format: float
+          type: number
+        recommendationUpperBoundCpuPercentile:
+          format: float
+          type: number
+        targetMemoryPercentile:
+          format: float
+          type: number
+        recommendationLowerBoundMemoryPercentile:
+          format: float
+          type: number
+        recommendationUpperBoundMemoryPercentile:
+          format: float
+          type: number
+        checkpointsTimeout:
+          type: string
+        minCheckpoints:
+          type: integer
+        memorySaver:
+          type: boolean
+        recommenderInterval:
+          type: string
+        checkpointsGcInterval:
+          type: string
+        prometheusAddress:
+          type: string
+        prometheusCadvisorJobName:
+          type: string
+        address:
+          type: string
+        kubeconfig:
+          type: string
+        kubeApiQps:
+          format: float
+          type: number
+        kubeApiBurst:
+          type: integer
+        storage:
+          type: string
+        historyLength:
+          type: string
+        historyResolution:
+          type: string
+        prometheusQueryTimeout:
+          type: string
+        podLabelPrefix:
+          type: string
+        metricForPodLabels:
+          type: string
+        podNamespaceLabel:
+          type: string
+        podNameLabel:
+          type: string
+        containerNamespaceLabel:
+          type: string
+        containerPodNameLabel:
+          type: string
+        containerNameLabel:
+          type: string
+        vpaObjectNamespace:
+          type: string
+        memoryAggregationInterval:
+          type: string
+        memoryAggregationIntervalCount:
+          type: integer
+        memoryHistogramDecayHalfLife:
+          type: string
+        cpuHistogramDecayHalfLife:
+          type: string
+        cpuIntegerPostProcessorEnabled:
+          type: boolean
+        useExternalMetrics:
+          type: boolean
+        externalMetricsCpuMetric:
+          type: string
+        externalMetricsMemoryMetric:
+          type: string
+        oomBumpUpRatio:
+          format: float64
+          type: number
+        oomMinBumpUpBytes:
+          format: float64
+          type: number
+        tolerations:
+          items:
+            $ref: '#/components/schemas/Toleration'
+          type: array
+        nodeSelector:
+          additionalProperties:
+            type: string
+          type: object
+      required:
+      - name
+      type: object
     RHACSOperatorConfigs:
       properties:
         CrdUrls:
@@ -571,6 +743,8 @@ components:
           type: array
         rhacs_operators:
           $ref: '#/components/schemas/RHACSOperatorConfigs'
+        verticalPodAutoscaling:
+          $ref: '#/components/schemas/VerticalPodAutoscaling'
     DataPlaneClusterUpdateStatusRequest_addons:
       example:
         packageImage: packageImage
