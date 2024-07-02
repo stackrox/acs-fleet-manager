@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/metrics"
 )
 
 const fromTemplate = "From: RHACS Cloud Service <%s>\r\n"
@@ -34,12 +35,15 @@ func (s *MailSender) Send(ctx context.Context, to []string, rawMessage []byte, t
 	// Even though AWS adds the "from" handler we need to set it to the message to show
 	// an alias in email inboxes. It is more human friendly (noreply@rhacs-dev.com vs. RHACS Cloud Service)
 	if !s.rateLimiter.IsAllowed(tenantID) {
+		metrics.DefaultInstance().IncThrottledSendEmail(tenantID)
 		return fmt.Errorf("rate limit exceeded for tenant: %s", tenantID)
 	}
 	fromBytes := []byte(fmt.Sprintf(fromTemplate, s.from))
 	raw := bytes.Join([][]byte{fromBytes, rawMessage}, nil)
+	metrics.DefaultInstance().IncSendEmail(tenantID)
 	_, err := s.ses.SendRawEmail(ctx, s.from, to, raw)
 	if err != nil {
+		metrics.DefaultInstance().IncFailedSendEmail(tenantID)
 		return fmt.Errorf("failed to send email: %v", err)
 	}
 	if err = s.rateLimiter.PersistEmailSendEvent(tenantID); err != nil {
