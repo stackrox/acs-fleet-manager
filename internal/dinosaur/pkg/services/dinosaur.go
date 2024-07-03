@@ -187,7 +187,7 @@ func (k *dinosaurService) ResetCentralSecretBackup(ctx context.Context, centralR
 	logStateChange("reset secrets", centralRequest.ID, nil)
 
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Model(centralRequest).Select("secrets", "secrets_data_hash").Updates(centralRequest).Error; err != nil {
+	if err := dbConn.Model(centralRequest).Select("secrets", "secret_data_sum").Updates(centralRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset secrets for central request")
 	}
 

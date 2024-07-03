@@ -54,6 +54,7 @@ func getMigrations() []*gormigrate.Migration {
 		addClusterAddons(),
 		addAlternateUserIDFieldToCentralRequests(),
 		addTraitsFieldToCentralRequests(),
+		addSecretDataSum(),
 	}
 }
 

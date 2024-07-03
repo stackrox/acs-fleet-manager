@@ -77,7 +77,7 @@ type CentralRequest struct {
 	Secrets api.JSON `json:"secrets"`
 	// SecretDataSum is the b64 encoded hash of plain text data of the stored secrets.
 	// It used used for equality checks of secrets in the dataplane cluster with the secrets stored in DB
-	SecretDataSum string `json:"secrets_data_sum"`
+	SecretDataSum string `json:"secret_data_sum"`
 
 	Namespace        string `json:"namespace"`
 	RoutesCreationID string `json:"routes_creation_id"`
