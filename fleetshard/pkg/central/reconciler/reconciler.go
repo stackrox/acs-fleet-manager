@@ -31,6 +31,7 @@ import (
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
+	"github.com/stackrox/rox/pkg/maputil"
 	"github.com/stackrox/rox/pkg/random"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
@@ -925,14 +926,23 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (m
 	encryptedSecrets := map[string]string{}
 
 	allSecretData := []byte{}
-	for key, secret := range secrets { // pragma: allowlist secret
+	// sort to ensure the loop always executed in the same order
+	// otherwise the sha sum can differ across multiple invocations
+	keys := maputil.Keys(secrets)
+	sort.Strings(keys)
+	for _, key := range keys { // pragma: allowlist secret
+		secret := secrets[key]
 		secretBytes, err := json.Marshal(secret)
 		if err != nil {
 			return nil, "", fmt.Errorf("error marshaling secret for encryption: %s: %w", key, err)
 		}
 
-		for _, data := range secret.Data {
-			allSecretData = append(allSecretData, data...)
+		// sort to ensure the loop always executed in the same order
+		// otherwise the sha sum can differ across multiple invocations
+		dataKeys := maputil.Keys(secret.Data)
+		sort.Strings(dataKeys)
+		for _, dataKey := range dataKeys {
+			allSecretData = append(allSecretData, secret.Data[dataKey]...)
 		}
 
 		encryptedBytes, err := r.secretCipher.Encrypt(secretBytes)
