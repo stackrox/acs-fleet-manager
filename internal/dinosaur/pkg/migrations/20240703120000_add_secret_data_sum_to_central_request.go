@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func addSecretDataSum() *gormigrate.Migration {
+func addSecretDataSumToCentralRequest() *gormigrate.Migration {
 	type CentralRequest struct {
 		db.Model
 		SecretDataSum string `json:"secret_data_sum"`
