@@ -2,8 +2,9 @@ package db
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 
 	commonDB "github.com/stackrox/acs-fleet-manager/pkg/db"
 )
@@ -12,6 +13,7 @@ import (
 type DatabaseClient interface {
 	InsertEmailSentByTenant(tenantID string) error
 	CountEmailSentByTenantSince(tenantID string, since time.Time) (int64, error)
+	CleanupEmailSentByTenant(before time.Time) (int64, error)
 }
 
 // DatabaseConnection contains dependency for communicating with DB
@@ -49,4 +51,15 @@ func (d *DatabaseConnection) CountEmailSentByTenantSince(tenantID string, since 
 		return count, fmt.Errorf("failed count items in email_sent_by_tenant: %v", result.Error)
 	}
 	return count, nil
+}
+
+// CleanupEmailSentByTenant removes all EmailSendByTenant rows that were created
+// before the given input time returns the number of rows affected and DB errors
+func (d *DatabaseConnection) CleanupEmailSentByTenant(before time.Time) (int64, error) {
+	res := d.DB.Where("created_at < ?", before).Delete(&EmailSentByTenant{})
+	if err := res.Error; err != nil {
+		return 0, fmt.Errorf("failed to cleanup expired emails, %w", err)
+	}
+
+	return res.RowsAffected, nil
 }
