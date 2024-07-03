@@ -33,6 +33,8 @@ func main() {
 		glog.Fatalf("Failed to load configuration: %v", err)
 	}
 
+	glog.Info("trigger CI")
+
 	ctx, cancel := context.WithTimeout(context.Background(), config.StartupTimeout)
 	defer cancel()
 	glog.Infof("Starting application, timeout=%s", config.StartupTimeout)
