@@ -35,20 +35,20 @@ spec:
         app: vpa-recommender
         vertical-pod-autoscaler: {{ .name | quote }}
     spec:
-      {{- if .nodeSelector }}
+      {{ if .nodeSelector }}
       {{ toYaml .nodeSelector | nindent 6 }}
-      {{- end }}
+      {{ end }}
       serviceAccountName: rhacs-vpa-recommender
       terminationGracePeriodSeconds: 30
-      {{- if .tolerations }}
+      {{ if .tolerations }}
       {{ toYaml .tolerations | nindent 6 }}
       {{ end }}
-      {{- if .priorityClassName }}
+      {{ if .priorityClassName }}
       {{ toYaml .priorityClassName | nindent 6 }}
-      {{- end }}
-      {{- if .imagePullSecrets }}
+      {{ end }}
+      {{ if .imagePullSecrets }}
       imagePullSecrets: {{ toYaml .imagePullSecrets | nindent 8 }}
-      {{- end }}
+      {{ end }}
       volumes:
         - name: service-ca-bundle
           configMap:
@@ -69,151 +69,151 @@ spec:
               type: RuntimeDefault
             capabilities:
               drop: [ ALL ]
-          {{- if .resources }}
+          {{ if .resources }}
           resources: {{ toYaml .resources | nindent 12 }}
-          {{- end }}
+          {{ end }}
           command:
             - recommender
           args:
             - --recommender-name={{ .name }}
             - --logtostderr
             - --v=1
-            {{- if .recommendationMarginFraction }}
+            {{ if .recommendationMarginFraction }}
             - --recommendation-margin-fraction={{ .recommendationMarginFraction }}
-            {{- end }}
-            {{- if .podRecommendationMinCpuMillicores }}
+            {{ end }}
+            {{ if .podRecommendationMinCpuMillicores }}
             - --pod-recommendation-min-cpu-millicores={{ .podRecommendationMinCpuMillicores }}
-            {{- end }}
-            {{- if .podRecommendationMinMemoryMb }}
+            {{ end }}
+            {{ if .podRecommendationMinMemoryMb }}
             - --pod-recommendation-min-memory-mb={{ .podRecommendationMinMemoryMb }}
-            {{- end }}
-            {{- if .targetCpuPercentile }}
+            {{ end }}
+            {{ if .targetCpuPercentile }}
             - --target-cpu-percentile={{ .targetCpuPercentile }}
-            {{- end }}
-            {{- if .recommendationLowerBoundCpuPercentile }}
+            {{ end }}
+            {{ if .recommendationLowerBoundCpuPercentile }}
             - --recommendation-lower-bound-cpu-percentile={{ .recommendationLowerBoundCpuPercentile }}
-            {{- end }}
-            {{- if .recommendationUpperBoundCpuPercentile }}
+            {{ end }}
+            {{ if .recommendationUpperBoundCpuPercentile }}
             - --recommendation-upper-bound-cpu-percentile={{ .recommendationUpperBoundCpuPercentile }}
-            {{- end }}
-            {{- if .targetMemoryPercentile }}
+            {{ end }}
+            {{ if .targetMemoryPercentile }}
             - --target-memory-percentile={{ .targetMemoryPercentile }}
-            {{- end }}
-            {{- if .recommendationLowerBoundMemoryPercentile }}
+            {{ end }}
+            {{ if .recommendationLowerBoundMemoryPercentile }}
             - --recommendation-lower-bound-memory-percentile={{ .recommendationLowerBoundMemoryPercentile }}
-            {{- end }}
-            {{- if .recommendationUpperBoundMemoryPercentile }}
+            {{ end }}
+            {{ if .recommendationUpperBoundMemoryPercentile }}
             - --recommendation-upper-bound-memory-percentile={{ .recommendationUpperBoundMemoryPercentile }}
-            {{- end }}
-            {{- if .checkpointsTimeout }}
+            {{ end }}
+            {{ if .checkpointsTimeout }}
             - --checkpoints-timeout={{ .checkpointsTimeout }}
-            {{- end }}
-            {{- if .minCheckpoints }}
+            {{ end }}
+            {{ if .minCheckpoints }}
             - --min-checkpoints={{ .minCheckpoints }}
-            {{- end }}
-            {{- if .memorySaver }}
+            {{ end }}
+            {{ if .memorySaver }}
             - --memory-saver
-            {{- end }}
-            {{- if .recommenderInterval }}
+            {{ end }}
+            {{ if .recommenderInterval }}
             - --recommender-interval={{ .recommenderInterval }}
-            {{- end }}
-            {{- if .checkpointsGcInterval }}
+            {{ end }}
+            {{ if .checkpointsGcInterval }}
             - --checkpoints-gc-interval={{ .checkpointsGcInterval }}
-            {{- end }}
+            {{ end }}
             {{- /* If we're using the proxy, point to the sidecar */}}
-            {{- if and .prometheusAddress .useProxy }}
+            {{ if and .prometheusAddress .useProxy }}
             - --prometheus-address=http://localhost:9000
             {{- else if .prometheusAddress }}
             - --prometheus-address={{ .address }}
-            {{- end }}
-            {{- if .prometheusCadvisorJobName }}
+            {{ end }}
+            {{ if .prometheusCadvisorJobName }}
             - --prometheus-cadvisor-job-name={{ .prometheusCadvisorJobName }}
-            {{- end }}
-            {{- if .address }}
+            {{ end }}
+            {{ if .address }}
             - --address={{ .address }}
-            {{- end }}
-            {{- if .kubeconfig }}
+            {{ end }}
+            {{ if .kubeconfig }}
             - --kubeconfig={{ .kubeconfig }}
-            {{- end }}
-            {{- if .kubeApiQps }}
+            {{ end }}
+            {{ if .kubeApiQps }}
             - --kube-api-qps={{ .kubeApiQps }}
-            {{- end }}
-            {{- if .kubeApiBurst }}
+            {{ end }}
+            {{ if .kubeApiBurst }}
             - --kube-api-burst={{ .kubeApiBurst }}
-            {{- end }}
-            {{- if .storage }}
+            {{ end }}
+            {{ if .storage }}
             - --storage={{ .storage }}
-            {{- end }}
-            {{- if .historyLength }}
+            {{ end }}
+            {{ if .historyLength }}
             - --history-length={{ .historyLength }}
-            {{- end }}
-            {{- if .historyResolution }}
+            {{ end }}
+            {{ if .historyResolution }}
             - --history-resolution={{ .historyResolution }}
-            {{- end }}
-            {{- if .prometheusQueryTimeout }}
+            {{ end }}
+            {{ if .prometheusQueryTimeout }}
             - --prometheus-query-timeout={{ .prometheusQueryTimeout }}
-            {{- end }}
-            {{- if .podLabelPrefix }}
+            {{ end }}
+            {{ if .podLabelPrefix }}
             - --pod-label-prefix={{ .podLabelPrefix }}
-            {{- end }}
-            {{- if .metricForPodLabels }}
+            {{ end }}
+            {{ if .metricForPodLabels }}
             - --metric-for-pod-labels={{ .metricForPodLabels }}
-            {{- end }}
-            {{- if .podNamespaceLabel }}
+            {{ end }}
+            {{ if .podNamespaceLabel }}
             - --pod-namespace-label={{ .podNamespaceLabel }}
-            {{- end }}
-            {{- if .podNameLabel }}
+            {{ end }}
+            {{ if .podNameLabel }}
             - --pod-name-label={{ .podNameLabel }}
-            {{- end }}
-            {{- if .containerNamespaceLabel }}
+            {{ end }}
+            {{ if .containerNamespaceLabel }}
             - --container-namespace-label={{ .containerNamespaceLabel }}
-            {{- end }}
-            {{- if .containerPodNameLabel }}
+            {{ end }}
+            {{ if .containerPodNameLabel }}
             - --container-pod-name-label={{ .containerPodNameLabel }}
-            {{- end }}
-            {{- if .containerNameLabel }}
+            {{ end }}
+            {{ if .containerNameLabel }}
             - --container-name-label={{ .containerNameLabel }}
-            {{- end }}
-            {{- if .vpaObjectNamespace }}
+            {{ end }}
+            {{ if .vpaObjectNamespace }}
             - --vpa-object-namespace={{ .vpaObjectNamespace }}
-            {{- end }}
-            {{- if .memoryAggregationInterval }}
+            {{ end }}
+            {{ if .memoryAggregationInterval }}
             - --memory-aggregation-interval={{ .memoryAggregationInterval }}
-            {{- end }}
-            {{- if .memoryAggregationIntervalCount }}
+            {{ end }}
+            {{ if .memoryAggregationIntervalCount }}
             - --memory-aggregation-interval-count={{ .memoryAggregationIntervalCount }}
-            {{- end }}
-            {{- if .memoryHistogramDecayHalfLife }}
+            {{ end }}
+            {{ if .memoryHistogramDecayHalfLife }}
             - --memory-histogram-decay-half-life={{ .memoryHistogramDecayHalfLife }}
-            {{- end }}
-            {{- if .cpuHistogramDecayHalfLife }}
+            {{ end }}
+            {{ if .cpuHistogramDecayHalfLife }}
             - --cpu-histogram-decay-half-life={{ .cpuHistogramDecayHalfLife }}
-            {{- end }}
-            {{- if .cpuIntegerPostProcessorEnabled }}
+            {{ end }}
+            {{ if .cpuIntegerPostProcessorEnabled }}
             - --cpu-integer-post-processor-enabled={{ .cpuIntegerPostProcessorEnabled }}
-            {{- end }}
-            {{- if .useExternalMetrics }}
+            {{ end }}
+            {{ if .useExternalMetrics }}
             - --use-external-metrics={{ .useExternalMetrics }}
-            {{- end }}
-            {{- if .externalMetricsCpuMetric }}
+            {{ end }}
+            {{ if .externalMetricsCpuMetric }}
             - --external-metrics-cpu-metric={{ .externalMetricsCpuMetric }}
-            {{- end }}
-            {{- if .externalMetricsMemoryMetric }}
+            {{ end }}
+            {{ if .externalMetricsMemoryMetric }}
             - --external-metrics-memory-metric={{ .externalMetricsMemoryMetric }}
-            {{- end }}
-            {{- if .oomBumpUpRatio }}
+            {{ end }}
+            {{ if .oomBumpUpRatio }}
             - --oom-bump-up-ratio={{ .oomBumpUpRatio }}
-            {{- end }}
-            {{- if .oomMinBumpUpBytes }}
+            {{ end }}
+            {{ if .oomMinBumpUpBytes }}
             - --oom-min-bump-up-bytes={{ .oomMinBumpUpBytes }}
-            {{- end }}
+            {{ end }}
           env:
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.namespace
-        {{- if and .prometheusAddress .useProxy }}
+        {{ if and .prometheusAddress .useProxy }}
         {{- $promUrl := urlParse .prometheusAddress }}
         {{- $promProtocol := index $promUrl "scheme" }}
         {{- $promHostPort := split ":" (index $promUrl "host") }}
@@ -254,8 +254,8 @@ spec:
             - mountPath: /service-ca-certs/openshift-service-ca.crt
               name: service-ca-bundle
               subPath: service-ca.crt
-        {{- end }}
-      {{- if and .prometheusAddress .useProxy }}
+        {{ end }}
+      {{ if and .prometheusAddress .useProxy }}
       volumes:
         - configMap:
             defaultMode: 420
@@ -267,4 +267,4 @@ spec:
               name: proxy-config
       {{ end }}
 ---
-{{- end }}
+{{ end }}
