@@ -35,18 +35,18 @@ spec:
         app: vpa-recommender
         vertical-pod-autoscaler: {{ .name | quote }}
     spec:
-      {{ if .nodeSelector }}
+      {{- if .nodeSelector }}
       {{ toYaml .nodeSelector | nindent 6 }}
       {{- end }}
       serviceAccountName: rhacs-vpa-recommender
       terminationGracePeriodSeconds: 30
-      {{ if .tolerations }}
+      {{- if .tolerations }}
       {{ toYaml .tolerations | nindent 6 }}
-      {{end }}
-      {{ if .priorityClassName }}
+      {{ end }}
+      {{- if .priorityClassName }}
       {{ toYaml .priorityClassName | nindent 6 }}
       {{- end }}
-      {{ if .imagePullSecrets }}
+      {{- if .imagePullSecrets }}
       imagePullSecrets: {{ toYaml .imagePullSecrets | nindent 8 }}
       {{- end }}
       volumes:
@@ -60,15 +60,16 @@ spec:
           imagePullPolicy: Always
           volumeMounts:
             - name: service-ca-bundle
-              mountPath: /etc/pki/ca-trust/extracted/pem/
+              mountPath: /etc/pki/ca-trust/extracted/pem/openshift-service-ca.crt
+              subPath: service-ca.crt
           securityContext:
             runAsNonRoot: true
             allowPrivilegeEscalation: false
             seccompProfile:
               type: RuntimeDefault
             capabilities:
-              drop: [ALL]
-          {{ if .resources }}
+              drop: [ ALL ]
+          {{- if .resources }}
           resources: {{ toYaml .resources | nindent 12 }}
           {{- end }}
           command:
@@ -119,8 +120,11 @@ spec:
             {{- if .checkpointsGcInterval }}
             - --checkpoints-gc-interval={{ .checkpointsGcInterval }}
             {{- end }}
-            {{- if .prometheusAddress }}
-            - --prometheus-address={{ .prometheusAddress }}
+            {{- /* If we're using the proxy, point to the sidecar */}}
+            {{- if and .prometheusAddress .useProxy }}
+            - --prometheus-address=http://localhost:9000
+            {{- else if .prometheusAddress }}
+            - --prometheus-address={{ .address }}
             {{- end }}
             {{- if .prometheusCadvisorJobName }}
             - --prometheus-cadvisor-job-name={{ .prometheusCadvisorJobName }}
@@ -209,5 +213,58 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.namespace
+        {{- if and .prometheusAddress .useProxy }}
+        {{- $promUrl := urlParse .prometheusAddress }}
+        {{- $promProtocol := index $promUrl "scheme" }}
+        {{- $promHostPort := split ":" (index $promUrl "host") }}
+        {{- $promHost := $promHostPort._0 }}
+        {{- $promPort := $promHostPort._1 }}
+        {{- required "prometheusAddress must be fully defined <scheme>://host:port" $promProtocol  }}
+        {{- required "prometheusAddress must be fully defined <scheme>://host:port" $promHost }}
+        {{- required "prometheusAddress must be fully defined <scheme>://host:port" $promPort }}
+        - name: proxy
+          image: {{ .proxyImage | default "registry.access.redhat.com/ubi8/nodejs-18:latest" | quote }}
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: [ ALL ]
+          env:
+            - name: UPSTREAM_HOST
+              value: {{ $promHost | quote }}
+            - name: UPSTREAM_PORT
+              value: {{ $promPort | quote }}
+            - name: UPSTREAM_PROTOCOL
+              value: {{ $promProtocol | quote }}
+            - name: LISTEN_PORT
+              value: "9000"
+            - name: TOKEN_PATH
+              value: "/var/run/secrets/kubernetes.io/serviceaccount/token"
+            - name: NODE_EXTRA_CA_CERTS
+              value: /service-ca-certs/openshift-service-ca.crt
+          command: [ node ]
+          args: [ '/app./server.js' ]
+          volumeMounts:
+            - mountPath: /app/server.js
+              name: proxy-config
+              subPath: server.js
+            - mountPath: /service-ca-certs/openshift-service-ca.crt
+              name: service-ca-bundle
+              subPath: service-ca.crt
+        {{- end }}
+      {{- if and .prometheusAddress .useProxy }}
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: openshift-service-ca.crt
+            optional: true
+          name: service-ca-bundle
+        - name: proxy-config
+          configMap:
+              name: proxy-config
+      {{ end }}
 ---
 {{- end }}

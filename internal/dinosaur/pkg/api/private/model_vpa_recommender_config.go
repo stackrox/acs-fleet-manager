@@ -60,4 +60,6 @@ type VpaRecommenderConfig struct {
 	OomMinBumpUpBytes                        float32                `json:"oomMinBumpUpBytes,omitempty"`
 	Tolerations                              []Toleration           `json:"tolerations,omitempty"`
 	NodeSelector                             map[string]string      `json:"nodeSelector,omitempty"`
+	UseProxy                                 bool                   `json:"useProxy,omitempty"`
+	ProxyImage                               string                 `json:"proxyImage,omitempty"`
 }

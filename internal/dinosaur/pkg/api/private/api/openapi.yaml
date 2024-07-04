@@ -501,6 +501,10 @@ components:
           additionalProperties:
             type: string
           type: object
+        useProxy:
+          type: boolean
+        proxyImage:
+          type: string
       required:
       - name
       type: object

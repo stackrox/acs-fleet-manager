@@ -569,6 +569,10 @@ components:
             $ref: "#/components/schemas/Toleration"
         nodeSelector:
           $ref: "#/components/schemas/PodNodeSelector"
+        useProxy:
+          type: boolean
+        proxyImage:
+          type: string
 
     RHACSOperatorConfigs:
       properties:

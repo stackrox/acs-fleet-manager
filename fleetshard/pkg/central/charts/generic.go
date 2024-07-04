@@ -1,12 +1,10 @@
 package charts
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	jsonpatch "github.com/evanphx/json-patch"
+
 	"github.com/golang/glog"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -16,17 +14,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"reflect"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 const (
-	labelManagedBy            = "app.kubernetes.io/managed-by"
-	labelHelmReleaseName      = "meta.helm.sh/release-name"
-	labelHelmReleaseNamespace = "meta.helm.sh/release-namespace"
-	labelHelmChart            = "helm.sh/chart"
+	labelManagedBy             = "app.kubernetes.io/managed-by"
+	labelHelmReleaseName       = "meta.helm.sh/release-name"
+	labelHelmReleaseNamespace  = "meta.helm.sh/release-namespace"
+	labelHelmChart             = "helm.sh/chart"
+	annotationPreviousManifest = "last-applied-configuration"
 )
 
 // HelmRecocilerParams contains the parameters required to reconcile a Helm release.
@@ -236,6 +234,21 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 		if isNamespacedGVK {
 			wantObj.SetNamespace(params.Namespace)
 		}
+
+		wantManifest, err := yaml.Marshal(wantObj.Object)
+		if err != nil {
+			return fmt.Errorf("failed to marshal object %q of type %v: %w", objectName, gvk, err)
+		}
+
+		{
+			annotations := wantObj.GetAnnotations()
+			if annotations == nil {
+				annotations = make(map[string]string)
+			}
+			annotations[annotationPreviousManifest] = string(wantManifest)
+			wantObj.SetAnnotations(annotations)
+		}
+
 		if existingObject, alreadyExists := existingByName[objectName]; alreadyExists {
 
 			// Do not update object that are not managed by us
@@ -248,28 +261,14 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 				return fmt.Errorf("cannot update object %q of type %v because it is being deleted", objectName, gvk)
 			}
 
-			mergedObj := chartutil.CoalesceTables(wantObj.Object, existingObject.Object)
-			if reflect.DeepEqual(wantObj.Object, mergedObj) {
-				glog.Infof("object %q of type %v is up-to-date", objectName, gvk)
-				continue
+			if existingObject.GetAnnotations() != nil && existingObject.GetAnnotations()[annotationPreviousManifest] == string(wantManifest) {
+				continue // The object is already up-to-date
 			}
 
-			patch, err := createPatch(existingObject.Object, mergedObj)
-			if err != nil {
-				return fmt.Errorf("failed to create patch for object %q of type %v: %w", objectName, gvk, err)
-			}
-
-			if len(patch) == 0 || bytes.Equal(patch, []byte("{}")) {
-				glog.Infof("object %q of type %v is up-to-date", objectName, gvk)
-				continue
-			} else {
-				glog.Infof("object %q of type %v is not up-to-date", objectName, gvk)
-				glog.Infof("diff: %v", string(patch))
-			}
-
-			if err := params.Client.Patch(ctx, wantObj, ctrlClient.RawPatch(types.StrategicMergePatchType, patch)); err != nil {
+			if err := params.Client.Update(ctx, wantObj); err != nil {
 				return fmt.Errorf("failed to update object %q of type %v: %w", objectName, gvk, err)
 			}
+
 		} else {
 			// The object doesn't exist, create it
 
@@ -349,22 +348,4 @@ func applyLabelsToObject(obj *unstructured.Unstructured, labels map[string]strin
 		existing[k] = v
 	}
 	obj.SetLabels(existing)
-}
-
-// getPatchData will return difference between original and modified document
-func createPatch(originalObj, modifiedObj interface{}) ([]byte, error) {
-	originalData, err := json.Marshal(originalObj)
-	if err != nil {
-		return nil, fmt.Errorf("failed marshal original data: %w", err)
-	}
-	modifiedData, err := json.Marshal(modifiedObj)
-	if err != nil {
-		return nil, fmt.Errorf("failed marshal modified data: %w", err)
-	}
-
-	patchBytes, err := jsonpatch.CreateMergePatch(originalData, modifiedData)
-	if err != nil {
-		return nil, fmt.Errorf("CreateMergePatch failed: %w", err)
-	}
-	return patchBytes, nil
 }
