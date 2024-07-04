@@ -505,6 +505,8 @@ components:
           type: boolean
         proxyImage:
           type: string
+        logLevel:
+          type: number
       required:
       - name
       type: object

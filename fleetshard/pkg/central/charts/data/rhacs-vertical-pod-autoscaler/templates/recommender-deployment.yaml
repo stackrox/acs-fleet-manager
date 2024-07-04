@@ -77,7 +77,9 @@ spec:
           args:
             - --recommender-name={{ .name }}
             - --logtostderr
-            - --v=1
+            {{- if .logLevel }}
+            - --v={{ .logLevel }}
+            {{ end }}
             {{- if .recommendationMarginFraction }}
             - --recommendation-margin-fraction={{ .recommendationMarginFraction }}
             {{ end }}

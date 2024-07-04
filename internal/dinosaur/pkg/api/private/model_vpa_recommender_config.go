@@ -62,4 +62,5 @@ type VpaRecommenderConfig struct {
 	NodeSelector                             map[string]string      `json:"nodeSelector,omitempty"`
 	UseProxy                                 bool                   `json:"useProxy,omitempty"`
 	ProxyImage                               string                 `json:"proxyImage,omitempty"`
+	LogLevel                                 float32                `json:"logLevel,omitempty"`
 }
