@@ -69,6 +69,11 @@ func (r *vpaReconciler) getParamsForConfig(config private.VerticalPodAutoscaling
 				Version: "v1",
 			},
 			{
+				Kind:    "ConfigMap",
+				Group:   "",
+				Version: "v1",
+			},
+			{
 				Kind:    "ClusterRole",
 				Group:   "rbac.authorization.k8s.io",
 				Version: "v1",
