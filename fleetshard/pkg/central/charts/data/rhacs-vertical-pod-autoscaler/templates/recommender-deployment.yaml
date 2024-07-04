@@ -219,9 +219,9 @@ spec:
         {{- $promHostPort := split ":" (index $promUrl "host") }}
         {{- $promHost := $promHostPort._0 }}
         {{- $promPort := $promHostPort._1 }}
-        {{- required "prometheusAddress must be fully defined <scheme>://host:port" $promProtocol  }}
-        {{- required "prometheusAddress must be fully defined <scheme>://host:port" $promHost }}
-        {{- required "prometheusAddress must be fully defined <scheme>://host:port" $promPort }}
+        {{- $_ := required "prometheusAddress must be fully defined <scheme>://host:port" $promProtocol  }}
+        {{- $_ := required "prometheusAddress must be fully defined <scheme>://host:port" $promHost }}
+        {{- $_ := required "prometheusAddress must be fully defined <scheme>://host:port" $promPort }}
         - name: proxy
           image: {{ .proxyImage | default "registry.access.redhat.com/ubi8/nodejs-18:latest" | quote }}
           imagePullPolicy: Always

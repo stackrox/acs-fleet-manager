@@ -20,11 +20,11 @@ import (
 )
 
 const (
-	labelManagedBy             = "app.kubernetes.io/managed-by"
-	labelHelmReleaseName       = "meta.helm.sh/release-name"
-	labelHelmReleaseNamespace  = "meta.helm.sh/release-namespace"
-	labelHelmChart             = "helm.sh/chart"
-	annotationPreviousManifest = "last-applied-configuration"
+	labelManagedBy                 = "app.kubernetes.io/managed-by"
+	labelHelmReleaseName           = "meta.helm.sh/release-name"
+	labelHelmReleaseNamespace      = "meta.helm.sh/release-namespace"
+	labelHelmChart                 = "helm.sh/chart"
+	annotationAppliedConfiguration = "rhacs.redhat.com/applied-configuration"
 )
 
 // HelmRecocilerParams contains the parameters required to reconcile a Helm release.
@@ -216,10 +216,12 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 		if err := checkOwnership(objToDelete, params.ManagerName, params.ReleaseName, params.Namespace); err != nil {
 			return fmt.Errorf("cannot delete object %q of type %v: %w", nameToDelete, gvk, err)
 		}
+
 		// Do not delete object that is already being deleted
 		if objToDelete.GetDeletionTimestamp() != nil {
 			continue
 		}
+
 		if err := params.Client.Delete(ctx, objToDelete); err != nil {
 			if !k8serrors.IsNotFound(err) {
 				return fmt.Errorf("failed to delete object %s: %w", nameToDelete, err)
@@ -230,7 +232,9 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 	// Create / Update
 	for _, wantObj := range wantObjs {
 		objectName := wantObj.GetName()
+
 		applyLabelsToObject(wantObj, ownershipLabels)
+
 		if isNamespacedGVK {
 			wantObj.SetNamespace(params.Namespace)
 		}
@@ -241,11 +245,12 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 		}
 
 		{
+			// Apply the applied-configuration annotation to the object
 			annotations := wantObj.GetAnnotations()
 			if annotations == nil {
 				annotations = make(map[string]string)
 			}
-			annotations[annotationPreviousManifest] = string(wantManifest)
+			annotations[annotationAppliedConfiguration] = string(wantManifest)
 			wantObj.SetAnnotations(annotations)
 		}
 
@@ -261,7 +266,7 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 				return fmt.Errorf("cannot update object %q of type %v because it is being deleted", objectName, gvk)
 			}
 
-			if existingObject.GetAnnotations() != nil && existingObject.GetAnnotations()[annotationPreviousManifest] == string(wantManifest) {
+			if existingObject.GetAnnotations() != nil && existingObject.GetAnnotations()[annotationAppliedConfiguration] == string(wantManifest) {
 				continue // The object is already up-to-date
 			}
 
@@ -271,12 +276,10 @@ func reconcileGvk(ctx context.Context, params HelmReconcilerParams, gvk schema.G
 
 		} else {
 			// The object doesn't exist, create it
-
 			glog.Infof("creating object %q of type %v", objectName, gvk)
 
 			if err := params.Client.Create(ctx, wantObj); err != nil {
 				if k8serrors.IsAlreadyExists(err) {
-
 					return fmt.Errorf("cannot create object %q of type %v because it already exists and is not managed by %q or is not part of release %q", objectName, gvk, params.ManagerName, params.ReleaseName)
 				} else {
 					return fmt.Errorf("failed to create object %s: %w", objectName, err)
