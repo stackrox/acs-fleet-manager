@@ -35,18 +35,18 @@ spec:
         app: vpa-recommender
         vertical-pod-autoscaler: {{ .name | quote }}
     spec:
-      {{ if .nodeSelector }}
+      {{- if .nodeSelector }}
       {{ toYaml .nodeSelector | nindent 6 }}
       {{ end }}
       serviceAccountName: rhacs-vpa-recommender
       terminationGracePeriodSeconds: 30
-      {{ if .tolerations }}
+      {{- if .tolerations }}
       {{ toYaml .tolerations | nindent 6 }}
       {{ end }}
-      {{ if .priorityClassName }}
+      {{- if .priorityClassName }}
       {{ toYaml .priorityClassName | nindent 6 }}
       {{ end }}
-      {{ if .imagePullSecrets }}
+      {{- if .imagePullSecrets }}
       imagePullSecrets: {{ toYaml .imagePullSecrets | nindent 8 }}
       {{ end }}
       volumes:
@@ -69,7 +69,7 @@ spec:
               type: RuntimeDefault
             capabilities:
               drop: [ ALL ]
-          {{ if .resources }}
+          {{- if .resources }}
           resources: {{ toYaml .resources | nindent 12 }}
           {{ end }}
           command:
@@ -78,133 +78,133 @@ spec:
             - --recommender-name={{ .name }}
             - --logtostderr
             - --v=1
-            {{ if .recommendationMarginFraction }}
+            {{- if .recommendationMarginFraction }}
             - --recommendation-margin-fraction={{ .recommendationMarginFraction }}
             {{ end }}
-            {{ if .podRecommendationMinCpuMillicores }}
+            {{- if .podRecommendationMinCpuMillicores }}
             - --pod-recommendation-min-cpu-millicores={{ .podRecommendationMinCpuMillicores }}
             {{ end }}
-            {{ if .podRecommendationMinMemoryMb }}
+            {{- if .podRecommendationMinMemoryMb }}
             - --pod-recommendation-min-memory-mb={{ .podRecommendationMinMemoryMb }}
             {{ end }}
-            {{ if .targetCpuPercentile }}
+            {{- if .targetCpuPercentile }}
             - --target-cpu-percentile={{ .targetCpuPercentile }}
             {{ end }}
-            {{ if .recommendationLowerBoundCpuPercentile }}
+            {{- if .recommendationLowerBoundCpuPercentile }}
             - --recommendation-lower-bound-cpu-percentile={{ .recommendationLowerBoundCpuPercentile }}
             {{ end }}
-            {{ if .recommendationUpperBoundCpuPercentile }}
+            {{- if .recommendationUpperBoundCpuPercentile }}
             - --recommendation-upper-bound-cpu-percentile={{ .recommendationUpperBoundCpuPercentile }}
             {{ end }}
-            {{ if .targetMemoryPercentile }}
+            {{- if .targetMemoryPercentile }}
             - --target-memory-percentile={{ .targetMemoryPercentile }}
             {{ end }}
-            {{ if .recommendationLowerBoundMemoryPercentile }}
+            {{- if .recommendationLowerBoundMemoryPercentile }}
             - --recommendation-lower-bound-memory-percentile={{ .recommendationLowerBoundMemoryPercentile }}
             {{ end }}
-            {{ if .recommendationUpperBoundMemoryPercentile }}
+            {{- if .recommendationUpperBoundMemoryPercentile }}
             - --recommendation-upper-bound-memory-percentile={{ .recommendationUpperBoundMemoryPercentile }}
             {{ end }}
-            {{ if .checkpointsTimeout }}
+            {{- if .checkpointsTimeout }}
             - --checkpoints-timeout={{ .checkpointsTimeout }}
             {{ end }}
-            {{ if .minCheckpoints }}
+            {{- if .minCheckpoints }}
             - --min-checkpoints={{ .minCheckpoints }}
             {{ end }}
-            {{ if .memorySaver }}
+            {{- if .memorySaver }}
             - --memory-saver
             {{ end }}
-            {{ if .recommenderInterval }}
+            {{- if .recommenderInterval }}
             - --recommender-interval={{ .recommenderInterval }}
             {{ end }}
-            {{ if .checkpointsGcInterval }}
+            {{- if .checkpointsGcInterval }}
             - --checkpoints-gc-interval={{ .checkpointsGcInterval }}
             {{ end }}
             {{- /* If we're using the proxy, point to the sidecar */}}
-            {{ if and .prometheusAddress .useProxy }}
+            {{- if and .prometheusAddress .useProxy }}
             - --prometheus-address=http://localhost:9000
             {{- else if .prometheusAddress }}
             - --prometheus-address={{ .address }}
             {{ end }}
-            {{ if .prometheusCadvisorJobName }}
+            {{- if .prometheusCadvisorJobName }}
             - --prometheus-cadvisor-job-name={{ .prometheusCadvisorJobName }}
             {{ end }}
-            {{ if .address }}
+            {{- if .address }}
             - --address={{ .address }}
             {{ end }}
-            {{ if .kubeconfig }}
+            {{- if .kubeconfig }}
             - --kubeconfig={{ .kubeconfig }}
             {{ end }}
-            {{ if .kubeApiQps }}
+            {{- if .kubeApiQps }}
             - --kube-api-qps={{ .kubeApiQps }}
             {{ end }}
-            {{ if .kubeApiBurst }}
+            {{- if .kubeApiBurst }}
             - --kube-api-burst={{ .kubeApiBurst }}
             {{ end }}
-            {{ if .storage }}
+            {{- if .storage }}
             - --storage={{ .storage }}
             {{ end }}
-            {{ if .historyLength }}
+            {{- if .historyLength }}
             - --history-length={{ .historyLength }}
             {{ end }}
-            {{ if .historyResolution }}
+            {{- if .historyResolution }}
             - --history-resolution={{ .historyResolution }}
             {{ end }}
-            {{ if .prometheusQueryTimeout }}
+            {{- if .prometheusQueryTimeout }}
             - --prometheus-query-timeout={{ .prometheusQueryTimeout }}
             {{ end }}
-            {{ if .podLabelPrefix }}
+            {{- if .podLabelPrefix }}
             - --pod-label-prefix={{ .podLabelPrefix }}
             {{ end }}
-            {{ if .metricForPodLabels }}
+            {{- if .metricForPodLabels }}
             - --metric-for-pod-labels={{ .metricForPodLabels }}
             {{ end }}
-            {{ if .podNamespaceLabel }}
+            {{- if .podNamespaceLabel }}
             - --pod-namespace-label={{ .podNamespaceLabel }}
             {{ end }}
-            {{ if .podNameLabel }}
+            {{- if .podNameLabel }}
             - --pod-name-label={{ .podNameLabel }}
             {{ end }}
-            {{ if .containerNamespaceLabel }}
+            {{- if .containerNamespaceLabel }}
             - --container-namespace-label={{ .containerNamespaceLabel }}
             {{ end }}
-            {{ if .containerPodNameLabel }}
+            {{- if .containerPodNameLabel }}
             - --container-pod-name-label={{ .containerPodNameLabel }}
             {{ end }}
-            {{ if .containerNameLabel }}
+            {{- if .containerNameLabel }}
             - --container-name-label={{ .containerNameLabel }}
             {{ end }}
-            {{ if .vpaObjectNamespace }}
+            {{- if .vpaObjectNamespace }}
             - --vpa-object-namespace={{ .vpaObjectNamespace }}
             {{ end }}
-            {{ if .memoryAggregationInterval }}
+            {{- if .memoryAggregationInterval }}
             - --memory-aggregation-interval={{ .memoryAggregationInterval }}
             {{ end }}
-            {{ if .memoryAggregationIntervalCount }}
+            {{- if .memoryAggregationIntervalCount }}
             - --memory-aggregation-interval-count={{ .memoryAggregationIntervalCount }}
             {{ end }}
-            {{ if .memoryHistogramDecayHalfLife }}
+            {{- if .memoryHistogramDecayHalfLife }}
             - --memory-histogram-decay-half-life={{ .memoryHistogramDecayHalfLife }}
             {{ end }}
-            {{ if .cpuHistogramDecayHalfLife }}
+            {{- if .cpuHistogramDecayHalfLife }}
             - --cpu-histogram-decay-half-life={{ .cpuHistogramDecayHalfLife }}
             {{ end }}
-            {{ if .cpuIntegerPostProcessorEnabled }}
+            {{- if .cpuIntegerPostProcessorEnabled }}
             - --cpu-integer-post-processor-enabled={{ .cpuIntegerPostProcessorEnabled }}
             {{ end }}
-            {{ if .useExternalMetrics }}
+            {{- if .useExternalMetrics }}
             - --use-external-metrics={{ .useExternalMetrics }}
             {{ end }}
-            {{ if .externalMetricsCpuMetric }}
+            {{- if .externalMetricsCpuMetric }}
             - --external-metrics-cpu-metric={{ .externalMetricsCpuMetric }}
             {{ end }}
-            {{ if .externalMetricsMemoryMetric }}
+            {{- if .externalMetricsMemoryMetric }}
             - --external-metrics-memory-metric={{ .externalMetricsMemoryMetric }}
             {{ end }}
-            {{ if .oomBumpUpRatio }}
+            {{- if .oomBumpUpRatio }}
             - --oom-bump-up-ratio={{ .oomBumpUpRatio }}
             {{ end }}
-            {{ if .oomMinBumpUpBytes }}
+            {{- if .oomMinBumpUpBytes }}
             - --oom-min-bump-up-bytes={{ .oomMinBumpUpBytes }}
             {{ end }}
           env:
@@ -213,7 +213,7 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.namespace
-        {{ if and .prometheusAddress .useProxy }}
+        {{- if and .prometheusAddress .useProxy }}
         {{- $promUrl := urlParse .prometheusAddress }}
         {{- $promProtocol := index $promUrl "scheme" }}
         {{- $promHostPort := split ":" (index $promUrl "host") }}
@@ -254,8 +254,8 @@ spec:
             - mountPath: /service-ca-certs/openshift-service-ca.crt
               name: service-ca-bundle
               subPath: service-ca.crt
-        {{ end }}
-      {{ if and .prometheusAddress .useProxy }}
+        {{- end }}
+      {{- if and .prometheusAddress .useProxy }}
       volumes:
         - configMap:
             defaultMode: 420
