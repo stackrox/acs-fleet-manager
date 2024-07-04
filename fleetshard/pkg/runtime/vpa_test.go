@@ -37,6 +37,7 @@ func (f *fakeRESTMapper) RESTMapping(gk schema.GroupKind, versions ...string) (*
 var fakeRestMapper meta.RESTMapper = &fakeRESTMapper{scopeForGvk: map[schema.GroupVersionKind]meta.RESTScope{
 	{Group: "apps", Version: "v1", Kind: "Deployment"}:                              meta.RESTScopeNamespace,
 	{Group: "", Version: "v1", Kind: "ServiceAccount"}:                              meta.RESTScopeNamespace,
+	{Group: "", Version: "v1", Kind: "ConfigMap"}:                                   meta.RESTScopeNamespace,
 	{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "ClusterRole"}:        meta.RESTScopeRoot,
 	{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "ClusterRoleBinding"}: meta.RESTScopeRoot,
 }}
