@@ -49,7 +49,11 @@ else
     log "Skipping installation of Vertical Pod Autoscaler"
 fi
 
-apply "${MANIFESTS_DIR}/monitoring"
+# skip manifests if openshift cluster using is_openshift_cluster
+if ! is_openshift_cluster "$CLUSTER_TYPE"; then
+    apply "${MANIFESTS_DIR}/monitoring"
+fi
+
 apply "${MANIFESTS_DIR}/addons"
 
 if is_local_cluster "$CLUSTER_TYPE"; then
