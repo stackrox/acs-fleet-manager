@@ -246,7 +246,7 @@ spec:
             - name: NODE_EXTRA_CA_CERTS
               value: /service-ca-certs/openshift-service-ca.crt
           command: [ node ]
-          args: [ '/app./server.js' ]
+          args: [ '/app/server.js' ]
           volumeMounts:
             - mountPath: /app/server.js
               name: proxy-config
