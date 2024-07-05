@@ -382,7 +382,7 @@ components:
             type: string
           description: Map of Secrets created for a Central
           type: object
-        secretDataSum:
+        secretDataSha256Sum:
           description: Hash of plain text secret data used for equality check
           type: string
       type: object
@@ -447,7 +447,7 @@ components:
           additionalProperties:
             type: string
           type: object
-        secretDataSum:
+        secretDataSha256Sum:
           type: string
         expired-at:
           format: date-time

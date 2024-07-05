@@ -118,10 +118,10 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 				MasId:          from.ID,
 				MasPlacementId: from.PlacementID,
 			},
-			Internal:      from.Internal,
-			SecretsStored: getSecretNames(from), // pragma: allowlist secret
-			SecretDataSum: from.SecretDataSum,   // pragma: allowlist secret
-			ExpiredAt:     dbapi.NullTimeToTimePtr(from.ExpiredAt),
+			Internal:            from.Internal,
+			SecretsStored:       getSecretNames(from),     // pragma: allowlist secret
+			SecretDataSha256Sum: from.SecretDataSha256Sum, // pragma: allowlist secret
+			ExpiredAt:           dbapi.NullTimeToTimePtr(from.ExpiredAt),
 		},
 		Spec: private.ManagedCentralAllOfSpec{
 			Owners: []string{

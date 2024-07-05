@@ -269,7 +269,7 @@ components:
                   type: object
                   additionalProperties:
                     type: string
-                secretDataSum:
+                secretDataSha256Sum:
                   type: string
                 expired-at:
                   type: string
@@ -461,7 +461,7 @@ components:
           type: object
           additionalProperties:
             type: string
-        secretDataSum:
+        secretDataSha256Sum:
           description: "Hash of plain text secret data used for equality check"
           type: string
 

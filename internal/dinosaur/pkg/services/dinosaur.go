@@ -183,11 +183,11 @@ func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralR
 
 func (k *dinosaurService) ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	centralRequest.Secrets = nil // pragma: allowlist secret
-	centralRequest.SecretDataSum = ""
+	centralRequest.SecretDataSha256Sum = ""
 	logStateChange("reset secrets", centralRequest.ID, nil)
 
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Model(centralRequest).Select("secrets", "secret_data_sum").Updates(centralRequest).Error; err != nil {
+	if err := dbConn.Model(centralRequest).Select("secrets", "secret_data_sha256_sum").Updates(centralRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset secrets for central request")
 	}
 

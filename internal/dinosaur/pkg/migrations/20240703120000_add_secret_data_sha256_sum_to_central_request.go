@@ -12,22 +12,22 @@ import (
 	"gorm.io/gorm"
 )
 
-func addSecretDataSumToCentralRequest() *gormigrate.Migration {
+func addSecretDataSha256SumToCentralRequest() *gormigrate.Migration {
 	type CentralRequest struct {
 		db.Model
-		SecretDataSum string `json:"secret_data_sum"`
+		SecretDataSha256Sum string `json:"secret_data_sha256_sum"`
 	}
 	migrationID := "20240703120000"
 
 	return &gormigrate.Migration{
 		ID: migrationID,
 		Migrate: func(tx *gorm.DB) error {
-			return addColumnIfNotExists(tx, &CentralRequest{}, "secret_data_sum")
+			return addColumnIfNotExists(tx, &CentralRequest{}, "secret_data_sha256_sum")
 		},
 		Rollback: func(tx *gorm.DB) error {
 			return errors.Wrap(
-				tx.Migrator().DropColumn(&CentralRequest{}, "secret_data_sum"),
-				"failed to drop secret_data_sum column",
+				tx.Migrator().DropColumn(&CentralRequest{}, "secret_data_sha256_sum"),
+				"failed to drop secret_data_sha256_sum column",
 			)
 		},
 	}

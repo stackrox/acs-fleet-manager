@@ -281,7 +281,7 @@ func (d *dataPlaneCentralService) addSecretsToRequest(centralRequest *dbapi.Cent
 		return nil
 	}
 
-	if centralStatus.SecretDataSum == "" {
+	if centralStatus.SecretDataSha256Sum == "" {
 		// TODO: change this to send a bad request later, once we are sure no FS version without SecretDataSum feature is running
 		logger.Logger.V(10).Warningf("persisting secret but no secret data sum. this might be a request of a outdated fleetshard version")
 	}
@@ -291,7 +291,7 @@ func (d *dataPlaneCentralService) addSecretsToRequest(centralRequest *dbapi.Cent
 	if err := centralRequest.SetSecrets(centralStatus.Secrets); err != nil {
 		return serviceError.NewWithCause(serviceError.ErrorGeneral, err, "failed to set secrets for central %s", centralRequest.ID)
 	}
-	centralRequest.SecretDataSum = centralStatus.SecretDataSum // pragma: allowlist secret
+	centralRequest.SecretDataSha256Sum = centralStatus.SecretDataSha256Sum // pragma: allowlist secret
 
 	return nil
 }

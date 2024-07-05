@@ -2636,18 +2636,18 @@ func TestEncryptionShaSum(t *testing.T) {
 		},
 	}
 
-	_, shaSumFirst, err := reconciler.encryptSecrets(testSecrets)
+	enc1, err := reconciler.encryptSecrets(testSecrets)
 	require.NoError(t, err)
-	_, shaSumSecond, err := reconciler.encryptSecrets(testSecrets)
+	enc2, err := reconciler.encryptSecrets(testSecrets)
 	require.NoError(t, err)
 
 	testSecrets["testsecret1"].Data["test3"] = []byte("test3")
-	_, shaSumChanged, err := reconciler.encryptSecrets(testSecrets)
+	encChanged, err := reconciler.encryptSecrets(testSecrets)
 	require.NoError(t, err)
 
 	require.NoError(t, err)
-	require.Equal(t, shaSumFirst, shaSumSecond, "hash of equal secrets was not equal")
-	require.NotEqual(t, shaSumFirst, shaSumChanged, "hash of unequal secrets was equal")
+	require.Equal(t, enc1.sha256Sum, enc2.sha256Sum, "hash of equal secrets was not equal")
+	require.NotEqual(t, enc1.sha256Sum, encChanged.sha256Sum, "hash of unequal secrets was equal")
 }
 
 func TestEncyrptionSHASumSameObject(t *testing.T) {
@@ -2685,9 +2685,9 @@ func TestEncyrptionSHASumSameObject(t *testing.T) {
 	amount := 1000
 	sums := make([]string, 1000)
 	for i := 0; i < amount; i++ {
-		_, sum, err := reconciler.encryptSecrets(testSecrets)
+		enc, err := reconciler.encryptSecrets(testSecrets)
 		require.NoError(t, err)
-		sums[i] = sum
+		sums[i] = enc.sha256Sum
 	}
 
 	for i := 1; i < amount; i++ {
