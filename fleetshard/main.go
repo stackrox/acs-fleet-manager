@@ -4,7 +4,6 @@ package main
 import (
 	"context"
 	"flag"
-	v1 "k8s.io/api/core/v1"
 	"os"
 	"os/signal"
 
@@ -17,8 +16,6 @@ import (
 	"golang.org/x/sys/unix"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
-
-var a = v1.PodSpec{}
 
 func main() {
 	// This is needed to make `glog` believe that the flags have already been parsed, otherwise
