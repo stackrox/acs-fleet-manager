@@ -7,6 +7,18 @@ rhacsOperators:
       image: "quay.io/rhacs-eng/stackrox-operator:4.4.2"
       centralLabelSelector: "rhacs.redhat.com/version-selector=4.4.2"
       securedClusterReconcilerEnabled: false
+verticalPodAutoscaling:
+  recommenders:
+    - image: registry.redhat.io/openshift4/ose-vertical-pod-autoscaler-rhel9@sha256:d268de83bd371a725c0d0dad8a48008afa982c10e2997b24ff6d139d90d964f6
+      name: vpa-1
+      imagePullSecrets: [{ name: redhat-pull-secret }]
+      recommendationMarginFraction: 0.30
+      podRecommendationMinCpuMillicores: 10
+    - image: registry.redhat.io/openshift4/ose-vertical-pod-autoscaler-rhel9@sha256:d268de83bd371a725c0d0dad8a48008afa982c10e2997b24ff6d139d90d964f6
+      name: vpa-2
+      imagePullSecrets: [{ name: redhat-pull-secret }]
+      recommendationMarginFraction: 0.30
+      podRecommendationMinCpuMillicores: 20
 tenantResources:
   default: |
     labels:
@@ -22,6 +34,18 @@ tenantResources:
     verticalPodAutoscalers:
       central:
         enabled: true
+        updatePolicy:
+          updateMode: "Auto"
+          minReplicas: 1
+        resourcePolicy:
+          containerPolicies:
+            - containerName: "*"
+              minAllowed:
+                cpu: "100m"
+                memory: "50Mi"
+              maxAllowed:
+                cpu: "1"
+                memory: "2Gi"
 centrals:
   overrides:
     - instanceIds:
