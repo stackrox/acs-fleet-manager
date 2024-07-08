@@ -280,11 +280,18 @@ func (d *dataPlaneCentralService) addSecretsToRequest(centralRequest *dbapi.Cent
 		logger.Logger.V(10).Infof("skip persisting secrets for Central %s, report is empty or nil", centralRequest.ID)
 		return nil
 	}
+
+	if centralStatus.SecretDataSha256Sum == "" {
+		// TODO: change this to send a bad request later, once we are sure no FS version without SecretDataSum feature is running
+		logger.Logger.V(10).Warningf("persisting secret but no secret data sum. this might be a request of a outdated fleetshard version")
+	}
+
 	logger.Logger.Infof("store secret information for central %s", centralRequest.ID)
 
 	if err := centralRequest.SetSecrets(centralStatus.Secrets); err != nil {
 		return serviceError.NewWithCause(serviceError.ErrorGeneral, err, "failed to set secrets for central %s", centralRequest.ID)
 	}
+	centralRequest.SecretDataSha256Sum = centralStatus.SecretDataSha256Sum // pragma: allowlist secret
 
 	return nil
 }

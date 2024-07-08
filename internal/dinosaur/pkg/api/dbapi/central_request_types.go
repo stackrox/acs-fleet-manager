@@ -74,9 +74,13 @@ type CentralRequest struct {
 	// We store this in the database to ensure that old centrals whose namespace contained "owner-<central-id>" information will continue to work.
 
 	// Secrets stores the encrypted secrets reported for a central tenant
-	Secrets          api.JSON `json:"secrets"`
-	Namespace        string   `json:"namespace"`
-	RoutesCreationID string   `json:"routes_creation_id"`
+	Secrets api.JSON `json:"secrets"`
+	// SecretDataSha256Sum is the b64 encoded hash of plain text data of the stored secrets.
+	// It used used for equality checks of secrets in the dataplane cluster with the secrets stored in DB
+	SecretDataSha256Sum string `json:"secret_data_sha256_sum"`
+
+	Namespace        string `json:"namespace"`
+	RoutesCreationID string `json:"routes_creation_id"`
 	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource.
 	DeletionTimestamp sql.NullTime `json:"deletionTimestamp"`
 

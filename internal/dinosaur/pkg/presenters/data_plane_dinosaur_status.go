@@ -31,10 +31,11 @@ func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralSt
 		}
 
 		res = append(res, &dbapi.DataPlaneCentralStatus{
-			CentralClusterID: k,
-			Conditions:       c,
-			Routes:           routes,
-			Secrets:          v.Secrets, // pragma: allowlist secret
+			CentralClusterID:    k,
+			Conditions:          c,
+			Routes:              routes,
+			Secrets:             v.Secrets,             // pragma: allowlist secret
+			SecretDataSha256Sum: v.SecretDataSha256Sum, // pragma: allowlist secret
 		})
 	}
 

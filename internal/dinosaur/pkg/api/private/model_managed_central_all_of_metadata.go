@@ -16,12 +16,13 @@ import (
 
 // ManagedCentralAllOfMetadata struct for ManagedCentralAllOfMetadata
 type ManagedCentralAllOfMetadata struct {
-	Name              string                                 `json:"name,omitempty"`
-	Namespace         string                                 `json:"namespace,omitempty"`
-	Internal          bool                                   `json:"internal,omitempty"`
-	Annotations       ManagedCentralAllOfMetadataAnnotations `json:"annotations,omitempty"`
-	DeletionTimestamp string                                 `json:"deletionTimestamp,omitempty"`
-	SecretsStored     []string                               `json:"secretsStored,omitempty"`
-	Secrets           map[string]string                      `json:"secrets,omitempty"`
-	ExpiredAt         *time.Time                             `json:"expired-at,omitempty"`
+	Name                string                                 `json:"name,omitempty"`
+	Namespace           string                                 `json:"namespace,omitempty"`
+	Internal            bool                                   `json:"internal,omitempty"`
+	Annotations         ManagedCentralAllOfMetadataAnnotations `json:"annotations,omitempty"`
+	DeletionTimestamp   string                                 `json:"deletionTimestamp,omitempty"`
+	SecretsStored       []string                               `json:"secretsStored,omitempty"`
+	Secrets             map[string]string                      `json:"secrets,omitempty"`
+	SecretDataSha256Sum string                                 `json:"secretDataSha256Sum,omitempty"`
+	ExpiredAt           *time.Time                             `json:"expired-at,omitempty"`
 }

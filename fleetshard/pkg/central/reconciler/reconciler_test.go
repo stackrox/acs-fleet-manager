@@ -2607,3 +2607,90 @@ func TestChartValues(t *testing.T) {
 	}
 
 }
+
+func TestEncryptionShaSum(t *testing.T) {
+	reconciler := &CentralReconciler{
+		secretCipher: cipher.LocalBase64Cipher{}, // pragma: allowlist secret
+	}
+
+	testSecrets := map[string]*v1.Secret{
+		"testsecret1": {
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testsecret1",
+				Namespace: centralNamespace,
+			},
+			Data: map[string][]byte{
+				"test1": []byte("test1-secretdata1"),
+				"test2": []byte("test1-secretdata2"),
+			},
+		},
+		"testsecret2": {
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testsecret2",
+				Namespace: centralNamespace,
+			},
+			Data: map[string][]byte{
+				"test1": []byte("test2-secretdata1"),
+				"test2": []byte("test2-secretdata2"),
+			},
+		},
+	}
+
+	enc1, err := reconciler.encryptSecrets(testSecrets)
+	require.NoError(t, err)
+	enc2, err := reconciler.encryptSecrets(testSecrets)
+	require.NoError(t, err)
+
+	testSecrets["testsecret1"].Data["test3"] = []byte("test3")
+	encChanged, err := reconciler.encryptSecrets(testSecrets)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, enc1.sha256Sum, enc2.sha256Sum, "hash of equal secrets was not equal")
+	require.NotEqual(t, enc1.sha256Sum, encChanged.sha256Sum, "hash of unequal secrets was equal")
+}
+
+func TestEncyrptionSHASumSameObject(t *testing.T) {
+	// This test is important, since it helped catch a bug discovered during e2e testing
+	// of this feature that would cause the calculated hash to be not equal for the same secrets
+	// because the function was looping over keys of Go maps, which is not guaranteed to loop in the
+	// same order on every invokation
+	reconciler := &CentralReconciler{
+		secretCipher: cipher.LocalBase64Cipher{}, // pragma: allowlist secret
+	}
+
+	testSecrets := map[string]*v1.Secret{
+		"testsecret1": {
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testsecret1",
+				Namespace: centralNamespace,
+			},
+			Data: map[string][]byte{
+				"test1": []byte("test1-secretdata1"),
+				"test2": []byte("test1-secretdata2"),
+			},
+		},
+		"testsecret2": {
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testsecret2",
+				Namespace: centralNamespace,
+			},
+			Data: map[string][]byte{
+				"test1": []byte("test2-secretdata1"),
+				"test2": []byte("test2-secretdata2"),
+			},
+		},
+	}
+
+	amount := 1000
+	sums := make([]string, 1000)
+	for i := 0; i < amount; i++ {
+		enc, err := reconciler.encryptSecrets(testSecrets)
+		require.NoError(t, err)
+		sums[i] = enc.sha256Sum
+	}
+
+	for i := 1; i < amount; i++ {
+		require.Equal(t, sums[i-1], sums[i], "hash of the same object should always be equal but was not")
+	}
+}

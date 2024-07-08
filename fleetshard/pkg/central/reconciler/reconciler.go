@@ -4,6 +4,7 @@ package reconciler
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -30,6 +31,7 @@ import (
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
+	"github.com/stackrox/rox/pkg/maputil"
 	"github.com/stackrox/rox/pkg/random"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
@@ -102,6 +104,11 @@ type verifyAuthProviderExistsFunc func(ctx context.Context, central private.Mana
 type needsReconcileFunc func(changed bool, central *v1alpha1.Central, storedSecrets []string) bool
 type restoreCentralSecretsFunc func(ctx context.Context, remoteCentral private.ManagedCentral) error
 type areSecretsStoredFunc func(secretsStored []string) bool
+
+type encryptedSecrets struct {
+	secrets   map[string]string
+	sha256Sum string
+}
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
@@ -824,14 +831,18 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 	}
 
 	// Only report secrets if Central is ready, to ensure we're not trying to get secrets before they are created.
-	// Only report secrets if not all secrets are already stored to ensure we don't overwrite initial secrets with corrupted secrets
-	// from the cluster state.
-	if isRemoteCentralReady(remoteCentral) && !r.areSecretsStored(remoteCentral.Metadata.SecretsStored) {
-		secrets, err := r.collectSecretsEncrypted(ctx, remoteCentral)
+	if isRemoteCentralReady(remoteCentral) {
+		encSecrets, err := r.collectSecretsEncrypted(ctx, remoteCentral)
 		if err != nil {
 			return nil, err
 		}
-		status.Secrets = secrets // pragma: allowlist secret
+
+		// Only report secrets if data hash differs to make sure we don't produce huge amount of data
+		// if no update is required on the fleet-manager DB
+		if encSecrets.sha256Sum != remoteCentral.Metadata.SecretDataSha256Sum { // pragma: allowlist secret
+			status.Secrets = encSecrets.secrets               // pragma: allowlist secret
+			status.SecretDataSha256Sum = encSecrets.sha256Sum // pragma: allowlist secret
+		}
 	}
 
 	return status, nil
@@ -875,18 +886,18 @@ func (r *CentralReconciler) collectSecrets(ctx context.Context, remoteCentral *p
 	return secrets, nil
 }
 
-func (r *CentralReconciler) collectSecretsEncrypted(ctx context.Context, remoteCentral *private.ManagedCentral) (map[string]string, error) {
+func (r *CentralReconciler) collectSecretsEncrypted(ctx context.Context, remoteCentral *private.ManagedCentral) (encryptedSecrets, error) {
 	secrets, err := r.collectSecrets(ctx, remoteCentral)
 	if err != nil {
-		return nil, err
+		return encryptedSecrets{}, err
 	}
 
-	encryptedSecrets, err := r.encryptSecrets(secrets)
+	encSecrets, err := r.encryptSecrets(secrets)
 	if err != nil {
-		return nil, fmt.Errorf("encrypting secrets for namespace: %s: %w", remoteCentral.Metadata.Namespace, err)
+		return encSecrets, fmt.Errorf("encrypting secrets for namespace: %s: %w", remoteCentral.Metadata.Namespace, err)
 	}
 
-	return encryptedSecrets, nil
+	return encSecrets, nil
 }
 
 func (r *CentralReconciler) decryptSecrets(secrets map[string]string) (map[string]*corev1.Secret, error) {
@@ -914,25 +925,44 @@ func (r *CentralReconciler) decryptSecrets(secrets map[string]string) (map[strin
 	return decryptedSecrets, nil
 }
 
-func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (map[string]string, error) {
-	encryptedSecrets := map[string]string{}
+// encryptSecrets return the encrypted secrets and a sha256 sum of secret data to check if secrets
+// need update later on
+func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (encryptedSecrets, error) {
+	encSecrets := encryptedSecrets{secrets: map[string]string{}}
 
-	for key, secret := range secrets { // pragma: allowlist secret
+	allSecretData := []byte{}
+	// sort to ensure the loop always executed in the same order
+	// otherwise the sha sum can differ across multiple invocations
+	keys := maputil.Keys(secrets)
+	sort.Strings(keys)
+	for _, key := range keys { // pragma: allowlist secret
+		secret := secrets[key]
 		secretBytes, err := json.Marshal(secret)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling secret for encryption: %s: %w", key, err)
+			return encSecrets, fmt.Errorf("error marshaling secret for encryption: %s: %w", key, err)
+		}
+
+		// sort to ensure the loop always executed in the same order
+		// otherwise the sha sum can differ across multiple invocations
+		dataKeys := maputil.Keys(secret.Data)
+		sort.Strings(dataKeys)
+		for _, dataKey := range dataKeys {
+			allSecretData = append(allSecretData, secret.Data[dataKey]...)
 		}
 
 		encryptedBytes, err := r.secretCipher.Encrypt(secretBytes)
 		if err != nil {
-			return nil, fmt.Errorf("encrypting secret: %s: %w", key, err)
+			return encSecrets, fmt.Errorf("encrypting secret: %s: %w", key, err)
 		}
 
-		encryptedSecrets[key] = base64.StdEncoding.EncodeToString(encryptedBytes)
+		encSecrets.secrets[key] = base64.StdEncoding.EncodeToString(encryptedBytes)
 	}
 
-	return encryptedSecrets, nil
+	secretSum := sha256.Sum256(allSecretData)
+	secretShaStr := base64.StdEncoding.EncodeToString(secretSum[:])
+	encSecrets.sha256Sum = secretShaStr
 
+	return encSecrets, nil
 }
 
 // ensureSecretHasOwnerReference is used to make sure the central-tls secret has it's

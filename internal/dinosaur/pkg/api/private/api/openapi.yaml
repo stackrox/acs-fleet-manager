@@ -560,6 +560,9 @@ components:
             type: string
           description: Map of Secrets created for a Central
           type: object
+        secretDataSha256Sum:
+          description: Hash of plain text secret data used for equality check
+          type: string
       type: object
     DataPlaneCentralStatusUpdateRequest:
       additionalProperties:
@@ -622,6 +625,8 @@ components:
           additionalProperties:
             type: string
           type: object
+        secretDataSha256Sum:
+          type: string
         expired-at:
           format: date-time
           nullable: true
