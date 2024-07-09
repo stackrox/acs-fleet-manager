@@ -8,10 +8,17 @@ WORKDIR /src
 RUN go env -w GOCACHE=/go/.cache; \
     go env -w GOMODCACHE=/go/pkg/mod
 
-COPY . ./
-
+# Use the docker build cache to avoid calling 'go mod download' if go.mod/go.sum have not been changed.
+# Otherwise, use cache mount to cache dependencies between builds.
+# mount=type=bind is intentionally not used to ensure compatibility between docker and podman.
+# See:
+#  - https://docs.docker.com/build/cache/
+#  - https://docs.docker.com/build/guide/mounts/
+#  - https://github.com/containers/podman/issues/15423
+COPY go.*  ./
 RUN --mount=type=cache,target=/go/pkg/mod/ \
-      go mod download -x
+      go mod download
+COPY . ./
 
 ARG TARGETARCH
 
