@@ -330,7 +330,6 @@ func (i *KubernetesIssuer) getJwksURI(client *http.Client) (string, error) {
 		return "", errors.Wrapf(err, "failed to parse jwksURI as net/url: %s", jwksURI)
 	}
 
-	glog.V(5).Infof("jwks_uri before replacement logic: %s", jwksURI)
 	if netutil.IsIPAddress(jwksURL.Hostname()) && i.IssuerURI == kubernetesIssuer {
 		// in some cases like infra OCP the cluster internal jwks_uri in the discovery document
 		// is a private IP address of the pod running the oidc server. This breaks tls validation.

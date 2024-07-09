@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
 # A library of CI related reusable bash functions
+SCRIPTS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../.. && pwd)"
+
+# shellcheck source=scripts/lib/log.sh
+source "$SCRIPTS_ROOT/scripts/lib/log.sh"
 
 ci_export() {
     if [[ "$#" -ne 2 ]]; then
@@ -29,8 +33,4 @@ set_ci_shared_export() {
     local env_value="$2"
 
     echo "export ${env_name}=${env_value}" | tee -a "${SHARED_DIR:-/tmp}/shared_env"
-}
-
-info() {
-    echo "INFO: $(date): $*"
 }
