@@ -326,6 +326,20 @@ func (i *KubernetesIssuer) getJwksURI(client *http.Client) (string, error) {
 	if cfg.Issuer != i.IssuerURI {
 		glog.V(5).Infof("Configured issuer URI does't match the issuer URI configured in the discovery document, overriding: [configured: %s, got: %s]", i.IssuerURI, cfg.Issuer)
 		i.IssuerURI = cfg.Issuer
+
+		// trying to get the OIDC config from the cfg Issuer instead
+		// because in some cases of issuer mismatch like infra OCP the JWKS URI returned
+		// from the kubernetes.default.svc is an k8s internal IP address
+		// which causes TLS verification to fail
+		cfg, err := getOpenIDConfiguration(client, cfg.Issuer)
+		if err != nil {
+			// do not return the error here, since in most cases we can continue with the
+			// JWKS URI that we already got from the first OIDC config loaded
+			glog.Warning("failed to reload OIDC config from new issuer: %s", cfg.Issuer)
+		} else {
+			jwksURI = cfg.JwksURI
+		}
+
 	}
 	return jwksURI, nil
 }
