@@ -319,28 +319,29 @@ func (i *KubernetesIssuer) getJwksURI(client *http.Client) (string, error) {
 		return "", errors.Wrapf(err, "retrieving open-id configuration for %q", i.IssuerURI)
 	}
 	jwksURI := cfg.JwksURI
+
 	if i.isLocalCluster() {
 		// kube api-server returns an internal IP, need to override it.
 		jwksURI = i.overrideJwksURIForLocalCluster(jwksURI)
 	}
+
+	jwksURL, err := url.Parse(jwksURI)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to parse jwksURI as net/url: %s", jwksURI)
+	}
+
+	if netutil.IsIPAddress(jwksURL.Host) && i.IssuerURI == kubernetesIssuer {
+		// in some cases like infra OCP the cluster internal jwks_uri in the discovery document
+		// is a private IP address of the pod running the oidc server. This breaks tls validation.
+		// This override makes sure that in those cases kubernetes.default.svc is used instead of the IP
+		jwksURI = i.overrideJwksURIForInternalCluster(jwksURL)
+	}
+
 	if cfg.Issuer != i.IssuerURI {
 		glog.V(5).Infof("Configured issuer URI does't match the issuer URI configured in the discovery document, overriding: [configured: %s, got: %s]", i.IssuerURI, cfg.Issuer)
 		i.IssuerURI = cfg.Issuer
-
-		// trying to get the OIDC config from the cfg Issuer instead
-		// because in some cases of issuer mismatch like infra OCP the JWKS URI returned
-		// from the kubernetes.default.svc is an k8s internal IP address
-		// which causes TLS verification to fail
-		cfg, err := getOpenIDConfiguration(client, cfg.Issuer)
-		if err != nil {
-			// do not return the error here, since in most cases we can continue with the
-			// JWKS URI that we already got from the first OIDC config loaded
-			glog.Warning("failed to reload OIDC config from new issuer: %s", cfg.Issuer)
-		} else {
-			jwksURI = cfg.JwksURI
-		}
-
 	}
+
 	return jwksURI, nil
 }
 
@@ -356,6 +357,11 @@ func (i *KubernetesIssuer) overrideJwksURIForLocalCluster(jwksURI string) string
 		jwksURL.Host = "127.0.0.1"
 	}
 	return jwksURL.String()
+}
+
+func (i *KubernetesIssuer) overrideJwksURIForInternalCluster(url *url.URL) string {
+	url.Host = strings.TrimLeft(kubernetesIssuer, "/")
+	return url.String()
 }
 
 func (i *KubernetesIssuer) buildK8sConfig() (*rest.Config, error) {
