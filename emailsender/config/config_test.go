@@ -71,30 +71,6 @@ func TestGetConfigFailureEnabledHTTPSOnly(t *testing.T) {
 	assert.Nil(t, cfg)
 }
 
-func TestJWKSPathFromURL(t *testing.T) {
-
-	tests := map[string]struct {
-		url      string
-		expected string
-	}{
-		"crc url": {
-			url:      "https://api-int.crc.testing:6443/openid/v1/jwks",
-			expected: "openid/v1/jwks",
-		},
-		"dataplane internal url": {
-			url:      "https://10.0.145.59:6443/openid/v1/jwks",
-			expected: "openid/v1/jwks",
-		},
-	}
-
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			actual := jwksPathFromURL(tc.url)
-			require.Equal(t, tc.expected, actual)
-		})
-	}
-}
-
 // copied from a CRC openid-configuration response
 const exampleOidcCfgContent = `{"issuer":"https://kubernetes.default.svc","jwks_uri":"https://api-int.crc.testing:6443/openid/v1/jwks","response_types_supported":["id_token"],"subject_types_supported":["public"],"id_token_signing_alg_values_supported":["RS256"]}`
 
@@ -121,6 +97,7 @@ func TestAuthConfigFromKubernetes(t *testing.T) {
 	authCfg := &AuthConfig{
 		saTokenFile: tokenFile,
 		httpClient:  fakeK8sClient,
+		k8sJWKSPath: "/test/path",
 		k8sSvcURL:   "localhost.testservice",
 		jwksDir:     testDir,
 	}
@@ -149,7 +126,7 @@ func (f fakeK8sRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	case strings.Contains(url, wellKnownPath):
 		res.StatusCode = 200
 		res.Body = readCloserFromString(exampleOidcCfgContent)
-	case strings.Contains(url, "jwks"):
+	case strings.Contains(url, "/test/path"):
 		res.StatusCode = 200
 		res.Body = readCloserFromString(exampleJwksContent)
 	default:
