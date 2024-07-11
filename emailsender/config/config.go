@@ -23,7 +23,6 @@ import (
 const (
 	defaultSATokenFile      = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	defaultKubernetesCAFile = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-	k8sAPISvc               = "https://kubernetes.default.svc"
 	wellKnownPath           = ".well-known/openid-configuration"
 )
 
@@ -37,6 +36,7 @@ type Config struct {
 	MetricsAddress            string        `env:"METRICS_ADDRESS" envDefault:":9090"`
 	AuthConfigFile            string        `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
 	AuthConfigFromKubernetes  bool          `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
+	KubernetesSvcURL          string        `env:"KUBERNETES_SVC_URL" envDefault:"https://kubernetes.default.svc"`
 	KubernetesJWKSPath        string        `env:"KUBERNETES_JWKS_PATH" envDefault:"/openid/v1/jwks"`
 	SenderAddress             string        `env:"SENDER_ADDRESS" envDefault:"noreply@mail.rhacs-dev.com"`
 	LimitEmailPerTenant       int           `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
@@ -104,7 +104,7 @@ func GetConfig() (*Config, error) {
 	auth := &AuthConfig{
 		configFile:  c.AuthConfigFile,
 		saTokenFile: defaultSATokenFile,
-		k8sSvcURL:   k8sAPISvc,
+		k8sSvcURL:   c.KubernetesSvcURL,
 		k8sJWKSPath: c.KubernetesJWKSPath,
 		jwksDir:     os.TempDir(),
 	}
