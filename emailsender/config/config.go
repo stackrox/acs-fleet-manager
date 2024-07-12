@@ -24,7 +24,6 @@ import (
 const (
 	defaultSATokenFile      = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	defaultKubernetesCAFile = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-	k8sAPISvc               = "https://kubernetes.default.svc"
 	wellKnownPath           = ".well-known/openid-configuration"
 )
 
@@ -38,6 +37,8 @@ type Config struct {
 	MetricsAddress            string        `env:"METRICS_ADDRESS" envDefault:":9090"`
 	AuthConfigFile            string        `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
 	AuthConfigFromKubernetes  bool          `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
+	KubernetesSvcURL          string        `env:"KUBERNETES_SVC_URL" envDefault:"https://kubernetes.default.svc"`
+	KubernetesJWKSPath        string        `env:"KUBERNETES_JWKS_PATH" envDefault:"openid/v1/jwks"`
 	SenderAddress             string        `env:"SENDER_ADDRESS" envDefault:"noreply@mail.rhacs-dev.com"`
 	LimitEmailPerTenant       int           `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
 	SesMaxBackoffDelay        time.Duration `env:"SES_MAX_BACKOFF_DELAY" envDefault:"5s"`
@@ -104,7 +105,8 @@ func GetConfig() (*Config, error) {
 	auth := &AuthConfig{
 		configFile:  c.AuthConfigFile,
 		saTokenFile: defaultSATokenFile,
-		k8sSvcURL:   k8sAPISvc,
+		k8sSvcURL:   c.KubernetesSvcURL,
+		k8sJWKSPath: c.KubernetesJWKSPath,
 		jwksDir:     os.TempDir(),
 	}
 
@@ -143,6 +145,7 @@ type AuthConfig struct {
 	configFile       string
 	saTokenFile      string
 	k8sSvcURL        string
+	k8sJWKSPath      string
 	httpClient       *http.Client
 	jwksDir          string
 	JwksURLs         []string `yaml:"jwks_urls"`
@@ -183,7 +186,7 @@ func (c *AuthConfig) readFromKubernetes() error {
 		return err
 	}
 
-	jwksBytes, err := c.getJWKS(oidcCfg, token)
+	jwksBytes, err := c.getJWKS(token)
 	if err != nil {
 		return err
 	}
@@ -207,7 +210,8 @@ func (c *AuthConfig) readFromKubernetes() error {
 func (c *AuthConfig) getOIDCConfig(token string) (oidcConfig, error) {
 	var oidcCfg oidcConfig
 
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.k8sSvcURL, wellKnownPath), nil)
+	configURL := joinURLAndPath(c.k8sSvcURL, wellKnownPath)
+	req, err := http.NewRequest(http.MethodGet, configURL, nil)
 	if err != nil {
 		return oidcCfg, fmt.Errorf("failed to create HTTP request for openid configuration: %w", err)
 	}
@@ -230,11 +234,15 @@ func (c *AuthConfig) getOIDCConfig(token string) (oidcConfig, error) {
 	return oidcCfg, nil
 }
 
-func (c *AuthConfig) getJWKS(oidcCfg oidcConfig, token string) ([]byte, error) {
-	// replacing the potentially public facing JWKS url with the cluster internal k8sSvcURL
-	// since we don't want to call the endpoint via ingress but within the cluster
-	jwksPath := jwksPathFromURL(oidcCfg.JwksURI)
-	jwksRequest, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.k8sSvcURL, jwksPath), nil)
+func joinURLAndPath(url string, path string) string {
+	trimmedURL := strings.TrimRight(url, "/")
+	trimmedPath := strings.TrimLeft(path, "/")
+	return fmt.Sprintf("%s/%s", trimmedURL, trimmedPath)
+}
+
+func (c *AuthConfig) getJWKS(token string) ([]byte, error) {
+	jwksURL := joinURLAndPath(c.k8sSvcURL, c.k8sJWKSPath)
+	jwksRequest, err := http.NewRequest(http.MethodGet, jwksURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request for jwks: %w", err)
 	}
@@ -247,7 +255,7 @@ func (c *AuthConfig) getJWKS(oidcCfg oidcConfig, token string) ([]byte, error) {
 	defer utils.IgnoreError(jwksRes.Body.Close)
 
 	if jwksRes.StatusCode != 200 {
-		return nil, fmt.Errorf("jwks key request failed with status code: %d", jwksRes.StatusCode)
+		return nil, fmt.Errorf("jwks key request to %s failed with status code: %d", jwksURL, jwksRes.StatusCode)
 	}
 
 	jwksBytes, err := io.ReadAll(jwksRes.Body)
@@ -256,13 +264,6 @@ func (c *AuthConfig) getJWKS(oidcCfg oidcConfig, token string) ([]byte, error) {
 	}
 
 	return jwksBytes, nil
-}
-
-func jwksPathFromURL(url string) string {
-	jwksPath, _ := strings.CutPrefix(url, "https://")
-	jwksPath, _ = strings.CutPrefix(jwksPath, "http://")
-	_, jwksPath, _ = strings.Cut(jwksPath, "/")
-	return jwksPath
 }
 
 func addAuthHeader(req *http.Request, token string) {
