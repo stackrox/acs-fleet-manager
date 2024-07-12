@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/caarlos0/env/v6"
@@ -37,7 +38,7 @@ type Config struct {
 	AuthConfigFile            string        `env:"AUTH_CONFIG_FILE" envDefault:"config/emailsender-authz.yaml"`
 	AuthConfigFromKubernetes  bool          `env:"AUTH_CONFIG_FROM_KUBERNETES" envDefault:"false"`
 	KubernetesSvcURL          string        `env:"KUBERNETES_SVC_URL" envDefault:"https://kubernetes.default.svc"`
-	KubernetesJWKSPath        string        `env:"KUBERNETES_JWKS_PATH" envDefault:"/openid/v1/jwks"`
+	KubernetesJWKSPath        string        `env:"KUBERNETES_JWKS_PATH" envDefault:"openid/v1/jwks"`
 	SenderAddress             string        `env:"SENDER_ADDRESS" envDefault:"noreply@mail.rhacs-dev.com"`
 	LimitEmailPerTenant       int           `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
 	SesMaxBackoffDelay        time.Duration `env:"SES_MAX_BACKOFF_DELAY" envDefault:"5s"`
@@ -209,7 +210,8 @@ func (c *AuthConfig) readFromKubernetes() error {
 func (c *AuthConfig) getOIDCConfig(token string) (oidcConfig, error) {
 	var oidcCfg oidcConfig
 
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.k8sSvcURL, wellKnownPath), nil)
+	configURL := joinURLAndPath(c.k8sSvcURL, wellKnownPath)
+	req, err := http.NewRequest(http.MethodGet, configURL, nil)
 	if err != nil {
 		return oidcCfg, fmt.Errorf("failed to create HTTP request for openid configuration: %w", err)
 	}
@@ -232,8 +234,14 @@ func (c *AuthConfig) getOIDCConfig(token string) (oidcConfig, error) {
 	return oidcCfg, nil
 }
 
+func joinURLAndPath(url string, path string) string {
+	trimmedURL := strings.TrimRight(url, "/")
+	trimmedPath := strings.TrimLeft(path, "/")
+	return fmt.Sprintf("%s/%s", trimmedURL, trimmedPath)
+}
+
 func (c *AuthConfig) getJWKS(token string) ([]byte, error) {
-	jwksURL := fmt.Sprintf("%s/%s", c.k8sSvcURL, c.k8sJWKSPath)
+	jwksURL := joinURLAndPath(c.k8sSvcURL, c.k8sJWKSPath)
 	jwksRequest, err := http.NewRequest(http.MethodGet, jwksURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request for jwks: %w", err)

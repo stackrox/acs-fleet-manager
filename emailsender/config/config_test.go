@@ -140,3 +140,39 @@ func (f fakeK8sRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 func readCloserFromString(s string) io.ReadCloser {
 	return io.NopCloser(strings.NewReader(s))
 }
+
+func TestJoinURLAndPath(t *testing.T) {
+	tests := map[string]struct {
+		url      string
+		path     string
+		expected string
+	}{
+		"leading '/' in path, no trailing '/' in url": {
+			url:      "https://api-int.crc.testing:6443",
+			path:     "/openid/v1/jwks",
+			expected: "https://api-int.crc.testing:6443/openid/v1/jwks",
+		},
+		"no leading '/' in path, trailing '/' in url": {
+			url:      "https://api-int.crc.testing:6443/",
+			path:     "openid/v1/jwks",
+			expected: "https://api-int.crc.testing:6443/openid/v1/jwks",
+		},
+		"no leading '/' in path, no trailing '/' in url": {
+			url:      "https://api-int.crc.testing:6443",
+			path:     "openid/v1/jwks",
+			expected: "https://api-int.crc.testing:6443/openid/v1/jwks",
+		},
+		"leading '/' in path, trailing '/' in url": {
+			url:      "https://api-int.crc.testing:6443/",
+			path:     "/openid/v1/jwks",
+			expected: "https://api-int.crc.testing:6443/openid/v1/jwks",
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			actual := joinURLAndPath(tc.url, tc.path)
+			require.Equal(t, tc.expected, actual)
+		})
+	}
+}
