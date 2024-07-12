@@ -185,7 +185,7 @@ func (c *AuthConfig) readFromKubernetes() error {
 		return err
 	}
 
-	jwksBytes, err := c.getJWKS(oidcCfg, token)
+	jwksBytes, err := c.getJWKS(token)
 	if err != nil {
 		return err
 	}
@@ -232,8 +232,9 @@ func (c *AuthConfig) getOIDCConfig(token string) (oidcConfig, error) {
 	return oidcCfg, nil
 }
 
-func (c *AuthConfig) getJWKS(oidcCfg oidcConfig, token string) ([]byte, error) {
-	jwksRequest, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.k8sSvcURL, c.k8sJWKSPath), nil)
+func (c *AuthConfig) getJWKS(token string) ([]byte, error) {
+	jwksURL := fmt.Sprintf("%s/%s", c.k8sSvcURL, c.k8sJWKSPath)
+	jwksRequest, err := http.NewRequest(http.MethodGet, jwksURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request for jwks: %w", err)
 	}
@@ -246,7 +247,7 @@ func (c *AuthConfig) getJWKS(oidcCfg oidcConfig, token string) ([]byte, error) {
 	defer utils.IgnoreError(jwksRes.Body.Close)
 
 	if jwksRes.StatusCode != 200 {
-		return nil, fmt.Errorf("jwks key request failed with status code: %d", jwksRes.StatusCode)
+		return nil, fmt.Errorf("jwks key request to %s failed with status code: %d", jwksURL, jwksRes.StatusCode)
 	}
 
 	jwksBytes, err := io.ReadAll(jwksRes.Body)
