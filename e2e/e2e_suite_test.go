@@ -23,12 +23,10 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/rest"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
-	cfg                   *rest.Config
 	k8sClient             ctrlClient.Client
 	routeService          *k8s.RouteService
 	dnsEnabled            bool

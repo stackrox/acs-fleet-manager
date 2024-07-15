@@ -14,34 +14,11 @@ import (
 // UseFleetShardAuthorizationMiddleware ...
 func UseFleetShardAuthorizationMiddleware(router *mux.Router, iamConfig *iam.IAMConfig,
 	fleetShardAuthZConfig *FleetShardAuthZConfig) {
-	router.Use(fleetShardAuthorizationMiddleware(iamConfig, fleetShardAuthZConfig))
-}
-
-func fleetShardAuthorizationMiddleware(iamConfig *iam.IAMConfig, fleetShardAuthZConfig *FleetShardAuthZConfig) mux.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx := req.Context()
-			claims, err := GetClaimsFromContext(ctx)
-			if err != nil {
-				serviceErr := errors.New(errors.ErrorNotFound, "")
-				shared.HandleError(req, w, serviceErr)
-				return
-			}
-
-			if claims.VerifyIssuer(iamConfig.RedhatSSORealm.ValidIssuerURI, true) {
-				// middlewares must be applied in REVERSE order (last comes first)
-				next = CheckAllowedOrgIDs(fleetShardAuthZConfig.AllowedOrgIDs)(next)
-				next = NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorNotFound)(next)
-			} else {
-				// middlewares must be applied in REVERSE order (last comes first)
-				next = checkSubject(fleetShardAuthZConfig.AllowedSubjects)(next)
-				next = CheckAudience(fleetShardAuthZConfig.AllowedAudiences)(next)
-				next = NewRequireIssuerMiddleware().RequireIssuer(iamConfig.GetDataPlaneIssuerURIs(), errors.ErrorNotFound)(next)
-			}
-
-			next.ServeHTTP(w, req)
-		})
-	}
+	router.Use(
+		NewRequireIssuerMiddleware().RequireIssuer(iamConfig.GetDataPlaneIssuerURIs(), errors.ErrorNotFound),
+		CheckAudience(fleetShardAuthZConfig.AllowedAudiences),
+		checkSubject(fleetShardAuthZConfig.AllowedSubjects),
+	)
 }
 
 func checkSubject(allowedSubjects []string) mux.MiddlewareFunc {
