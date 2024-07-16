@@ -2,10 +2,12 @@ package certmonitor
 
 import (
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
+	"time"
 )
 
 type fakeNamespaceGetter struct {
@@ -275,15 +277,11 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 	}
 }
 
-func (c *certMonitor) handleSecretCreation(secret *v1.Secret) {
-	fmt.Printf("Handling Creating: %s,%s\n", secret.Namespace, secret.Name)
-}
-
-func (c *certMonitor) handleSecretUpdate(secret *v1.Secret) {
-	fmt.Printf("Handling Updating: %s,%s\n", secret.Namespace, secret.Name)
-}
-
 func TestCertMonitor(t *testing.T) {
+	cert := "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVuakNDQXdhZ0F3SUJBZ0lRSEdGOTR4QVIxMkhsS3ZaZ1A5Vng1REFOQmdrcWhraUc5dzBCQVFzRkFEQ0IKdVRFZU1Cd0dBMVVFQ2hNVmJXdGpaWEowSUdSbGRtVnNiM0J0Wlc1MElFTkJNVWN3UlFZRFZRUUxERDVoYTJGdApaWEpwWTBCaGEyRnRaWEpwWXkxMGFHbHVhM0JoWkhReE5ITm5aVzR5YVM1eVpXMXZkR1V1WTNOaUlDaEJiV2x1CllTQkxZVzFsY21saktURk9NRXdHQTFVRUF3eEZiV3RqWlhKMElHRnJZVzFsY21salFHRnJZVzFsY21sakxYUm8KYVc1cmNHRmtkREUwYzJkbGJqSnBMbkpsYlc5MFpTNWpjMklnS0VGdGFXNWhJRXRoYldWeWFXTXBNQjRYRFRJMApNRFl5TnpBNU1UTTFObG9YRFRJMk1Ea3lOekE1TVRNMU5sb3djakVuTUNVR0ExVUVDaE1lYld0alpYSjBJR1JsCmRtVnNiM0J0Wlc1MElHTmxjblJwWm1sallYUmxNVWN3UlFZRFZRUUxERDVoYTJGdFpYSnBZMEJoYTJGdFpYSnAKWXkxMGFHbHVhM0JoWkhReE5ITm5aVzR5YVM1eVpXMXZkR1V1WTNOaUlDaEJiV2x1WVNCTFlXMWxjbWxqS1RDQwpBU0l3RFFZSktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ0VCQUx6MHJUZVdXaWJWMmQ1TGFMbVhNL0FkCm1WNTZNR2t4WnRrcXhhait6eWpUSjYySUd3cVFIMDBNYjdLY0wyYm1GK0RHR096M1ZLWkhERk5QV3NBU3FOcFoKeWlmOFNKRFVVTkFGd1lqd0ZoQS9EWjA2dnlsMjNlYlJXaGZJVW1uNjhHWFMxNWZudGZYa3pQSFQrcmFocmRMOApnUmtHbmNyQklSZm9ab3l1WFJ5VDlXYUY2R0ZuRnIzY3I0VjQrSUUxM1cyS1JFVVJlUDdxU2NwK2dmQTl3QXcrCmhYaWo2OVFxWmJxOTM1ZEZ0TVhCeW5XV1RBWHJ0SDl6TkVWTDRuM05Tc29CM01KOHQxbjlSRmVoL0l6UVBLRFoKaDNVZXJPMml6eFVGOU40MzUvNStxclJ0WjJFOGtGVU5YV3lZUWd4Sm04dU5OL3FJZGMzWEp1cXducXl4N2IwQwpBd0VBQWFOb01HWXdEZ1lEVlIwUEFRSC9CQVFEQWdXZ01CTUdBMVVkSlFRTU1Bb0dDQ3NHQVFVRkJ3TUVNQjhHCkExVWRJd1FZTUJhQUZDdE9qTUQyZVZWeGt2Q0YvT2xqQSsrV1FYRDVNQjRHQTFVZEVRUVhNQldCRTJGcllXMWwKY21salFISmxaR2hoZEM1amIyMHdEUVlKS29aSWh2Y05BUUVMQlFBRGdnR0JBR2dLZ1Z0NTFEMmpaS01QQWxUZQpUbVRZOUNVQW8veUtFaEpaeVNuZTY3T3pSNSsvRVhsRWpiWkJkOHJyaC9xcW9uaER4ZmFFM1BXSkdVclZMZXd6Ck1KTE5QZFVtZmRYbXcwdEVIU1VHOVRBSjM1Z2lMZUtpbjJQTytMZk42Z1pyd1VkWWhvSWxySjBFSFgyam1sbWQKUkJoZjhkaTlSelZWSjJFUkpyL3VTNmFCWVB5WERUd1I0Nk1WZ3FaZGFXb2ZuVlhBbUNud3BRM0J5N2tOeTVSZgpMZTN6K3RhZVQ1cG5sR1VoZmltTU9sc1pEanFWajNJaHR0bExBVzlZbGJ6NFlxcmgxbVJjNG5kY2xVbzFXOXdDCjJHU3FhdWNLdUdNQ0p2VmJlUXRMQzBwWUJXdTFQT2N1QmVpM0xzY2U4VHYyQ0VqOHF4c3FtSjdWak0xM0g3Y1kKMWxTSytLb3oycHB3ZWd3WUc2TTdjNUdxNk5XbWF3czg2dTExTFRnQ0phUDFoZTJnWjZ2eTR2eFF3eVcvbWpkTwpWeEx0NHN1UUl3bW4rcCtuK0phTFdBck9oRFFNZEpKSTdtSit5d0lONk1yekc4TXFaK0Y1QzlicUZYVSs4WWFQCm1TUDJPQ3p2YmJESUkyekh0d1kyQ3doZ2FLeHJoV3ZEQjE4TzlSck4va3l2K1E9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
+
+	now1 := time.Now()
+	expirytime := now1.Add(1 * time.Minute)
 	namespaces := []v1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -300,21 +298,38 @@ func TestCertMonitor(t *testing.T) {
 
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: "secret-1", Namespace: "namespace-1"},
-		Data:       map[string][]byte{"key": []byte("value")},
+		Data:       map[string][]byte{"tls.crt": []byte(cert)},
 	}
 
-	certMonitor.handleSecretCreation(secret)
+	certMonitor.handleTestSecretCreation(secret)
 	expectedData := fmt.Sprintf("Handling creation: %s,%s", secret.Namespace, secret.Name)
 	assert.Contains(t, ActualData(), expectedData, "Not found")
 
+	expirationUnix := float64(expirytime.Unix())
+
+	verifyPrometheusMetric(t, "namespace-1", "secret-1", "tls.crt", expirationUnix)
+
 	secretUpdated := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: "secret-2", Namespace: "namespace-2"},
-		Data:       map[string][]byte{"key": []byte("value")},
+		Data:       map[string][]byte{"tls.crt": []byte(cert)},
 	}
-	certMonitor.handleSecretUpdate(secretUpdated)
+	certMonitor.handleTestSecretUpdate(secret, secretUpdated)
 	expectedData = fmt.Sprintf("Handling update: %s,%s", secretUpdated.Namespace, secretUpdated.Name)
 	assert.Contains(t, ActualUpdateData(), expectedData, "Not found")
 
+	certMonitor.handleTestSecretDeletion(secret)
+	expectedData = fmt.Sprintf("Handling delete: %s,%s", secret.Namespace, secret.Name)
+	assert.Contains(t, ActualDeleteData(), expectedData, "Not found")
+
+}
+
+func verifyPrometheusMetric(t *testing.T, namespace, secret, dataKey string, expectedValue float64) {
+	actualValue := testutil.ToFloat64(certificatesExpiry.WithLabelValues(namespace, secret, dataKey))
+	assert.Equal(t, expectedValue, actualValue, "Value does nt match")
+}
+
+func ActualDeleteData() interface{} {
+	return "Handling delete: namespace-1,secret-1"
 }
 
 func ActualUpdateData() interface{} {

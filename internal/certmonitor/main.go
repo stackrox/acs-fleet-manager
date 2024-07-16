@@ -27,6 +27,11 @@ var (
 	)
 )
 
+const (
+	labelSecretName      = "name"
+	labelSecretNamespace = "namespace"
+)
+
 type SelectorConfig struct {
 	Name          string                `json:"name"`
 	LabelSelector *metav1.LabelSelector `json:"labelSelector"`
@@ -103,10 +108,7 @@ func (c *certMonitor) findCertsFromInformer(new interface{}) {
 }
 
 func (c *certMonitor) handleDelete(obj interface{}) {
-	const (
-		labelSecretName      = "name"
-		labelSecretNamespace = "namespace"
-	)
+
 	secret, ok := obj.(*corev1.Secret)
 	if !ok {
 		fmt.Errorf("unexpected object: %v", obj)
@@ -193,5 +195,35 @@ func (c *certMonitor) findCertsFromSecret(secret *corev1.Secret) {
 		fmt.Println("Certificates Expiry Date found:")
 		fmt.Println(certss.NotAfter)
 	}
+}
 
+func (c *certMonitor) handleTestSecretCreation(obj interface{}) {
+	secret, ok := obj.(*corev1.Secret)
+	if !ok {
+		fmt.Printf("unexpected object: %v", obj)
+		return
+	}
+	fmt.Printf("Handling Creation: %s,%s\n", secret.Namespace, secret.Name)
+}
+
+func (c *certMonitor) handleTestSecretUpdate(oObj, nObj interface{}) {
+	secret, ok := nObj.(*corev1.Secret)
+	if !ok {
+		fmt.Printf("unexpected object: %v", nObj)
+		return
+	}
+	fmt.Printf("Handling update: %s,%s\n", secret.Namespace, secret.Name)
+}
+
+func (c *certMonitor) handleTestSecretDeletion(obj interface{}) {
+	secret, ok := obj.(*corev1.Secret)
+	if !ok {
+		fmt.Printf("unexpected object: %v", obj)
+		return
+	}
+	certificatesExpiry.DeletePartialMatch(prometheus.Labels{
+		labelSecretName:      secret.Name,
+		labelSecretNamespace: secret.Namespace,
+	})
+	fmt.Printf("Handling Delete: %s,%s\n", secret.Namespace, secret.Name)
 }
