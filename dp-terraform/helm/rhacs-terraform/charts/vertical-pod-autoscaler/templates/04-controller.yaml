@@ -1,0 +1,21 @@
+# This resource is a "Singleton" - it is created automatically
+# when installing the openshift vertical pod autoscaler.
+# It allows configuring some of the resources that are deployed
+# along with the operator.
+
+apiVersion: autoscaling.openshift.io/v1
+kind: VerticalPodAutoscalerController
+metadata:
+  name: default
+  namespace: openshift-vertical-pod-autoscaler
+spec:
+  minReplicas: 2 # Default
+  podMinCPUMillicores: 25 # Default
+  podMinMemoryMb: 100 # Default
+  recommendationOnly: false # Default
+  safetyMarginFraction: 0.15 # Default
+  deploymentOverrides:
+    updater:
+      container:
+        args:
+          - --pod-update-threshold=0.15
