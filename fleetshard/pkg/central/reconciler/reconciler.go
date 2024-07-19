@@ -49,11 +49,17 @@ const (
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 	envAnnotationKey          = "rhacs.redhat.com/environment"
 	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
+	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
 
 	ovnACLLoggingAnnotationKey     = "k8s.ovn.org/acl-logging"
 	ovnACLLoggingAnnotationDefault = "{\"deny\": \"warning\"}"
 
-	centralExpiredAtKey = "rhacs.redhat.com/expired-at"
+	labelManagedByFleetshardValue = "rhacs-fleetshard"
+	instanceLabelKey              = "app.kubernetes.io/instance"
+	instanceTypeLabelKey          = "rhacs.redhat.com/instance-type"
+	managedByLabelKey             = "app.kubernetes.io/managed-by"
+	orgIDLabelKey                 = "rhacs.redhat.com/org-id"
+	tenantIDLabelKey              = "rhacs.redhat.com/tenant"
 
 	auditLogNotifierKey  = "com.redhat.rhacs.auditLogNotifier"
 	auditLogNotifierName = "Platform Audit Logs"
@@ -1493,6 +1499,35 @@ func (r *CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, nam
 	return r.ensureRouteDeleted(ctx, func() (*openshiftRouteV1.Route, error) {
 		return r.routeService.FindReencryptRoute(ctx, namespace) //nolint:wrapcheck
 	})
+}
+
+func getTenantLabels(c private.ManagedCentral) map[string]string {
+	return map[string]string{
+		managedByLabelKey:    labelManagedByFleetshardValue,
+		instanceLabelKey:     c.Metadata.Name,
+		orgIDLabelKey:        c.Spec.Auth.OwnerOrgId,
+		tenantIDLabelKey:     c.Id,
+		instanceTypeLabelKey: c.Spec.InstanceType,
+	}
+}
+
+func getTenantAnnotations(c private.ManagedCentral) map[string]string {
+	return map[string]string{
+		orgNameAnnotationKey: c.Spec.Auth.OwnerOrgName,
+	}
+}
+
+func getNamespaceLabels(c private.ManagedCentral) map[string]string {
+	return getTenantLabels(c)
+}
+
+func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
+	namespaceAnnotations := getTenantAnnotations(c)
+	if c.Metadata.ExpiredAt != nil {
+		namespaceAnnotations[centralExpiredAtKey] = c.Metadata.ExpiredAt.Format(time.RFC3339)
+	}
+	namespaceAnnotations[ovnACLLoggingAnnotationKey] = ovnACLLoggingAnnotationDefault
+	return namespaceAnnotations
 }
 
 // TODO(ROX-11918): Make hostname configurable on the StackRox operator
