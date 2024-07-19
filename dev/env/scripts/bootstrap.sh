@@ -53,7 +53,6 @@ fi
 if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     operator-sdk olm install
     apply "${MANIFESTS_DIR}/olm-operators"
-    apply "${MANIFESTS_DIR}/monitoring"
     apply "${MANIFESTS_DIR}/prometheus-operator"
     wait_for_crd "prometheuses.monitoring.coreos.com"
     apply "${MANIFESTS_DIR}/argocd-operator"
