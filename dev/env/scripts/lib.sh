@@ -261,6 +261,15 @@ wait_for_container_to_become_ready() {
     return 1
 }
 
+crd_exists() {
+    local crd_name="$1"
+    if $KUBECTL get crd "$crd_name" 2>/dev/null >&2; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 wait_for_crd(){
     local crd_name="$1"
     local seconds="${2:-60}"
