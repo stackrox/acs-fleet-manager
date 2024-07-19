@@ -86,7 +86,6 @@ const (
 )
 
 type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error)
-type needsReconcileFunc func(changed bool, central *v1alpha1.Central, storedSecrets []string) bool
 type restoreCentralSecretsFunc func(ctx context.Context, remoteCentral private.ManagedCentral) error
 type areSecretsStoredFunc func(secretsStored []string) bool
 
@@ -159,6 +158,103 @@ var centralResource = schema.GroupVersionResource{
 	Group:    "platform.stackrox.io",
 	Version:  "v1alpha1",
 	Resource: "centrals",
+}
+
+// Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
+// It tries to create a namespace for the Central and applies necessary updates to the resource.
+// TODO(sbaumer): Check correct Central gets reconciled
+// TODO(sbaumer): Should an initial ManagedCentral be added on reconciler creation?
+func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
+	if !r.lock.TryLock() {
+		return nil, ErrBusy
+	}
+	defer r.lock.Unlock()
+
+	var err error
+
+	glog.Infof("Start reconcile central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
+
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+
+	if remoteCentral.Metadata.DeletionTimestamp != "" {
+		status, err := r.reconcileInstanceDeletion(ctx, &remoteCentral)
+		return status, err
+	}
+
+	changed, err := r.reconcileArgoApplication(ctx, remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(r.tenantImagePullSecret) > 0 {
+		err = r.ensureImagePullSecretConfigured(ctx, remoteCentralNamespace, tenantImagePullSecretName, r.tenantImagePullSecret)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = r.restoreCentralSecretsFunc(ctx, remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.ensureEncryptionKeySecretExists(ctx, remoteCentralNamespace)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
+		return nil, err
+	}
+
+	centralTLSSecretFound := true // pragma: allowlist secret
+	if r.useRoutes {
+		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
+			if k8s.IsCentralTLSNotFound(err) {
+				centralTLSSecretFound = false // pragma: allowlist secret
+			} else {
+				return nil, errors.Wrap(err, "updating routes")
+			}
+		}
+	}
+
+	// Check whether deployment is ready.
+	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral.Metadata.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = r.ensureSecretHasOwnerReference(ctx, k8s.CentralTLSSecretName, &remoteCentral); err != nil {
+		return nil, err
+	}
+
+	if !centralDeploymentReady || !centralTLSSecretFound {
+		if isRemoteCentralProvisioning(remoteCentral) && !changed { // no changes detected, wait until central become ready
+			return nil, ErrCentralNotChanged
+		}
+		return installingStatus(), nil
+	}
+
+	exists, err := r.ensureAuthProviderExists(ctx, remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		glog.Infof("Default auth provider for central %s/%s is not yet ready.",
+			remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
+		return nil, ErrCentralNotChanged
+	}
+
+	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
+	logStatus := *status
+	logStatus.Secrets = obscureSecrets(status.Secrets)
+	glog.Infof("Returning central status %+v", logStatus)
+
+	return status, nil
 }
 
 func (r *CentralReconciler) reconcileNamespace(ctx context.Context, obj private.ManagedCentral) error {
@@ -302,103 +398,6 @@ func (r *CentralReconciler) deleteArgoCdApplication(ctx context.Context, app pri
 		return false, err
 	}
 	return true, nil
-}
-
-// Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
-// It tries to create a namespace for the Central and applies necessary updates to the resource.
-// TODO(sbaumer): Check correct Central gets reconciled
-// TODO(sbaumer): Should an initial ManagedCentral be added on reconciler creation?
-func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
-	if !r.lock.TryLock() {
-		return nil, ErrBusy
-	}
-	defer r.lock.Unlock()
-
-	var err error
-
-	glog.Infof("Start reconcile central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
-
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
-	if remoteCentral.Metadata.DeletionTimestamp != "" {
-		status, err := r.reconcileInstanceDeletion(ctx, &remoteCentral)
-		return status, err
-	}
-
-	changed, err := r.reconcileArgoApplication(ctx, remoteCentral)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(r.tenantImagePullSecret) > 0 {
-		err = r.ensureImagePullSecretConfigured(ctx, remoteCentralNamespace, tenantImagePullSecretName, r.tenantImagePullSecret)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	err = r.restoreCentralSecretsFunc(ctx, remoteCentral)
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.ensureEncryptionKeySecretExists(ctx, remoteCentralNamespace)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
-		return nil, err
-	}
-
-	centralTLSSecretFound := true // pragma: allowlist secret
-	if r.useRoutes {
-		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
-			if k8s.IsCentralTLSNotFound(err) {
-				centralTLSSecretFound = false // pragma: allowlist secret
-			} else {
-				return nil, errors.Wrap(err, "updating routes")
-			}
-		}
-	}
-
-	// Check whether deployment is ready.
-	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral.Metadata.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = r.ensureSecretHasOwnerReference(ctx, k8s.CentralTLSSecretName, &remoteCentral); err != nil {
-		return nil, err
-	}
-
-	if !centralDeploymentReady || !centralTLSSecretFound {
-		if isRemoteCentralProvisioning(remoteCentral) && !changed { // no changes detected, wait until central become ready
-			return nil, ErrCentralNotChanged
-		}
-		return installingStatus(), nil
-	}
-
-	exists, err := r.ensureAuthProviderExists(ctx, remoteCentral)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		glog.Infof("Default auth provider for central %s/%s is not yet ready.",
-			remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
-		return nil, ErrCentralNotChanged
-	}
-
-	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
-	if err != nil {
-		return nil, err
-	}
-
-	logStatus := *status
-	logStatus.Secrets = obscureSecrets(status.Secrets)
-	glog.Infof("Returning central status %+v", logStatus)
-
-	return status, nil
 }
 
 func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
