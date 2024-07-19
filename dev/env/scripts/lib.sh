@@ -261,6 +261,21 @@ wait_for_container_to_become_ready() {
     return 1
 }
 
+wait_for_crd(){
+    local crd_name="$1"
+    local seconds="${2:-60}"
+    log "Waiting for CRD ${crd_name} to be created..."
+    for _ in $(seq "$seconds"); do
+        if $KUBECTL get crd "$crd_name" 2>/dev/null >&2; then
+            log "CRD ${crd_name} appeared"
+            return 0
+        fi
+        sleep 1
+    done
+    log "Giving up after ${seconds}s waiting for CRD ${crd_name}"
+    return 1
+}
+
 wait_for_resource_to_appear() {
     local namespace="$1"
     local kind="$2"
