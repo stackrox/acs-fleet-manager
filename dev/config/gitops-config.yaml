@@ -4,7 +4,7 @@ rhacsOperators:
     - https://raw.githubusercontent.com/stackrox/stackrox/4.4.2/operator/bundle/manifests/platform.stackrox.io_centrals.yaml
   operators:
     - deploymentName: "rhacs-operator-dev"
-      image: "quay.io/rhacs-eng/stackrox-operator:4.6.0-104-g3f337e2dd2"
+      image: "quay.io/rhacs-eng/stackrox-operator:4.4.2"
       centralLabelSelector: "rhacs.redhat.com/version-selector=dev"
       securedClusterReconcilerEnabled: false
 verticalPodAutoscaling:
