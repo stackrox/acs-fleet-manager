@@ -49,6 +49,9 @@ else
     log "Skipping installation of Vertical Pod Autoscaler"
 fi
 
+log "Installing RedHat Catalog Sources"
+apply "${MANIFESTS_DIR}/catalogsources"
+
 # skip manifests if openshift cluster using is_openshift_cluster
 if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     apply "${MANIFESTS_DIR}/monitoring"

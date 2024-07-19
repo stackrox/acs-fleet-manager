@@ -3,22 +3,12 @@ rhacsOperators:
     - https://raw.githubusercontent.com/stackrox/stackrox/4.4.2/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml
     - https://raw.githubusercontent.com/stackrox/stackrox/4.4.2/operator/bundle/manifests/platform.stackrox.io_centrals.yaml
   operators:
-    - deploymentName: "rhacs-operator-4.4.2"
-      image: "quay.io/rhacs-eng/stackrox-operator:4.4.2"
-      centralLabelSelector: "rhacs.redhat.com/version-selector=4.4.2"
+    - deploymentName: "rhacs-operator-dev"
+      image: "quay.io/rhacs-eng/stackrox-operator:4.6.0-104-g3f337e2dd2"
+      centralLabelSelector: "rhacs.redhat.com/version-selector=dev"
       securedClusterReconcilerEnabled: false
 verticalPodAutoscaling:
-  recommenders:
-    - image: registry.redhat.io/openshift4/ose-vertical-pod-autoscaler-rhel9@sha256:d268de83bd371a725c0d0dad8a48008afa982c10e2997b24ff6d139d90d964f6
-      name: vpa-1
-      imagePullSecrets: [{ name: redhat-pull-secret }]
-      recommendationMarginFraction: 0.30
-      podRecommendationMinCpuMillicores: 10
-    - image: registry.redhat.io/openshift4/ose-vertical-pod-autoscaler-rhel9@sha256:d268de83bd371a725c0d0dad8a48008afa982c10e2997b24ff6d139d90d964f6
-      name: vpa-2
-      imagePullSecrets: [{ name: redhat-pull-secret }]
-      recommendationMarginFraction: 0.30
-      podRecommendationMinCpuMillicores: 20
+  recommenders: []
 tenantResources:
   default: |
     labels:
@@ -29,7 +19,7 @@ tenantResources:
       rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
     annotations:
       rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
-    secureTenantNetwork: false
+    secureTenantNetwork: true
     centralRdsCidrBlock: "10.1.0.0/16"
     verticalPodAutoscalers:
       central:

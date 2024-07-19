@@ -10,7 +10,7 @@ import (
 
 func mustGetChart(t *testing.T, name string) *chart.Chart {
 	t.Helper()
-	chartFiles, err := TraverseChart(testdata, fmt.Sprintf("testdata/%s", name))
+	chartFiles, err := traverseChart(testdata, fmt.Sprintf("testdata/%s", name))
 	require.NoError(t, err)
 	chart, err := loader.LoadFiles(chartFiles)
 	require.NoError(t, err)

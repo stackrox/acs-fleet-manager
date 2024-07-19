@@ -151,6 +151,53 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 			CentralCRYAML:         renderedCentral.CentralCRYaml,
 			TenantResourcesValues: renderedCentral.Values,
 			InstanceType:          from.InstanceType,
+			ArgoCDApplication: private.ArgoCdApplication{
+				Metadata: private.Metadata{
+					Name:      from.ID,
+					Namespace: "openshift-gitops",
+				},
+				Spec: private.ArgoCdApplicationSpec{
+					Project: "default",
+					Source: private.ArgoCdApplicationSource{
+						RepoURL:        "https://github.com/ludydoo/acscs-manifests",
+						TargetRevision: "HEAD",
+						Path:           "tenant-resources",
+						Helm: private.ArgoCdApplicationHelm{
+							ReleaseName: from.ID,
+							ValuesObject: map[string]interface{}{
+								"tenant": map[string]interface{}{
+									"name":             from.Name,
+									"organizationName": from.OrganisationName,
+									"instanceType":     from.InstanceType,
+									"organizationId":   from.OrganisationID,
+									"id":               from.ID,
+									"internal":         from.Internal,
+								},
+								"rdsCidrBlock": "10.1.0.0/16",
+							},
+						},
+					},
+					Destination: private.ArgoCdApplicationDestination{
+						Server:    "https://kubernetes.default.svc",
+						Namespace: from.Namespace,
+					},
+					SyncPolicy: private.ArgoCdApplicationSyncPolicy{
+						Automated: private.ArgoCdApplicationAutomatedSyncPolicy{
+							Prune:      true,
+							SelfHeal:   true,
+							AllowEmpty: true,
+						},
+						SyncOptions: []string{
+							"CreateNamespace=true",
+						},
+						ManagedNamespaceMetadata: private.ArgoCdApplicationManagedNamespaceMetadata{
+							Labels: map[string]string{
+								"argocd.argoproj.io/managed-by": "argocd",
+							},
+						},
+					},
+				},
+			},
 		},
 		RequestStatus: from.Status,
 	}
