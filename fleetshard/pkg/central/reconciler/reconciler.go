@@ -17,7 +17,6 @@ import (
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cipher"
@@ -60,6 +59,7 @@ const (
 	managedByLabelKey             = "app.kubernetes.io/managed-by"
 	orgIDLabelKey                 = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey              = "rhacs.redhat.com/tenant"
+	centralExpiredAtKey           = "rhacs.redhat.com/expired-at"
 
 	auditLogNotifierKey  = "com.redhat.rhacs.auditLogNotifier"
 	auditLogNotifierName = "Platform Audit Logs"
@@ -1593,8 +1593,6 @@ func (r *CentralReconciler) needsReconcile(changed bool, central *v1alpha1.Centr
 	forceReconcile, ok := central.Labels["rhacs.redhat.com/force-reconcile"]
 	return ok && forceReconcile == "true"
 }
-
-var resourcesChart = charts.MustGetChart("tenant-resources", nil)
 
 func (r *CentralReconciler) checkSecretExists(
 	ctx context.Context,
