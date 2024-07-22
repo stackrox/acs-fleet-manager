@@ -185,11 +185,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
-	changed, err := r.reconcileArgoApplication(ctx, remoteCentral)
-	if err != nil {
-		return nil, err
-	}
-
 	if len(r.tenantImagePullSecret) > 0 {
 		err = r.ensureImagePullSecretConfigured(ctx, remoteCentralNamespace, tenantImagePullSecretName, r.tenantImagePullSecret)
 		if err != nil {
@@ -212,6 +207,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
+		return nil, err
+	}
+
+	changed, err := r.reconcileArgoApplication(ctx, remoteCentral)
+	if err != nil {
 		return nil, err
 	}
 
