@@ -259,7 +259,8 @@ verify: check-gopath openapi/validate
 		./test/... \
 		./fleetshard/... \
 		./probe/... \
-		./emailsender/...
+		./emailsender/... \
+		./dp-terraform/test/...
 .PHONY: verify
 
 # Runs linter against go files and .y(a)ml files in the templates directory
