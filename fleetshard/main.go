@@ -4,8 +4,17 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
+	"github.com/stackrox/acs-fleet-manager/internal/certmonitor"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -61,6 +70,75 @@ func main() {
 			glog.Fatal(err)
 		}
 	}()
+
+	glog.Info("Creating certMonitor")
+
+	certmonitorConfig := &certmonitor.Config{
+
+		Kubeconfig: filepath.Join(homedir.HomeDir(), ".kube", "config"),
+		Monitors: []certmonitor.MonitorConfig{
+			{
+				Namespace: certmonitor.SelectorConfig{
+					Name: "namespace-three",
+				},
+				Secret: certmonitor.SelectorConfig{
+					Name: "secret-three-cert",
+				},
+			},
+			{
+				Namespace: certmonitor.SelectorConfig{
+					Name: "namespace-four",
+				},
+				Secret: certmonitor.SelectorConfig{
+					Name: "secret-three-cert2",
+				},
+			},
+			{
+				Namespace: certmonitor.SelectorConfig{
+					LabelSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"bar": "qux",
+						},
+					},
+				},
+				Secret: certmonitor.SelectorConfig{
+					Name: "secret-labeled-1",
+				},
+			},
+		},
+	}
+	kubeconfigPath := certmonitorConfig.Kubeconfig
+	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	if err != nil {
+		fmt.Errorf("error building kubeconfig: %s", err.Error())
+	}
+
+	clientset, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		fmt.Errorf("error creating clientset: %s", err.Error())
+	}
+
+	/*
+		if errs := certmonitor.ValidateConfig(*certmonitorConfig); len(errs) != 0 {
+			fmt.Errorf("error validating config:\n")
+			for _, err := range errs {
+				fmt.Printf("%s\n", err)
+			}
+		}
+
+	*/
+
+	informedFactory := informers.NewSharedInformerFactory(clientset, time.Minute)
+	podInformer := informedFactory.Core().V1().Secrets().Informer()
+	namespaceLister := informedFactory.Core().V1().Namespaces().Lister()
+
+	monitor, err := certmonitor.NewCertMonitor(certmonitorConfig, informedFactory, podInformer, namespaceLister)
+	if err != nil {
+		fmt.Printf("Error creating certificate monitor: %v\n", err)
+		os.Exit(1)
+	}
+	stopCh := make(chan struct{})
+	go monitor.StartInformer(stopCh)
 
 	glog.Info("Creating metrics server...")
 	metricServer := fleetshardmetrics.NewMetricsServer(config.MetricsAddress)

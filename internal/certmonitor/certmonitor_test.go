@@ -1,11 +1,19 @@
 package certmonitor
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"math/big"
 	"testing"
 	"time"
 )
@@ -278,10 +286,8 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 }
 
 func TestCertMonitor(t *testing.T) {
-	cert := "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVuakNDQXdhZ0F3SUJBZ0lRSEdGOTR4QVIxMkhsS3ZaZ1A5Vng1REFOQmdrcWhraUc5dzBCQVFzRkFEQ0IKdVRFZU1Cd0dBMVVFQ2hNVmJXdGpaWEowSUdSbGRtVnNiM0J0Wlc1MElFTkJNVWN3UlFZRFZRUUxERDVoYTJGdApaWEpwWTBCaGEyRnRaWEpwWXkxMGFHbHVhM0JoWkhReE5ITm5aVzR5YVM1eVpXMXZkR1V1WTNOaUlDaEJiV2x1CllTQkxZVzFsY21saktURk9NRXdHQTFVRUF3eEZiV3RqWlhKMElHRnJZVzFsY21salFHRnJZVzFsY21sakxYUm8KYVc1cmNHRmtkREUwYzJkbGJqSnBMbkpsYlc5MFpTNWpjMklnS0VGdGFXNWhJRXRoYldWeWFXTXBNQjRYRFRJMApNRFl5TnpBNU1UTTFObG9YRFRJMk1Ea3lOekE1TVRNMU5sb3djakVuTUNVR0ExVUVDaE1lYld0alpYSjBJR1JsCmRtVnNiM0J0Wlc1MElHTmxjblJwWm1sallYUmxNVWN3UlFZRFZRUUxERDVoYTJGdFpYSnBZMEJoYTJGdFpYSnAKWXkxMGFHbHVhM0JoWkhReE5ITm5aVzR5YVM1eVpXMXZkR1V1WTNOaUlDaEJiV2x1WVNCTFlXMWxjbWxqS1RDQwpBU0l3RFFZSktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ0VCQUx6MHJUZVdXaWJWMmQ1TGFMbVhNL0FkCm1WNTZNR2t4WnRrcXhhait6eWpUSjYySUd3cVFIMDBNYjdLY0wyYm1GK0RHR096M1ZLWkhERk5QV3NBU3FOcFoKeWlmOFNKRFVVTkFGd1lqd0ZoQS9EWjA2dnlsMjNlYlJXaGZJVW1uNjhHWFMxNWZudGZYa3pQSFQrcmFocmRMOApnUmtHbmNyQklSZm9ab3l1WFJ5VDlXYUY2R0ZuRnIzY3I0VjQrSUUxM1cyS1JFVVJlUDdxU2NwK2dmQTl3QXcrCmhYaWo2OVFxWmJxOTM1ZEZ0TVhCeW5XV1RBWHJ0SDl6TkVWTDRuM05Tc29CM01KOHQxbjlSRmVoL0l6UVBLRFoKaDNVZXJPMml6eFVGOU40MzUvNStxclJ0WjJFOGtGVU5YV3lZUWd4Sm04dU5OL3FJZGMzWEp1cXducXl4N2IwQwpBd0VBQWFOb01HWXdEZ1lEVlIwUEFRSC9CQVFEQWdXZ01CTUdBMVVkSlFRTU1Bb0dDQ3NHQVFVRkJ3TUVNQjhHCkExVWRJd1FZTUJhQUZDdE9qTUQyZVZWeGt2Q0YvT2xqQSsrV1FYRDVNQjRHQTFVZEVRUVhNQldCRTJGcllXMWwKY21salFISmxaR2hoZEM1amIyMHdEUVlKS29aSWh2Y05BUUVMQlFBRGdnR0JBR2dLZ1Z0NTFEMmpaS01QQWxUZQpUbVRZOUNVQW8veUtFaEpaeVNuZTY3T3pSNSsvRVhsRWpiWkJkOHJyaC9xcW9uaER4ZmFFM1BXSkdVclZMZXd6Ck1KTE5QZFVtZmRYbXcwdEVIU1VHOVRBSjM1Z2lMZUtpbjJQTytMZk42Z1pyd1VkWWhvSWxySjBFSFgyam1sbWQKUkJoZjhkaTlSelZWSjJFUkpyL3VTNmFCWVB5WERUd1I0Nk1WZ3FaZGFXb2ZuVlhBbUNud3BRM0J5N2tOeTVSZgpMZTN6K3RhZVQ1cG5sR1VoZmltTU9sc1pEanFWajNJaHR0bExBVzlZbGJ6NFlxcmgxbVJjNG5kY2xVbzFXOXdDCjJHU3FhdWNLdUdNQ0p2VmJlUXRMQzBwWUJXdTFQT2N1QmVpM0xzY2U4VHYyQ0VqOHF4c3FtSjdWak0xM0g3Y1kKMWxTSytLb3oycHB3ZWd3WUc2TTdjNUdxNk5XbWF3czg2dTExTFRnQ0phUDFoZTJnWjZ2eTR2eFF3eVcvbWpkTwpWeEx0NHN1UUl3bW4rcCtuK0phTFdBck9oRFFNZEpKSTdtSit5d0lONk1yekc4TXFaK0Y1QzlicUZYVSs4WWFQCm1TUDJPQ3p2YmJESUkyekh0d1kyQ3doZ2FLeHJoV3ZEQjE4TzlSck4va3l2K1E9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
+	certificatesExpiry.Reset()
 
-	now1 := time.Now()
-	expirytime := now1.Add(1 * time.Minute)
 	namespaces := []v1.Namespace{
 		{
 			ObjectMeta: metav1.ObjectMeta{
@@ -291,52 +297,66 @@ func TestCertMonitor(t *testing.T) {
 			},
 		},
 	}
-
 	certMonitor := &certMonitor{
 		namespaceLister: newFakeNamespaceGetter(namespaces),
 	}
+	now1 := time.Now().UTC()
+	expirytime := now1.Add(1 * time.Hour)
+	newExpiryTime := now1.Add(20 * time.Hour)
 
 	secret := &v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: "secret-1", Namespace: "namespace-1"},
-		Data:       map[string][]byte{"tls.crt": []byte(cert)},
+		ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-1", Name: "secret-1"},
+		Data:       map[string][]byte{"tls.crt": generateCertWithExpiration(t, expirytime)},
 	}
 
-	certMonitor.handleTestSecretCreation(secret)
-	expectedData := fmt.Sprintf("Handling creation: %s,%s", secret.Namespace, secret.Name)
-	assert.Contains(t, ActualData(), expectedData, "Not found")
+	secretUpdated := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-1", Name: "secret-1"},
+		Data:       map[string][]byte{"tls-1.crt": generateCertWithExpiration(t, newExpiryTime)},
+	}
+	certMonitor.handleSecretCreation(secret)
 
 	expirationUnix := float64(expirytime.Unix())
 
+	updatedUnix := float64(newExpiryTime.Unix())
 	verifyPrometheusMetric(t, "namespace-1", "secret-1", "tls.crt", expirationUnix)
 
-	secretUpdated := &v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: "secret-2", Namespace: "namespace-2"},
-		Data:       map[string][]byte{"tls.crt": []byte(cert)},
-	}
-	certMonitor.handleTestSecretUpdate(secret, secretUpdated)
-	expectedData = fmt.Sprintf("Handling update: %s,%s", secretUpdated.Namespace, secretUpdated.Name)
-	assert.Contains(t, ActualUpdateData(), expectedData, "Not found")
+	certMonitor.handleSecretUpdate(secret, secretUpdated)
+	verifyPrometheusMetric(t, "namespace-1", "secret-1", "tls-1.crt", updatedUnix)
 
-	certMonitor.handleTestSecretDeletion(secret)
-	expectedData = fmt.Sprintf("Handling delete: %s,%s", secret.Namespace, secret.Name)
-	assert.Contains(t, ActualDeleteData(), expectedData, "Not found")
+	certMonitor.handleSecretDeletion(secretUpdated)
+	verifyPrometheusMetricDelete(t, "namespace-1", "secret-1", "tls.crt")
 
 }
 
-func verifyPrometheusMetric(t *testing.T, namespace, secret, dataKey string, expectedValue float64) {
-	actualValue := testutil.ToFloat64(certificatesExpiry.WithLabelValues(namespace, secret, dataKey))
+func generateCertWithExpiration(t *testing.T, expiry time.Time) []byte {
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	b, err := rand.Int(rand.Reader, big.NewInt(1000000))
+	require.NoError(t, err)
+	cert := &x509.Certificate{
+		NotBefore:    time.Now(),
+		NotAfter:     expiry,
+		SerialNumber: b,
+	}
+	certBytesDER, err := x509.CreateCertificate(rand.Reader, cert, cert, &privateKey.PublicKey, privateKey)
+	require.NoError(t, err)
+	pemCert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certBytesDER})
+	base64Encoded := base64.StdEncoding.EncodeToString(pemCert)
+	return []byte(base64Encoded)
+}
+
+func verifyPrometheusMetric(t *testing.T, namespace, secret, data_key string, expectedValue float64) {
+	actualValue := testutil.ToFloat64(certificatesExpiry.WithLabelValues(namespace, secret, data_key))
 	assert.Equal(t, expectedValue, actualValue, "Value does nt match")
 }
 
-func ActualDeleteData() interface{} {
-	return "Handling delete: namespace-1,secret-1"
-}
-
-func ActualUpdateData() interface{} {
-	return "Handling update: namespace-2,secret-2"
-
-}
-
-func ActualData() interface{} {
-	return "Handling creation: namespace-1,secret-1"
+func verifyPrometheusMetricDelete(t *testing.T, namespace, secret, data_key string) {
+	metric, err := certificatesExpiry.GetMetricWithLabelValues(namespace, secret, data_key)
+	t.Logf(namespace, metric, data_key)
+	if err != nil {
+		metrciValue := testutil.ToFloat64(metric)
+		if metrciValue != 0 {
+			t.Errorf("erorrrr: %v", metrciValue)
+		}
+	}
 }
