@@ -25,9 +25,9 @@ func TestHelmTemplate_FleetshardSyncDeployment_ServiceAccountTokenAuthType(t *te
 	require.Equal(t, "fleetshard-sync", container.Name)
 
 	volumes := deployment.Spec.Template.Spec.Volumes
-	require.Equal(t, 2, len(volumes))
-	volume := volumes[1]
-	require.Equal(t, "fleet-manager-token", volume.Name)
+	require.Equal(t, 1, len(volumes))
+	volume := volumes[0]
+	require.Equal(t, "tokens", volume.Name)
 
 	envVars := container.Env
 	require.Equal(t, "SERVICE_ACCOUNT_TOKEN", findEnvVar("AUTH_TYPE", envVars).Value)

@@ -340,7 +340,13 @@ test/integration/dinosaur: $(GOTESTSUM_BIN)
 				./internal/dinosaur/test/integration/...
 .PHONY: test/integration/dinosaur
 
-test/integration: test/integration/dinosaur
+test/dp-terraform: $(GOTESTSUM_BIN)
+	#@helm dependencies build ./dp-terraform/helm/rhacs-terraform
+	$(GOTESTSUM_BIN) --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
+				./dp-terraform/test/...
+.PHONY: test/dp-terraform
+
+test/integration: test/integration/dinosaur test/dp-terraform
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM
