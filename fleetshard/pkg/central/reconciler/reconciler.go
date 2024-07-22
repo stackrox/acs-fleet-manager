@@ -207,6 +207,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
+	if err = r.reconcileCentralDBConfig(ctx, &remoteCentral); err != nil {
+		return nil, err
+	}
+
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
 		return nil, err
 	}
@@ -298,25 +302,6 @@ func (r *CentralReconciler) reconcileNamespace(ctx context.Context, obj private.
 func (r *CentralReconciler) reconcileArgoApplication(ctx context.Context, obj private.ManagedCentral) (bool, error) {
 	app := obj.Spec.ArgoCDApplication
 	app.Metadata.Namespace = "argocd"
-
-	centralDB := map[string]interface{}{}
-
-	if r.managedDBEnabled {
-		centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, &obj)
-		if err != nil {
-			return false, fmt.Errorf("getting Central DB connection string: %w", err)
-		}
-		centralDB["connectionString"] = centralDBConnectionString
-
-		dbCA, err := postgres.GetDatabaseCACertificates()
-		if err != nil {
-			glog.Warningf("Could not read DB server CA bundle: %v", err)
-		} else {
-			centralDB["caCerts"] = []string{string(dbCA)}
-		}
-	}
-
-	app.Spec.Source.Helm.ValuesObject["centralDb"] = centralDB
 
 	app.Spec.Source.Helm.ValuesObject["version"] = "dev"
 
@@ -555,6 +540,34 @@ func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remote
 		return true, nil
 	}
 	return false, nil
+}
+
+func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral *private.ManagedCentral) error {
+	centralDB := map[string]interface{}{}
+	if !r.managedDBEnabled {
+		return nil
+	}
+
+	centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
+	if err != nil {
+		return fmt.Errorf("getting Central DB connection string: %w", err)
+	}
+	centralDB["connectionString"] = centralDBConnectionString
+
+	dbCA, err := postgres.GetDatabaseCACertificates()
+	if err != nil {
+		glog.Warningf("Could not read DB server CA bundle: %v", err)
+	} else {
+		centralDB["caCerts"] = []map[string]string{
+			{
+				"name":    postgres.CentralDatabaseCACertificateBaseName,
+				"content": string(dbCA),
+			},
+		}
+	}
+
+	remoteCentral.Spec.ArgoCDApplication.Spec.Source.Helm.ValuesObject["centralDb"] = centralDB
+	return nil
 }
 
 func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
