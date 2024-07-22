@@ -181,6 +181,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return status, err
 	}
 
+	if err := r.reconcileNamespace(ctx, remoteCentral); err != nil {
+		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
+	}
+
 	changed, err := r.reconcileArgoApplication(ctx, remoteCentral)
 	if err != nil {
 		return nil, err
@@ -294,10 +298,6 @@ func (r *CentralReconciler) reconcileNamespace(ctx context.Context, obj private.
 func (r *CentralReconciler) reconcileArgoApplication(ctx context.Context, obj private.ManagedCentral) (bool, error) {
 	app := obj.Spec.ArgoCDApplication
 	app.Metadata.Namespace = "argocd"
-
-	if err := r.reconcileNamespace(ctx, obj); err != nil {
-		return false, err
-	}
 
 	centralDB := map[string]interface{}{}
 
