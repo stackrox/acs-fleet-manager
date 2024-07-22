@@ -15,7 +15,7 @@ import (
 func TestHelmTemplate_FleetshardSyncDeployment_ServiceAccountTokenAuthType(t *testing.T) {
 	t.Parallel()
 
-	deployment := unmarshalFleetshardSyncDeploymentTemplate(t, map[string]string{
+	deployment := unmarshalFleetshardSyncDeployment(t, map[string]string{
 		"secured-cluster.enabled":          "false",
 		"fleetshardSync.managedDB.enabled": "false",
 		"fleetshardSync.authType":          "SERVICE_ACCOUNT_TOKEN",
@@ -56,7 +56,7 @@ func renderTemplate(t *testing.T, values map[string]string, template string) str
 	return output
 }
 
-func unmarshalFleetshardSyncDeploymentTemplate(t *testing.T, values map[string]string) appsv1.Deployment {
+func unmarshalFleetshardSyncDeployment(t *testing.T, values map[string]string) appsv1.Deployment {
 	output := renderTemplate(t, values, "templates/fleetshard-sync.yaml")
 	var deployment appsv1.Deployment
 	helm.UnmarshalK8SYaml(t, output, &deployment)
@@ -119,7 +119,7 @@ func TestHelmTemplate_FleetshardSyncDeployment_Tenant(t *testing.T) {
 				values["fleetshardSync.tenantImagePullSecret.key"] = tt.key
 			}
 
-			deployment := unmarshalFleetshardSyncDeploymentTemplate(t, values)
+			deployment := unmarshalFleetshardSyncDeployment(t, values)
 			container := deployment.Spec.Template.Spec.Containers[0]
 			require.Equal(t, "fleetshard-sync", container.Name)
 
@@ -190,7 +190,7 @@ func TestHelmTemplate_FleetshardSyncDeployment_Image(t *testing.T) {
 				values["fleetshardSync.image.ref"] = tt.ref
 			}
 
-			deployment := unmarshalFleetshardSyncDeploymentTemplate(t, values)
+			deployment := unmarshalFleetshardSyncDeployment(t, values)
 			container := deployment.Spec.Template.Spec.Containers[0]
 			require.Equal(t, "fleetshard-sync", container.Name)
 			require.Equal(t, tt.wantImage, container.Image)
