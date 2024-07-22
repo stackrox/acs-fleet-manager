@@ -265,40 +265,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	return status, nil
 }
 
-func (r *CentralReconciler) reconcileNamespace(ctx context.Context, obj private.ManagedCentral) error {
-	ns := &corev1.Namespace{}
-	if err := r.client.Get(ctx, ctrlClient.ObjectKey{Name: obj.Metadata.Namespace}, ns); err != nil {
-		if apiErrors.IsNotFound(err) {
-			wantNs := &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: obj.Metadata.Namespace,
-					Labels: map[string]string{
-						"argocd.argoproj.io/managed-by": "argocd",
-					},
-				},
-			}
-			if err := r.client.Create(ctx, wantNs); err != nil {
-				return fmt.Errorf("failed creating namespace %s: %w", obj.Metadata.Namespace, err)
-			}
-		} else {
-			return fmt.Errorf("failed getting namespace %s: %w", obj.Metadata.Namespace, err)
-		}
-	}
-
-	if ns.Labels == nil {
-		ns.Labels = map[string]string{}
-	}
-	if ns.Labels["argocd.argoproj.io/managed-by"] != "argocd" {
-		ns.Labels["argocd.argoproj.io/managed-by"] = "argocd"
-		if err := r.client.Update(ctx, ns); err != nil {
-			return fmt.Errorf("failed updating namespace %s: %w", obj.Metadata.Namespace, err)
-		}
-	}
-
-	return nil
-
-}
-
 func (r *CentralReconciler) reconcileArgoApplication(ctx context.Context, obj private.ManagedCentral) (bool, error) {
 	app := obj.Spec.ArgoCDApplication
 	app.Metadata.Namespace = "argocd"
@@ -1090,6 +1056,40 @@ func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespace
 	}
 
 	return nil
+}
+
+func (r *CentralReconciler) reconcileNamespace(ctx context.Context, obj private.ManagedCentral) error {
+	ns := &corev1.Namespace{}
+	if err := r.client.Get(ctx, ctrlClient.ObjectKey{Name: obj.Metadata.Namespace}, ns); err != nil {
+		if apiErrors.IsNotFound(err) {
+			wantNs := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: obj.Metadata.Namespace,
+					Labels: map[string]string{
+						"argocd.argoproj.io/managed-by": "argocd",
+					},
+				},
+			}
+			if err := r.client.Create(ctx, wantNs); err != nil {
+				return fmt.Errorf("failed creating namespace %s: %w", obj.Metadata.Namespace, err)
+			}
+		} else {
+			return fmt.Errorf("failed getting namespace %s: %w", obj.Metadata.Namespace, err)
+		}
+	}
+
+	if ns.Labels == nil {
+		ns.Labels = map[string]string{}
+	}
+	if ns.Labels["argocd.argoproj.io/managed-by"] != "argocd" {
+		ns.Labels["argocd.argoproj.io/managed-by"] = "argocd"
+		if err := r.client.Update(ctx, ns); err != nil {
+			return fmt.Errorf("failed updating namespace %s: %w", obj.Metadata.Namespace, err)
+		}
+	}
+
+	return nil
+
 }
 
 func (r *CentralReconciler) ensureImagePullSecretConfigured(ctx context.Context, namespaceName string, secretName string, imagePullSecret []byte) error {
