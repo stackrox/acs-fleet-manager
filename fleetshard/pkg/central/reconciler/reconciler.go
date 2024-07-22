@@ -1327,20 +1327,13 @@ func (r *CentralReconciler) centralDBSecretExists(ctx context.Context, remoteCen
 }
 
 func (r *CentralReconciler) centralDBUserExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
-	if err := r.client.Get(ctx, ctrlClient.ObjectKey{Name: remoteCentralNamespace}, &corev1.Namespace{}); err != nil {
-		if apiErrors.IsNotFound(err) {
-			glog.Infof("Namespace %s does not exist", remoteCentralNamespace)
-			return false, nil
-		}
-		return false, fmt.Errorf("getting namespace %s: %w", remoteCentralNamespace, err)
-	}
-
 	secret := &corev1.Secret{}
 	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return false, nil
 		}
+
 		return false, fmt.Errorf("getting central DB secret: %w", err)
 	}
 
