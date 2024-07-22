@@ -696,6 +696,21 @@ func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Co
 	)
 }
 
+func stringMapNeedsUpdating(desired, actual map[string]string) bool {
+	if len(desired) == 0 {
+		return false
+	}
+	if actual == nil {
+		return true
+	}
+	for k, v := range desired {
+		if actual[k] != v {
+			return true
+		}
+	}
+	return false
+}
+
 func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
@@ -1061,38 +1076,52 @@ func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespace
 	return nil
 }
 
-func (r *CentralReconciler) reconcileNamespace(ctx context.Context, obj private.ManagedCentral) error {
-	ns := &corev1.Namespace{}
-	if err := r.client.Get(ctx, ctrlClient.ObjectKey{Name: obj.Metadata.Namespace}, ns); err != nil {
+func (r *CentralReconciler) reconcileNamespace(ctx context.Context, c private.ManagedCentral) error {
+	desiredNamespace := getDesiredNamespace(c)
+
+	existingNamespace, err := r.getNamespace(desiredNamespace.Name)
+	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			wantNs := &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: obj.Metadata.Namespace,
-					Labels: map[string]string{
-						"argocd.argoproj.io/managed-by": "argocd",
-					},
-				},
+			if err := r.client.Create(ctx, desiredNamespace); err != nil {
+				return fmt.Errorf("creating namespace %q: %w", desiredNamespace.Name, err)
 			}
-			if err := r.client.Create(ctx, wantNs); err != nil {
-				return fmt.Errorf("failed creating namespace %s: %w", obj.Metadata.Namespace, err)
-			}
-		} else {
-			return fmt.Errorf("failed getting namespace %s: %w", obj.Metadata.Namespace, err)
+			return nil
 		}
+		return fmt.Errorf("getting namespace %q: %w", desiredNamespace.Name, err)
 	}
 
-	if ns.Labels == nil {
-		ns.Labels = map[string]string{}
-	}
-	if ns.Labels["argocd.argoproj.io/managed-by"] != "argocd" {
-		ns.Labels["argocd.argoproj.io/managed-by"] = "argocd"
-		if err := r.client.Update(ctx, ns); err != nil {
-			return fmt.Errorf("failed updating namespace %s: %w", obj.Metadata.Namespace, err)
+	if stringMapNeedsUpdating(desiredNamespace.Annotations, existingNamespace.Annotations) || stringMapNeedsUpdating(desiredNamespace.Labels, existingNamespace.Labels) {
+		glog.Infof("Updating namespace %q", desiredNamespace.Name)
+		if existingNamespace.Annotations == nil {
+			existingNamespace.Annotations = map[string]string{}
+		}
+		for k, v := range desiredNamespace.Annotations {
+			existingNamespace.Annotations[k] = v
+		}
+		if existingNamespace.Labels == nil {
+			existingNamespace.Labels = map[string]string{}
+		}
+		for k, v := range desiredNamespace.Labels {
+			existingNamespace.Labels[k] = v
+		}
+		if err = r.client.Update(ctx, existingNamespace, &ctrlClient.UpdateOptions{
+			FieldManager: "fleetshard-sync",
+		}); err != nil {
+			return fmt.Errorf("updating namespace %q: %w", desiredNamespace.Name, err)
 		}
 	}
 
 	return nil
+}
 
+func getDesiredNamespace(c private.ManagedCentral) *corev1.Namespace {
+	return &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        c.Metadata.Namespace,
+			Annotations: getNamespaceAnnotations(c),
+			Labels:      getNamespaceLabels(c),
+		},
+	}
 }
 
 func (r *CentralReconciler) ensureImagePullSecretConfigured(ctx context.Context, namespaceName string, secretName string, imagePullSecret []byte) error {
@@ -1564,11 +1593,12 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 
 func getTenantLabels(c private.ManagedCentral) map[string]string {
 	return map[string]string{
-		managedByLabelKey:    labelManagedByFleetshardValue,
-		instanceLabelKey:     c.Metadata.Name,
-		orgIDLabelKey:        c.Spec.Auth.OwnerOrgId,
-		tenantIDLabelKey:     c.Id,
-		instanceTypeLabelKey: c.Spec.InstanceType,
+		managedByLabelKey:               labelManagedByFleetshardValue,
+		instanceLabelKey:                c.Metadata.Name,
+		orgIDLabelKey:                   c.Spec.Auth.OwnerOrgId,
+		tenantIDLabelKey:                c.Id,
+		instanceTypeLabelKey:            c.Spec.InstanceType,
+		"argocd.argoproj.io/managed-by": "argocd",
 	}
 }
 
