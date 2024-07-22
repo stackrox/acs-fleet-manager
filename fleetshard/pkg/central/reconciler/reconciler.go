@@ -1516,35 +1516,6 @@ func (r *CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, nam
 	})
 }
 
-func getTenantLabels(c private.ManagedCentral) map[string]string {
-	return map[string]string{
-		managedByLabelKey:    labelManagedByFleetshardValue,
-		instanceLabelKey:     c.Metadata.Name,
-		orgIDLabelKey:        c.Spec.Auth.OwnerOrgId,
-		tenantIDLabelKey:     c.Id,
-		instanceTypeLabelKey: c.Spec.InstanceType,
-	}
-}
-
-func getTenantAnnotations(c private.ManagedCentral) map[string]string {
-	return map[string]string{
-		orgNameAnnotationKey: c.Spec.Auth.OwnerOrgName,
-	}
-}
-
-func getNamespaceLabels(c private.ManagedCentral) map[string]string {
-	return getTenantLabels(c)
-}
-
-func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
-	namespaceAnnotations := getTenantAnnotations(c)
-	if c.Metadata.ExpiredAt != nil {
-		namespaceAnnotations[centralExpiredAtKey] = c.Metadata.ExpiredAt.Format(time.RFC3339)
-	}
-	namespaceAnnotations[ovnACLLoggingAnnotationKey] = ovnACLLoggingAnnotationDefault
-	return namespaceAnnotations
-}
-
 // TODO(ROX-11918): Make hostname configurable on the StackRox operator
 func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	namespace := remoteCentral.Metadata.Namespace
@@ -1589,6 +1560,35 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 		return false, errors.Wrapf(err, "delete central route %s/%s", route.GetNamespace(), route.GetName())
 	}
 	return false, nil
+}
+
+func getTenantLabels(c private.ManagedCentral) map[string]string {
+	return map[string]string{
+		managedByLabelKey:    labelManagedByFleetshardValue,
+		instanceLabelKey:     c.Metadata.Name,
+		orgIDLabelKey:        c.Spec.Auth.OwnerOrgId,
+		tenantIDLabelKey:     c.Id,
+		instanceTypeLabelKey: c.Spec.InstanceType,
+	}
+}
+
+func getTenantAnnotations(c private.ManagedCentral) map[string]string {
+	return map[string]string{
+		orgNameAnnotationKey: c.Spec.Auth.OwnerOrgName,
+	}
+}
+
+func getNamespaceLabels(c private.ManagedCentral) map[string]string {
+	return getTenantLabels(c)
+}
+
+func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
+	namespaceAnnotations := getTenantAnnotations(c)
+	if c.Metadata.ExpiredAt != nil {
+		namespaceAnnotations[centralExpiredAtKey] = c.Metadata.ExpiredAt.Format(time.RFC3339)
+	}
+	namespaceAnnotations[ovnACLLoggingAnnotationKey] = ovnACLLoggingAnnotationDefault
+	return namespaceAnnotations
 }
 
 func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
