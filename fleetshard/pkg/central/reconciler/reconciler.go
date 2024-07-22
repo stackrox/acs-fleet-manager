@@ -210,6 +210,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
+	if err := r.reconcileAdminPasswordGeneration(&remoteCentral); err != nil {
+		return nil, err
+	}
+
 	changed, err := r.reconcileArgoApplication(ctx, remoteCentral)
 	if err != nil {
 		return nil, err
@@ -478,17 +482,16 @@ func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCen
 	return nil
 }
 
-//
-//func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *v1alpha1.Central) error {
-//	if !r.wantsAuthProvider {
-//		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(false)
-//		glog.Infof("No auth provider desired, enabling basic authentication for Central %s/%s",
-//			central.GetNamespace(), central.GetName())
-//		return nil
-//	}
-//	central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
-//	return nil
-//}
+func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *private.ManagedCentral) error {
+	if !r.wantsAuthProvider {
+		central.Spec.ArgoCDApplication.Spec.Source.Helm.ValuesObject["disableAdminPassword"] = pointer.Bool(false)
+		glog.Infof("No auth provider desired, enabling basic authentication for Central %s/%s",
+			central.Metadata.Namespace, central.Metadata.Name)
+		return nil
+	}
+	central.Spec.ArgoCDApplication.Spec.Source.Helm.ValuesObject["disableAdminPassword"] = pointer.Bool(true)
+	return nil
+}
 
 func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
 	// Short-circuit if an auth provider isn't desired or already exists.
@@ -506,6 +509,20 @@ func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remote
 		return true, nil
 	}
 	return false, nil
+}
+
+func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+
+	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral)
+	if err != nil {
+		return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
+	}
+	if deleted {
+		return deletedStatus(), nil
+	}
+	return nil, ErrDeletionInProgress
 }
 
 func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral *private.ManagedCentral) error {
@@ -534,20 +551,6 @@ func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remote
 
 	remoteCentral.Spec.ArgoCDApplication.Spec.Source.Helm.ValuesObject["centralDb"] = centralDB
 	return nil
-}
-
-func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
-	remoteCentralName := remoteCentral.Metadata.Name
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
-	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral)
-	if err != nil {
-		return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
-	}
-	if deleted {
-		return deletedStatus(), nil
-	}
-	return nil, ErrDeletionInProgress
 }
 
 func getAuditLogNotifierConfig(
