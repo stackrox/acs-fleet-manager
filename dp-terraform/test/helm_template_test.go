@@ -9,19 +9,17 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestHelmTemplate_FleetshardSyncDeployment_ServiceAccountTokenAuthType(t *testing.T) {
 	t.Parallel()
 
-	output := renderTemplate(t, map[string]string{
+	deployment := unmarshalFleetshardSyncDeploymentTemplate(t, map[string]string{
 		"secured-cluster.enabled":          "false",
 		"fleetshardSync.managedDB.enabled": "false",
 		"fleetshardSync.authType":          "SERVICE_ACCOUNT_TOKEN",
 	})
-
-	var deployment appsv1.Deployment
-	helm.UnmarshalK8SYaml(t, output, &deployment)
 
 	container := deployment.Spec.Template.Spec.Containers[0]
 	require.Equal(t, "fleetshard-sync", container.Name)
@@ -42,7 +40,7 @@ func TestHelmTemplate_FleetshardSyncDeployment_ServiceAccountTokenAuthType(t *te
 	require.NotEmpty(t, tokenFile.Value)
 }
 
-func renderTemplate(t *testing.T, values map[string]string) string {
+func renderTemplate(t *testing.T, values map[string]string, template string) string {
 	helmChartPath, err := filepath.Abs("../helm/rhacs-terraform")
 	releaseName := "rhacs-terraform"
 	require.NoError(t, err)
@@ -54,8 +52,15 @@ func renderTemplate(t *testing.T, values map[string]string) string {
 		KubectlOptions: k8s.NewKubectlOptions("", "", namespaceName),
 	}
 
-	output := helm.RenderTemplate(t, options, helmChartPath, releaseName, []string{"templates/fleetshard-sync.yaml"})
+	output := helm.RenderTemplate(t, options, helmChartPath, releaseName, []string{template})
 	return output
+}
+
+func unmarshalFleetshardSyncDeploymentTemplate(t *testing.T, values map[string]string) appsv1.Deployment {
+	output := renderTemplate(t, values, "templates/fleetshard-sync.yaml")
+	var deployment appsv1.Deployment
+	helm.UnmarshalK8SYaml(t, output, &deployment)
+	return deployment
 }
 
 func findEnvVar(name string, envVars []corev1.EnvVar) *corev1.EnvVar {
@@ -114,11 +119,7 @@ func TestHelmTemplate_FleetshardSyncDeployment_Tenant(t *testing.T) {
 				values["fleetshardSync.tenantImagePullSecret.key"] = tt.key
 			}
 
-			output := renderTemplate(t, values)
-
-			var deployment appsv1.Deployment
-			helm.UnmarshalK8SYaml(t, output, &deployment)
-
+			deployment := unmarshalFleetshardSyncDeploymentTemplate(t, values)
 			container := deployment.Spec.Template.Spec.Containers[0]
 			require.Equal(t, "fleetshard-sync", container.Name)
 
@@ -189,14 +190,90 @@ func TestHelmTemplate_FleetshardSyncDeployment_Image(t *testing.T) {
 				values["fleetshardSync.image.ref"] = tt.ref
 			}
 
-			output := renderTemplate(t, values)
-
-			var deployment appsv1.Deployment
-			helm.UnmarshalK8SYaml(t, output, &deployment)
-
+			deployment := unmarshalFleetshardSyncDeploymentTemplate(t, values)
 			container := deployment.Spec.Template.Spec.Containers[0]
 			require.Equal(t, "fleetshard-sync", container.Name)
 			require.Equal(t, tt.wantImage, container.Image)
+		})
+	}
+}
+
+func TestHelmTemplate_ObservabilityCR_blackboxExporterEnabled(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		enabled      string
+		wantDisabled bool
+		wantErr      bool
+	}{
+		{
+			name:         "should disable blackbox exporter by default",
+			wantDisabled: true,
+		},
+		{
+			name:         "should not disable blackbox exporter when the enabled flag is true",
+			enabled:      "true",
+			wantDisabled: false,
+		},
+		{
+			name:         "should disable blackbox exporter when the enabled flag is false",
+			enabled:      "false",
+			wantDisabled: true,
+		},
+		{
+			name:    "should fail when the enabled flag is invalid string",
+			enabled: "wrong",
+			wantErr: true,
+		},
+	}
+
+	// Types are taken from
+	// https://github.com/redhat-developer/observability-operator/blob/main/api/v1/observability_types.go
+	type SelfContained struct {
+		DisableBlackboxExporter *bool `json:"disableBlackboxExporter,omitempty"`
+	}
+	type ObservabilitySpec struct {
+		SelfContained *SelfContained `json:"selfContained,omitempty"`
+	}
+	type Observability struct {
+		metav1.TypeMeta   `json:",inline"`
+		metav1.ObjectMeta `json:"metadata,omitempty"`
+
+		Spec ObservabilitySpec `json:"spec,omitempty"`
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			values := map[string]string{
+				"secured-cluster.enabled":          "false",
+				"fleetshardSync.managedDB.enabled": "false",
+			}
+			if tt.enabled != "" {
+				values["observability.blackboxExporterEnabled"] = tt.enabled
+			}
+
+			releaseName := "rhacs-terraform"
+			namespaceName := "rhacs"
+			helmChartPath, err := filepath.Abs("../helm/rhacs-terraform")
+			require.NoError(t, err)
+
+			options := &helm.Options{
+				SetValues:      values,
+				KubectlOptions: k8s.NewKubectlOptions("", "", namespaceName),
+			}
+
+			output, err := helm.RenderTemplateE(t, options, helmChartPath, releaseName, []string{"charts/observability/templates/01-operator-06-cr.yaml"})
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				var observability Observability
+				helm.UnmarshalK8SYaml(t, output, &observability)
+
+				disablBlackboxExporter := *observability.Spec.SelfContained.DisableBlackboxExporter
+				require.Equal(t, tt.wantDisabled, disablBlackboxExporter)
+			}
 		})
 	}
 }

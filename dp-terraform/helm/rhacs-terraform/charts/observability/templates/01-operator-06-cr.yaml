@@ -19,7 +19,7 @@ spec:
   retention: {{ .Values.retention | quote }}
   selfContained:
     alertManagerConfigSecret: rhacs-alertmanager-configuration
-    disableBlackboxExporter: true
+    disableBlackboxExporter: {{ ne true .Values.blackboxExporterEnabled }}
     # Disable logging features of the operator, because we set up the logging operator
     # ourselves via the logging sub-chart.
     disableLogging: true
