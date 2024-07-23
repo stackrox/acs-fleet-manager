@@ -66,21 +66,16 @@ func main() {
 		fmt.Errorf("error creating clientset: %s", err.Error())
 	}
 
-	/*
-		if errs := certmonitor.ValidateConfig(*config); len(errs) != 0 {
-			fmt.Errorf("error validating config:\n")
-			for _, err := range errs {
-				fmt.Printf("%s\n", err)
-			}
-		}
+	if errs := certmonitor.ValidateConfig(*config); len(errs) != 0 {
+		fmt.Errorf("error validating config:\n")
 
-	*/
+	}
 
-	informedFactory := informers.NewSharedInformerFactory(clientset, resyncPeriod)
-	podInformer := informedFactory.Core().V1().Secrets().Informer()
-	namespaceLister := informedFactory.Core().V1().Namespaces().Lister()
+	informerFactory := informers.NewSharedInformerFactory(clientset, resyncPeriod)
+	podInformer := informerFactory.Core().V1().Secrets().Informer()
+	namespaceLister := informerFactory.Core().V1().Namespaces().Lister()
 
-	monitor, err := certmonitor.NewCertMonitor(config, informedFactory, podInformer, namespaceLister)
+	monitor, err := certmonitor.NewCertMonitor(config, informerFactory, podInformer, namespaceLister)
 	if err != nil {
 		fmt.Printf("Error creating certificate monitor: %v\n", err)
 		os.Exit(1)

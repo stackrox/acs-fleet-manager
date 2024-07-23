@@ -4,16 +4,11 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/stackrox/acs-fleet-manager/internal/certmonitor"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"time"
 
 	"github.com/golang/glog"
@@ -75,7 +70,6 @@ func main() {
 
 	certmonitorConfig := &certmonitor.Config{
 
-		Kubeconfig: filepath.Join(homedir.HomeDir(), ".kube", "config"),
 		Monitors: []certmonitor.MonitorConfig{
 			{
 				Namespace: certmonitor.SelectorConfig{
@@ -107,34 +101,19 @@ func main() {
 			},
 		},
 	}
-	kubeconfigPath := certmonitorConfig.Kubeconfig
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-	if err != nil {
-		fmt.Errorf("error building kubeconfig: %s", err.Error())
+
+	if errs := certmonitor.ValidateConfig(*certmonitorConfig); len(errs) != 0 {
+		glog.Fatalf("certmonitor validation error: %w", errs)
 	}
 
-	clientset, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		fmt.Errorf("error creating clientset: %s", err.Error())
-	}
-
-	/*
-		if errs := certmonitor.ValidateConfig(*certmonitorConfig); len(errs) != 0 {
-			fmt.Errorf("error validating config:\n")
-			for _, err := range errs {
-				fmt.Printf("%s\n", err)
-			}
-		}
-
-	*/
-
-	informedFactory := informers.NewSharedInformerFactory(clientset, time.Minute)
+	k8sInterface := k8s.CreateInterfaceOrDie()
+	informedFactory := informers.NewSharedInformerFactory(k8sInterface, time.Minute)
 	podInformer := informedFactory.Core().V1().Secrets().Informer()
 	namespaceLister := informedFactory.Core().V1().Namespaces().Lister()
 
 	monitor, err := certmonitor.NewCertMonitor(certmonitorConfig, informedFactory, podInformer, namespaceLister)
 	if err != nil {
-		fmt.Printf("Error creating certificate monitor: %v\n", err)
+		glog.Info("Error creating certificate monitor: %v\n", err)
 		os.Exit(1)
 	}
 	stopCh := make(chan struct{})

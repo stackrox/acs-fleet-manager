@@ -18,10 +18,12 @@ import (
 	"time"
 )
 
+// fakeNameSpaceGetter struct is mock implementation for test
 type fakeNamespaceGetter struct {
 	namespaces map[string]v1.Namespace
 }
 
+// Get func returns/gets a namespace by name
 func (f *fakeNamespaceGetter) Get(name string) (*v1.Namespace, error) {
 	ns, ok := f.namespaces[name]
 	if !ok {
@@ -30,6 +32,7 @@ func (f *fakeNamespaceGetter) Get(name string) (*v1.Namespace, error) {
 	return &ns, nil
 }
 
+// newFakeNamespaceGetter func creates new fakeNameSpaceGetter
 func newFakeNamespaceGetter(namespaces []v1.Namespace) *fakeNamespaceGetter {
 	f := fakeNamespaceGetter{namespaces: make(map[string]v1.Namespace)}
 	for _, ns := range namespaces {
@@ -38,6 +41,7 @@ func newFakeNamespaceGetter(namespaces []v1.Namespace) *fakeNamespaceGetter {
 	return &f
 }
 
+// TestCertMonitor_secretMatches func tests the secretMatches method in certmonitor.go
 func TestCertMonitor_secretMatches(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -285,6 +289,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 	}
 }
 
+// TestCertMonitor func tests certificates event handlers + prometheus metrics handling
 func TestCertMonitor(t *testing.T) {
 	certificatesExpiry.Reset()
 
@@ -328,6 +333,7 @@ func TestCertMonitor(t *testing.T) {
 
 }
 
+// generateCertWithExpiration func generates a base64encoded certificate
 func generateCertWithExpiration(t *testing.T, expiry time.Time) []byte {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	require.NoError(t, err)
@@ -345,11 +351,13 @@ func generateCertWithExpiration(t *testing.T, expiry time.Time) []byte {
 	return []byte(base64Encoded)
 }
 
+// verifyPrometheusMetric func verifies if the promethues metric matches the expected value (create + update handle)
 func verifyPrometheusMetric(t *testing.T, namespace, secret, data_key string, expectedValue float64) {
 	actualValue := testutil.ToFloat64(certificatesExpiry.WithLabelValues(namespace, secret, data_key))
 	assert.Equal(t, expectedValue, actualValue, "Value does nt match")
 }
 
+// verifyPrometheusMetricDelete func verifies that the promethues metric has actually been deleted (delete handle)
 func verifyPrometheusMetricDelete(t *testing.T, namespace, secret, data_key string) {
 	metric, err := certificatesExpiry.GetMetricWithLabelValues(namespace, secret, data_key)
 	t.Logf(namespace, metric, data_key)
