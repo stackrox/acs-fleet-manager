@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/golang/glog"
-	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -42,15 +41,15 @@ func (n namespaceReconciler) ensurePresent(ctx context.Context) (context.Context
 			if _, err := n.client.CoreV1().Namespaces().Create(ctx, desiredNamespace, metav1.CreateOptions{
 				FieldManager: fieldManager,
 			}); err != nil {
-				return ctx, fmt.Errorf("creating namespace %q: %w", desiredNamespace.Name, err)
+				return ctx, fmt.Errorf("failed to create namespace %q: %w", desiredNamespace.Name, err)
 			}
 			return ctx, nil
 		}
-		return ctx, fmt.Errorf("getting namespace %q: %w", desiredNamespace.Name, err)
+		return ctx, fmt.Errorf("failed getting namespace %q: %w", desiredNamespace.Name, err)
 	}
 
 	if stringMapNeedsUpdating(desiredNamespace.Annotations, existingNamespace.Annotations) || stringMapNeedsUpdating(desiredNamespace.Labels, existingNamespace.Labels) {
-		glog.Infof("Updating namespace %q", desiredNamespace.Name)
+		glog.Infof("updating namespace %q", desiredNamespace.Name)
 		if existingNamespace.Annotations == nil {
 			existingNamespace.Annotations = map[string]string{}
 		}
@@ -66,7 +65,7 @@ func (n namespaceReconciler) ensurePresent(ctx context.Context) (context.Context
 		if _, err = n.client.CoreV1().Namespaces().Update(ctx, existingNamespace, metav1.UpdateOptions{
 			FieldManager: fieldManager,
 		}); err != nil {
-			return ctx, fmt.Errorf("updating namespace %q: %w", desiredNamespace.Name, err)
+			return ctx, fmt.Errorf("failed to update namespace %q: %w", desiredNamespace.Name, err)
 		}
 	}
 	return ctx, nil
@@ -83,26 +82,28 @@ func (n namespaceReconciler) ensureAbsent(ctx context.Context) (context.Context,
 	defer cancel()
 
 	ticker := time.NewTicker(namespaceDeletionPollInterval)
+	start := time.Now()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx, fmt.Errorf("timeout deleting central namespace %s", namespaceName)
+			return ctx, fmt.Errorf("%v timeout reached while deleting namespace %q", namespaceDeletionTimeout, namespaceName)
 		case <-ticker.C:
 			namespace, err := n.client.CoreV1().Namespaces().Get(ctx, namespaceName, metav1.GetOptions{})
 			if err != nil {
 				if apiErrors.IsNotFound(err) {
+					glog.Infof("namespace %q was successfully deleted after %v", namespaceName, time.Since(start))
 					return ctx, nil
 				}
-				return ctx, errors.Wrapf(err, "deleting central namespace %s", namespaceName)
+				return ctx, fmt.Errorf("failed to delete namespace %q: %w", namespaceName, err)
 			}
 			if namespace.Status.Phase == corev1.NamespaceTerminating {
 				continue
 			}
 			if err := n.client.CoreV1().Namespaces().Delete(ctx, namespaceName, metav1.DeleteOptions{}); err != nil {
-				return ctx, errors.Wrapf(err, "delete central namespace %s", namespaceName)
+				return ctx, fmt.Errorf("failed to delete namespace %q: %w", namespaceName, err)
 			}
-			glog.Infof("Central namespace %s is marked for deletion", namespaceName)
+			glog.Infof("namespace %s was marked for deletion", namespaceName)
 		}
 	}
 }
