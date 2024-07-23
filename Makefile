@@ -259,7 +259,8 @@ verify: check-gopath openapi/validate
 		./test/... \
 		./fleetshard/... \
 		./probe/... \
-		./emailsender/...
+		./emailsender/... \
+		./dp-terraform/test/...
 .PHONY: verify
 
 # Runs linter against go files and .y(a)ml files in the templates directory
@@ -340,7 +341,14 @@ test/integration/dinosaur: $(GOTESTSUM_BIN)
 				./internal/dinosaur/test/integration/...
 .PHONY: test/integration/dinosaur
 
-test/integration: test/integration/dinosaur
+test/dp-terraform: $(GOTESTSUM_BIN)
+	@helm repo add external-secrets "https://charts.external-secrets.io/"
+	@helm dependency build ./dp-terraform/helm/rhacs-terraform
+	$(GOTESTSUM_BIN) --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
+				./dp-terraform/test/...
+.PHONY: test/dp-terraform
+
+test/integration: test/integration/dinosaur test/dp-terraform
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM

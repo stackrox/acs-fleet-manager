@@ -82,3 +82,5 @@ affinity: {}
 tolerations: []
 
 # observability operator doesn't expose nodeSelector
+
+blackboxExporterEnabled: false
