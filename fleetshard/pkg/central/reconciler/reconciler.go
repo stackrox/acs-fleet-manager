@@ -98,6 +98,8 @@ const (
 
 	helmChartLabelKey  = "helm.sh/chart"
 	helmChartNameLabel = "helm.sh/chart-name"
+
+	fieldManager = "fleetshard-sync"
 )
 
 type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error)
@@ -160,6 +162,8 @@ type CentralReconciler struct {
 	areSecretsStoredFunc      areSecretsStoredFunc
 	needsReconcileFunc        needsReconcileFunc
 	restoreCentralSecretsFunc restoreCentralSecretsFunc
+
+	namespaceReconciler reconciler
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -167,6 +171,9 @@ type CentralReconciler struct {
 // TODO(sbaumer): Check correct Central gets reconciled
 // TODO(sbaumer): Should an initial ManagedCentral be added on reconciler creation?
 func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
+
+	ctx = withManagedCentral(ctx, remoteCentral)
+
 	// Only allow to start reconcile function once
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
 		return nil, ErrBusy
@@ -212,7 +219,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return status, err
 	}
 
-	if err := r.reconcileNamespace(ctx, remoteCentral); err != nil {
+	ctx, err = r.namespaceReconciler.ensurePresent(ctx)
+	if err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
@@ -1197,54 +1205,6 @@ func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespace
 	return nil
 }
 
-func (r *CentralReconciler) reconcileNamespace(ctx context.Context, c private.ManagedCentral) error {
-	desiredNamespace := getDesiredNamespace(c)
-
-	existingNamespace, err := r.getNamespace(desiredNamespace.Name)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			if err := r.client.Create(ctx, desiredNamespace); err != nil {
-				return fmt.Errorf("creating namespace %q: %w", desiredNamespace.Name, err)
-			}
-			return nil
-		}
-		return fmt.Errorf("getting namespace %q: %w", desiredNamespace.Name, err)
-	}
-
-	if stringMapNeedsUpdating(desiredNamespace.Annotations, existingNamespace.Annotations) || stringMapNeedsUpdating(desiredNamespace.Labels, existingNamespace.Labels) {
-		glog.Infof("Updating namespace %q", desiredNamespace.Name)
-		if existingNamespace.Annotations == nil {
-			existingNamespace.Annotations = map[string]string{}
-		}
-		for k, v := range desiredNamespace.Annotations {
-			existingNamespace.Annotations[k] = v
-		}
-		if existingNamespace.Labels == nil {
-			existingNamespace.Labels = map[string]string{}
-		}
-		for k, v := range desiredNamespace.Labels {
-			existingNamespace.Labels[k] = v
-		}
-		if err = r.client.Update(ctx, existingNamespace, &ctrlClient.UpdateOptions{
-			FieldManager: "fleetshard-sync",
-		}); err != nil {
-			return fmt.Errorf("updating namespace %q: %w", desiredNamespace.Name, err)
-		}
-	}
-
-	return nil
-}
-
-func getDesiredNamespace(c private.ManagedCentral) *corev1.Namespace {
-	return &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        c.Metadata.Namespace,
-			Annotations: getNamespaceAnnotations(c),
-			Labels:      getNamespaceLabels(c),
-		},
-	}
-}
-
 func (r *CentralReconciler) ensureImagePullSecretConfigured(ctx context.Context, namespaceName string, secretName string, imagePullSecret []byte) error {
 	// Ensure that the secret exists.
 	_, err := r.getSecret(namespaceName, secretName)
@@ -1867,19 +1827,6 @@ func getTenantAnnotations(c private.ManagedCentral) map[string]string {
 	return map[string]string{
 		orgNameAnnotationKey: c.Spec.Auth.OwnerOrgName,
 	}
-}
-
-func getNamespaceLabels(c private.ManagedCentral) map[string]string {
-	return getTenantLabels(c)
-}
-
-func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
-	namespaceAnnotations := getTenantAnnotations(c)
-	if c.Metadata.ExpiredAt != nil {
-		namespaceAnnotations[centralExpiredAtKey] = c.Metadata.ExpiredAt.Format(time.RFC3339)
-	}
-	namespaceAnnotations[ovnACLLoggingAnnotationKey] = ovnACLLoggingAnnotationDefault
-	return namespaceAnnotations
 }
 
 func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Values, error) {
