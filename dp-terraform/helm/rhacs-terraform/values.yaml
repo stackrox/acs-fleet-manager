@@ -8,8 +8,8 @@ fleetshardSync:
     ref: ""
     repo: "quay.io/app-sre/acs-fleet-manager"
     tag: "main"
-  # Can be either OCM, RHSSO, STATIC_TOKEN, SERVICE_ACCOUNT_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses RHSSO.
-  authType: "RHSSO"
+  # Can be either STATIC_TOKEN or SERVICE_ACCOUNT_TOKEN. By default, uses SERVICE_ACCOUNT_TOKEN.
+  authType: "SERVICE_ACCOUNT_TOKEN"
   # OCM refresh token, only required in combination with authType=OCM.
   ocmToken: ""
   fleetManagerEndpoint: ""
@@ -17,16 +17,12 @@ fleetshardSync:
   clusterName: ""
   environment: ""
   # Flag controlling whether tenant's sso.redhat.com auth provider will be initialised by fleetshard-sync.
-  # Currently this functionality is supported only when fleetshard-sync is deployed in the same k8s cluster as tenant.
+  # Currently, this functionality is supported only when fleetshard-sync is deployed in the same k8s cluster as tenant.
   createAuthProvider: true
-  # Static token, only required in combination with authType=STATIC_TOKEN. A sample static token can be found
-  # within Bitwarden (ACS Fleet* static token).
+  # Static token, only required in combination with authType=STATIC_TOKEN.
+  # Static token can be issued by the kubernetes issuer with the following command:
+  # $ kubectl create token -n rhacs fleetshard-sync --audience acs-fleet-manager-private-api
   staticToken: ""
-  # Red Hat SSO secrets, only required in combination with authType=RHSSO. The client credentials can be found within
-  # Bitwarden (ACS RH SSO Fleet* serviceaccount).
-  redHatSSO:
-    endpoint: "https://sso.redhat.com"
-    realm: "redhat-external"
   secureTenantNetwork: false
   auditLogs:
     enabled: true

@@ -60,28 +60,12 @@ spec:
           value: "{{ .Values.fleetshardSync.createAuthProvider }}"
         - name: AUTH_TYPE
           value: {{ .Values.fleetshardSync.authType }}
+        {{- if eq "STATIC_TOKEN" .Values.fleetshardSync.authType }}
         - name: STATIC_TOKEN
           value: {{ .Values.fleetshardSync.staticToken }}
+        {{- end }}
         - name: SECURE_TENANT_NETWORK
           value: {{ .Values.fleetshardSync.secureTenantNetwork | quote }}
-        {{- if eq "RHSSO" .Values.fleetshardSync.authType }}
-        - name: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
-          valueFrom:
-            secretKeyRef:
-              name: fleetshard-sync
-              key: "rhsso-service-account-client-id"
-              optional: false
-        - name: RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: fleetshard-sync
-              key: "rhsso-service-account-client-secret"
-              optional: false
-        - name: RHSSO_REALM
-          value: {{ .Values.fleetshardSync.redHatSSO.realm }}
-        - name: RHSSO_ENDPOINT
-          value: {{ .Values.fleetshardSync.redHatSSO.endpoint }}
-        {{- end }}
         - name: AUDIT_LOG_ENABLED
           value: {{ .Values.fleetshardSync.auditLogs.enabled | quote }}
         - name: AUDIT_LOG_SKIP_TLS_VERIFY

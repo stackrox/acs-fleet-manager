@@ -15,10 +15,7 @@ func TestSingleton_Success(t *testing.T) {
 	assert.Equal(t, cfg.FleetManagerEndpoint, "http://127.0.0.1:8000")
 	assert.Equal(t, cfg.ClusterID, "some-value")
 	assert.Equal(t, cfg.RuntimePollPeriod, 5*time.Second)
-	assert.Equal(t, cfg.AuthType, "RHSSO")
-	assert.Equal(t, cfg.RHSSORealm, "redhat-external")
-	assert.Equal(t, cfg.RHSSOEndpoint, "https://sso.redhat.com")
-	assert.Empty(t, cfg.OCMRefreshToken)
+	assert.Equal(t, cfg.AuthType, "SERVICE_ACCOUNT_TOKEN")
 }
 
 func TestSingleton_Failure(t *testing.T) {
