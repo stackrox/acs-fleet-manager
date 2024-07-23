@@ -4,6 +4,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"k8s.io/client-go/kubernetes"
 	"time"
 
 	"github.com/golang/glog"
@@ -62,10 +63,11 @@ type Runtime struct {
 	encryptionKeyGenerator cipher.KeyGenerator
 	addonService           cluster.AddonService
 	vpaReconciler          *vpaReconciler
+	clientSet              kubernetes.Interface
 }
 
 // NewRuntime creates a new runtime
-func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
+func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient.Client, clientSet kubernetes.Interface) (*Runtime, error) {
 	authOption := fleetmanager.Option{
 		Sso: fleetmanager.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
@@ -117,6 +119,7 @@ func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient
 	return &Runtime{
 		config:                 config,
 		k8sClient:              k8sClient,
+		clientSet:              clientSet,
 		client:                 client,
 		clusterID:              config.ClusterID,
 		dbProvisionClient:      dbProvisionClient,
@@ -178,7 +181,7 @@ func (r *Runtime) Start() error {
 		logger.InfoChangedInt32(&reconciledCentralCountCache, "Received central count changed: received %d centrals", reconciledCentralCountCache)
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
-				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, r.client, central,
+				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, r.clientSet, r.client, central,
 					r.dbProvisionClient, postgres.InitializeDatabase, r.secretCipher, r.encryptionKeyGenerator, reconcilerOpts)
 			}
 

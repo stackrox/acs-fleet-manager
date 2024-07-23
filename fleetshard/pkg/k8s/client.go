@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	verticalpodautoscalingv1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,6 +46,21 @@ func CreateClientOrDie() ctrlClient.Client {
 
 	glog.Infof("Connected to k8s cluster: %s", config.Host)
 	return k8sClient
+}
+
+func CreateClientSetOrDie() kubernetes.Interface {
+	config, err := ctrl.GetConfig()
+	if err != nil {
+		glog.Fatal("failed to get k8s client config", err)
+	}
+
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		glog.Fatal("failed to create k8s client", err)
+	}
+
+	glog.Infof("Connected to k8s cluster: %s", config.Host)
+	return clientSet
 }
 
 // IsRoutesResourceEnabled checks if routes resource are available on the cluster.
