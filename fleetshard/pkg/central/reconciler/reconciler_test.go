@@ -6,6 +6,7 @@ import (
 	"embed"
 	"encoding/base64"
 	"fmt"
+	fake2 "k8s.io/client-go/kubernetes/fake"
 	"net/http"
 	"testing"
 	"time"
@@ -145,8 +146,10 @@ func getClientTrackerAndReconciler(
 	k8sObjects ...client.Object,
 ) (client.WithWatch, *testutils.ReconcileTracker, *CentralReconciler) {
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t, k8sObjects...)
+	fakeClientSet := fake2.NewSimpleClientset()
 	reconciler := NewCentralReconciler(
 		fakeClient,
+		fakeClientSet,
 		fmMocks.NewClientMock().Client(),
 		centralConfig,
 		managedDBClient,
@@ -359,6 +362,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		resourcesChart:         resourcesChart,
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
+		namespaceReconciler:    noopReconciler{},
 	}
 	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
 	r.needsReconcileFunc = r.needsReconcile
@@ -780,41 +784,6 @@ func TestCentralChanged(t *testing.T) {
 			assert.Equal(t, test.want, got)
 		})
 	}
-}
-
-func TestNamespaceLabelsAreSet(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		useRoutesReconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	namespace := &v1.Namespace{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
-	require.NoError(t, err)
-	assert.Equal(t, simpleManagedCentral.Id, namespace.GetLabels()[tenantIDLabelKey])
-	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, namespace.GetLabels()[orgIDLabelKey])
-}
-
-func TestNamespaceAnnotationsAreSet(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		useRoutesReconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	namespace := &v1.Namespace{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
-	require.NoError(t, err)
-	assert.Equal(t, ovnACLLoggingAnnotationDefault, namespace.GetAnnotations()[ovnACLLoggingAnnotationKey])
 }
 
 func TestReportRoutesStatuses(t *testing.T) {

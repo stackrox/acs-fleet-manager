@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"k8s.io/client-go/kubernetes"
 	"reflect"
 	"sort"
 	"sync/atomic"
@@ -130,6 +131,7 @@ type CentralReconcilerOptions struct {
 // in its Reconcile function.
 type CentralReconciler struct {
 	client                 ctrlClient.Client
+	clientSet              kubernetes.Interface
 	fleetmanagerClient     *fleetmanager.Client
 	central                private.ManagedCentral
 	status                 *int32
@@ -2014,13 +2016,14 @@ func findAdditionalAuthProvider(central private.ManagedCentral) *declarativeconf
 }
 
 // NewCentralReconciler ...
-func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleetmanager.Client, central private.ManagedCentral,
+func NewCentralReconciler(k8sClient ctrlClient.Client, clientSet kubernetes.Interface, fleetmanagerClient *fleetmanager.Client, central private.ManagedCentral,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
 	secretCipher cipher.Cipher, encryptionKeyGenerator cipher.KeyGenerator,
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
 	r := &CentralReconciler{
 		client:                 k8sClient,
+		clientSet:              clientSet,
 		fleetmanagerClient:     fleetmanagerClient,
 		central:                central,
 		status:                 pointer.Int32(FreeStatus),
@@ -2045,6 +2048,8 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 
 		resourcesChart: resourcesChart,
 		clock:          realClock{},
+
+		namespaceReconciler: newNamespaceReconciler(clientSet),
 	}
 	r.needsReconcileFunc = r.needsReconcile
 
