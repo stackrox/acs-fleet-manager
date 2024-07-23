@@ -48,9 +48,10 @@ func main() {
 	}
 	glog.Info("Creating k8s client...")
 	k8sClient := k8s.CreateClientOrDie()
+	dynamicClient := k8s.CreateDynamicClientOrDie()
 	ctrl.SetLogger(logger.NewKubeAPILogger())
 	glog.Info("Creating runtime...")
-	runtime, err := runtime.NewRuntime(ctx, config, k8sClient)
+	runtime, err := runtime.NewRuntime(ctx, config, k8sClient, dynamicClient)
 	if err != nil {
 		glog.Fatal(err)
 	}

@@ -4,6 +4,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"k8s.io/client-go/dynamic"
 	"time"
 
 	"github.com/golang/glog"
@@ -55,6 +56,7 @@ type Runtime struct {
 	clusterID              string
 	reconcilers            reconcilerRegistry
 	k8sClient              ctrlClient.Client
+	dynamicClient          dynamic.Interface
 	dbProvisionClient      cloudprovider.DBClient
 	statusResponseCh       chan private.DataPlaneCentralStatus
 	operatorManager        *operator.ACSOperatorManager
@@ -65,7 +67,7 @@ type Runtime struct {
 }
 
 // NewRuntime creates a new runtime
-func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
+func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient.Client, dynamicClient dynamic.Interface) (*Runtime, error) {
 	authOption := fleetmanager.Option{
 		Sso: fleetmanager.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
@@ -117,6 +119,7 @@ func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient
 	return &Runtime{
 		config:                 config,
 		k8sClient:              k8sClient,
+		dynamicClient:          dynamicClient,
 		client:                 client,
 		clusterID:              config.ClusterID,
 		dbProvisionClient:      dbProvisionClient,
@@ -178,7 +181,7 @@ func (r *Runtime) Start() error {
 		logger.InfoChangedInt32(&reconciledCentralCountCache, "Received central count changed: received %d centrals", reconciledCentralCountCache)
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
-				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, r.client, central,
+				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, r.dynamicClient, r.client, central,
 					r.dbProvisionClient, postgres.InitializeDatabase, r.secretCipher, r.encryptionKeyGenerator, reconcilerOpts)
 			}
 

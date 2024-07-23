@@ -332,6 +332,282 @@ components:
       - $ref: '#/components/schemas/ListReference'
       - $ref: '#/components/schemas/ManagedCentralList_allOf'
       description: A list of ManagedCentral
+    Metadata:
+      properties:
+        name:
+          type: string
+        namespace:
+          type: string
+        annotations:
+          additionalProperties:
+            type: string
+          type: object
+        labels:
+          additionalProperties:
+            type: string
+          type: object
+    ArgoCDApplicationSource:
+      properties:
+        repoURL:
+          type: string
+        targetRevision:
+          type: string
+        path:
+          type: string
+        chart:
+          type: string
+        helm:
+          $ref: '#/components/schemas/ArgoCDApplicationHelm'
+    ArgoCDApplicationDestination:
+      properties:
+        server:
+          type: string
+        namespace:
+          type: string
+    ArgoCDApplicationHelmParameter:
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        forceString:
+          type: boolean
+    ArgoCDApplicatioHelmFileParameter:
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+    ArgoCDApplicationKustomizeReplicas:
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+    ArgoCDApplicationJsonnetExternalVariable:
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        code:
+          type: boolean
+    ArgoCDApplicationJsonnetTopLevelArgument:
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        code:
+          type: boolean
+    ArgoCDApplicationJsonnet:
+      properties:
+        extVars:
+          items:
+            $ref: '#/components/schemas/ArgoCDApplicationJsonnetExternalVariable'
+          type: array
+        tlas:
+          items:
+            $ref: '#/components/schemas/ArgoCDApplicationJsonnetTopLevelArgument'
+          type: array
+    ArgoCDApplicationPluginEnvVar:
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+    ArgoCDApplicationPluginParameter:
+      properties:
+        name:
+          type: string
+        string:
+          type: string
+        array:
+          items:
+            type: string
+          type: array
+        map:
+          additionalProperties:
+            type: string
+          type: object
+    ArgoCDApplicationInfo:
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+    ArgoCDApplicationAutomatedSyncPolicy:
+      properties:
+        prune:
+          type: boolean
+        selfHeal:
+          type: boolean
+        allowEmpty:
+          type: boolean
+    ArgoCDApplicationManagedNamespaceMetadata:
+      properties:
+        labels:
+          additionalProperties:
+            type: string
+          type: object
+        annotations:
+          additionalProperties:
+            type: string
+          type: object
+    ArgoCDApplicationSyncPolicyRetryBackoff:
+      properties:
+        duration:
+          type: string
+        factor:
+          type: integer
+        maxDuration:
+          type: string
+    ArgoCDApplicationSyncPolicyRetry:
+      properties:
+        limit:
+          type: integer
+        backoff:
+          $ref: '#/components/schemas/ArgoCDApplicationSyncPolicyRetryBackoff'
+    ArgoCDApplicationSyncPolicy:
+      properties:
+        automated:
+          $ref: '#/components/schemas/ArgoCDApplicationAutomatedSyncPolicy'
+        syncOptions:
+          items:
+            type: string
+          type: array
+        managedNamespaceMetadata:
+          $ref: '#/components/schemas/ArgoCDApplicationManagedNamespaceMetadata'
+        retry:
+          $ref: '#/components/schemas/ArgoCDApplicationSyncPolicyRetry'
+    ArgoCDApplicationIgnoredDifference:
+      properties:
+        group:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+        namespace:
+          type: string
+        jsonPointers:
+          items:
+            type: string
+          type: array
+        jqPathExpressions:
+          items:
+            type: string
+          type: array
+        managedFieldsManagers:
+          items:
+            type: string
+          type: array
+    ArgoCDApplicationHelm:
+      properties:
+        passCredentials:
+          type: boolean
+        parameters:
+          items:
+            $ref: '#/components/schemas/ArgoCDApplicationHelmParameter'
+          type: array
+        fileParameters:
+          items:
+            $ref: '#/components/schemas/ArgoCDApplicatioHelmFileParameter'
+          type: array
+        releaseName:
+          type: string
+        valueFiles:
+          items:
+            type: string
+          type: array
+        ignoreMissingValueFiles:
+          type: boolean
+        skipCrds:
+          type: boolean
+        values:
+          type: string
+        valuesObject:
+          type: object
+    ArgoCDApplicationKustomize:
+      properties:
+        version:
+          type: string
+        namePrefix:
+          type: string
+        nameSuffix:
+          type: string
+        commonLabels:
+          additionalProperties:
+            type: string
+          type: object
+        commonAnnotations:
+          additionalProperties:
+            type: string
+          type: object
+        commonAnnotationsEnvsubst:
+          type: boolean
+        images:
+          items:
+            type: string
+          type: array
+        namespace:
+          type: string
+        replicas:
+          items:
+            $ref: '#/components/schemas/ArgoCDApplicationKustomizeReplicas'
+          type: array
+    ArgoCDApplicationDirectory:
+      properties:
+        recurse:
+          type: boolean
+        jsonnet:
+          $ref: '#/components/schemas/ArgoCDApplicationJsonnet'
+        exclude:
+          type: string
+        include:
+          type: string
+    ArgoCDApplicationPlugin:
+      properties:
+        name:
+          type: string
+        env:
+          items:
+            $ref: '#/components/schemas/ArgoCDApplicationPluginEnvVar'
+          type: array
+        parameters:
+          items:
+            $ref: '#/components/schemas/ArgoCDApplicationPluginParameter'
+          type: array
+    ArgoCDApplicationSpec:
+      properties:
+        project:
+          type: string
+        source:
+          $ref: '#/components/schemas/ArgoCDApplicationSource'
+        sources:
+          items:
+            $ref: '#/components/schemas/ArgoCDApplicationSource'
+          type: array
+        destination:
+          $ref: '#/components/schemas/ArgoCDApplicationDestination'
+        info:
+          items:
+            $ref: '#/components/schemas/ArgoCDApplicationInfo'
+          type: array
+        syncPolicy:
+          $ref: '#/components/schemas/ArgoCDApplicationSyncPolicy'
+        ignoreDifferences:
+          items:
+            $ref: '#/components/schemas/ArgoCDApplicationIgnoredDifference'
+          type: array
+        revisionHistoryLimit:
+          type: integer
+    ArgoCDApplication:
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        spec:
+          $ref: '#/components/schemas/ArgoCDApplicationSpec'
     VerticalPodAutoscaling:
       properties:
         recommenders:
@@ -722,6 +998,8 @@ components:
           type: string
         tenantResourcesValues:
           type: object
+        argoCDApplication:
+          $ref: '#/components/schemas/ArgoCDApplication'
         centralCRYAML:
           type: string
         owners:

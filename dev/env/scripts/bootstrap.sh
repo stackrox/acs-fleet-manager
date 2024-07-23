@@ -51,7 +51,16 @@ fi
 
 # skip manifests if openshift cluster using is_openshift_cluster
 if ! is_openshift_cluster "$CLUSTER_TYPE"; then
-    apply "${MANIFESTS_DIR}/monitoring"
+    if ! crd_exists "subscriptions.operators.coreos.com"; then
+        log "Installing OLM"
+        operator-sdk olm install
+    fi
+    apply "${MANIFESTS_DIR}/olm-operators"
+    apply "${MANIFESTS_DIR}/prometheus-operator"
+    wait_for_crd "prometheuses.monitoring.coreos.com"
+    apply "${MANIFESTS_DIR}/argocd-operator"
+    wait_for_crd "argocds.argoproj.io"
+    apply "${MANIFESTS_DIR}/argocd"
 fi
 
 apply "${MANIFESTS_DIR}/addons"

@@ -15,7 +15,6 @@ import (
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
@@ -30,22 +29,17 @@ import (
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
-	"github.com/stackrox/rox/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
-	"helm.sh/helm/v3/pkg/chart/loader"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	yaml2 "sigs.k8s.io/yaml"
 )
@@ -357,12 +351,10 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		status:                 pointer.Int32(0),
 		client:                 fakeClient,
 		central:                private.ManagedCentral{},
-		resourcesChart:         resourcesChart,
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
 	}
-	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
-	r.needsReconcileFunc = r.needsReconcile
+	r.areSecretsStoredFunc = r.areSecretsStored           //pragma: allowlist secret
 	r.restoreCentralSecretsFunc = r.restoreCentralSecrets //pragma: allowlist secret
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -725,99 +717,6 @@ func TestReconcileDeleteWithManagedDBOverride(t *testing.T) {
 	assert.Len(t, managedDBProvisioningClient.EnsureDBDeprovisionedCalls(), 2)
 }
 
-func TestCentralChanged(t *testing.T) {
-	tests := []struct {
-		name           string
-		lastCentral    *private.ManagedCentral
-		currentCentral private.ManagedCentral
-		want           bool
-	}{
-		{
-			name:           "return true when lastCentral was not set",
-			lastCentral:    nil,
-			currentCentral: simpleManagedCentral,
-			want:           true,
-		},
-		{
-			name:           "return false when lastCentral equal currentCentral",
-			lastCentral:    &simpleManagedCentral,
-			currentCentral: simpleManagedCentral,
-			want:           false,
-		},
-		{
-			name:        "return true when lastCentral not equal currentCentral",
-			lastCentral: &simpleManagedCentral,
-			currentCentral: private.ManagedCentral{
-				Metadata: simpleManagedCentral.Metadata,
-				Spec: private.ManagedCentralAllOfSpec{
-					UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
-						Host: "central.cluster.local",
-					},
-				},
-			},
-			want: true,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			_, _, reconciler := getClientTrackerAndReconciler(
-				t,
-				test.currentCentral,
-				nil,
-				defaultReconcilerOptions,
-				centralDeploymentObject(),
-			)
-
-			if test.lastCentral != nil {
-				centralHash, err := reconciler.computeCentralHash(*test.lastCentral)
-				require.NoError(t, err)
-				reconciler.setLastCentralHash(centralHash)
-			}
-
-			centralHash, err := reconciler.computeCentralHash(test.currentCentral)
-			require.NoError(t, err)
-			got := reconciler.centralChanged(centralHash)
-			assert.Equal(t, test.want, got)
-		})
-	}
-}
-
-func TestNamespaceLabelsAreSet(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		useRoutesReconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	namespace := &v1.Namespace{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
-	require.NoError(t, err)
-	assert.Equal(t, simpleManagedCentral.Id, namespace.GetLabels()[tenantIDLabelKey])
-	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, namespace.GetLabels()[orgIDLabelKey])
-}
-
-func TestNamespaceAnnotationsAreSet(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		useRoutesReconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	namespace := &v1.Namespace{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
-	require.NoError(t, err)
-	assert.Equal(t, ovnACLLoggingAnnotationDefault, namespace.GetAnnotations()[ovnACLLoggingAnnotationKey])
-}
-
 func TestReportRoutesStatuses(t *testing.T) {
 	_, _, r := getClientTrackerAndReconciler(
 		t,
@@ -841,43 +740,6 @@ func TestReportRoutesStatuses(t *testing.T) {
 	}
 	actual := status.Routes
 	assert.ElementsMatch(t, expected, actual)
-}
-
-func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
-	chartFiles, err := charts.TraverseChart(testdata, "testdata/tenant-resources")
-	require.NoError(t, err)
-	chart, err := loader.LoadFiles(chartFiles)
-	require.NoError(t, err)
-
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-	)
-	r.resourcesChart = chart
-
-	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	var dummyObj networkingv1.NetworkPolicy
-	dummyObjKey := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: "dummy"}
-	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
-	assert.NoError(t, err)
-
-	assert.Equal(t, k8s.ManagedByFleetshardValue, dummyObj.GetLabels()[k8s.ManagedByLabelKey])
-
-	deletedCentral := simpleManagedCentral
-	deletedCentral.Metadata.DeletionTimestamp = time.Now().Format(time.RFC3339)
-
-	_, err = r.Reconcile(context.TODO(), deletedCentral)
-	for i := 0; i < 3 && errors.Is(err, ErrDeletionInProgress); i++ {
-		_, err = r.Reconcile(context.TODO(), deletedCentral)
-	}
-	require.NoError(t, err)
-
-	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
-	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
 func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
@@ -907,46 +769,6 @@ func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
 	require.NoError(t, err)
 	expectedKeyLen := 32 // 256 bits key
 	require.Equal(t, expectedKeyLen, len(encKey))
-}
-
-func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
-	chartFiles, err := charts.TraverseChart(testdata, "testdata/tenant-resources")
-	require.NoError(t, err)
-	chart, err := loader.LoadFiles(chartFiles)
-	require.NoError(t, err)
-
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-	)
-	r.resourcesChart = chart
-
-	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	var dummyObj networkingv1.NetworkPolicy
-	dummyObjKey := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: "dummy"}
-	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
-	assert.NoError(t, err)
-
-	dummyObj.SetAnnotations(map[string]string{"dummy-annotation": "test"})
-	err = fakeClient.Update(context.TODO(), &dummyObj)
-	assert.NoError(t, err)
-
-	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
-	assert.NoError(t, err)
-	assert.Equal(t, "test", dummyObj.GetAnnotations()["dummy-annotation"])
-
-	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
-	assert.NoError(t, err)
-
-	// verify that the chart resource was updated, by checking that the manually added annotation
-	// is no longer present
-	assert.Equal(t, "", dummyObj.GetAnnotations()["dummy-annotation"])
 }
 
 func TestTenantNetworkIsSecured(t *testing.T) {
@@ -1187,273 +1009,6 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 			require.Equal(t, tc.expectedTLSKey, reencryptRoute.Spec.TLS.Key)
 			require.Equal(t, tc.expectedPassthroughHost, passthroughRoute.Spec.Host)
 
-		})
-	}
-}
-
-func Test_centralNeedsUpdating(t *testing.T) {
-	var scheme = runtime.NewScheme()
-	utils.Must(clientgoscheme.AddToScheme(scheme))
-	utils.Must(v1alpha1.AddToScheme(scheme))
-
-	var central1 *v1alpha1.Central
-	var central2 *v1alpha1.Central
-
-	setup := func() {
-		objectMeta := metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: "test",
-		}
-		centralSpec1 := v1alpha1.CentralSpec{
-			Central: &v1alpha1.CentralComponentSpec{
-				DeploymentSpec: v1alpha1.DeploymentSpec{
-					Resources: &v1.ResourceRequirements{
-						Limits: v1.ResourceList{
-							v1.ResourceCPU: resource.MustParse("1"),
-						},
-					},
-				},
-			},
-		}
-		centralSpec2 := v1alpha1.CentralSpec{
-			Central: &v1alpha1.CentralComponentSpec{
-				DeploymentSpec: v1alpha1.DeploymentSpec{
-					Resources: &v1.ResourceRequirements{
-						Limits: v1.ResourceList{
-							v1.ResourceCPU: resource.MustParse("2"),
-						},
-					},
-				},
-			},
-		}
-		central1 = &v1alpha1.Central{
-			ObjectMeta: objectMeta,
-			Spec:       centralSpec1,
-		}
-		central2 = &v1alpha1.Central{
-			ObjectMeta: objectMeta,
-			Spec:       centralSpec2,
-		}
-	}
-
-	t.Run("when desired is equal to existing Central, no upgrades are required", func(t *testing.T) {
-		setup()
-		existing := central1.DeepCopy()
-		existing.Annotations = map[string]string{"test": "test"}
-		existing.Labels = map[string]string{"test": "test"}
-		desired := central1.DeepCopy()
-		desired.Annotations = map[string]string{"test": "test"}
-		desired.Labels = map[string]string{"test": "test"}
-		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existing).Build()
-
-		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
-
-		require.NoError(t, err)
-		require.False(t, got)
-	})
-	t.Run("when desired Central spec is different from existing spec, an upgrade is required", func(t *testing.T) {
-		setup()
-		existing := central1.DeepCopy()
-		desired := central2.DeepCopy()
-		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
-
-		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
-
-		require.NoError(t, err)
-		require.True(t, got)
-	})
-	t.Run("when existing central is missing an annotation, an upgrade is required", func(t *testing.T) {
-		setup()
-		existing := central1.DeepCopy()
-		existing.Annotations = map[string]string{"foo": "bar"}
-		desired := central1.DeepCopy()
-		desired.Annotations = map[string]string{"foo": "bar", "bar": "baz"}
-		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
-
-		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
-
-		require.NoError(t, err)
-		require.True(t, got)
-	})
-	t.Run("when existing central is missing a label, an update is required", func(t *testing.T) {
-		setup()
-		existing := central1.DeepCopy()
-		existing.Labels = map[string]string{"foo": "bar"}
-		desired := central1.DeepCopy()
-		desired.Labels = map[string]string{"foo": "bar", "bar": "baz"}
-		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
-
-		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
-
-		require.NoError(t, err)
-		require.True(t, got)
-	})
-	t.Run("when existing central has extra annotations, no upgrade is required", func(t *testing.T) {
-		setup()
-		existing := central1.DeepCopy()
-		existing.Annotations = map[string]string{"foo": "bar", "bar": "baz"}
-		desired := central1.DeepCopy()
-		desired.Annotations = map[string]string{"foo": "bar"}
-		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
-
-		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
-
-		require.NoError(t, err)
-		require.False(t, got)
-	})
-	t.Run("when existing central has extra labels, no upgrade is required", func(t *testing.T) {
-		setup()
-		existing := central1.DeepCopy()
-		existing.Labels = map[string]string{"foo": "bar", "bar": "baz"}
-		desired := central1.DeepCopy()
-		desired.Labels = map[string]string{"foo": "bar"}
-		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
-
-		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
-
-		require.NoError(t, err)
-		require.False(t, got)
-	})
-	t.Run("when existing central is not missing labels, no upgrade is required", func(t *testing.T) {
-		setup()
-		existing := central1.DeepCopy()
-		existing.Labels = map[string]string{"foo": "bar"}
-		desired := central1.DeepCopy()
-		desired.Labels = map[string]string{"foo": "bar"}
-		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
-
-		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
-
-		require.NoError(t, err)
-		require.False(t, got)
-	})
-
-	t.Run("when existing central is not missing annotations, no upgrade is required", func(t *testing.T) {
-		setup()
-		existing := central1.DeepCopy()
-		existing.Annotations = map[string]string{"foo": "bar"}
-		desired := central1.DeepCopy()
-		desired.Annotations = map[string]string{"foo": "bar"}
-		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
-
-		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
-
-		require.NoError(t, err)
-		require.False(t, got)
-	})
-
-}
-
-func Test_mergeLabelsAndAnnotations(t *testing.T) {
-
-	var from *v1alpha1.Central
-	var into *v1alpha1.Central
-
-	setup := func() {
-		from = &v1alpha1.Central{}
-		into = &v1alpha1.Central{}
-	}
-
-	t.Run("when from annotations is nil", func(t *testing.T) {
-		setup()
-		from.Annotations = nil
-		into.Annotations = map[string]string{"bar": "baz"}
-		mergeLabelsAndAnnotations(from, into)
-		require.Equal(t, map[string]string{"bar": "baz"}, into.Annotations)
-	})
-	t.Run("when from annotations is empty", func(t *testing.T) {
-		setup()
-		from.Annotations = map[string]string{}
-		into.Annotations = map[string]string{"bar": "baz"}
-		mergeLabelsAndAnnotations(from, into)
-		require.Equal(t, map[string]string{"bar": "baz"}, into.Annotations)
-	})
-	t.Run("when from annotations has values", func(t *testing.T) {
-		setup()
-		from.Annotations = map[string]string{"foo": "bar"}
-		into.Annotations = map[string]string{"bar": "baz"}
-		mergeLabelsAndAnnotations(from, into)
-		require.Equal(t, map[string]string{"foo": "bar", "bar": "baz"}, into.Annotations)
-	})
-	t.Run("when from labels is nil", func(t *testing.T) {
-		setup()
-		from.Labels = nil
-		into.Labels = map[string]string{"bar": "baz"}
-		mergeLabelsAndAnnotations(from, into)
-		require.Equal(t, map[string]string{"bar": "baz"}, into.Labels)
-	})
-	t.Run("when from labels is empty", func(t *testing.T) {
-		setup()
-		from.Labels = map[string]string{}
-		into.Labels = map[string]string{"bar": "baz"}
-		mergeLabelsAndAnnotations(from, into)
-		require.Equal(t, map[string]string{"bar": "baz"}, into.Labels)
-	})
-	t.Run("when from labels has values", func(t *testing.T) {
-		setup()
-		from.Labels = map[string]string{"foo": "bar"}
-		into.Labels = map[string]string{"bar": "baz"}
-		mergeLabelsAndAnnotations(from, into)
-		require.Equal(t, map[string]string{"foo": "bar", "bar": "baz"}, into.Labels)
-	})
-
-}
-
-func Test_stringMapNeedsUpdating(t *testing.T) {
-	type tc struct {
-		name    string
-		actual  map[string]string
-		desired map[string]string
-		want    bool
-	}
-	tests := []tc{
-		{
-			name:    "both nil",
-			desired: nil,
-			actual:  nil,
-			want:    false,
-		}, {
-			name:    "both empty",
-			desired: map[string]string{},
-			actual:  map[string]string{},
-			want:    false,
-		}, {
-			name:    "desired nil",
-			desired: nil,
-			actual:  map[string]string{"foo": "bar"},
-			want:    false,
-		}, {
-			name:    "actual nil",
-			desired: map[string]string{"foo": "bar"},
-			actual:  nil,
-			want:    true,
-		}, {
-			name:    "desired empty",
-			desired: map[string]string{},
-			actual:  map[string]string{"foo": "bar"},
-			want:    false,
-		}, {
-			name:    "actual empty",
-			desired: map[string]string{"foo": "bar"},
-			actual:  map[string]string{},
-			want:    true,
-		}, {
-			name:    "desired has more keys",
-			desired: map[string]string{"foo": "bar", "bar": "baz"},
-			actual:  map[string]string{"foo": "bar"},
-			want:    true,
-		}, {
-			name:    "actual has more keys",
-			desired: map[string]string{"foo": "bar"},
-			actual:  map[string]string{"foo": "bar", "bar": "baz"},
-			want:    false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := stringMapNeedsUpdating(tt.desired, tt.actual)
-			assert.Equal(t, tt.want, got, tt.name)
 		})
 	}
 }
@@ -2439,10 +1994,6 @@ func TestReconcilerRaceCondition(t *testing.T) {
 	namespace := central1.Metadata.Namespace
 	name := central1.Metadata.Name
 
-	// we mock the "needsReconcileFunc" to only return true when the hash changes
-	r.needsReconcileFunc = func(changed bool, central *v1alpha1.Central, storedSecrets []string) bool {
-		return changed
-	}
 	// we mock the "restoreCentralSecrets" to always succeed
 	r.restoreCentralSecretsFunc = func(ctx context.Context, remoteCentral private.ManagedCentral) error {
 		return nil
@@ -2553,59 +2104,6 @@ func withCpuLimit(t *testing.T, central private.ManagedCentral, cpuLimit string)
 	var clone private.ManagedCentral = central
 	clone.Spec.CentralCRYAML = string(central2Yaml)
 	return clone
-}
-
-func TestChartValues(t *testing.T) {
-
-	r := CentralReconciler{resourcesChart: resourcesChart}
-
-	tests := []struct {
-		name           string
-		managedCentral private.ManagedCentral
-		assertFn       func(t *testing.T, values map[string]interface{}, err error)
-	}{
-		{
-			name: "withTenantResources",
-			managedCentral: private.ManagedCentral{
-				Spec: private.ManagedCentralAllOfSpec{
-					TenantResourcesValues: map[string]interface{}{
-						"verticalPodAutoscalers": map[string]interface{}{
-							"central": map[string]interface{}{
-								"enabled": true,
-								"updatePolicy": map[string]interface{}{
-									"minReplicas": 1,
-								},
-							},
-						},
-					},
-				},
-			},
-			assertFn: func(t *testing.T, values map[string]interface{}, err error) {
-				require.NoError(t, err)
-				verticalPodAutoscalers, ok := values["verticalPodAutoscalers"].(map[string]interface{})
-				require.True(t, ok)
-				central, ok := verticalPodAutoscalers["central"].(map[string]interface{})
-				require.True(t, ok)
-				enabled, ok := central["enabled"].(bool)
-				require.True(t, ok)
-				assert.True(t, enabled)
-
-				updatePolicy, ok := central["updatePolicy"].(map[string]interface{})
-				require.True(t, ok)
-				minReplicas, ok := updatePolicy["minReplicas"].(int)
-				require.True(t, ok)
-				assert.Equal(t, 1, minReplicas)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			values, err := r.chartValues(tt.managedCentral)
-			tt.assertFn(t, values, err)
-		})
-	}
-
 }
 
 func TestEncryptionShaSum(t *testing.T) {
