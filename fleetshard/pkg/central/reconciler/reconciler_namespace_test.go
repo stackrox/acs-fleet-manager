@@ -150,6 +150,15 @@ func TestNamespaceReconciler(t *testing.T) {
 					},
 				},
 			},
+		}, {
+			name: "namespace should not be updated if it being deleted",
+			existingNamespace: &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              simpleManagedCentral.Metadata.Namespace,
+					DeletionTimestamp: &metav1.Time{},
+				},
+			},
+			wantErr: true,
 		},
 	}
 
@@ -158,8 +167,7 @@ func TestNamespaceReconciler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			ctx := context.Background()
-			ctx = withManagedCentral(ctx, managedCentral)
+			ctx := withManagedCentral(context.Background(), managedCentral)
 
 			var existingObjects []runtime.Object
 			if tt.existingNamespace != nil {

@@ -38,6 +38,7 @@ func (n namespaceReconciler) ensurePresent(ctx context.Context) (context.Context
 	existingNamespace, err := n.client.CoreV1().Namespaces().Get(ctx, desiredNamespace.Name, metav1.GetOptions{})
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
+			glog.Infof("creating namespace %q", desiredNamespace.Name)
 			if _, err := n.client.CoreV1().Namespaces().Create(ctx, desiredNamespace, metav1.CreateOptions{
 				FieldManager: fieldManager,
 			}); err != nil {
@@ -46,6 +47,10 @@ func (n namespaceReconciler) ensurePresent(ctx context.Context) (context.Context
 			return ctx, nil
 		}
 		return ctx, fmt.Errorf("failed getting namespace %q: %w", desiredNamespace.Name, err)
+	}
+
+	if existingNamespace.DeletionTimestamp != nil {
+		return ctx, fmt.Errorf("namespace %q is being deleted", desiredNamespace.Name)
 	}
 
 	if stringMapNeedsUpdating(desiredNamespace.Annotations, existingNamespace.Annotations) || stringMapNeedsUpdating(desiredNamespace.Labels, existingNamespace.Labels) {
@@ -78,8 +83,6 @@ func (n namespaceReconciler) ensureAbsent(ctx context.Context) (context.Context,
 	}
 	namespaceName := central.Metadata.Namespace
 
-	glog.Infof("deleting namespace %q", namespaceName)
-
 	ctx, cancel := context.WithTimeout(ctx, namespaceDeletionTimeout)
 	defer cancel()
 
@@ -91,6 +94,7 @@ func (n namespaceReconciler) ensureAbsent(ctx context.Context) (context.Context,
 		case <-ctx.Done():
 			return ctx, fmt.Errorf("%v timeout reached while deleting namespace %q", namespaceDeletionTimeout, namespaceName)
 		case <-ticker.C:
+
 			namespace, err := n.client.CoreV1().Namespaces().Get(ctx, namespaceName, metav1.GetOptions{})
 			if err != nil {
 				if apiErrors.IsNotFound(err) {
@@ -99,10 +103,13 @@ func (n namespaceReconciler) ensureAbsent(ctx context.Context) (context.Context,
 				}
 				return ctx, fmt.Errorf("failed to delete namespace %q: %w", namespaceName, err)
 			}
+
 			if namespace.Status.Phase == corev1.NamespaceTerminating {
-				glog.Infof("namespace %q is still terminating", namespaceName)
+				glog.Infof("namespace %q is still terminating after %v", namespaceName, time.Since(start))
 				continue
 			}
+
+			glog.Infof("deleting namespace %q", namespaceName)
 			if err := n.client.CoreV1().Namespaces().Delete(ctx, namespaceName, metav1.DeleteOptions{}); err != nil {
 				if apiErrors.IsNotFound(err) {
 					glog.Infof("namespace %q was successfully deleted after %v", namespaceName, time.Since(start))
@@ -110,6 +117,7 @@ func (n namespaceReconciler) ensureAbsent(ctx context.Context) (context.Context,
 				}
 				return ctx, fmt.Errorf("failed to delete namespace %q: %w", namespaceName, err)
 			}
+
 			glog.Infof("namespace %s was marked for deletion", namespaceName)
 		}
 	}
