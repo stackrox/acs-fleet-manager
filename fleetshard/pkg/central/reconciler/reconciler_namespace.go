@@ -78,6 +78,8 @@ func (n namespaceReconciler) ensureAbsent(ctx context.Context) (context.Context,
 	}
 	namespaceName := central.Metadata.Namespace
 
+	glog.Infof("deleting namespace %q", namespaceName)
+
 	ctx, cancel := context.WithTimeout(ctx, namespaceDeletionTimeout)
 	defer cancel()
 
@@ -98,9 +100,14 @@ func (n namespaceReconciler) ensureAbsent(ctx context.Context) (context.Context,
 				return ctx, fmt.Errorf("failed to delete namespace %q: %w", namespaceName, err)
 			}
 			if namespace.Status.Phase == corev1.NamespaceTerminating {
+				glog.Infof("namespace %q is still terminating", namespaceName)
 				continue
 			}
 			if err := n.client.CoreV1().Namespaces().Delete(ctx, namespaceName, metav1.DeleteOptions{}); err != nil {
+				if apiErrors.IsNotFound(err) {
+					glog.Infof("namespace %q was successfully deleted after %v", namespaceName, time.Since(start))
+					return ctx, nil
+				}
 				return ctx, fmt.Errorf("failed to delete namespace %q: %w", namespaceName, err)
 			}
 			glog.Infof("namespace %s was marked for deletion", namespaceName)
