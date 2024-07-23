@@ -18,7 +18,6 @@ type namespaceReconciler struct {
 	client kubernetes.Interface
 }
 
-var errNamespaceTerminating = errors.New("namespace is being deleted")
 var namespaceDeletionTimeout = 30 * time.Minute
 var namespaceDeletionPollInterval = 5 * time.Second
 
