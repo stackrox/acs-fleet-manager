@@ -8,7 +8,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/antihax/optional v1.0.0
 	github.com/aws/aws-sdk-go v1.54.7
-	github.com/aws/aws-sdk-go-v2 v1.30.1
+	github.com/aws/aws-sdk-go-v2 v1.30.3
 	github.com/aws/aws-sdk-go-v2/config v1.27.24
 	github.com/aws/aws-sdk-go-v2/service/ses v1.24.1
 	github.com/bxcodec/faker/v3 v3.8.1
