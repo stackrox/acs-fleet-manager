@@ -1119,11 +1119,11 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && chartResourcesDeleted
 
-	nsDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace())
+	ctx, err = r.namespaceReconciler.ensureAbsent(ctx)
 	if err != nil {
 		return false, err
 	}
-	globalDeleted = globalDeleted && nsDeleted
+
 	return globalDeleted, nil
 }
 
@@ -1221,24 +1221,6 @@ func (r *CentralReconciler) ensureImagePullSecretConfigured(ctx context.Context,
 	// We have an IsNotFound error.
 	glog.Infof("Creating image pull secret %s/%s", namespaceName, secretName)
 	return r.createImagePullSecret(ctx, namespaceName, secretName, imagePullSecret)
-}
-
-func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name string) (bool, error) {
-	namespace, err := r.getNamespace(name)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return true, nil
-		}
-		return false, errors.Wrapf(err, "delete central namespace %s", name)
-	}
-	if namespace.Status.Phase == corev1.NamespaceTerminating {
-		return false, nil // Deletion is already in progress, skipping deletion request
-	}
-	if err = r.client.Delete(ctx, namespace); err != nil {
-		return false, errors.Wrapf(err, "delete central namespace %s", name)
-	}
-	glog.Infof("Central namespace %s is marked for deletion", name)
-	return false, nil
 }
 
 func (r *CentralReconciler) ensureEncryptionKeySecretExists(ctx context.Context, remoteCentralNamespace string) error {

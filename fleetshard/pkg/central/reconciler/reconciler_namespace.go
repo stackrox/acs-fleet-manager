@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -12,9 +13,14 @@ import (
 	"time"
 )
 
+// namespaceReconciler is a reconciler that ensures that the namespace for a managed central is present and up-to-date.
 type namespaceReconciler struct {
 	client kubernetes.Interface
 }
+
+var errNamespaceTerminating = errors.New("namespace is being deleted")
+var namespaceDeletionTimeout = 30 * time.Minute
+var namespaceDeletionPollInterval = 5 * time.Second
 
 func newNamespaceReconciler(client kubernetes.Interface) reconciler {
 	return &namespaceReconciler{
@@ -68,7 +74,38 @@ func (n namespaceReconciler) ensurePresent(ctx context.Context) (context.Context
 }
 
 func (n namespaceReconciler) ensureAbsent(ctx context.Context) (context.Context, error) {
-	return ctx, nil
+	central, ok := managedCentralFromContext(ctx)
+	if !ok {
+		return ctx, fmt.Errorf("context does not contain a managed central")
+	}
+	namespaceName := central.Metadata.Namespace
+
+	ctx, cancel := context.WithTimeout(ctx, namespaceDeletionTimeout)
+	defer cancel()
+
+	ticker := time.NewTicker(namespaceDeletionPollInterval)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx, fmt.Errorf("timeout deleting central namespace %s", namespaceName)
+		case <-ticker.C:
+			namespace, err := n.client.CoreV1().Namespaces().Get(ctx, namespaceName, metav1.GetOptions{})
+			if err != nil {
+				if apiErrors.IsNotFound(err) {
+					return ctx, nil
+				}
+				return ctx, errors.Wrapf(err, "deleting central namespace %s", namespaceName)
+			}
+			if namespace.Status.Phase == corev1.NamespaceTerminating {
+				continue
+			}
+			if err := n.client.CoreV1().Namespaces().Delete(ctx, namespaceName, metav1.DeleteOptions{}); err != nil {
+				return ctx, errors.Wrapf(err, "delete central namespace %s", namespaceName)
+			}
+			glog.Infof("Central namespace %s is marked for deletion", namespaceName)
+		}
+	}
 }
 
 func (n namespaceReconciler) makeNamespace(central private.ManagedCentral) *corev1.Namespace {
