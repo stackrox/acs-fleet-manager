@@ -364,6 +364,7 @@ delete_tenant_namespaces() {
     done
     log "Waiting for leftover RHACS namespaces to be deleted... "
     while true; do
+        # Filter regex is based on https://github.com/rs/xid
         central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | grep -E '^rhacs-[0-9a-v]{20}$' || true)
         if [[ "$central_namespaces" ]]; then
             central_namespaces_short=$(echo "$central_namespaces" | tr '\n' " ")
