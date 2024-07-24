@@ -63,11 +63,8 @@ $ export KUBECONFIG=/your/kubeconfig
 # Bootstrap the environment
 $ make deploy/bootstrap
 
-# Sets up database, starts fleet-manager
+# Sets up database, starts fleet-manager and fleetshard-sync
 $ make deploy/dev
-
-# Start fleetshard-sync
-$ OCM_TOKEN=$(ocm token --refresh) AUTH_TYPE=OCM CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
 
 # To create a central instance
 $ ./scripts/create-central.sh

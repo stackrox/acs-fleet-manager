@@ -203,8 +203,10 @@ func (ic *IAMConfig) ReadFiles() error {
 			return err
 		}
 	}
-	if err := readIssuersFile(ic.DataPlaneOIDCIssuers.File, ic.DataPlaneOIDCIssuers); err != nil {
-		return err
+	if len(ic.DataPlaneOIDCIssuers.URIs) == 0 {
+		if err := readIssuersFile(ic.DataPlaneOIDCIssuers.File, ic.DataPlaneOIDCIssuers); err != nil {
+			return err
+		}
 	}
 	if len(ic.DataPlaneOIDCIssuers.JWKSURIs) == 0 {
 		if err := ic.DataPlaneOIDCIssuers.resolveURIs(); err != nil {

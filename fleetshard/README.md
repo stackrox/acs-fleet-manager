@@ -52,33 +52,21 @@ to inject the necessary environment variables to the fleetshard-sync application
 ## Authentication types
 
 Fleetshard sync provides different authentication types that can be used when calling the fleet manager's API.
-
-### Red Hat SSO
-
-This is the default authentication type used.
-To run fleetshard-sync with RH SSO, use the following command:
-```shell
-./dev/env/scripts/exec_fleetshard_sync.sh
-```
-
-### OCM Refresh token
-
-To run fleetshard-sync with the OCM refresh token, use the following:
-```shell
-OCM_TOKEN=$(ocm token --refresh) \
-AUTH_TYPE=OCM \
-./dev/env/scripts/exec_fleetshard_sync.sh
-```
+Fleet manager in dev environment trusts the local cluster issuer or the issuer of the cluster selected in the kubeconfig file.
 
 ### Static token
+Use kubernetes service account token as an environment variable
 
-A static token has been created which is non-expiring. The JWKS certs are by default added to fleet manager.
-The token's claims can be viewed under `config/static-token-payload.json`.
-You can either generate your own token following the documentation under `docs/acs/test-locally-static-token.md` or
-use the token found within Bitwarden (`ACS Fleet* static token`):
 ```
-STATIC_TOKEN=<generated value | bitwarden value> \
+STATIC_TOKEN=$(kubectl create token -n rhacs fleetshard-sync --audience acs-fleet-manager-private-api --duration 8760h) \
 AUTH_TYPE=STATIC_TOKEN \
+./dev/env/scripts/exec_fleetshard_sync.sh
+```
+### Service account token file
+Save kubernetes service account token as file
+```
+export FLEET_MANAGER_TOKEN_FILE=./secrets/fleetshard-sync-sa-token
+kubectl create token -n rhacs fleetshard-sync --audience acs-fleet-manager-private-api --duration 8760h > $FLEET_MANAGER_TOKEN_FILE
 ./dev/env/scripts/exec_fleetshard_sync.sh
 ```
 

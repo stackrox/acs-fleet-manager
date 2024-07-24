@@ -23,8 +23,11 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	corev1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -56,6 +59,11 @@ var _ = Describe("Central", Ordered, func() {
 	var privateAPI fleetmanager.PrivateAPI
 	var notes []string
 	var ctx = context.Background()
+	var serviceAccountToken string
+
+	BeforeAll(func() {
+		serviceAccountToken = createServiceAccountToken(context.Background())
+	})
 
 	BeforeEach(func() {
 		SkipIf(!runCentralTests, "Skipping Central tests")
@@ -73,11 +81,8 @@ var _ = Describe("Central", Ordered, func() {
 		Expect(err).ToNot(HaveOccurred())
 		adminAPI = adminClient.AdminAPI()
 
-		privateAPIAuth, err := fmImpl.NewRHSSOAuth(context.Background(), fmImpl.RHSSOOption{
-			ClientID:     option.Sso.ClientID,
-			ClientSecret: option.Sso.ClientSecret, // pragma: allowlist secret
-			Realm:        option.Sso.Realm,
-			Endpoint:     option.Sso.Endpoint,
+		privateAPIAuth, err := fmImpl.NewStaticAuth(context.Background(), fmImpl.StaticOption{
+			StaticToken: serviceAccountToken,
 		})
 		Expect(err).ToNot(HaveOccurred())
 		privateClient, err := fmImpl.NewClient(fleetManagerEndpoint, privateAPIAuth)
@@ -560,4 +565,35 @@ func assertEqualSecrets(actualSecrets, expectedSecrets map[string]*corev1.Secret
 		expectedData := expectedSecrets[secretName].Data
 		Expect(actualData).To(Equal(expectedData))
 	}
+}
+
+func ensureTestServiceAccountExists(ctx context.Context, sa *corev1.ServiceAccount) error {
+	if err := k8sClient.Update(ctx, sa); err != nil {
+		if !k8sErrors.IsNotFound(err) {
+			return err
+		}
+	} else {
+		return nil
+	}
+	return k8sClient.Create(ctx, sa)
+}
+
+func createServiceAccountToken(ctx context.Context) string {
+	sa := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      "e2e-tests",
+		},
+	}
+	Expect(ensureTestServiceAccountExists(context.Background(), sa)).To(Succeed())
+
+	token := &authenticationv1.TokenRequest{
+		Spec: authenticationv1.TokenRequestSpec{
+			Audiences:         []string{"acs-fleet-manager-private-api"},
+			ExpirationSeconds: pointer.Int64(6 * 60 * 60), // 6 hours.
+		},
+	}
+	err := k8sClient.SubResource("token").Create(ctx, sa, token)
+	Expect(err).ToNot(HaveOccurred())
+	return token.Status.Token
 }

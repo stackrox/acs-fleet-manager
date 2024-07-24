@@ -1,12 +1,12 @@
 package integration
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
 
-	"github.com/golang-jwt/jwt/v4"
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -14,11 +14,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
-)
-
-const (
-	issuerURL = "https://sso.redhat.com/auth/realms/redhat-external"
-	orgID     = "16134752"
 )
 
 func mockedClusterWithMetricsInfo(computeNodes int) (*clustersmgmtv1.Cluster, error) {
@@ -43,13 +38,7 @@ func TestDataPlaneClusterStatus(t *testing.T) {
 	defer tearDown()
 
 	clusterID := api.NewID()
-	account := h.NewAllowedServiceAccount()
-	claims := jwt.MapClaims{
-		"iss":    issuerURL,
-		"org_id": orgID,
-	}
-	ctx := h.NewAuthenticatedContext(account, claims)
-	token := h.CreateJWTStringWithClaim(account, claims)
+	token := h.CreateDataPlaneJWTString()
 
 	config := private.NewConfiguration()
 	config.BasePath = fmt.Sprintf("http://%s", test.TestServices.ServerConfig.BindAddress)
@@ -76,7 +65,7 @@ func TestDataPlaneClusterStatus(t *testing.T) {
 	err = db.Create(cluster).Error
 	Expect(err).NotTo(HaveOccurred())
 
-	resp, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, clusterID, private.DataPlaneClusterUpdateStatusRequest{
+	resp, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(context.Background(), clusterID, private.DataPlaneClusterUpdateStatusRequest{
 		Addons: []private.DataPlaneClusterUpdateStatusRequestAddons{
 			{
 				Id:                  "acs-fleetshard",

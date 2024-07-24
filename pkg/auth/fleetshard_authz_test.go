@@ -14,7 +14,6 @@ func TestFleetShardAuthZConfig_ReadFiles(t *testing.T) {
 	}
 	err := c.ReadFiles()
 	Expect(err).ToNot(HaveOccurred())
-	Expect(c.AllowedOrgIDs).To(Equal(ClaimValues{"12345678"}))
 	Expect(c.AllowedSubjects).To(Equal(ClaimValues{"test-sub"}))
 	Expect(c.AllowedAudiences).To(Equal(ClaimValues{"test-aud"}))
 }

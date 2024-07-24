@@ -25,12 +25,7 @@ type Config struct {
 	ClusterName             string        `env:"CLUSTER_NAME"`
 	Environment             string        `env:"ENVIRONMENT"`
 	RuntimePollPeriod       time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
-	AuthType                string        `env:"AUTH_TYPE" envDefault:"RHSSO"`
-	RHSSOClientID           string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
-	RHSSOClientSecret       string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
-	RHSSORealm              string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
-	RHSSOEndpoint           string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
-	OCMRefreshToken         string        `env:"OCM_TOKEN"`
+	AuthType                string        `env:"AUTH_TYPE" envDefault:"SERVICE_ACCOUNT_TOKEN"`
 	StaticToken             string        `env:"STATIC_TOKEN"`
 	ServiceAccountTokenFile string        `env:"FLEET_MANAGER_TOKEN_FILE"`
 	CreateAuthProvider      bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`

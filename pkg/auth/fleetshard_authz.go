@@ -23,7 +23,6 @@ func (v ClaimValues) Contains(value string) bool {
 type FleetShardAuthZConfig struct {
 	Enabled          bool        `yaml:"-"`
 	File             string      `yaml:"-"`
-	AllowedOrgIDs    ClaimValues `yaml:"allowed_org_ids"`
 	AllowedSubjects  ClaimValues `yaml:"allowed_subjects"`
 	AllowedAudiences ClaimValues `yaml:"allowed_audiences"`
 }

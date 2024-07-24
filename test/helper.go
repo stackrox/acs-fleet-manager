@@ -40,8 +40,9 @@ import (
 )
 
 const (
-	jwtKeyFile = "test/support/jwt_private_key.pem"
-	jwtCAFile  = "test/support/jwt_ca.pem"
+	jwtKeyFile         = "test/support/jwt_private_key.pem"
+	jwtCAFile          = "test/support/jwt_ca.pem"
+	dataplaneIssuerURI = "https://dataplane.issuer.test.local"
 )
 
 // TODO jwk mock server needs to be refactored out of the helper and into the testing environment
@@ -131,9 +132,14 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
 	iamConfig.JwksURL = jwkURL
-	iamConfig.DataPlaneOIDCIssuers.JWKSURIs = []string{
-		jwkURL,
-		"https://dummy", // append https endpoint to the end to exploit a bug in ocm-sdk that allows to use insecure http endpoints.
+	iamConfig.DataPlaneOIDCIssuers = &iam.OIDCIssuers{
+		URIs: []string{
+			dataplaneIssuerURI,
+		},
+		JWKSURIs: []string{
+			jwkURL,
+			"https://dummy", // append https endpoint to the end to exploit a bug in ocm-sdk that allows to use insecure http endpoints.
+		},
 	}
 
 	file := testutils.CreateNonEmptyFile(t)
@@ -372,6 +378,20 @@ func (helper *Helper) CreateJWTStringWithClaim(account *amv1.Account, jwtClaims 
 // CreateJWTToken ...
 func (helper *Helper) CreateJWTToken(account *amv1.Account, jwtClaims jwt.MapClaims) *jwt.Token {
 	token, err := helper.AuthHelper.CreateJWTWithClaims(account, jwtClaims)
+	if err != nil {
+		helper.T.Errorf("Failed to create jwt token: %s", err.Error())
+	}
+	return token
+}
+
+// CreateDataPlaneJWTString creates a new JWT token for the dataplane (fleetshard) authorization
+func (helper *Helper) CreateDataPlaneJWTString() string {
+	claims := jwt.MapClaims{
+		"iss": dataplaneIssuerURI,
+		"aud": "acs-fleet-manager-private-api",
+		"sub": "system:serviceaccount:rhacs:integration-tests",
+	}
+	token, err := helper.AuthHelper.CreateSignedJWT(nil, claims)
 	if err != nil {
 		helper.T.Errorf("Failed to create jwt token: %s", err.Error())
 	}

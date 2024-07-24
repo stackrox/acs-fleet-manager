@@ -352,7 +352,8 @@ is_openshift_cluster() {
 }
 
 delete_tenant_namespaces() {
-    central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[?(@.status.phase == "Active")]}{.metadata.name}{"\n"}{end}' | grep '^rhacs-.*$' || true)
+    # Filter regex is based on https://github.com/rs/xid
+    central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[?(@.status.phase == "Active")]}{.metadata.name}{"\n"}{end}' | grep -E '^rhacs-[0-9a-v]{20}$' || true)
     if [[ ! "$central_namespaces" ]]; then
         log "No left-over RHACS tenant namespaces to be deleted."
         return
@@ -363,7 +364,8 @@ delete_tenant_namespaces() {
     done
     log "Waiting for leftover RHACS namespaces to be deleted... "
     while true; do
-        central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | grep '^rhacs-.*$' || true)
+        # Filter regex is based on https://github.com/rs/xid
+        central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | grep -E '^rhacs-[0-9a-v]{20}$' || true)
         if [[ "$central_namespaces" ]]; then
             central_namespaces_short=$(echo "$central_namespaces" | tr '\n' " ")
             log "Waiting for RHACS tenant namespaces to be deleted: $central_namespaces_short ..."
