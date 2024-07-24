@@ -360,6 +360,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
 		namespaceReconciler:    noopReconciler{},
+		pullSecretReconciler:   noopReconciler{}, // pragma: allowlist secret
 	}
 	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
 	r.needsReconcileFunc = r.needsReconcile
