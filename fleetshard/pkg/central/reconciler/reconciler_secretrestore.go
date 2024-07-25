@@ -10,9 +10,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"net/http"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type centralGetter interface {
@@ -20,12 +19,12 @@ type centralGetter interface {
 }
 
 type secretRestoreReconciler struct {
-	client             kubernetes.Interface
+	client             ctrlClient.Client
 	fleetManagerClient centralGetter
 	secretCipher       cipher.Cipher
 }
 
-func newSecretRestoreReconciler(client kubernetes.Interface, fleetManagerClient centralGetter, secretCipher cipher.Cipher) reconciler {
+func newSecretRestoreReconciler(client ctrlClient.Client, fleetManagerClient centralGetter, secretCipher cipher.Cipher) reconciler {
 	return &secretRestoreReconciler{
 		client:             client,
 		fleetManagerClient: fleetManagerClient,
@@ -45,7 +44,8 @@ func (s secretRestoreReconciler) ensurePresent(ctx context.Context) (context.Con
 	restoreSecrets := []string{}
 
 	for _, secretName := range central.Metadata.SecretsStored { // pragma: allowlist secret
-		_, err := s.client.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
+		objectKey := ctrlClient.ObjectKey{Namespace: namespace, Name: secretName}
+		err := s.client.Get(ctx, objectKey, &corev1.Secret{})
 		if err == nil {
 			// secret already exists
 			continue
@@ -78,11 +78,10 @@ func (s secretRestoreReconciler) ensurePresent(ctx context.Context) (context.Con
 			return ctx, fmt.Errorf("failed to find secret %s in decrypted secret map", secretName)
 		}
 
-		_, err = s.client.CoreV1().Secrets(namespace).Create(ctx, secretToRestore, metav1.CreateOptions{})
+		err = s.client.Create(ctx, secretToRestore)
 		if err != nil {
 			return ctx, fmt.Errorf("failed to recreate secret %s for central %s: %w", secretName, centralID, err)
 		}
-
 	}
 
 	return ctx, nil

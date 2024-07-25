@@ -160,8 +160,9 @@ type CentralReconciler struct {
 	needsReconcileFunc        needsReconcileFunc
 	restoreCentralSecretsFunc restoreCentralSecretsFunc
 
-	namespaceReconciler  reconciler
-	pullSecretReconciler reconciler
+	namespaceReconciler     reconciler
+	pullSecretReconciler    reconciler
+	secretRestoreReconciler reconciler
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -1988,8 +1989,9 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		resourcesChart: resourcesChart,
 		clock:          realClock{},
 
-		namespaceReconciler:  newNamespaceReconciler(k8sClient),
-		pullSecretReconciler: newPullSecretReconciler(k8sClient, central.Metadata.Namespace, []byte(opts.TenantImagePullSecret)),
+		namespaceReconciler:     newNamespaceReconciler(k8sClient),
+		pullSecretReconciler:    newPullSecretReconciler(k8sClient, central.Metadata.Namespace, []byte(opts.TenantImagePullSecret)),
+		secretRestoreReconciler: newSecretRestoreReconciler(k8sClient, fleetmanagerClient.PrivateAPI(), secretCipher),
 	}
 	r.needsReconcileFunc = r.needsReconcile
 

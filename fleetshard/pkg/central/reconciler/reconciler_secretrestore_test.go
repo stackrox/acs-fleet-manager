@@ -8,10 +8,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/fake"
 	"net/http"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	fake2 "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 )
 
@@ -121,7 +121,7 @@ func Test_secretRestoreReconciler(t *testing.T) {
 			ctx := context.Background()
 			ctx = withManagedCentral(ctx, tc.buildCentral())
 
-			fakeClient := fake.NewSimpleClientset(tc.mockObjects...)
+			fakeClient := fake2.NewFakeClient(tc.mockObjects...)
 			centralGetter := mockCentralGetter{getCentralFn: tc.getCentralFn}
 
 			r := newSecretRestoreReconciler(fakeClient, centralGetter, testCipher)
@@ -137,7 +137,8 @@ func Test_secretRestoreReconciler(t *testing.T) {
 			for _, obj := range tc.expectedObjects {
 				wantObj, ok := obj.(*corev1.Secret)
 				require.True(t, ok, "expected object is not a Secret")
-				_, err := fakeClient.CoreV1().Secrets(wantObj.GetNamespace()).Get(context.Background(), wantObj.GetName(), metav1.GetOptions{})
+				objectKey := ctrlClient.ObjectKey{Namespace: wantObj.GetNamespace(), Name: wantObj.GetName()}
+				err := fakeClient.Get(context.Background(), objectKey, &corev1.Secret{})
 				require.NoErrorf(t, err, "finding expected object %s/%s", wantObj.GetNamespace(), wantObj.GetName())
 			}
 
