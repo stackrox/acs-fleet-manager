@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"embed"
-	"encoding/base64"
 	"fmt"
 	"testing"
 	"time"
@@ -25,7 +24,6 @@ import (
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	fmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/mocks"
-	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/utils"
@@ -360,6 +358,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		namespaceReconciler:     noopReconciler{},
 		pullSecretReconciler:    noopReconciler{}, // pragma: allowlist secret
 		secretRestoreReconciler: noopReconciler{}, // pragma: allowlist secret
+		encryptionKeyReconciler: noopReconciler{},
 	}
 	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
 	r.needsReconcileFunc = r.needsReconcile
@@ -842,35 +841,6 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 
 	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
 	assert.True(t, k8sErrors.IsNotFound(err))
-}
-
-func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	var centralEncryptionSecret v1.Secret
-	key := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: centralEncryptionKeySecretName}
-	err = fakeClient.Get(context.TODO(), key, &centralEncryptionSecret)
-	require.NoError(t, err)
-	require.Contains(t, centralEncryptionSecret.Data, "key-chain.yaml")
-
-	var keyChain centralNotifierUtils.KeyChain
-	err = yaml.Unmarshal(centralEncryptionSecret.Data["key-chain.yaml"], &keyChain)
-	require.NoError(t, err)
-	require.Equal(t, 0, keyChain.ActiveKeyIndex)
-	require.Equal(t, 1, len(keyChain.KeyMap))
-
-	encKey, err := base64.StdEncoding.DecodeString(keyChain.KeyMap[keyChain.ActiveKeyIndex])
-	require.NoError(t, err)
-	expectedKeyLen := 32 // 256 bits key
-	require.Equal(t, expectedKeyLen, len(encKey))
 }
 
 func TestChartResourcesAreAddedAndUpdated(t *testing.T) {

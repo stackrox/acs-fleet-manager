@@ -28,7 +28,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
-	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/maputil"
@@ -85,8 +84,6 @@ const (
 	centralDbSecretName        = "central-db-password" // pragma: allowlist secret
 	centralDbOverrideConfigMap = "central-db-override"
 	centralDeletePollInterval  = 5 * time.Second
-
-	centralEncryptionKeySecretName = "central-encryption-key-chain" // pragma: allowlist secret
 
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
 	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
@@ -161,6 +158,7 @@ type CentralReconciler struct {
 	namespaceReconciler     reconciler
 	pullSecretReconciler    reconciler
 	secretRestoreReconciler reconciler
+	encryptionKeyReconciler reconciler
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -231,9 +229,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrap(err, "ensuring secrets are present")
 	}
 
-	err = r.ensureEncryptionKeySecretExists(ctx, remoteCentralNamespace)
+	ctx, err = r.encryptionKeyReconciler.ensurePresent(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "ensuring encryption key is present")
 	}
 
 	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
@@ -1112,51 +1110,6 @@ func (r *CentralReconciler) getSecret(namespaceName string, secretName string) (
 	return secret, nil
 }
 
-func (r *CentralReconciler) ensureEncryptionKeySecretExists(ctx context.Context, remoteCentralNamespace string) error {
-	return r.ensureSecretExists(ctx, remoteCentralNamespace, centralEncryptionKeySecretName, r.populateEncryptionKeySecret)
-}
-
-func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) error {
-	const encryptionKeyChainFile = "key-chain.yaml"
-
-	if secret.Data != nil {
-		if _, ok := secret.Data[encryptionKeyChainFile]; ok {
-			// secret already populated with encryption key skip operation
-			return nil
-		}
-	}
-
-	encryptionKey, err := r.encryptionKeyGenerator.Generate()
-	if err != nil {
-		return fmt.Errorf("generating encryption key: %w", err)
-	}
-
-	b64Key := base64.StdEncoding.EncodeToString(encryptionKey)
-	keyChainFile, err := generateNewKeyChainFile(b64Key)
-	if err != nil {
-		return err
-	}
-	secret.Data = map[string][]byte{encryptionKeyChainFile: keyChainFile}
-	return nil
-}
-
-func generateNewKeyChainFile(b64Key string) ([]byte, error) {
-	keyMap := make(map[int]string)
-	keyMap[0] = b64Key
-
-	keyChain := centralNotifierUtils.KeyChain{
-		KeyMap:         keyMap,
-		ActiveKeyIndex: 0,
-	}
-
-	yamlBytes, err := yaml.Marshal(keyChain)
-	if err != nil {
-		return []byte{}, fmt.Errorf("generating key-chain file: %w", err)
-	}
-
-	return yamlBytes, nil
-}
-
 func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral *private.ManagedCentral) (string, error) {
 	centralDBUserExists, err := r.centralDBUserExists(ctx, remoteCentral.Metadata.Namespace)
 	if err != nil {
@@ -1921,6 +1874,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		namespaceReconciler:     newNamespaceReconciler(k8sClient),
 		pullSecretReconciler:    newPullSecretReconciler(k8sClient, central.Metadata.Namespace, []byte(opts.TenantImagePullSecret)),
 		secretRestoreReconciler: newSecretRestoreReconciler(k8sClient, fleetmanagerClient.PrivateAPI(), secretCipher),
+		encryptionKeyReconciler: newEncryptionKeyReconciler(k8sClient, encryptionKeyGenerator),
 	}
 	r.needsReconcileFunc = r.needsReconcile
 
