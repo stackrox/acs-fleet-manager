@@ -154,7 +154,6 @@ type CentralReconciler struct {
 	wantsAuthProvider      bool
 	hasAuthProvider        bool
 	verifyAuthProviderFunc verifyAuthProviderExistsFunc
-	tenantImagePullSecret  []byte
 	clock                  clock
 
 	areSecretsStoredFunc      areSecretsStoredFunc
@@ -223,11 +222,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
-	if len(r.tenantImagePullSecret) > 0 {
-		err = r.ensureImagePullSecretConfigured(ctx, remoteCentralNamespace, tenantImagePullSecretName, r.tenantImagePullSecret)
-		if err != nil {
-			return nil, err
-		}
+	ctx, err = r.pullSecretReconciler.ensurePresent(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "ensuring pull secret is present")
 	}
 
 	err = r.restoreCentralSecretsFunc(ctx, remoteCentral)
@@ -1185,41 +1182,6 @@ func (r *CentralReconciler) getSecret(namespaceName string, secretName string) (
 	return secret, nil
 }
 
-func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespaceName string, secretName string, imagePullSecretJSON []byte) error {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespaceName,
-			Name:      secretName,
-		},
-		Type: "kubernetes.io/dockerconfigjson",
-		Data: map[string][]byte{
-			".dockerconfigjson": imagePullSecretJSON,
-		},
-	}
-
-	if err := r.client.Create(ctx, secret); err != nil {
-		return errors.Wrapf(err, "creating image pull secret %s/%s", namespaceName, secretName)
-	}
-
-	return nil
-}
-
-func (r *CentralReconciler) ensureImagePullSecretConfigured(ctx context.Context, namespaceName string, secretName string, imagePullSecret []byte) error {
-	// Ensure that the secret exists.
-	_, err := r.getSecret(namespaceName, secretName)
-	if err == nil {
-		// Secret exists already.
-		return nil
-	}
-	if !apiErrors.IsNotFound(err) {
-		// Unexpected error.
-		return errors.Wrapf(err, "retrieving secret %s/%s", namespaceName, secretName)
-	}
-	// We have an IsNotFound error.
-	glog.Infof("Creating image pull secret %s/%s", namespaceName, secretName)
-	return r.createImagePullSecret(ctx, namespaceName, secretName, imagePullSecret)
-}
-
 func (r *CentralReconciler) ensureEncryptionKeySecretExists(ctx context.Context, remoteCentralNamespace string) error {
 	return r.ensureSecretExists(ctx, remoteCentralNamespace, centralEncryptionKeySecretName, r.populateEncryptionKeySecret)
 }
@@ -2022,7 +1984,6 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		managedDBInitFunc:           managedDBInitFunc,
 
 		verifyAuthProviderFunc: hasAuthProvider,
-		tenantImagePullSecret:  []byte(opts.TenantImagePullSecret),
 
 		resourcesChart: resourcesChart,
 		clock:          realClock{},
