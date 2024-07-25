@@ -41,7 +41,7 @@ func (e encryptionKeyReconciler) ensurePresent(ctx context.Context) (context.Con
 
 	namespace := central.Metadata.Namespace
 	secret := &corev1.Secret{}
-	secretName := centralEncryptionKeySecretName                              //pragma: allowlist secret
+	secretName := centralEncryptionKeySecretName                              // pragma: allowlist secret
 	secretKey := ctrlClient.ObjectKey{Name: secretName, Namespace: namespace} // pragma: allowlist secret
 
 	err := e.client.Get(ctx, secretKey, secret) // pragma: allowlist secret
