@@ -8,19 +8,19 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 )
 
 // namespaceReconciler is a reconciler that ensures that the namespace for a managed central is present and up-to-date.
 type namespaceReconciler struct {
-	client kubernetes.Interface
+	client ctrlClient.Client
 }
 
 var namespaceDeletionTimeout = 30 * time.Minute
-var namespaceDeletionPollInterval = 5 * time.Second
+var namespaceDeletionPollInterval = 1 * time.Second
 
-func newNamespaceReconciler(client kubernetes.Interface) reconciler {
+func newNamespaceReconciler(client ctrlClient.Client) reconciler {
 	return &namespaceReconciler{
 		client: client,
 	}
@@ -35,13 +35,13 @@ func (n namespaceReconciler) ensurePresent(ctx context.Context) (context.Context
 	}
 	desiredNamespace := n.makeNamespace(central)
 
-	existingNamespace, err := n.client.CoreV1().Namespaces().Get(ctx, desiredNamespace.Name, metav1.GetOptions{})
+	var existingNamespace corev1.Namespace
+
+	err := n.client.Get(ctx, ctrlClient.ObjectKey{Name: desiredNamespace.Name}, &existingNamespace)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			glog.Infof("creating namespace %q", desiredNamespace.Name)
-			if _, err := n.client.CoreV1().Namespaces().Create(ctx, desiredNamespace, metav1.CreateOptions{
-				FieldManager: fieldManager,
-			}); err != nil {
+			if err := n.client.Create(ctx, desiredNamespace, ctrlClient.FieldOwner(fieldManager)); err != nil {
 				return ctx, fmt.Errorf("failed to create namespace %q: %w", desiredNamespace.Name, err)
 			}
 			return ctx, nil
@@ -67,9 +67,7 @@ func (n namespaceReconciler) ensurePresent(ctx context.Context) (context.Context
 		for k, v := range desiredNamespace.Labels {
 			existingNamespace.Labels[k] = v
 		}
-		if _, err = n.client.CoreV1().Namespaces().Update(ctx, existingNamespace, metav1.UpdateOptions{
-			FieldManager: fieldManager,
-		}); err != nil {
+		if err = n.client.Update(ctx, &existingNamespace, ctrlClient.FieldOwner(fieldManager)); err != nil {
 			return ctx, fmt.Errorf("failed to update namespace %q: %w", desiredNamespace.Name, err)
 		}
 	}
@@ -87,6 +85,7 @@ func (n namespaceReconciler) ensureAbsent(ctx context.Context) (context.Context,
 	defer cancel()
 
 	ticker := time.NewTicker(namespaceDeletionPollInterval)
+	defer ticker.Stop()
 	start := time.Now()
 
 	for {
@@ -94,33 +93,39 @@ func (n namespaceReconciler) ensureAbsent(ctx context.Context) (context.Context,
 		case <-ctx.Done():
 			return ctx, fmt.Errorf("%v timeout reached while deleting namespace %q", namespaceDeletionTimeout, namespaceName)
 		case <-ticker.C:
-
-			namespace, err := n.client.CoreV1().Namespaces().Get(ctx, namespaceName, metav1.GetOptions{})
-			if err != nil {
-				if apiErrors.IsNotFound(err) {
-					glog.Infof("namespace %q was successfully deleted after %v", namespaceName, time.Since(start))
-					return ctx, nil
-				}
-				return ctx, fmt.Errorf("failed to delete namespace %q: %w", namespaceName, err)
+			if deleted, err := n.tryDelete(ctx, start, namespaceName); deleted || err != nil {
+				return ctx, err
 			}
-
-			if namespace.Status.Phase == corev1.NamespaceTerminating {
-				glog.Infof("namespace %q is still terminating after %v", namespaceName, time.Since(start))
-				continue
-			}
-
-			glog.Infof("deleting namespace %q", namespaceName)
-			if err := n.client.CoreV1().Namespaces().Delete(ctx, namespaceName, metav1.DeleteOptions{}); err != nil {
-				if apiErrors.IsNotFound(err) {
-					glog.Infof("namespace %q was successfully deleted after %v", namespaceName, time.Since(start))
-					return ctx, nil
-				}
-				return ctx, fmt.Errorf("failed to delete namespace %q: %w", namespaceName, err)
-			}
-
-			glog.Infof("namespace %s was marked for deletion", namespaceName)
 		}
 	}
+}
+
+func (n namespaceReconciler) tryDelete(ctx context.Context, start time.Time, namespaceName string) (bool, error) {
+	var namespace corev1.Namespace
+	if err := n.client.Get(ctx, ctrlClient.ObjectKey{Name: namespaceName}, &namespace); err != nil {
+		if apiErrors.IsNotFound(err) {
+			glog.Infof("namespace %q was successfully deleted after %v", namespaceName, time.Since(start))
+			return true, nil
+		}
+		return false, fmt.Errorf("failed to delete namespace %q: %w", namespaceName, err)
+	}
+
+	if namespace.DeletionTimestamp != nil {
+		glog.Infof("namespace %q is still terminating after %v", namespaceName, time.Since(start))
+		return false, nil
+	}
+
+	glog.Infof("deleting namespace %q", namespaceName)
+	if err := n.client.Delete(ctx, &namespace); err != nil {
+		if apiErrors.IsNotFound(err) {
+			glog.Infof("namespace %q was successfully deleted after %v", namespaceName, time.Since(start))
+			return true, nil
+		}
+		return false, fmt.Errorf("failed to delete namespace %q: %w", namespaceName, err)
+	}
+
+	glog.Infof("namespace %s was marked for deletion", namespaceName)
+	return false, nil
 }
 
 func (n namespaceReconciler) makeNamespace(central private.ManagedCentral) *corev1.Namespace {

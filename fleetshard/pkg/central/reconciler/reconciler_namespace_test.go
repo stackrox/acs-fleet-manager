@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/fake"
-	k8sTesting "k8s.io/client-go/testing"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	fake2 "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	"testing"
 )
 
@@ -156,6 +156,7 @@ func TestNamespaceReconciler(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              simpleManagedCentral.Metadata.Namespace,
 					DeletionTimestamp: &metav1.Time{},
+					Finalizers:        []string{"foo"},
 				},
 			},
 			wantErr: true,
@@ -169,32 +170,34 @@ func TestNamespaceReconciler(t *testing.T) {
 
 			ctx := withManagedCentral(context.Background(), managedCentral)
 
-			var existingObjects []runtime.Object
+			var existingObjects []ctrlClient.Object
 			if tt.existingNamespace != nil {
 				existingObjects = append(existingObjects, tt.existingNamespace)
 			}
 
-			fakeClientSet := fake.NewSimpleClientset(existingObjects...)
-
 			updateCount := 0
 			createCount := 0
 
-			fakeClientSet.PrependReactor("update", "namespaces", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
-				updateCount++
-				return false, nil, nil
-			})
+			fakeClient := fake2.NewClientBuilder().
+				WithInterceptorFuncs(interceptor.Funcs{
+					Create: func(ctx context.Context, client ctrlClient.WithWatch, obj ctrlClient.Object, opts ...ctrlClient.CreateOption) error {
+						createCount++
+						return client.Create(ctx, obj, opts...)
+					},
+					Update: func(ctx context.Context, client ctrlClient.WithWatch, obj ctrlClient.Object, opts ...ctrlClient.UpdateOption) error {
+						updateCount++
+						return client.Update(ctx, obj, opts...)
+					},
+				}).WithObjects(existingObjects...).
+				Build()
 
-			fakeClientSet.PrependReactor("create", "namespaces", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
-				createCount++
-				return false, nil, nil
-			})
-
-			ctx, err := newNamespaceReconciler(fakeClientSet).ensurePresent(ctx)
+			ctx, err := newNamespaceReconciler(fakeClient).ensurePresent(ctx)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				got, err := fakeClientSet.CoreV1().Namespaces().Get(ctx, simpleManagedCentral.Metadata.Namespace, metav1.GetOptions{})
+				var got corev1.Namespace
+				err := fakeClient.Get(ctx, ctrlClient.ObjectKey{Name: simpleManagedCentral.Metadata.Namespace}, &got)
 				require.NoError(t, err)
 				assert.Equal(t, tt.wantNamespace.Name, got.Name)
 				assert.Equal(t, tt.wantNamespace.Labels, got.Labels)

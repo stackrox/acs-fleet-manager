@@ -6,7 +6,6 @@ import (
 	"embed"
 	"encoding/base64"
 	"fmt"
-	fake2 "k8s.io/client-go/kubernetes/fake"
 	"net/http"
 	"testing"
 	"time"
@@ -146,10 +145,8 @@ func getClientTrackerAndReconciler(
 	k8sObjects ...client.Object,
 ) (client.WithWatch, *testutils.ReconcileTracker, *CentralReconciler) {
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t, k8sObjects...)
-	fakeClientSet := fake2.NewSimpleClientset()
 	reconciler := NewCentralReconciler(
 		fakeClient,
-		fakeClientSet,
 		fmMocks.NewClientMock().Client(),
 		centralConfig,
 		managedDBClient,
