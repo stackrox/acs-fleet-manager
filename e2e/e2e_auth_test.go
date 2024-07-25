@@ -105,7 +105,7 @@ var _ = Describe("AuthN/Z Fleet* components", Ordered, func() {
 				adminAPI, true, http.StatusNotFound, false),
 		)
 	})
-
+	// TEST ME
 	Describe("RH SSO auth type", func() {
 		BeforeEach(func() {
 			rhSSOOpt := authOption.Sso
