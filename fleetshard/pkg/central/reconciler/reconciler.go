@@ -94,8 +94,6 @@ const (
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
 	additionalAuthProviderConfigKey  = "additional-auth-provider"
 
-	tenantImagePullSecretName = "stackrox" // pragma: allowlist secret
-
 	helmChartLabelKey  = "helm.sh/chart"
 	helmChartNameLabel = "helm.sh/chart-name"
 
@@ -163,7 +161,8 @@ type CentralReconciler struct {
 	needsReconcileFunc        needsReconcileFunc
 	restoreCentralSecretsFunc restoreCentralSecretsFunc
 
-	namespaceReconciler reconciler
+	namespaceReconciler  reconciler
+	pullSecretReconciler reconciler
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -2028,7 +2027,8 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		resourcesChart: resourcesChart,
 		clock:          realClock{},
 
-		namespaceReconciler: newNamespaceReconciler(k8sClient),
+		namespaceReconciler:  newNamespaceReconciler(k8sClient),
+		pullSecretReconciler: newPullSecretReconciler(k8sClient, central.Metadata.Namespace, []byte(opts.TenantImagePullSecret)),
 	}
 	r.needsReconcileFunc = r.needsReconcile
 

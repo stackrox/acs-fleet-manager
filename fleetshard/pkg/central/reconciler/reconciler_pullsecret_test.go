@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/fake"
-	k8sTesting "k8s.io/client-go/testing"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	fake2 "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	"testing"
 )
 
@@ -82,29 +82,34 @@ func Test_pullSecretReconciler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			objs := []runtime.Object{}
+			objs := []ctrlClient.Object{}
 			if tt.existingSecret != nil { // pragma: allowlist secret
 				objs = append(objs, tt.existingSecret)
 			}
-			clientSet := fake.NewSimpleClientset(objs...)
 
 			updateCount := 0
 			createCount := 0
 			deleteCount := 0
-			clientSet.PrependReactor("create", "secrets", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
-				createCount++
-				return false, nil, nil
-			})
-			clientSet.PrependReactor("update", "secrets", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
-				updateCount++
-				return false, nil, nil
-			})
-			clientSet.PrependReactor("delete", "secrets", func(action k8sTesting.Action) (handled bool, ret runtime.Object, err error) {
-				deleteCount++
-				return false, nil, nil
-			})
 
-			reconciler := newPullSecretReconciler(clientSet, "test-namespace", []byte(tt.dockerConfigJson))
+			client := fake2.NewClientBuilder().
+				WithInterceptorFuncs(interceptor.Funcs{
+					Create: func(ctx context.Context, client ctrlClient.WithWatch, obj ctrlClient.Object, opts ...ctrlClient.CreateOption) error {
+						createCount++
+						return client.Create(ctx, obj, opts...)
+					},
+					Update: func(ctx context.Context, client ctrlClient.WithWatch, obj ctrlClient.Object, opts ...ctrlClient.UpdateOption) error {
+						updateCount++
+						return client.Update(ctx, obj, opts...)
+					},
+					Delete: func(ctx context.Context, client ctrlClient.WithWatch, obj ctrlClient.Object, opts ...ctrlClient.DeleteOption) error {
+						deleteCount++
+						return client.Delete(ctx, obj, opts...)
+					},
+				}).
+				WithObjects(objs...).
+				Build()
+
+			reconciler := newPullSecretReconciler(client, "test-namespace", []byte(tt.dockerConfigJson))
 			ctx := context.Background()
 			ctx, err := reconciler.ensurePresent(ctx)
 			if tt.wantErr {
@@ -130,15 +135,18 @@ func Test_pullSecretReconciler(t *testing.T) {
 					assert.Equal(t, 0, deleteCount)
 				}
 
+				objectKey := ctrlClient.ObjectKey{Namespace: "test-namespace", Name: tenantImagePullSecretName}
+
 				if tt.want != nil {
-					got, err := clientSet.CoreV1().Secrets("test-namespace").Get(ctx, tenantImagePullSecretName, metav1.GetOptions{})
+					var got corev1.Secret
+					err := client.Get(ctx, objectKey, &got)
 					require.NoError(t, err)
 					assert.Equal(t, tt.want.Name, got.Name)
 					assert.Equal(t, tt.want.Namespace, got.Namespace)
 					assert.Equal(t, tt.want.Type, got.Type)
 					assert.Equal(t, tt.want.Data, got.Data)
 				} else {
-					_, err := clientSet.CoreV1().Secrets("test-namespace").Get(ctx, tenantImagePullSecretName, metav1.GetOptions{})
+					err := client.Get(ctx, objectKey, &corev1.Secret{})
 					assert.Error(t, err)
 				}
 			}
