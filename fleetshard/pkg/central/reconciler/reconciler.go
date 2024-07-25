@@ -102,7 +102,6 @@ const (
 
 type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error)
 type needsReconcileFunc func(changed bool, central *v1alpha1.Central, storedSecrets []string) bool
-type restoreCentralSecretsFunc func(ctx context.Context, remoteCentral private.ManagedCentral) error
 type areSecretsStoredFunc func(secretsStored []string) bool
 
 type encryptedSecrets struct {
@@ -156,9 +155,8 @@ type CentralReconciler struct {
 	verifyAuthProviderFunc verifyAuthProviderExistsFunc
 	clock                  clock
 
-	areSecretsStoredFunc      areSecretsStoredFunc
-	needsReconcileFunc        needsReconcileFunc
-	restoreCentralSecretsFunc restoreCentralSecretsFunc
+	areSecretsStoredFunc areSecretsStoredFunc
+	needsReconcileFunc   needsReconcileFunc
 
 	namespaceReconciler     reconciler
 	pullSecretReconciler    reconciler
@@ -228,9 +226,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrap(err, "ensuring pull secret is present")
 	}
 
-	err = r.restoreCentralSecretsFunc(ctx, remoteCentral)
+	ctx, err = r.secretRestoreReconciler.ensurePresent(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "ensuring secrets are present")
 	}
 
 	err = r.ensureEncryptionKeySecretExists(ctx, remoteCentralNamespace)
@@ -391,50 +389,6 @@ func (r *CentralReconciler) applyTelemetry(remoteCentral *private.ManagedCentral
 		},
 	}
 	central.Spec.Central.Telemetry = telemetry
-}
-
-func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
-	restoreSecrets := []string{}
-	for _, secretName := range remoteCentral.Metadata.SecretsStored { // pragma: allowlist secret
-		exists, err := r.checkSecretExists(ctx, remoteCentral.Metadata.Namespace, secretName)
-		if err != nil {
-			return err
-		}
-
-		if !exists {
-			restoreSecrets = append(restoreSecrets, secretName)
-		}
-	}
-
-	if len(restoreSecrets) == 0 {
-		// nothing to restore
-		return nil
-	}
-
-	glog.Info(fmt.Sprintf("Restore secret for tenant: %s/%s", remoteCentral.Id, r.central.Metadata.Namespace), restoreSecrets)
-	central, _, err := r.fleetmanagerClient.PrivateAPI().GetCentral(ctx, remoteCentral.Id)
-	if err != nil {
-		return fmt.Errorf("loading secrets for central %s: %w", remoteCentral.Id, err)
-	}
-
-	decryptedSecrets, err := r.decryptSecrets(central.Metadata.Secrets)
-	if err != nil {
-		return fmt.Errorf("decrypting secrets for central %s: %w", central.Id, err)
-	}
-
-	for _, secretName := range restoreSecrets { // pragma: allowlist secret
-		secretToRestore, secretFound := decryptedSecrets[secretName]
-		if !secretFound {
-			return fmt.Errorf("finding secret %s in decrypted secret map", secretName)
-		}
-
-		if err := r.client.Create(ctx, secretToRestore); err != nil {
-			return fmt.Errorf("recreating secret %s for central %s: %w", secretName, central.Id, err)
-		}
-
-	}
-
-	return nil
 }
 
 func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *v1alpha1.Central) error {
@@ -903,31 +857,6 @@ func (r *CentralReconciler) collectSecretsEncrypted(ctx context.Context, remoteC
 	}
 
 	return encSecrets, nil
-}
-
-func (r *CentralReconciler) decryptSecrets(secrets map[string]string) (map[string]*corev1.Secret, error) {
-	decryptedSecrets := map[string]*corev1.Secret{}
-
-	for secretName, ciphertext := range secrets {
-		decodedCipher, err := base64.StdEncoding.DecodeString(ciphertext)
-		if err != nil {
-			return nil, fmt.Errorf("decoding secret %s: %w", secretName, err)
-		}
-
-		plaintextSecret, err := r.secretCipher.Decrypt(decodedCipher)
-		if err != nil {
-			return nil, fmt.Errorf("decrypting secret %s: %w", secretName, err)
-		}
-
-		var secret corev1.Secret
-		if err := json.Unmarshal(plaintextSecret, &secret); err != nil {
-			return nil, fmt.Errorf("unmarshaling secret %s: %w", secretName, err)
-		}
-
-		decryptedSecrets[secretName] = &secret // pragma: allowlist secret
-	}
-
-	return decryptedSecrets, nil
 }
 
 // encryptSecrets return the encrypted secrets and a sha256 sum of secret data to check if secrets
@@ -1995,8 +1924,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 	}
 	r.needsReconcileFunc = r.needsReconcile
 
-	r.restoreCentralSecretsFunc = r.restoreCentralSecrets //pragma: allowlist secret
-	r.areSecretsStoredFunc = r.areSecretsStored           //pragma: allowlist secret
+	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
 	return r
 }
 
