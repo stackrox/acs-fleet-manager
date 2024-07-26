@@ -33,12 +33,9 @@ import (
 	"github.com/stackrox/rox/pkg/maputil"
 	"github.com/stackrox/rox/pkg/random"
 	"gopkg.in/yaml.v2"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
@@ -145,8 +142,6 @@ type CentralReconciler struct {
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
 
-	resourcesChart *chart.Chart
-
 	wantsAuthProvider      bool
 	hasAuthProvider        bool
 	verifyAuthProviderFunc verifyAuthProviderExistsFunc
@@ -155,10 +150,11 @@ type CentralReconciler struct {
 	areSecretsStoredFunc areSecretsStoredFunc
 	needsReconcileFunc   needsReconcileFunc
 
-	namespaceReconciler     reconciler
-	pullSecretReconciler    reconciler
-	secretRestoreReconciler reconciler
-	encryptionKeyReconciler reconciler
+	namespaceReconciler            reconciler
+	pullSecretReconciler           reconciler
+	secretRestoreReconciler        reconciler
+	encryptionKeyReconciler        reconciler
+	tenantResourcesChartReconciler reconciler
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -234,8 +230,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrap(err, "ensuring encryption key is present")
 	}
 
-	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
+	ctx, err = r.tenantResourcesChartReconciler.ensurePresent(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "ensuring tenant resources chart is present")
 	}
 
 	if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
@@ -1035,11 +1032,10 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 		globalDeleted = globalDeleted && secretDeleted
 	}
 
-	chartResourcesDeleted, err := r.ensureChartResourcesDeleted(ctx, remoteCentral)
+	ctx, err = r.tenantResourcesChartReconciler.ensureAbsent(ctx)
 	if err != nil {
 		return false, err
 	}
-	globalDeleted = globalDeleted && chartResourcesDeleted
 
 	ctx, err = r.namespaceReconciler.ensureAbsent(ctx)
 	if err != nil {
@@ -1402,154 +1398,6 @@ func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, 
 	return nil
 }
 
-func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
-	getObjectKey := func(obj *unstructured.Unstructured) string {
-		return fmt.Sprintf("%s/%s/%s",
-			obj.GetAPIVersion(),
-			obj.GetKind(),
-			obj.GetName(),
-		)
-	}
-
-	vals, err := r.chartValues(remoteCentral)
-	if err != nil {
-		return fmt.Errorf("obtaining values for resources chart: %w", err)
-	}
-
-	if features.PrintTenantResourcesChartValues.Enabled() {
-		glog.Infof("Tenant resources for central %q: %s", remoteCentral.Metadata.Name, vals)
-	}
-
-	objs, err := charts.RenderToObjects(helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
-	if err != nil {
-		return fmt.Errorf("rendering resources chart: %w", err)
-	}
-
-	helmChartLabelValue := r.getTenantResourcesChartHelmLabelValue()
-
-	// objectsThatShouldExist stores the keys of the objects we want to exist
-	var objectsThatShouldExist = map[string]struct{}{}
-
-	for _, obj := range objs {
-		objectsThatShouldExist[getObjectKey(obj)] = struct{}{}
-
-		if obj.GetNamespace() == "" {
-			obj.SetNamespace(remoteCentral.Metadata.Namespace)
-		}
-		if obj.GetLabels() == nil {
-			obj.SetLabels(map[string]string{})
-		}
-		labels := obj.GetLabels()
-		labels[managedByLabelKey] = labelManagedByFleetshardValue
-		labels[helmChartLabelKey] = helmChartLabelValue
-		labels[helmChartNameLabel] = r.resourcesChart.Name()
-		obj.SetLabels(labels)
-
-		objectKey := ctrlClient.ObjectKey{Namespace: remoteCentral.Metadata.Namespace, Name: obj.GetName()}
-		glog.Infof("Upserting object %v of type %v", objectKey, obj.GroupVersionKind())
-		if err := charts.InstallOrUpdateChart(ctx, obj, r.client); err != nil {
-			return fmt.Errorf("Failed to upsert object %v of type %v: %w", objectKey, obj.GroupVersionKind(), err)
-		}
-	}
-
-	// Perform garbage collection
-	for _, gvk := range tenantChartResourceGVKs {
-		gvk := gvk
-		var existingObjects unstructured.UnstructuredList
-		existingObjects.SetGroupVersionKind(gvk)
-
-		if err := r.client.List(ctx, &existingObjects,
-			ctrlClient.InNamespace(remoteCentral.Metadata.Namespace),
-			ctrlClient.MatchingLabels{helmChartNameLabel: r.resourcesChart.Name()},
-		); err != nil {
-			return fmt.Errorf("failed to list tenant resources chart objects %v: %w", gvk, err)
-		}
-
-		for _, existingObject := range existingObjects.Items {
-			existingObject := &existingObject
-			if _, shouldExist := objectsThatShouldExist[getObjectKey(existingObject)]; shouldExist {
-				continue
-			}
-
-			// Re-check that the helm label is present & namespace matches.
-			// Failsafe against some potential k8s-client bug when listing objects with a label selector
-			if !r.isTenantResourcesChartObject(existingObject, &remoteCentral) {
-				glog.Infof("Object %v of type %v is not managed by the resources chart", existingObject.GetName(), gvk)
-				continue
-			}
-
-			if existingObject.GetDeletionTimestamp() != nil {
-				glog.Infof("Object %v of type %v is already being deleted", existingObject.GetName(), gvk)
-				continue
-			}
-
-			// The object exists but it should not. Delete it.
-			glog.Infof("Deleting object %v of type %v", existingObject.GetName(), gvk)
-			if err := r.client.Delete(ctx, existingObject); err != nil {
-				if !apiErrors.IsNotFound(err) {
-					return fmt.Errorf("failed to delete central tenant object %v %q in namespace %s: %w", gvk, existingObject.GetName(), remoteCentral.Metadata.Namespace, err)
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func (r *CentralReconciler) getTenantResourcesChartHelmLabelValue() string {
-	// the objects rendered by the helm chart will have a label in the format
-	// helm.sh/chart: <chart-name>-<chart-version>
-	return fmt.Sprintf("%s-%s", r.resourcesChart.Name(), r.resourcesChart.Metadata.Version)
-}
-
-func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, remoteCentral *private.ManagedCentral) (bool, error) {
-
-	allObjectsDeleted := true
-
-	for _, gvk := range tenantChartResourceGVKs {
-		gvk := gvk
-		var existingObjects unstructured.UnstructuredList
-		existingObjects.SetGroupVersionKind(gvk)
-
-		if err := r.client.List(ctx, &existingObjects,
-			ctrlClient.InNamespace(remoteCentral.Metadata.Namespace),
-			ctrlClient.MatchingLabels{helmChartNameLabel: r.resourcesChart.Name()},
-		); err != nil {
-			return false, fmt.Errorf("failed to list tenant resources chart objects %v in namespace %s: %w", gvk, remoteCentral.Metadata.Namespace, err)
-		}
-
-		for _, existingObject := range existingObjects.Items {
-			existingObject := &existingObject
-
-			// Re-check that the helm label is present & namespace matches.
-			// Failsafe against some potential k8s-client bug when listing objects with a label selector
-			if !r.isTenantResourcesChartObject(existingObject, remoteCentral) {
-				continue
-			}
-
-			if existingObject.GetDeletionTimestamp() != nil {
-				allObjectsDeleted = false
-				continue
-			}
-
-			if err := r.client.Delete(ctx, existingObject); err != nil {
-				if !apiErrors.IsNotFound(err) {
-					return false, fmt.Errorf("failed to delete central tenant object %v in namespace %q: %w", gvk, remoteCentral.Metadata.Namespace, err)
-				}
-			}
-		}
-	}
-
-	return allObjectsDeleted, nil
-}
-
-func (r *CentralReconciler) isTenantResourcesChartObject(existingObject *unstructured.Unstructured, remoteCentral *private.ManagedCentral) bool {
-	return existingObject.GetLabels() != nil &&
-		existingObject.GetLabels()[helmChartNameLabel] == r.resourcesChart.Name() &&
-		existingObject.GetLabels()[managedByLabelKey] == labelManagedByFleetshardValue &&
-		existingObject.GetNamespace() == remoteCentral.Metadata.Namespace
-}
-
 func (r *CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	err := r.ensureReencryptRouteExists(ctx, remoteCentral)
 	if err != nil {
@@ -1637,53 +1485,6 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 		return false, errors.Wrapf(err, "delete central route %s/%s", route.GetNamespace(), route.GetName())
 	}
 	return false, nil
-}
-
-func getTenantLabels(c private.ManagedCentral) map[string]string {
-	return map[string]string{
-		managedByLabelKey:    labelManagedByFleetshardValue,
-		instanceLabelKey:     c.Metadata.Name,
-		orgIDLabelKey:        c.Spec.Auth.OwnerOrgId,
-		tenantIDLabelKey:     c.Id,
-		instanceTypeLabelKey: c.Spec.InstanceType,
-	}
-}
-
-func getTenantAnnotations(c private.ManagedCentral) map[string]string {
-	return map[string]string{
-		orgNameAnnotationKey: c.Spec.Auth.OwnerOrgName,
-	}
-}
-
-func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Values, error) {
-	if r.resourcesChart == nil {
-		return nil, errors.New("resources chart is not set")
-	}
-	src := r.resourcesChart.Values
-
-	// We are introducing the passing of helm values from fleetManager (and gitops). If the managed central
-	// includes the tenant resource values, we will use them. Otherwise, defaults to the previous
-	// implementation.
-	if len(c.Spec.TenantResourcesValues) > 0 {
-		values := chartutil.CoalesceTables(c.Spec.TenantResourcesValues, src)
-		glog.Infof("Values: %v", values)
-		return values, nil
-	}
-
-	dst := map[string]interface{}{
-		"labels":      stringMapToMapInterface(getTenantLabels(c)),
-		"annotations": stringMapToMapInterface(getTenantAnnotations(c)),
-	}
-	dst["secureTenantNetwork"] = r.secureTenantNetwork
-	return chartutil.CoalesceTables(dst, src), nil
-}
-
-func stringMapToMapInterface(m map[string]string) map[string]interface{} {
-	result := make(map[string]interface{}, len(m))
-	for k, v := range m {
-		result[k] = v
-	}
-	return result
 }
 
 func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
@@ -1868,13 +1669,13 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 
 		verifyAuthProviderFunc: hasAuthProvider,
 
-		resourcesChart: resourcesChart,
-		clock:          realClock{},
+		clock: realClock{},
 
-		namespaceReconciler:     newNamespaceReconciler(k8sClient),
-		pullSecretReconciler:    newPullSecretReconciler(k8sClient, central.Metadata.Namespace, []byte(opts.TenantImagePullSecret)),
-		secretRestoreReconciler: newSecretRestoreReconciler(k8sClient, fleetmanagerClient.PrivateAPI(), secretCipher),
-		encryptionKeyReconciler: newEncryptionKeyReconciler(k8sClient, encryptionKeyGenerator),
+		namespaceReconciler:            newNamespaceReconciler(k8sClient),
+		pullSecretReconciler:           newPullSecretReconciler(k8sClient, central.Metadata.Namespace, []byte(opts.TenantImagePullSecret)),
+		secretRestoreReconciler:        newSecretRestoreReconciler(k8sClient, fleetmanagerClient.PrivateAPI(), secretCipher),
+		encryptionKeyReconciler:        newEncryptionKeyReconciler(k8sClient, encryptionKeyGenerator),
+		tenantResourcesChartReconciler: newTenantResourcesChartReconciler(k8sClient, resourcesChart, opts.SecureTenantNetwork),
 	}
 	r.needsReconcileFunc = r.needsReconcile
 
