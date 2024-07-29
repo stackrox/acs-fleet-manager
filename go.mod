@@ -1,8 +1,7 @@
 module github.com/stackrox/acs-fleet-manager
 
 go 1.21
-
-toolchain go1.21.9
+toolchain go1.22.5
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -13,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ses v1.24.1
 	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/caarlos0/env/v6 v6.10.1
-	github.com/containers/image/v5 v5.31.0
+	github.com/containers/image/v5 v5.32.0
 	github.com/coreos/go-oidc/v3 v3.11.0
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.28.1
@@ -57,7 +56,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zgalor/weberr v0.8.2
-	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
 	golang.org/x/oauth2 v0.21.0
 	golang.org/x/sync v0.7.0
 	golang.org/x/sys v0.22.0
@@ -76,7 +75,7 @@ require (
 )
 
 require (
-	github.com/BurntSushi/toml v1.3.2 // indirect
+	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
@@ -98,9 +97,9 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cloudflare/cfssl v1.6.4 // indirect
-	github.com/containers/storage v1.54.0 // indirect
+	github.com/containers/storage v1.55.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
-	github.com/cyphar/filepath-securejoin v0.2.5 // indirect
+	github.com/cyphar/filepath-securejoin v0.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
@@ -202,12 +201,12 @@ require (
 	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
+	golang.org/x/tools v0.22.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20240123012728-ef4313101c80 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240318140521-94a12d6c2237 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
-	google.golang.org/grpc v1.62.1 // indirect
+	google.golang.org/grpc v1.64.1 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
