@@ -21,7 +21,7 @@ spec:
       serviceAccountName: emailsender
       containers:
         - name: emailsender
-          image: "{{ .Values.emailsender.image.repo }}:{{ .Values.emailsender.image.tag }}"
+          image: "{{ .Values.emailsender.image.repo }}:{{ .Values.emailsender.image.tag | default .Values.global.image.tag }}"
           imagePullPolicy: IfNotPresent
           command:
             - /acscs/emailsender
