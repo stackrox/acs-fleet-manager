@@ -54,9 +54,6 @@ spec:
     probeSelector:
       matchLabels:
         app: rhacs
-    probeNamespaceSelector:
-      matchLabels:
-        app.kubernetes.io/managed-by: rhacs-fleetshard
     alertManagerResourceRequirement:
       requests:
         cpu: {{ .Values.alertManager.resources.requests.cpu | quote }}
