@@ -143,6 +143,6 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: make image/push/fleet-manager-tools
       - name: Build and push fleetshard-operator image to quay.io
-        run: make image/push/fleetshard-operator
+        run: make image/push/fleetshard-operator IMAGE_PLATFORM=linux/amd64,linux/arm64
       - name: Build and push fleet-manager image to quay.io
         run: make image/push/fleet-manager IMAGE_PLATFORM=linux/amd64,linux/arm64

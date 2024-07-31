@@ -620,12 +620,12 @@ image/push/internal: docker/login/internal
 
 image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
 image/build/fleetshard-operator:
-	$(DOCKER) build -t $(IMAGE_REF) --build-arg FLEETSHARD_SYNC_IMAGE_TAG=$(image_tag) --build-arg EMAILSENDER_IMAGE_TAG=$(image_tag) --load ${PROJECT_PATH}/dp-terraform/helm
+	$(DOCKER) buildx build -t $(IMAGE_REF) --build-arg FLEETSHARD_SYNC_IMAGE_TAG=$(image_tag) --build-arg EMAILSENDER_IMAGE_TAG=$(image_tag) --platform $(IMAGE_PLATFORM) --load ${PROJECT_PATH}/dp-terraform/helm
 .PHONY: image/build/fleetshard-operator
 
 image/push/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
-image/push/fleetshard-operator: image/build/fleetshard-operator
-	$(DOCKER) push $(IMAGE_REF)
+image/push/fleetshard-operator:
+	$(DOCKER) buildx build -t $(IMAGE_REF) --build-arg FLEETSHARD_SYNC_IMAGE_TAG=$(image_tag) --build-arg EMAILSENDER_IMAGE_TAG=$(image_tag) --platform $(IMAGE_PLATFORM) --push ${PROJECT_PATH}/dp-terraform/helm
 .PHONY: image/push/fleetshard-operator
 
 # Run the probe based e2e test in container

@@ -1,10 +1,12 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10 AS build
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/ubi-minimal:8.10 AS build
 ENV HOME=/opt/helm
 COPY rhacs-terraform  ${HOME}/rhacs-terraform
 WORKDIR ${HOME}
 
+ARG TARGETARCH
+
 RUN curl -L --retry 10 --silent --show-error --fail -o /usr/local/bin/helm \
-    "https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64" && \
+    "https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-${TARGETARCH}" && \
     chmod +x /usr/local/bin/helm && \
     helm version
 
@@ -14,12 +16,12 @@ RUN helm repo add external-secrets "https://charts.external-secrets.io/" && \
 # Workaround for deleting securityContext.runAsUser from the dependent chart
 # see: https://github.com/operator-framework/operator-sdk/issues/6635
 RUN microdnf install gzip tar && \
-    curl -L --retry 10 --silent --show-error --fail -o /tmp/yq_linux_amd64.tar.gz \
-        "https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_amd64.tar.gz" && \
-        tar -xzf /tmp/yq_linux_amd64.tar.gz ./yq_linux_amd64 && \
-        mv yq_linux_amd64 /usr/local/bin/yq && \
+    curl -L --retry 10 --silent --show-error --fail -o /tmp/yq.tar.gz \
+        "https://github.com/mikefarah/yq/releases/download/v4.44.2/yq_linux_${TARGETARCH}.tar.gz" && \
+        tar -xzf /tmp/yq.tar.gz ./yq_linux_${TARGETARCH} && \
+        mv yq_linux_${TARGETARCH} /usr/local/bin/yq && \
         chmod +x /usr/local/bin/yq && \
-        rm /tmp/yq_linux_amd64.tar.gz && \
+        rm /tmp/yq.tar.gz && \
     cd rhacs-terraform/charts && for filename in *.tgz; do tar -xf "$filename" && rm -f "$filename"; done && \
     yq -i 'del(.securityContext.runAsUser)' external-secrets/values.yaml
 
