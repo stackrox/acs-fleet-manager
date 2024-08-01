@@ -39,7 +39,7 @@ spec:
         {{- if .ref }}
         image: "{{ .ref }}"
         {{- else }}
-        image: "{{ .repo }}:{{ .tag }}"
+        image: "{{ .repo }}:{{ .tag | default $.Values.global.image.tag }}"
         {{- end }}
         {{- end }}
         imagePullPolicy: IfNotPresent

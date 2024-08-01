@@ -7,7 +7,7 @@ fleetshardSync:
     # can be either a full image reference represented by `ref` or a combination of `repo:tag`. `ref` has a higher priority (if set).
     ref: ""
     repo: "quay.io/app-sre/acs-fleet-manager"
-    tag: "main"
+    tag: null
   # Can be either STATIC_TOKEN or SERVICE_ACCOUNT_TOKEN. By default, uses SERVICE_ACCOUNT_TOKEN.
   authType: "SERVICE_ACCOUNT_TOKEN"
   # OCM refresh token, only required in combination with authType=OCM.
@@ -76,7 +76,7 @@ emailsender:
   replicas: 3
   image:
     repo: "quay.io/app-sre/acscs-emailsender"
-    tag: "main"
+    tag: null
   clusterId: ""
   clusterName: ""
   environment: ""
@@ -278,6 +278,8 @@ scc:
   enabled: true
 
 global:
+  image:
+    tag: "main"
   secretStore:
     aws:
       secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret
