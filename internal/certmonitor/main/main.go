@@ -62,17 +62,16 @@ func main() {
 	// build kubernetes client config
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
-		fmt.Errorf("error building kubeconfig: %s", err.Error())
+		fmt.Printf("error building kubeconfig: %s", err.Error())
 	}
 	// create new kubernetes clientset
 	clientset, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		fmt.Errorf("error creating clientset: %s", err.Error())
+		fmt.Printf("error creating clientset: %s", err.Error())
 	}
 	// validate cert monitor config
 	if errs := certmonitor.ValidateConfig(*config); len(errs) != 0 {
-		fmt.Errorf("error validating config:\n")
-
+		fmt.Printf("error validating config:\n")
 	}
 	// create new informer factory, and informer for secrets
 	informerFactory := informers.NewSharedInformerFactory(clientset, resyncPeriod)
