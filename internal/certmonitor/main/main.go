@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-// main func
+// pragma: allowlist secret
 func main() {
 	// resyncPeriod var is defualt resync period for informer
 	var resyncPeriod = time.Second * 30
