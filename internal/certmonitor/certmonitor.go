@@ -98,22 +98,6 @@ func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFact
 	return monitor, nil
 }
 
-// findCertsFromInformer handles new/created or updated secrets and finds the cert within it
-func (c *certMonitor) findCertsFromInformer(new interface{}) {
-	secret, ok := new.(*corev1.Secret)
-	if !ok {
-		return
-	}
-
-	for _, monitor := range c.config.Monitors {
-		if c.secretMatches(secret, monitor) {
-			c.findCertsFromSecret(secret)
-			break
-		}
-	}
-
-}
-
 // objectMatchesSelector func checks if object matches given label selector
 func objectMatchesSelector(obj runtime.Object, selector *metav1.LabelSelector) bool {
 	if selector == nil {

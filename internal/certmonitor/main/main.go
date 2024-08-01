@@ -15,11 +15,15 @@ import (
 	"time"
 )
 
+// main func
 func main() {
+	// resyncPeriod var is defualt resync period for informer
 	var resyncPeriod = time.Second * 30
+	// certificate monitor configuration
 	config := &certmonitor.Config{
-
+		// path to kubeconfig file
 		Kubeconfig: filepath.Join(homedir.HomeDir(), ".kube", "config"),
+		// list of monitors containing namespaces + secret configs
 		Monitors: []certmonitor.MonitorConfig{
 			{
 				Namespace: certmonitor.SelectorConfig{
@@ -54,27 +58,28 @@ func main() {
 	if config.ResyncPeriod != nil {
 		resyncPeriod = *config.ResyncPeriod
 	}
-
 	kubeconfigPath := config.Kubeconfig
+	// build kubernetes client config
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
 		fmt.Errorf("error building kubeconfig: %s", err.Error())
 	}
-
+	// create new kubernetes clientset
 	clientset, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		fmt.Errorf("error creating clientset: %s", err.Error())
 	}
-
+	// validate cert monitor config
 	if errs := certmonitor.ValidateConfig(*config); len(errs) != 0 {
 		fmt.Errorf("error validating config:\n")
 
 	}
-
+	// create new informer factory, and informer for secrets
 	informerFactory := informers.NewSharedInformerFactory(clientset, resyncPeriod)
 	podInformer := informerFactory.Core().V1().Secrets().Informer()
+	// lister for namespaces
 	namespaceLister := informerFactory.Core().V1().Namespaces().Lister()
-
+	//new cert monitor with (config, informerFactory, podInformer, namespaceLister)
 	monitor, err := certmonitor.NewCertMonitor(config, informerFactory, podInformer, namespaceLister)
 	if err != nil {
 		fmt.Printf("Error creating certificate monitor: %v\n", err)
@@ -83,6 +88,7 @@ func main() {
 	stopCh := make(chan struct{})
 	defer close(stopCh)
 
+	//start informer
 	go monitor.StartInformer(stopCh)
 
 	http.Handle("/metrics", promhttp.Handler())
