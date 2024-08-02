@@ -41,16 +41,12 @@ ACS fleet-manager repository for the ACS managed service.
   - there is an [extension for VSCode](https://marketplace.visualstudio.com/items?itemName=EditorConfig.EditorConfig)
 * A running kubernetes cluster
 
-  Supported cluster types:
-    * Local: Minikube, Colima, Rancher Desktop, CRC
-    * Remote: Infra OpenShift 4.x, OpenShift CI
-
   Guide: [setup-test-environment.md](./docs/development/setup-test-environment.md#prepare-the-environment)
 * Setting up configurations described [here](./docs/development/populating-configuration.md#interacting-with-the-fleet-manager-api)
 
 #### Supported cluster types:
-* Local: Minikube, Colima, Rancher Desktop, CRC
-* Remote: Infra OpenShift 4.x, OpenShift CI
+* Local: Minikube, **Colima** (recommended for macOS), **Kind** (recommended for linux), Rancher Desktop, CRC
+* Remote: Infra OSD or ROSA (recommended), Infra OpenShift 4.x (not recommended due to untrusted TLS certificate), OpenShift CI
 
 #### Getting started
 
