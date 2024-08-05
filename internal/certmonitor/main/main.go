@@ -15,7 +15,6 @@ import (
 	"time"
 )
 
-// pragma: allowlist secret
 func main() {
 	// resyncPeriod var is defualt resync period for informer
 	var resyncPeriod = time.Second * 30
@@ -29,9 +28,8 @@ func main() {
 				Namespace: certmonitor.SelectorConfig{
 					Name: "namespace-three",
 				},
-				// pragma: allowlist secret
 				Secret: certmonitor.SelectorConfig{
-					Name: "secret-three-cert",
+					Name: "secret-three-cert", // pragma: allowlist secret
 				},
 			},
 			{
