@@ -61,11 +61,11 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 			want: true,
 		}, {
 			name:   "mismatch on namespace name",
-			secret: v1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "secret-1", Namespace: "namespace-1"}},
+			secret: v1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "secret-1", Namespace: "namespace-1"}}, // pragma: allowlist secret
 			monitor: MonitorConfig{
 				Namespace: SelectorConfig{Name: "foo"},
 				Secret:    SelectorConfig{Name: "secret-1"},
-			},
+			}, // pragma: allowlist secret
 			want: false,
 		}, {
 			name:   "mismatch on secret name",
@@ -79,7 +79,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 			name: "match on namespace name and secret label",
 			secret: v1.Secret{
 				ObjectMeta: metav1.ObjectMeta{ // pragma: allowlist secret
-					Name:      "secret-1",
+					Name:      "secret-1", // pragma: allowlist secret
 					Namespace: "namespace-1",
 					Labels: map[string]string{
 						"foo": "bar",
@@ -87,8 +87,8 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 				},
 			},
 			monitor: MonitorConfig{
-				Namespace: SelectorConfig{Name: "namespace-1"},
-				Secret: SelectorConfig{
+				Namespace: SelectorConfig{Name: "namespace-1"}, // pragma: allowlist secret
+				Secret: SelectorConfig{ // pragma: allowlist secret
 					LabelSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
 							"foo": "bar", // pragma: allowlist secret
