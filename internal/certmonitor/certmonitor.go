@@ -29,7 +29,9 @@ var (
 
 // const variables for deletion selection
 const (
-	labelSecretName      = "name"
+	// pragma: allowlist secret
+	labelSecretName = "name"
+	// pragma: allowlist secret
 	labelSecretNamespace = "namespace"
 	labelDataKey         = "data_key"
 )
@@ -195,7 +197,9 @@ func (c *certMonitor) handleSecretUpdate(oldObj, newObj interface{}) {
 	for oldKey := range oldsecret.Data {
 		if _, ok := newsecret.Data[oldKey]; !ok {
 			certificatesExpiry.DeletePartialMatch(prometheus.Labels{
-				labelSecretName:      newsecret.Name,
+				// pragma: allowlist secret
+				labelSecretName: newsecret.Name,
+				// pragma: allowlist secret
 				labelSecretNamespace: newsecret.Namespace,
 				labelDataKey:         oldKey,
 			})
@@ -213,7 +217,9 @@ func (c *certMonitor) handleSecretDeletion(obj interface{}) {
 
 	for dataKey := range secret.Data {
 		certificatesExpiry.DeletePartialMatch(prometheus.Labels{
-			labelSecretName:      secret.Name,
+			// pragma: allowlist secret
+			labelSecretName: secret.Name,
+			// pragma: allowlist secret
 			labelSecretNamespace: secret.Namespace,
 			labelDataKey:         dataKey,
 		})
