@@ -64,12 +64,12 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 			secret: v1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "secret-1", Namespace: "namespace-1"}}, // pragma: allowlist secret
 			monitor: MonitorConfig{
 				Namespace: SelectorConfig{Name: "foo"},
-				Secret:    SelectorConfig{Name: "secret-1"},
+				Secret:    SelectorConfig{Name: "secret-1"}, // pragma: allowlist secret
 			}, // pragma: allowlist secret
 			want: false,
 		}, {
 			name:   "mismatch on secret name",
-			secret: v1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "secret-1", Namespace: "namespace-1"}},
+			secret: v1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "secret-1", Namespace: "namespace-1"}}, // pragma: allowlist secret
 			monitor: MonitorConfig{
 				Namespace: SelectorConfig{Name: "namespace-1"},
 				Secret:    SelectorConfig{Name: "bar"},
@@ -77,7 +77,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 			want: false,
 		}, {
 			name: "match on namespace name and secret label",
-			secret: v1.Secret{
+			secret: v1.Secret{ // pragma: allowlist secret
 				ObjectMeta: metav1.ObjectMeta{ // pragma: allowlist secret
 					Name:      "secret-1", // pragma: allowlist secret
 					Namespace: "namespace-1",
@@ -111,7 +111,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 			name: "match on namespace label and secret name",
 			secret: v1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "secret-1",
+					Name:      "secret-1", // pragma: allowlist secret
 					Namespace: "namespace-1",
 				},
 			},
@@ -123,7 +123,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 						},
 					},
 				},
-				Secret: SelectorConfig{
+				Secret: SelectorConfig{ // pragma: allowlist secret
 					Name: "secret-1",
 				},
 			},
@@ -140,7 +140,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 			want: true,
 		}, {
 			name: "match on both namespace label and secret label",
-			secret: v1.Secret{
+			secret: v1.Secret{ // pragma: allowlist secret
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "secret-1",
 					Namespace: "namespace-1",
@@ -157,7 +157,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 						},
 					},
 				},
-				Secret: SelectorConfig{
+				Secret: SelectorConfig{ // pragma: allowlist secret
 					LabelSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
 							"foo": "bar",
@@ -195,7 +195,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 						},
 					},
 				},
-				Secret: SelectorConfig{
+				Secret: SelectorConfig{ // pragma: allowlist secret
 					LabelSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
 							"foo": "qux",
@@ -227,7 +227,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 			},
 			monitor: MonitorConfig{
 				Namespace: SelectorConfig{Name: "namespace-2"},
-				Secret: SelectorConfig{
+				Secret: SelectorConfig{ // pragma: allowlist secret
 					LabelSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
 							"foo": "qux",
@@ -248,7 +248,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 			want: false,
 		}, {
 			name: "mismatch on namespace label and secret name",
-			secret: v1.Secret{
+			secret: v1.Secret{ // pragma: allowlist secret
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "secret-1",
 					Namespace: "namespace-1",
@@ -262,7 +262,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 						},
 					},
 				},
-				Secret: SelectorConfig{
+				Secret: SelectorConfig{ // pragma: allowlist secret
 					Name: "secret-2",
 				},
 			},
@@ -310,12 +310,12 @@ func TestCertMonitor(t *testing.T) {
 	expirytime := now1.Add(1 * time.Hour)
 	newExpiryTime := now1.Add(20 * time.Hour)
 
-	secret := &v1.Secret{
+	secret := &v1.Secret{ // pragma: allowlist secret
 		ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-1", Name: "secret-1"},
 		Data:       map[string][]byte{"tls.crt": generateCertWithExpiration(t, expirytime)},
 	}
 
-	secretUpdated := &v1.Secret{
+	secretUpdated := &v1.Secret{ // pragma: allowlist secret
 		ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-1", Name: "secret-1"},
 		Data:       map[string][]byte{"tls-1.crt": generateCertWithExpiration(t, newExpiryTime)},
 	}

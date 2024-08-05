@@ -83,7 +83,7 @@ func main() {
 				Namespace: certmonitor.SelectorConfig{
 					Name: "namespace-four",
 				},
-				Secret: certmonitor.SelectorConfig{
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
 					Name: "secret-three-cert2",
 				},
 			},
@@ -95,7 +95,7 @@ func main() {
 						},
 					},
 				},
-				Secret: certmonitor.SelectorConfig{
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
 					Name: "secret-labeled-1",
 				},
 			},
