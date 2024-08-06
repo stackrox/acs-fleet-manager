@@ -3,6 +3,10 @@ kind: Fleetshard
 metadata:
   name: rhacs-terraform
   namespace: "$ACSCS_NAMESPACE"
+  labels:
+    # Workaround for https://github.com/operator-framework/operator-sdk/issues/6780.
+    # Without this annotation WATCH_NAMESPACE has no effect (at least until the above issue is fixed).
+    helm.sdk.operatorframework.io/chart: rhacs-terraform
 spec:
   acsOperator:
     enabled: false
