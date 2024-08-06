@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
@@ -282,7 +283,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			certMonitor := &certMonitor{
-				namespaceLister: newFakeNamespaceGetter(tt.namespaces),
+				namespaceGetter: newFakeNamespaceGetter(tt.namespaces),
 			}
 			got := certMonitor.secretMatches(&tt.secret, tt.monitor)
 			assert.Equal(t, tt.want, got)
@@ -292,7 +293,8 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 
 // TestCertMonitor func tests certificates event handlers + prometheus metrics handling
 func TestCertMonitor(t *testing.T) {
-	certificatesExpiry.Reset()
+	metrics := fleetshardmetrics.newMetrics()
+	metrics.CertificatesExpiry.Reset()
 
 	namespaces := []v1.Namespace{
 		{
@@ -304,7 +306,8 @@ func TestCertMonitor(t *testing.T) {
 		},
 	}
 	certMonitor := &certMonitor{
-		namespaceLister: newFakeNamespaceGetter(namespaces),
+		namespaceGetter: newFakeNamespaceGetter(namespaces),
+		metrics:         metrics,
 	}
 	now1 := time.Now().UTC()
 	expirytime := now1.Add(1 * time.Hour)

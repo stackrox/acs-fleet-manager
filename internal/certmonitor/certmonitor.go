@@ -5,33 +5,15 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/informers"
-	v1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"time"
-)
-
-// define Prometheus metrics
-var (
-	certificatesExpiry = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "acscs_certmonitor_certificate_expiration_timestamp",
-		Help: "Expiry of certifications",
-	},
-		[]string{"namespace", "secret", "data_key"},
-	)
-)
-
-// const variables for deletion selection
-const (
-	labelSecretName      = "name"      // pragma: allowlist secret
-	labelSecretNamespace = "namespace" // pragma: allowlist secret
-	labelDataKey         = "data_key"
 )
 
 // SelectorConfig struct for namespace or secret selection based on labels/name
@@ -53,7 +35,7 @@ type Config struct {
 	ResyncPeriod *time.Duration  `json:"resyncPeriod"`
 }
 
-// NamespaceGetter interface for retrieving namespaces on name
+// NamespaceGetter interface for retrieving namespaces on name. This interface is a subset of `v1.NamespaceLister`
 type NamespaceGetter interface {
 	Get(name string) (*corev1.Namespace, error)
 }
@@ -63,12 +45,8 @@ type certMonitor struct {
 	informerfactory informers.SharedInformerFactory
 	podInformer     cache.SharedIndexInformer
 	config          *Config
-	namespaceLister NamespaceGetter
-}
-
-// init registers certifcatesExpiry with prometheus
-func init() {
-	prometheus.MustRegister(certificatesExpiry)
+	namespaceGetter NamespaceGetter
+	metrics         *fleetshardmetrics.Metrics
 }
 
 // StartInformer func starts to informer to monitor secrets + event handlers
@@ -88,12 +66,12 @@ func (c *certMonitor) StartInformer(stopCh <-chan struct{}) error {
 }
 
 // NewCertMonitor func creates new instance of certMonitor
-func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFactory, podInformer cache.SharedIndexInformer, namespaceLister v1.NamespaceLister) (*certMonitor, error) {
+func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFactory, podInformer cache.SharedIndexInformer, namespaceGetter NamespaceGetter) (*certMonitor, error) {
 	monitor := &certMonitor{
 		informerfactory: informerFactory,
 		podInformer:     podInformer,
 		config:          config,
-		namespaceLister: namespaceLister,
+		namespaceGetter: namespaceGetter,
 	}
 	return monitor, nil
 }
@@ -133,7 +111,7 @@ func (c *certMonitor) secretMatches(s *corev1.Secret, monitor MonitorConfig) boo
 	}
 
 	if monitor.Namespace.LabelSelector != nil {
-		ns, err := c.namespaceLister.Get(s.Namespace)
+		ns, err := c.namespaceGetter.Get(s.Namespace)
 		if err != nil {
 			return false
 		}
@@ -144,8 +122,8 @@ func (c *certMonitor) secretMatches(s *corev1.Secret, monitor MonitorConfig) boo
 	return true
 }
 
-// findCertsFromSecret func extracts, decodes, parses certifications from a secret, and displays in Prometheus
-func (c *certMonitor) findCertsFromSecret(secret *corev1.Secret) {
+// processSecret func extracts, decodes, parses certificates from a secret, and populates prometheus metrics
+func (c *certMonitor) processSecret(secret *corev1.Secret) {
 	for dataKey, dataCert := range secret.Data {
 		certConv, err := base64.StdEncoding.DecodeString(string(dataCert))
 		if err != nil {
@@ -163,7 +141,7 @@ func (c *certMonitor) findCertsFromSecret(secret *corev1.Secret) {
 		}
 
 		expiryTime := float64(certss.NotAfter.Unix())
-		certificatesExpiry.WithLabelValues(secret.Namespace, secret.Name, dataKey).Set(expiryTime)
+		c.metrics.SetCertKeyExpiryMetric(secret.Namespace, secret.Name, dataKey, expiryTime)
 	}
 }
 
@@ -174,7 +152,7 @@ func (c *certMonitor) handleSecretCreation(obj interface{}) {
 		return
 	}
 	fmt.Printf("Handling Creation: %s,%s\n", secret.Namespace, secret.Name)
-	c.findCertsFromSecret(secret)
+	c.processSecret(secret)
 }
 
 // handleSecretUpdate func event handles secret updates
@@ -194,14 +172,11 @@ func (c *certMonitor) handleSecretUpdate(oldObj, newObj interface{}) {
 	}
 	for oldKey := range oldsecret.Data {
 		if _, ok := newsecret.Data[oldKey]; !ok {
-			certificatesExpiry.DeletePartialMatch(prometheus.Labels{
-				labelSecretName:      newsecret.Name,      // pragma: allowlist secret
-				labelSecretNamespace: newsecret.Namespace, // pragma: allowlist secret
-				labelDataKey:         oldKey,
-			})
+			// secret has been updated, and oldKey does not exist in the new secret - so we delete the metric
+			c.metrics.DeleteKeyCertMetric(newsecret.Namespace, newsecret.Name, oldKey)
 		}
 	}
-	c.findCertsFromSecret(newsecret)
+	c.processSecret(newsecret)
 }
 
 // handleSecretDeletion func event handles deletion of secrets
@@ -210,18 +185,7 @@ func (c *certMonitor) handleSecretDeletion(obj interface{}) {
 	if !ok {
 		return
 	}
-
-	for dataKey := range secret.Data {
-		certificatesExpiry.DeletePartialMatch(prometheus.Labels{
-			labelSecretName:      secret.Name,      // pragma: allowlist secret
-			labelSecretNamespace: secret.Namespace, // pragma: allowlist secret
-			labelDataKey:         dataKey,
-		})
-	}
-	certificatesExpiry.DeletePartialMatch(prometheus.Labels{
-		labelSecretName:      secret.Name,      // pragma: allowlist secret
-		labelSecretNamespace: secret.Namespace, // pragma: allowlist secret
-	})
+	c.metrics.DeleteCertMetric(secret.Namespace, secret.Name)
 }
 
 // ValidateConfig func checks the validity of given config,  in 'Monitor'

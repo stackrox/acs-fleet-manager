@@ -73,30 +73,95 @@ func main() {
 		Monitors: []certmonitor.MonitorConfig{
 			{
 				Namespace: certmonitor.SelectorConfig{
-					Name: "namespace-three",
+					LabelSelector: &metav1.LabelSelector{
+						MatchExpressions: []metav1.LabelSelectorRequirement{
+							{
+								Key:      "rhacs.redhat.com/tenant",
+								Operator: metav1.LabelSelectorOpExists,
+							},
+						},
+					},
 				},
 				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
-					Name: "secret-three-cert",
-				},
-			},
-			{
-				Namespace: certmonitor.SelectorConfig{
-					Name: "namespace-four",
-				},
-				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
-					Name: "secret-three-cert2",
+					Name: "scanner-tls",
 				},
 			},
 			{
 				Namespace: certmonitor.SelectorConfig{
 					LabelSelector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{
-							"bar": "qux",
+						MatchExpressions: []metav1.LabelSelectorRequirement{
+							{
+								Key:      "rhacs.redhat.com/tenant",
+								Operator: metav1.LabelSelectorOpExists,
+							},
 						},
 					},
 				},
 				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
-					Name: "secret-labeled-1",
+					Name: "central-tls",
+				},
+			},
+
+			{
+				Namespace: certmonitor.SelectorConfig{
+					LabelSelector: &metav1.LabelSelector{
+						MatchExpressions: []metav1.LabelSelectorRequirement{
+							{
+								Key:      "rhacs.redhat.com/tenant",
+								Operator: metav1.LabelSelectorOpExists,
+							},
+						},
+					},
+				},
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
+					Name: "scanner-db-tls",
+				},
+			},
+
+			{
+				Namespace: certmonitor.SelectorConfig{
+					LabelSelector: &metav1.LabelSelector{
+						MatchExpressions: []metav1.LabelSelectorRequirement{
+							{
+								Key:      "rhacs.redhat.com/tenant",
+								Operator: metav1.LabelSelectorOpExists,
+							},
+						},
+					},
+				},
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
+					Name: "scanner-v4-db-tls",
+				},
+			},
+
+			{
+				Namespace: certmonitor.SelectorConfig{
+					LabelSelector: &metav1.LabelSelector{
+						MatchExpressions: []metav1.LabelSelectorRequirement{
+							{
+								Key:      "rhacs.redhat.com/tenant",
+								Operator: metav1.LabelSelectorOpExists,
+							},
+						},
+					},
+				},
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
+					Name: "scanner-v4-indexer-tls",
+				},
+			},
+			{
+				Namespace: certmonitor.SelectorConfig{
+					LabelSelector: &metav1.LabelSelector{
+						MatchExpressions: []metav1.LabelSelectorRequirement{
+							{
+								Key:      "rhacs.redhat.com/tenant",
+								Operator: metav1.LabelSelectorOpExists,
+							},
+						},
+					},
+				},
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
+					Name: "scanner-v4-matcher-tls",
 				},
 			},
 		},
