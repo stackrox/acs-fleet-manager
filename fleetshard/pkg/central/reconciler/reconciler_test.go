@@ -46,7 +46,6 @@ import (
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	yaml2 "sigs.k8s.io/yaml"
 )
 
@@ -360,6 +359,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		resourcesChart:         resourcesChart,
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
+		namespaceReconciler:    noopReconciler{},
 	}
 	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
 	r.needsReconcileFunc = r.needsReconcile
@@ -781,41 +781,6 @@ func TestCentralChanged(t *testing.T) {
 			assert.Equal(t, test.want, got)
 		})
 	}
-}
-
-func TestNamespaceLabelsAreSet(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		useRoutesReconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	namespace := &v1.Namespace{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
-	require.NoError(t, err)
-	assert.Equal(t, simpleManagedCentral.Id, namespace.GetLabels()[tenantIDLabelKey])
-	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, namespace.GetLabels()[orgIDLabelKey])
-}
-
-func TestNamespaceAnnotationsAreSet(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		useRoutesReconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	namespace := &v1.Namespace{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
-	require.NoError(t, err)
-	assert.Equal(t, ovnACLLoggingAnnotationDefault, namespace.GetAnnotations()[ovnACLLoggingAnnotationKey])
 }
 
 func TestReportRoutesStatuses(t *testing.T) {
@@ -2161,194 +2126,6 @@ metadata:
 		})
 	}
 
-}
-
-func TestReconciler_reconcileNamespace(t *testing.T) {
-	tests := []struct {
-		name              string
-		existingNamespace *v1.Namespace
-		wantErr           bool
-		wantNamespace     *v1.Namespace
-		expectUpdate      bool
-		expectCreate      bool
-	}{
-		{
-			name:         "namespace should be created if it doesn't exist",
-			expectCreate: true,
-			wantNamespace: &v1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: simpleManagedCentral.Metadata.Namespace,
-					Labels: map[string]string{
-						"app.kubernetes.io/instance":     "test-central",
-						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
-						"rhacs.redhat.com/instance-type": "standard",
-						"rhacs.redhat.com/org-id":        "12345",
-						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
-					},
-					Annotations: map[string]string{
-						"rhacs.redhat.com/org-name": "org-name",
-						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
-					},
-				},
-			},
-		},
-		{
-			name:         "namespace with wrong labels or annotations should be updated",
-			expectUpdate: true,
-			existingNamespace: &v1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: simpleManagedCentral.Metadata.Namespace,
-					Labels: map[string]string{
-						"app.kubernetes.io/instance":     "wrong",
-						"app.kubernetes.io/managed-by":   "wrong",
-						"rhacs.redhat.com/instance-type": "wrong",
-						"rhacs.redhat.com/org-id":        "wrong",
-						"rhacs.redhat.com/tenant":        "wrong",
-					},
-					Annotations: map[string]string{
-						"rhacs.redhat.com/org-name": "wrong",
-						ovnACLLoggingAnnotationKey:  "{\"allow\": \"wrong\"}",
-					},
-				},
-			},
-			wantNamespace: &v1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: simpleManagedCentral.Metadata.Namespace,
-					Labels: map[string]string{
-						"app.kubernetes.io/instance":     "test-central",
-						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
-						"rhacs.redhat.com/instance-type": "standard",
-						"rhacs.redhat.com/org-id":        "12345",
-						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
-					},
-					Annotations: map[string]string{
-						"rhacs.redhat.com/org-name": "org-name",
-						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
-					},
-				},
-			},
-		},
-		{
-			name: "extra labels/annotations should remain untouched",
-			existingNamespace: &v1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: simpleManagedCentral.Metadata.Namespace,
-					Labels: map[string]string{
-						"app.kubernetes.io/instance":     "test-central",
-						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
-						"rhacs.redhat.com/instance-type": "standard",
-						"rhacs.redhat.com/org-id":        "12345",
-						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
-						"extra":                          "extra",
-					},
-					Annotations: map[string]string{
-						"rhacs.redhat.com/org-name": "org-name",
-						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
-						"extra":                     "extra",
-					},
-				},
-			},
-			wantNamespace: &v1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: simpleManagedCentral.Metadata.Namespace,
-					Labels: map[string]string{
-						"app.kubernetes.io/instance":     "test-central",
-						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
-						"rhacs.redhat.com/instance-type": "standard",
-						"rhacs.redhat.com/org-id":        "12345",
-						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
-						"extra":                          "extra",
-					},
-					Annotations: map[string]string{
-						"rhacs.redhat.com/org-name": "org-name",
-						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
-						"extra":                     "extra",
-					},
-				},
-			},
-		},
-		{
-			name: "namespace should not be updated if it's already correct",
-			existingNamespace: &v1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: simpleManagedCentral.Metadata.Namespace,
-					Labels: map[string]string{
-						"app.kubernetes.io/instance":     "test-central",
-						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
-						"rhacs.redhat.com/instance-type": "standard",
-						"rhacs.redhat.com/org-id":        "12345",
-						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
-					},
-					Annotations: map[string]string{
-						"rhacs.redhat.com/org-name": "org-name",
-						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
-					},
-				},
-			},
-			wantNamespace: &v1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: simpleManagedCentral.Metadata.Namespace,
-					Labels: map[string]string{
-						"app.kubernetes.io/instance":     "test-central",
-						"app.kubernetes.io/managed-by":   "rhacs-fleetshard",
-						"rhacs.redhat.com/instance-type": "standard",
-						"rhacs.redhat.com/org-id":        "12345",
-						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
-					},
-					Annotations: map[string]string{
-						"rhacs.redhat.com/org-name": "org-name",
-						ovnACLLoggingAnnotationKey:  ovnACLLoggingAnnotationDefault,
-					},
-				},
-			},
-		},
-	}
-
-	managedCentral := simpleManagedCentral
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, nil, defaultReconcilerOptions)
-			if tt.existingNamespace != nil {
-				require.NoError(t, fakeClient.Create(context.Background(), tt.existingNamespace))
-			}
-			updateCount := 0
-			createCount := 0
-			r.client = interceptor.NewClient(fakeClient, interceptor.Funcs{
-				Update: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
-					updateCount++
-					return client.Update(ctx, obj, opts...)
-				},
-				Create: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.CreateOption) error {
-					createCount++
-					return client.Create(ctx, obj, opts...)
-				},
-			})
-			err := r.reconcileNamespace(context.Background(), managedCentral)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				var gotNamespace v1.Namespace
-				err := fakeClient.Get(context.Background(), client.ObjectKey{Name: simpleManagedCentral.Metadata.Namespace}, &gotNamespace)
-				require.NoError(t, err)
-				assert.Equal(t, tt.wantNamespace.Name, gotNamespace.Name)
-				assert.Equal(t, tt.wantNamespace.Labels, gotNamespace.Labels)
-				assert.Equal(t, tt.wantNamespace.Annotations, gotNamespace.Annotations)
-				if tt.expectUpdate {
-					assert.Equal(t, 1, updateCount, "update should be called")
-				} else {
-					assert.Equal(t, 0, updateCount, "update should not be called")
-				}
-
-				if tt.expectCreate {
-					assert.Equal(t, 1, createCount, "create should be called")
-				} else {
-					assert.Equal(t, 0, createCount, "create should not be called")
-				}
-			}
-		})
-	}
 }
 
 func TestReconciler_needsReconcile(t *testing.T) {
