@@ -293,8 +293,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 
 // TestCertMonitor func tests certificates event handlers + prometheus metrics handling
 func TestCertMonitor(t *testing.T) {
-	metrics := fleetshardmetrics.newMetrics()
-	metrics.CertificatesExpiry.Reset()
+	fleetshardmetrics.MetricsInstance().CertificatesExpiry.Reset()
 
 	namespaces := []v1.Namespace{
 		{
@@ -307,7 +306,7 @@ func TestCertMonitor(t *testing.T) {
 	}
 	certMonitor := &certMonitor{
 		namespaceGetter: newFakeNamespaceGetter(namespaces),
-		metrics:         metrics,
+		metrics:         fleetshardmetrics.MetricsInstance(),
 	}
 	now1 := time.Now().UTC()
 	expirytime := now1.Add(1 * time.Hour)
@@ -357,14 +356,13 @@ func generateCertWithExpiration(t *testing.T, expiry time.Time) []byte {
 
 // verifyPrometheusMetric func verifies if the promethues metric matches the expected value (create + update handle)
 func verifyPrometheusMetric(t *testing.T, namespace, secret, data_key string, expectedValue float64) {
-	actualValue := testutil.ToFloat64(certificatesExpiry.WithLabelValues(namespace, secret, data_key))
+	actualValue := testutil.ToFloat64(fleetshardmetrics.MetricsInstance().CertificatesExpiry.WithLabelValues(namespace, secret, data_key))
 	assert.Equal(t, expectedValue, actualValue, "Value does nt match")
 }
 
 // verifyPrometheusMetricDelete func verifies that the promethues metric has actually been deleted (delete handle)
 func verifyPrometheusMetricDelete(t *testing.T, namespace, secret, data_key string) {
-	metric, err := certificatesExpiry.GetMetricWithLabelValues(namespace, secret, data_key)
-	t.Logf(namespace, metric, data_key)
+	metric, err := fleetshardmetrics.MetricsInstance().CertificatesExpiry.GetMetricWithLabelValues(namespace, secret, data_key)
 	if err != nil {
 		metrciValue := testutil.ToFloat64(metric)
 		if metrciValue != 0 {

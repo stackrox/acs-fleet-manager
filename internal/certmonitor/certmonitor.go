@@ -72,6 +72,7 @@ func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFact
 		podInformer:     podInformer,
 		config:          config,
 		namespaceGetter: namespaceGetter,
+		metrics:         fleetshardmetrics.MetricsInstance(),
 	}
 	return monitor, nil
 }
@@ -139,7 +140,6 @@ func (c *certMonitor) processSecret(secret *corev1.Secret) {
 		if err != nil {
 			continue
 		}
-
 		expiryTime := float64(certss.NotAfter.Unix())
 		c.metrics.SetCertKeyExpiryMetric(secret.Namespace, secret.Name, dataKey, expiryTime)
 	}
