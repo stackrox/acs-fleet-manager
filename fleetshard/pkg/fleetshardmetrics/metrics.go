@@ -8,12 +8,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 )
 
-const (
-	metricsPrefix        = "acs_fleetshard_"
-	labelSecretName      = "name"      // pragma: allowlist secret
-	labelSecretNamespace = "namespace" // pragma: allowlist secret
-	labelDataKey         = "data_key"
-)
+const metricsPrefix = "acs_fleetshard_"
 
 var (
 	metrics *Metrics
@@ -131,15 +126,15 @@ func (m *Metrics) SetOperatorHealthStatus(image string, healthy bool) {
 }
 
 func (m *Metrics) SetCertKeyExpiryMetric(namespace, name, key string, expiry float64) {
-	m.CertificatesExpiry.With(prometheus.Labels{"namespace": namespace, "secret": name, "data_key": key}).Set(expiry)
+	m.CertificatesExpiry.With(prometheus.Labels{"namespace": namespace, "secret": name, "data_key": key}).Set(expiry) // pragma: allowlist secret
 }
 
 func (m *Metrics) DeleteCertMetric(namespace, name string) {
-	m.CertificatesExpiry.Delete(prometheus.Labels{"namespace": namespace, "secret": name})
+	m.CertificatesExpiry.Delete(prometheus.Labels{"namespace": namespace, "secret": name}) // pragma: allowlist secret
 }
 
 func (m *Metrics) DeleteKeyCertMetric(namespace, name, key string) {
-	m.CertificatesExpiry.Delete(prometheus.Labels{"namespace": namespace, "secret": name, "data_key": key})
+	m.CertificatesExpiry.Delete(prometheus.Labels{"namespace": namespace, "secret": name, "data_key": key}) // pragma: allowlist secret
 }
 
 // MetricsInstance return the global Singleton instance for Metrics
