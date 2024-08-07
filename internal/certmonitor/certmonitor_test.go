@@ -365,7 +365,7 @@ func verifyPrometheusMetricDelete(t *testing.T, namespace, secret, data_key stri
 	if err != nil {
 		metrciValue := testutil.ToFloat64(metric)
 		if metrciValue != 0 {
-			t.Errorf("erorrrr: %v", metrciValue)
+			t.Errorf("Error: %v", metrciValue)
 		}
 	}
 }

@@ -16,22 +16,22 @@ import (
 	"time"
 )
 
-// SelectorConfig struct for namespace or secret selection based on labels/name
+// SelectorConfig represents a configuration to select a namespace or a secret by name or labelSelector. Only one of Name or LabelSelector can be specified.
 type SelectorConfig struct {
 	Name          string                `json:"name"`
 	LabelSelector *metav1.LabelSelector `json:"labelSelector"`
 }
 
-// MonitorConfig struct for monitoring specific namespaces + secrets
+// MonitorConfig represents a configuration for observing certificates contained in kubernetes secrets
 type MonitorConfig struct {
 	Namespace SelectorConfig `json:"namespace"`
 	Secret    SelectorConfig `json:"secret"`
 }
 
-// Config struct, overall configuration for the certificate monitoring
+// Config represents the certificate monitor configuration
+
 type Config struct {
 	Monitors     []MonitorConfig `json:"monitors"`
-	Kubeconfig   string          `json:"kubeconfig"`
 	ResyncPeriod *time.Duration  `json:"resyncPeriod"`
 }
 
@@ -40,7 +40,7 @@ type NamespaceGetter interface {
 	Get(name string) (*corev1.Namespace, error)
 }
 
-// certMonitor struct is main struct for certificate monitoring
+// certMonitor is the Certificate Monitor. It watches Kubernetes secrets containing certificates, and populates prometheus metrics with the expiration time of those certificates.
 type certMonitor struct {
 	informerfactory informers.SharedInformerFactory
 	podInformer     cache.SharedIndexInformer
@@ -49,8 +49,8 @@ type certMonitor struct {
 	metrics         *fleetshardmetrics.Metrics
 }
 
-// StartInformer func starts to informer to monitor secrets + event handlers
-func (c *certMonitor) StartInformer(stopCh <-chan struct{}) error {
+// Start the certificate monitor
+func (c *certMonitor) Start(stopCh <-chan struct{}) error {
 	c.podInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.handleSecretCreation,
 		UpdateFunc: c.handleSecretUpdate,
@@ -65,7 +65,7 @@ func (c *certMonitor) StartInformer(stopCh <-chan struct{}) error {
 	return nil
 }
 
-// NewCertMonitor func creates new instance of certMonitor
+// NewCertMonitor creates new instance of certMonitor
 func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFactory, podInformer cache.SharedIndexInformer, namespaceGetter NamespaceGetter) (*certMonitor, error) {
 	monitor := &certMonitor{
 		informerfactory: informerFactory,
@@ -77,7 +77,7 @@ func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFact
 	return monitor, nil
 }
 
-// objectMatchesSelector func checks if object matches given label selector
+// objectMatchesSelector checks if object matches given label selector
 func objectMatchesSelector(obj runtime.Object, selector *metav1.LabelSelector) bool {
 	if selector == nil {
 		return true
@@ -96,7 +96,7 @@ func objectMatchesSelector(obj runtime.Object, selector *metav1.LabelSelector) b
 
 }
 
-// secretMatches func checks if secret matches in the monitor config
+// secretMatches checks if a secret matches a monitor config
 func (c *certMonitor) secretMatches(s *corev1.Secret, monitor MonitorConfig) bool {
 	if s == nil {
 		return false
@@ -123,7 +123,7 @@ func (c *certMonitor) secretMatches(s *corev1.Secret, monitor MonitorConfig) boo
 	return true
 }
 
-// processSecret func extracts, decodes, parses certificates from a secret, and populates prometheus metrics
+// processSecret extracts, decodes, parses certificates from a secret, and populates prometheus metrics
 func (c *certMonitor) processSecret(secret *corev1.Secret) {
 	for dataKey, dataCert := range secret.Data {
 		certConv, err := base64.StdEncoding.DecodeString(string(dataCert))
@@ -145,17 +145,16 @@ func (c *certMonitor) processSecret(secret *corev1.Secret) {
 	}
 }
 
-// handleScretCreation func event handles new secret creations
+// handleScretCreation handles secret creation events
 func (c *certMonitor) handleSecretCreation(obj interface{}) {
 	secret, ok := obj.(*corev1.Secret)
 	if !ok {
 		return
 	}
-	fmt.Printf("Handling Creation: %s,%s\n", secret.Namespace, secret.Name)
 	c.processSecret(secret)
 }
 
-// handleSecretUpdate func event handles secret updates
+// handleSecretUpdate handles secret updates
 func (c *certMonitor) handleSecretUpdate(oldObj, newObj interface{}) {
 	oldsecret, ok := oldObj.(*corev1.Secret)
 	if !ok {
@@ -179,7 +178,7 @@ func (c *certMonitor) handleSecretUpdate(oldObj, newObj interface{}) {
 	c.processSecret(newsecret)
 }
 
-// handleSecretDeletion func event handles deletion of secrets
+// handleSecretDeletion handles deletion of secrets
 func (c *certMonitor) handleSecretDeletion(obj interface{}) {
 	secret, ok := obj.(*corev1.Secret)
 	if !ok {
@@ -188,13 +187,13 @@ func (c *certMonitor) handleSecretDeletion(obj interface{}) {
 	c.metrics.DeleteCertMetric(secret.Namespace, secret.Name)
 }
 
-// ValidateConfig func checks the validity of given config,  in 'Monitor'
+// ValidateConfig checks the validity of Config
 func ValidateConfig(config Config) (errs field.ErrorList) {
 	errs = append(errs, validateMonitors(field.NewPath("monitors"), config.Monitors)...)
 	return errs
 }
 
-// validateMonitors func validates list of Monitor
+// validateMonitors validates list of Monitor
 func validateMonitors(path *field.Path, monitors []MonitorConfig) (errs field.ErrorList) {
 	for i, monitor := range monitors {
 		errs = append(errs, validateMonitor(path.Index(i), monitor)...)
@@ -202,14 +201,14 @@ func validateMonitors(path *field.Path, monitors []MonitorConfig) (errs field.Er
 	return errs
 }
 
-// validateMonitor func validates single Monitor obj, including: 'Namespace' and 'Secret'
+// validateMonitor validates a Monitor
 func validateMonitor(path *field.Path, monitor MonitorConfig) (errs field.ErrorList) {
 	errs = append(errs, validateSelectorConfig(path.Child("namespace"), monitor.Namespace)...)
 	errs = append(errs, validateSelectorConfig(path.Child("secret"), monitor.Secret)...)
 	return errs
 }
 
-// validateSelectorConfig func validates selectorConfig obj
+// validateSelectorConfig validates a SelectorConfig
 func validateSelectorConfig(path *field.Path, selectorConfig SelectorConfig) (errs field.ErrorList) {
 	if len(selectorConfig.Name) != 0 && selectorConfig.LabelSelector != nil {
 		errs = append(errs, field.Invalid(path, selectorConfig, "cannot specify both name and label selector"))

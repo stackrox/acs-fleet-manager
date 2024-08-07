@@ -178,11 +178,13 @@ func main() {
 
 	monitor, err := certmonitor.NewCertMonitor(certmonitorConfig, informedFactory, podInformer, namespaceLister)
 	if err != nil {
-		glog.Info("Error creating certificate monitor: %v\n", err)
-		os.Exit(1)
+		glog.Fatalf("Error creating certificate monitor: %v", err)
 	}
 	stopCh := make(chan struct{})
-	go monitor.StartInformer(stopCh)
+	go monitor.Start(stopCh)
+	if err := monitor.Start(stopCh); err != nil {
+		glog.Fatalf("Error starting certmonitor monitor: %v\n", err)
+	}
 
 	glog.Info("Creating metrics server...")
 	metricServer := fleetshardmetrics.NewMetricsServer(config.MetricsAddress)

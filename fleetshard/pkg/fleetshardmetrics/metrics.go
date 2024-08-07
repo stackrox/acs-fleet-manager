@@ -213,8 +213,8 @@ func newMetrics() *Metrics {
 		),
 
 		CertificatesExpiry: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "acscs_certmonitor_certificate_expiration_timestamp",
-			Help: "Expiry of certifications",
+			Name: metricsPrefix + "certificate_expiration_timestamp",
+			Help: "Expiry of certificates",
 		},
 			[]string{"namespace", "secret", "data_key"},
 		),
