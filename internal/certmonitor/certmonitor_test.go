@@ -321,13 +321,12 @@ func TestCertMonitor(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-1", Name: "secret-1"},
 		Data:       map[string][]byte{"tls-1.crt": generateCertWithExpiration(t, newExpiryTime)},
 	}
-	certMonitor.handleSecretCreation(secret)
 
 	expirationUnix := float64(expirytime.Unix())
-
-	updatedUnix := float64(newExpiryTime.Unix())
+	certMonitor.handleSecretCreation(secret)
 	verifyPrometheusMetric(t, "namespace-1", "secret-1", "tls.crt", expirationUnix)
 
+	updatedUnix := float64(newExpiryTime.Unix())
 	certMonitor.handleSecretUpdate(secret, secretUpdated)
 	verifyPrometheusMetric(t, "namespace-1", "secret-1", "tls-1.crt", updatedUnix)
 
@@ -357,7 +356,7 @@ func generateCertWithExpiration(t *testing.T, expiry time.Time) []byte {
 // verifyPrometheusMetric func verifies if the promethues metric matches the expected value (create + update handle)
 func verifyPrometheusMetric(t *testing.T, namespace, secret, data_key string, expectedValue float64) {
 	actualValue := testutil.ToFloat64(fleetshardmetrics.MetricsInstance().CertificatesExpiry.WithLabelValues(namespace, secret, data_key))
-	assert.Equal(t, expectedValue, actualValue, "Value does nt match")
+	assert.Equal(t, expectedValue, actualValue, "Value does not match")
 }
 
 // verifyPrometheusMetricDelete func verifies that the promethues metric has actually been deleted (delete handle)
