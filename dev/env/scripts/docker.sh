@@ -46,54 +46,36 @@ docker_logged_in() {
 }
 
 ensure_fleet_manager_image_exists() {
-    if [[ "$FLEET_MANAGER_IMAGE" =~ ^[0-9a-z.-]+$ ]]; then
-        log "FLEET_MANAGER_IMAGE='${FLEET_MANAGER_IMAGE}' looks like an image tag. Setting:"
-        FLEET_MANAGER_IMAGE="quay.io/rhacs-eng/fleet-manager:${FLEET_MANAGER_IMAGE}"
-        log "FLEET_MANAGER_IMAGE='${FLEET_MANAGER_IMAGE}'"
+    if should_skip_image_build;  then
+        return
     fi
+    if $DOCKER image inspect "$FLEET_MANAGER_IMAGE" >/dev/null 2>&1; then
+        log "Image ${FLEET_MANAGER_IMAGE} found, skipping building of a new image."
+        return
+    fi
+    if [[ "$FLEET_MANAGER_IMAGE" != "$(make -s -C "${GITROOT}" full-image-tag)" ]]; then
+        die "Cannot find image '${FLEET_MANAGER_IMAGE}' and don't know how to build it"
+    fi
+    if [[ "$CLUSTER_TYPE" == "infra-openshift" ]]; then
+        log "Building local image and pushing it to the internal registry"
+        make -C "${GITROOT}" image/push/internal
 
-    if is_local_deploy; then
-        # We are deploying locally. Locally we support Quay images and freshly built images.
-        if [[ "$FLEET_MANAGER_IMAGE" =~ ^fleet-manager.*:.* ]]; then
-            # Local image reference, which cannot be pulled.
-            image_available=$(if $DOCKER image inspect "${FLEET_MANAGER_IMAGE}" >/dev/null 2>&1; then echo "true"; else echo "false"; fi)
-            if [[ "$image_available" != "true" || "$FLEET_MANAGER_IMAGE" =~ dirty$ ]]; then
-                # Attempt to build this image.
-                if [[ "$FLEET_MANAGER_IMAGE" == "$(make -s -C "${GITROOT}" full-image-tag)" ]]; then
-                    log "Building local image..."
-                    make -C "${GITROOT}" image/build
-                else
-                    die "Cannot find image '${FLEET_MANAGER_IMAGE}' and don't know how to build it"
-                fi
-            else
-                log "Image ${FLEET_MANAGER_IMAGE} found, skipping building of a new image."
-            fi
-        else
-            log "Trying to pull image '${FLEET_MANAGER_IMAGE}'..."
-            docker_pull "$FLEET_MANAGER_IMAGE"
-        fi
-
+        # Override image tag from an image stream reference because image streams are not compatible with Helm 3 and image lookup can't be used for fleetshard-sync deployment
+        FLEET_MANAGER_IMAGE=$(oc get istag/fleet-manager:"$(make -s -C "${GITROOT}" tag)" -n "${ACSCS_NAMESPACE}" -o jsonpath='{.image.dockerImageReference}')
+    else
+        log "Building local image..."
+        make -C "${GITROOT}" image/build
         if [[ "${CLUSTER_TYPE}" == "kind" ]]; then
             kind load docker-image "$FLEET_MANAGER_IMAGE"
         fi
         if [[ "${CLUSTER_TYPE}" == "crc" ]]; then
-            docker tag "$FLEET_MANAGER_IMAGE" "${ACSCS_NAMESPACE}/$FLEET_MANAGER_IMAGE"
-        fi
-
-        # Verify that the image is there.
-        if ! $DOCKER image inspect "$FLEET_MANAGER_IMAGE" >/dev/null 2>&1; then
-            die "Image ${FLEET_MANAGER_IMAGE} not available in cluster, aborting"
-        fi
-    else
-        # We are deploying to a remote cluster.
-        if [[ "$FLEET_MANAGER_IMAGE" =~ ^fleet-manager:.* ]]; then
-            die "Error: When deploying to a remote target cluster FLEET_MANAGER_IMAGE must point to an image pullable from the target cluster."
+            $DOCKER tag "$FLEET_MANAGER_IMAGE" "${ACSCS_NAMESPACE}/$FLEET_MANAGER_IMAGE"
         fi
     fi
 }
 
 ensure_fleetshard_operator_image_exists() {
-    if ! is_local_deploy; then
+    if should_skip_image_build; then
         if [[ -z "${FLEETSHARD_OPERATOR_IMAGE:-}" ]]; then
             die "FLEET_MANAGER_IMAGE is not set"
         fi
@@ -103,26 +85,28 @@ ensure_fleetshard_operator_image_exists() {
     if [[ -z "${FLEETSHARD_OPERATOR_IMAGE:-}" ]]; then
         FLEETSHARD_OPERATOR_IMAGE="fleetshard-operator:$(make tag)"
         export FLEETSHARD_OPERATOR_IMAGE
-        log "Building fleetshard operator image ${FLEETSHARD_OPERATOR_IMAGE}..."
-        make -C "${GITROOT}" image/build/fleetshard-operator IMAGE_REF="${FLEETSHARD_OPERATOR_IMAGE}"
-        if [[ "${CLUSTER_TYPE}" == "kind" ]]; then
-            kind load docker-image "$FLEETSHARD_OPERATOR_IMAGE"
-        fi
-        if [[ "${CLUSTER_TYPE}" == "crc" ]]; then
-            docker tag "$FLEETSHARD_OPERATOR_IMAGE" "${ACSCS_NAMESPACE}/$FLEETSHARD_OPERATOR_IMAGE"
+        if [[ "$CLUSTER_TYPE" == "infra-openshift" ]]; then
+            log "Building fleetshard operator image ${FLEETSHARD_OPERATOR_IMAGE} and pushing it to internal registry"
+            make -C "${GITROOT}" image/push/fleetshard-operator/internal
+        else
+            log "Building fleetshard operator image ${FLEETSHARD_OPERATOR_IMAGE}..."
+            make -C "${GITROOT}" image/build/fleetshard-operator IMAGE_REF="${FLEETSHARD_OPERATOR_IMAGE}"
+            if [[ "${CLUSTER_TYPE}" == "kind" ]]; then
+                kind load docker-image "$FLEETSHARD_OPERATOR_IMAGE"
+            fi
+            if [[ "${CLUSTER_TYPE}" == "crc" ]]; then
+                $DOCKER tag "$FLEETSHARD_OPERATOR_IMAGE" "${ACSCS_NAMESPACE}/$FLEETSHARD_OPERATOR_IMAGE"
+            fi
         fi
     fi
 }
 
-is_local_deploy() {
-    if [[ "$CLUSTER_TYPE" == "openshift-ci" \
-        || "$CLUSTER_TYPE" == "infra-openshift" \
-        || "$CLUSTER_TYPE" == "gke" \
-        ]]; then
-        return 1
+should_skip_image_build() {
+    if [[ "$CLUSTER_TYPE" == "openshift-ci" ]]; then
+        return 0
     fi
     if is_running_inside_docker; then
-        return 1
+        return 0
     fi
-    return 0
+    return 1
 }

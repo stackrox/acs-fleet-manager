@@ -13,6 +13,9 @@ spec:
     metadata:
       labels:
         name: acs-fleetshard-operator
+      annotations:
+        # Allows deployment to use image streams
+        alpha.image.policy.openshift.io/resolve-names: '*'
     spec:
       securityContext:
         runAsNonRoot: true

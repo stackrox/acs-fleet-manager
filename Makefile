@@ -628,6 +628,12 @@ image/push/fleetshard-operator: image/build/fleetshard-operator
 	$(DOCKER) push $(IMAGE_REF)
 .PHONY: image/push/fleetshard-operator
 
+# push the image to the OpenShift internal registry
+image/push/fleetshard-operator/internal: IMAGE_TAG ?= $(image_tag)
+image/push/fleetshard-operator/internal: docker/login/internal
+	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/fleetshard-operator:$(IMAGE_TAG)" --platform linux/amd64 --push ${PROJECT_PATH}/dp-terraform/helm
+.PHONY: image/push/fleetshard-operator/internal
+
 # Run the probe based e2e test in container
 test/e2e/probe/run: image/build/probe
 test/e2e/probe/run: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
