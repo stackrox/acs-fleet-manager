@@ -29,7 +29,6 @@ type MonitorConfig struct {
 }
 
 // Config represents the certificate monitor configuration
-
 type Config struct {
 	Monitors     []MonitorConfig `json:"monitors"`
 	ResyncPeriod *time.Duration  `json:"resyncPeriod"`
@@ -55,8 +54,7 @@ func (c *certMonitor) Start(stopCh <-chan struct{}) error {
 		AddFunc:    c.handleSecretCreation,
 		UpdateFunc: c.handleSecretUpdate,
 		DeleteFunc: c.handleSecretDeletion,
-	},
-	)
+	})
 	c.informerfactory.Start(stopCh)
 
 	if !cache.WaitForCacheSync(stopCh, c.podInformer.HasSynced) {
@@ -66,15 +64,14 @@ func (c *certMonitor) Start(stopCh <-chan struct{}) error {
 }
 
 // NewCertMonitor creates new instance of certMonitor
-func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFactory, podInformer cache.SharedIndexInformer, namespaceGetter NamespaceGetter) (*certMonitor, error) {
-	monitor := &certMonitor{
+func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFactory, podInformer cache.SharedIndexInformer, namespaceGetter NamespaceGetter) *certMonitor {
+	return &certMonitor{
 		informerfactory: informerFactory,
 		podInformer:     podInformer,
 		config:          config,
 		namespaceGetter: namespaceGetter,
 		metrics:         fleetshardmetrics.MetricsInstance(),
 	}
-	return monitor, nil
 }
 
 // objectMatchesSelector checks if object matches given label selector
