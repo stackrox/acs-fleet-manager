@@ -176,10 +176,7 @@ func main() {
 	podInformer := informedFactory.Core().V1().Secrets().Informer()
 	namespaceLister := informedFactory.Core().V1().Namespaces().Lister()
 
-	monitor, err := certmonitor.NewCertMonitor(certmonitorConfig, informedFactory, podInformer, namespaceLister)
-	if err != nil {
-		glog.Fatalf("Error creating certificate monitor: %v", err)
-	}
+	monitor := certmonitor.NewCertMonitor(certmonitorConfig, informedFactory, podInformer, namespaceLister)
 	stopCh := make(chan struct{})
 	go monitor.Start(stopCh)
 	if err := monitor.Start(stopCh); err != nil {
