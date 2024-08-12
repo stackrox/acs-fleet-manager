@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/emailsender/config"
@@ -26,24 +25,23 @@ type Sender interface {
 }
 
 // NewEmailSender return a initialized Sender implementation according to the provider configured in cfg.EmailProvider
-func NewEmailSender(ctx context.Context, cfg *config.Config, rateLimiter RateLimiter) Sender {
+func NewEmailSender(ctx context.Context, cfg *config.Config, rateLimiter RateLimiter) (Sender, error) {
 	switch cfg.EmailProvider {
 	case EmailProviderLog:
 		return &LogEmailSender{
 			from: cfg.SenderAddress,
-		}
+		}, nil
 	default:
 		// EmailProviderAWSSES is the default
 		ses, err := NewSES(ctx, cfg.SesMaxBackoffDelay, cfg.SesMaxAttempts)
 		if err != nil {
-			glog.Errorf("Failed to initialise SES Client: %v", err)
-			os.Exit(1)
+			return nil, err
 		}
 		return &AWSMailSender{
 			from:        cfg.SenderAddress,
 			ses:         ses,
 			rateLimiter: rateLimiter,
-		}
+		}, nil
 
 	}
 }

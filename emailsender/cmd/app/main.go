@@ -69,7 +69,12 @@ func main() {
 		}
 	}()
 
-	emailSender := email.NewEmailSender(ctx, cfg, rateLimiter)
+	emailSender, err := email.NewEmailSender(ctx, cfg, rateLimiter)
+	if err != nil {
+		glog.Errorf("Failed to initialise EmailSender implementaiton: %v", err)
+		os.Exit(1)
+	}
+
 	emailHandler := api.NewEmailHandler(emailSender)
 
 	router, err := api.SetupRoutes(cfg.AuthConfig, emailHandler)
