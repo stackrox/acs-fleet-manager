@@ -53,7 +53,7 @@ type LogEmailSender struct {
 
 // Send simulates sending an email by logging given message to glog.
 func (l *LogEmailSender) Send(ctx context.Context, to []string, rawMessage []byte, tenantID string) error {
-	glog.Infof("LogEmailSender.Send called with: to: %s, rawMessage: %s, tenantID: %s, from: %s", to, string(rawMessage), tenantID, l.from)
+	glog.Infof("LogEmailSender.Send called with: to: %s, rawMessage: '%s', tenantID: '%s', from: '%s'", to, string(rawMessage), tenantID, l.from)
 	return nil
 }
 
