@@ -56,11 +56,6 @@ func main() {
 		os.Exit(1)
 	}
 	rateLimiter := email.NewRateLimiterService(dbConnection, cfg.LimitEmailPerTenant)
-	sesClient, err := email.NewSES(ctx, cfg.SesMaxBackoffDelay, cfg.SesMaxAttempts)
-	if err != nil {
-		glog.Errorf("Failed to initialise SES Client: %v", err)
-		os.Exit(1)
-	}
 
 	cleanupWorker := workers.CleanupEmailSent{
 		DbConn:       dbConnection,
@@ -74,7 +69,7 @@ func main() {
 		}
 	}()
 
-	emailSender := email.NewEmailSender(cfg.SenderAddress, sesClient, rateLimiter)
+	emailSender := email.NewEmailSender(ctx, cfg, rateLimiter)
 	emailHandler := api.NewEmailHandler(emailSender)
 
 	router, err := api.SetupRoutes(cfg.AuthConfig, emailHandler)

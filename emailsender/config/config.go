@@ -45,6 +45,7 @@ type Config struct {
 	SesMaxAttempts            int           `env:"SES_MAX_ATTEMPTS" envDefault:"3"`
 	EmailCleanupPeriodSeconds int           `env:"EMAIL_CLEANUP_PERIOD_SECONDS" envDefault:"300"`
 	EmailCleanupExpiryDays    int           `env:"EMAIL_CLEANUP_EXPIRY_DAYS" envDefault:"2"`
+	EmailProvider             string        `env:"EMAIL_PROVIDER" envDefault:"AWS_SES"`
 	AuthConfig                AuthConfig
 	DatabaseConfig            DbConfig
 }
