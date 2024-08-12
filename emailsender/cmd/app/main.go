@@ -71,7 +71,7 @@ func main() {
 
 	emailSender, err := email.NewEmailSender(ctx, cfg, rateLimiter)
 	if err != nil {
-		glog.Errorf("Failed to initialise EmailSender implementaiton: %v", err)
+		glog.Errorf("Failed to initialise EmailSender implementation: %v", err)
 		os.Exit(1)
 	}
 
