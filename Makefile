@@ -983,6 +983,10 @@ full-image-tag:
 	@echo "$(IMAGE_NAME):$(image_tag)"
 .PHONY: full-image-tag
 
+image-name/emailsender:
+	@echo "$(external_image_registry)/$(emailsender_image_repository)"
+.PHONY: image-name/emailsender
+
 image-tag/emailsender:
 	@echo "$(external_image_registry)/$(emailsender_image_repository):$(image_tag)"
 .PHONY: image-tag/emailsender
