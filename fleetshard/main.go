@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/internal/certmonitor"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
@@ -68,98 +69,53 @@ func main() {
 
 	glog.Info("Creating certMonitor")
 
+	tenantNamespaceSelector := certmonitor.SelectorConfig{
+		LabelSelector: &metav1.LabelSelector{
+			MatchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Key:      reconciler.TenantIDLabelKey,
+					Operator: metav1.LabelSelectorOpExists,
+				},
+			},
+		},
+	}
 	certmonitorConfig := &certmonitor.Config{
-
 		Monitors: []certmonitor.MonitorConfig{
 			{
-				Namespace: certmonitor.SelectorConfig{
-					LabelSelector: &metav1.LabelSelector{
-						MatchExpressions: []metav1.LabelSelectorRequirement{
-							{
-								Key:      "rhacs.redhat.com/tenant",
-								Operator: metav1.LabelSelectorOpExists,
-							},
-						},
-					},
-				},
+				Namespace: tenantNamespaceSelector,
 				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
 					Name: "scanner-tls",
 				},
 			},
 			{
-				Namespace: certmonitor.SelectorConfig{
-					LabelSelector: &metav1.LabelSelector{
-						MatchExpressions: []metav1.LabelSelectorRequirement{
-							{
-								Key:      "rhacs.redhat.com/tenant",
-								Operator: metav1.LabelSelectorOpExists,
-							},
-						},
-					},
-				},
+				Namespace: tenantNamespaceSelector,
 				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
 					Name: "central-tls",
 				},
 			},
 
 			{
-				Namespace: certmonitor.SelectorConfig{
-					LabelSelector: &metav1.LabelSelector{
-						MatchExpressions: []metav1.LabelSelectorRequirement{
-							{
-								Key:      "rhacs.redhat.com/tenant",
-								Operator: metav1.LabelSelectorOpExists,
-							},
-						},
-					},
-				},
+				Namespace: tenantNamespaceSelector,
 				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
 					Name: "scanner-db-tls",
 				},
 			},
 
 			{
-				Namespace: certmonitor.SelectorConfig{
-					LabelSelector: &metav1.LabelSelector{
-						MatchExpressions: []metav1.LabelSelectorRequirement{
-							{
-								Key:      "rhacs.redhat.com/tenant",
-								Operator: metav1.LabelSelectorOpExists,
-							},
-						},
-					},
-				},
+				Namespace: tenantNamespaceSelector,
 				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
 					Name: "scanner-v4-db-tls",
 				},
 			},
 
 			{
-				Namespace: certmonitor.SelectorConfig{
-					LabelSelector: &metav1.LabelSelector{
-						MatchExpressions: []metav1.LabelSelectorRequirement{
-							{
-								Key:      "rhacs.redhat.com/tenant",
-								Operator: metav1.LabelSelectorOpExists,
-							},
-						},
-					},
-				},
+				Namespace: tenantNamespaceSelector,
 				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
 					Name: "scanner-v4-indexer-tls",
 				},
 			},
 			{
-				Namespace: certmonitor.SelectorConfig{
-					LabelSelector: &metav1.LabelSelector{
-						MatchExpressions: []metav1.LabelSelectorRequirement{
-							{
-								Key:      "rhacs.redhat.com/tenant",
-								Operator: metav1.LabelSelectorOpExists,
-							},
-						},
-					},
-				},
+				Namespace: tenantNamespaceSelector,
 				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
 					Name: "scanner-v4-matcher-tls",
 				},
@@ -167,8 +123,8 @@ func main() {
 		},
 	}
 
-	if errs := certmonitor.ValidateConfig(*certmonitorConfig); len(errs) != 0 {
-		glog.Fatalf("certmonitor validation error: %w", errs)
+	if errs := certmonitor.ValidateConfig(*certmonitorConfig); len(errs) > 0 {
+		glog.Fatalf("certmonitor validation error: %v", errs)
 	}
 
 	k8sInterface := k8s.CreateInterfaceOrDie()
@@ -180,7 +136,7 @@ func main() {
 	stopCh := make(chan struct{})
 	go monitor.Start(stopCh)
 	if err := monitor.Start(stopCh); err != nil {
-		glog.Fatalf("Error starting certmonitor monitor: %v\n", err)
+		glog.Fatalf("Error starting certmonitor monitor: %v", err)
 	}
 
 	glog.Info("Creating metrics server...")
