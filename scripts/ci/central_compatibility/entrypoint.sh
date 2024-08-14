@@ -3,6 +3,8 @@
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../../.. && pwd)"
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+cd $ROOT_DIR
+
 source "$ROOT_DIR/scripts/ci/lib.sh"
 source "$ROOT_DIR/scripts/lib/log.sh"
 source "$ROOT_DIR/dev/env/scripts/lib.sh"
@@ -29,17 +31,18 @@ function log_failure() {
     kubectl describe pods -n "$CENTRAL_NS"
     kubectl logs -n "$CENTRAL_NS" --prefix --all-containers -l "app.kubernetes.io/name=stackrox"
   log "***** END STACKROX KUBERNETES RESOURCES *****"
-  exit 1
 }
 
 touch pids-port-forward
 
-if bash "$SOURCE_DIR/run_compatibilty_test.sh" ; then
-  exit 0
-else
+bash "$SOURCE_DIR/run_compatibilty_test.sh"
+EXIT_CODE="$?"
+
+if [ "$EXIT_CODE" -ne 0 ]; then
   log_failure
 fi
 
 cat pids-port-forwad | xargs kill
+exit $EXIT_CODE
 
 
