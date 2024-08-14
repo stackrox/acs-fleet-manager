@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/stretchr/testify/assert"
-	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 )
@@ -58,7 +59,7 @@ func TestSend_Success(t *testing.T) {
 		},
 	}
 	mockedSES := &SES{sesClient: mockClient}
-	mockedSender := MailSender{
+	mockedSender := AWSMailSender{
 		from,
 		mockedSES,
 		mockedRateLimiter,
@@ -83,7 +84,7 @@ func TestSend_LimitExceeded(t *testing.T) {
 		},
 	}
 	mockedSES := &SES{sesClient: mockClient}
-	mockedSender := MailSender{
+	mockedSender := AWSMailSender{
 		"from@example.com",
 		mockedSES,
 		mockedRateLimiter,

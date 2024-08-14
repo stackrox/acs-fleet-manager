@@ -4,34 +4,68 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+
+	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/emailsender/config"
 	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/metrics"
 )
 
 const fromTemplate = "From: RHACS Cloud Service <%s>\r\n"
+
+const (
+	// EmailProviderAWSSES is the type name for the AWSEmailSender implementation of the Sender interface
+	EmailProviderAWSSES = "AWS_SES"
+	// EmailProviderLog is the type name for the LogEmailSender implementation of the Sender interface
+	EmailProviderLog = "LOG"
+)
 
 // Sender defines the interface to send emails
 type Sender interface {
 	Send(ctx context.Context, to []string, rawMessage []byte, tenantID string) error
 }
 
-// MailSender is the default implementation for the Sender interface
-type MailSender struct {
+// NewEmailSender return a initialized Sender implementation according to the provider configured in cfg.EmailProvider
+func NewEmailSender(ctx context.Context, cfg *config.Config, rateLimiter RateLimiter) (Sender, error) {
+	switch cfg.EmailProvider {
+	case EmailProviderLog:
+		return &LogEmailSender{
+			from: cfg.SenderAddress,
+		}, nil
+	default:
+		// EmailProviderAWSSES is the default
+		ses, err := NewSES(ctx, cfg.SesMaxBackoffDelay, cfg.SesMaxAttempts)
+		if err != nil {
+			return nil, err
+		}
+		return &AWSMailSender{
+			from:        cfg.SenderAddress,
+			ses:         ses,
+			rateLimiter: rateLimiter,
+		}, nil
+
+	}
+}
+
+// LogEmailSender is a Sender implementation that logs email messages to glog
+type LogEmailSender struct {
+	from string
+}
+
+// Send simulates sending an email by logging given message to glog.
+func (l *LogEmailSender) Send(ctx context.Context, to []string, rawMessage []byte, tenantID string) error {
+	glog.Infof("LogEmailSender.Send called with: to: %s, rawMessage: '%s', tenantID: '%s', from: '%s'", to, string(rawMessage), tenantID, l.from)
+	return nil
+}
+
+// AWSMailSender is the default implementation for the Sender interface
+type AWSMailSender struct {
 	from        string
 	ses         *SES
 	rateLimiter RateLimiter
 }
 
-// NewEmailSender returns a new MailSender instance
-func NewEmailSender(from string, ses *SES, rateLimiter RateLimiter) *MailSender {
-	return &MailSender{
-		from:        from,
-		ses:         ses,
-		rateLimiter: rateLimiter,
-	}
-}
-
 // Send sends an email to the given AWS SES
-func (s *MailSender) Send(ctx context.Context, to []string, rawMessage []byte, tenantID string) error {
+func (s *AWSMailSender) Send(ctx context.Context, to []string, rawMessage []byte, tenantID string) error {
 	// Even though AWS adds the "from" handler we need to set it to the message to show
 	// an alias in email inboxes. It is more human friendly (noreply@rhacs-dev.com vs. RHACS Cloud Service)
 	if !s.rateLimiter.IsAllowed(tenantID) {

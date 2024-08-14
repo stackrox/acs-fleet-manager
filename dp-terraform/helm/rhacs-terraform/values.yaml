@@ -82,6 +82,7 @@ emailsender:
   environment: ""
   senderAddress: "noreply@mail.rhacs-dev.com"
   authConfigFromKubernetes: true
+  emailProvider: "AWS_SES"
   resources:
     requests:
       cpu: "100m"
