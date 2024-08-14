@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: acs-fleet-manager
-          fetch-depth: 0 
+          fetch-depth: 0
       - name: Checkout stackrox/stackrox repository
         uses: actions/checkout@v4
         with:
@@ -59,7 +59,3 @@ jobs:
         uses: helm/kind-action@v1
       - name: Run Test
         run: acs-fleet-manager/scripts/ci/central_compatibility/entrypoint.sh
-
-       
-
-

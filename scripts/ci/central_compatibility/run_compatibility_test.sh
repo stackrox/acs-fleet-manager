@@ -13,7 +13,7 @@ EMAILSENDER_NS="rhacs"
 CENTRAL_NS="rhacs-tenant"
 export ADMIN_PW="letmein"
 
-cd $ROOT_DIR
+cd "$ROOT_DIR"
 
 source "$ROOT_DIR/scripts/ci/lib.sh"
 source "$ROOT_DIR/scripts/lib/log.sh"
@@ -85,7 +85,7 @@ helm upgrade --install -n $CENTRAL_NS stackrox-central-services ./central-chart 
   --set "central.image.tag=$ACS_VERSION" \
   --set "central.db.image.tag=$ACS_VERSION"
 
-export KUBECTL=$(which kubectl)
+KUBECTL="$(which kubectl)"
 wait_for_container_to_become_ready "$CENTRAL_NS" "app=central" "central"
 wait_for_container_to_become_ready "$EMAILSENDER_NS" "app=emailsender" "emailsender"
 
