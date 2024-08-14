@@ -25,10 +25,10 @@ function pull_to_kind() {
   kind load docker-image "${img}"
 }
 
-EMAILSENDER_IMG_TAG="$(make -C "$ROOT_DIR" tag)"
-EMAILSENDER_IMG_NAME="$(make -C "$ROOT_DIR" image-name/emailsender)"
-EMAILSENDER_IMG="$(make -C "$ROOT_DIR" image-tag/emailsender)"
-make -C "$ROOT_DIR" image/build/emailsender
+EMAILSENDER_IMG_TAG="$(make --no-print-directory -C "$ROOT_DIR" tag)"
+EMAILSENDER_IMG_NAME="$(make --no-print-directory -C "$ROOT_DIR" image-name/emailsender)"
+EMAILSENDER_IMG="$(make --no-print-directory -C "$ROOT_DIR" image-tag/emailsender)"
+make --no-print-directory -C "$ROOT_DIR" image/build/emailsender
 kind load docker-image "${EMAILSENDER_IMG}"
 
 kubectl create ns $EMAILSENDER_NS -o yaml --dry-run=client | kubectl apply -f -
@@ -51,9 +51,9 @@ kubectl apply -f "${SOURCE_DIR}/emailsender-db.yaml"
 if [ "$GITHUB_REPOSITORY" = "stackrox/acs-fleet-manager" ]; then
   ACS_VERSION="$( git -C "$STACKROX_DIR" tag | grep nightly | tail -n 1 )"
   git -C "$STACKROX_DIR" checkout "$ACS_VERSION"
-  SCANNER_VERSION="$(make -C "$STACKROX_DIR" scanner-tag)"
+  SCANNER_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" scanner-tag)"
 else
-  ACS_VERSION="$(make -C "$STACKROX_DIR" tag)"
+  ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
 fi
 
 IMG_REPO="quay.io/rhacs-eng"
@@ -73,7 +73,7 @@ for img in "${IMAGES_TO_PULL[@]}"; do
   pull_to_kind "$img"
 done
 
-make -C "$STACKROX_DIR" cli_host-arch cli-install
+make --no-print-directory -C "$STACKROX_DIR" cli_host-arch cli-install
 
 # --remove to make this script rerunnable on a local machine
 roxctl helm output central-services --remove --output-dir ./central-chart

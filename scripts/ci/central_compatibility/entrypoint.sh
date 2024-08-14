@@ -13,7 +13,7 @@ export EMAILSENDER_NS="rhacs"
 export CENTRAL_NS="rhacs-tenant"
 
 function log_failure() {
-  log "Test failed with status: $?"
+  log "Test failed with status: $EXIT_CODE"
   log "Starting to log cluster resources and container logs..."
 
   log "***** START EMAILSENDER RESOURCES *****"
