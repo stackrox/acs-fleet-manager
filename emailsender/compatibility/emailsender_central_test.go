@@ -4,6 +4,7 @@ package compatibility
 
 import (
 	"bytes"
+	"crypto/tls"
 	_ "embed"
 	"fmt"
 	"io"
@@ -31,7 +32,14 @@ func TestACSCSEmailNotifier(t *testing.T) {
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(notifierPayload))
 	require.NoError(t, err, "failed to build http request")
 
-	res, err := http.DefaultClient.Do(req)
+	httpClient := http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	res, err := httpClient.Do(req)
 	require.NoError(t, err, "failed to send notifier test requests to central")
 	defer res.Body.Close()
 

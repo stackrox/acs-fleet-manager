@@ -12,7 +12,9 @@
 /tmp/*
 !/log/.keep
 !/tmp/.keep
-
+emailsender-manifests.yaml
+central-chart/
+pids-port-forward
 # Ignore uploaded files in development
 /storage/*
 
