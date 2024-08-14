@@ -25,6 +25,7 @@ central:
   adminPassword:
     value: "letmein"
 scanner:
+  disable: true
   replicas: 1
   resources:
     requests:

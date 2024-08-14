@@ -62,22 +62,15 @@ else
   ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
 fi
 
-SCANNER_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" scanner-tag)"
-
 log "ACS version: $ACS_VERSION"
-log "Scanner version: $SCANNER_VERSION"
 
 IMG_REPO="quay.io/rhacs-eng"
 MAIN_IMG_NAME="$IMG_REPO/main"
 CENTRAL_DB_IMG_NAME="$IMG_REPO/central-db"
-SCANNER_IMG_NAME="$IMG_REPO/scanner"
-SCANNER_DB_IMG_NAME="$IMG_REPO/scanner-db"
 
 IMAGES_TO_PULL=(
   "$MAIN_IMG_NAME:$ACS_VERSION"
   "$CENTRAL_DB_IMG_NAME:$ACS_VERSION"
-  "$SCANNER_IMG_NAME:$SCANNER_VERSION"
-  "$SCANNER_DB_IMG_NAME:$SCANNER_VERSION"
 )
 
 for img in "${IMAGES_TO_PULL[@]}"; do
