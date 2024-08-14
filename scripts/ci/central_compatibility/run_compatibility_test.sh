@@ -8,7 +8,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../../.. && pwd)"
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EMAILSENDER_HELM_DIR="$ROOT_DIR/dp-terraform/helm/rhacs-terraform"
-STACKROX_DIR="$(pwd)/stackrox"
+STACKROX_DIR="$(cd "$ROOT_DIR/../stackrox" && pwd)"
+
 EMAILSENDER_NS="rhacs"
 CENTRAL_NS="rhacs-tenant"
 export ADMIN_PW="letmein"
