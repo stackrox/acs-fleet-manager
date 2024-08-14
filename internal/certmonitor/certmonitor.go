@@ -67,7 +67,7 @@ func (c *certMonitor) Start(stopCh <-chan struct{}) error {
 func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFactory, secretInformer cache.SharedIndexInformer, namespaceGetter NamespaceGetter) *certMonitor {
 	return &certMonitor{
 		informerfactory: informerFactory,
-		secretInformer:  secretInformer,
+		secretInformer:  secretInformer, // pragma: allowlist secret
 		config:          config,
 		namespaceGetter: namespaceGetter,
 		metrics:         fleetshardmetrics.MetricsInstance(),
