@@ -33,16 +33,13 @@ function log_failure() {
   log "***** END STACKROX KUBERNETES RESOURCES *****"
 }
 
-touch pids-port-forward
-
 bash "$SOURCE_DIR/run_compatibilty_test.sh"
 EXIT_CODE="$?"
-
-if [ "$EXIT_CODE" -ne 0 ]; then
+if [ "$EXIT_CODE" -ne "0" ]; then
   log_failure
 fi
 
-cat pids-port-forwad | xargs kill
+stat /tmp/pids-port-forward > /dev/null 2>&1 && cat /tmp/pids-port-forward | xargs kill
 exit $EXIT_CODE
 
 

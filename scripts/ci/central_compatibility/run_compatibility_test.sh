@@ -90,7 +90,7 @@ wait_for_container_to_become_ready "$CENTRAL_NS" "app=central" "central"
 wait_for_container_to_become_ready "$EMAILSENDER_NS" "app=emailsender" "emailsender"
 
 kubectl port-forward -n "$CENTRAL_NS" svc/central 8443:443 >/dev/null &
-echo $! >> pids-port-forward
+echo $! >> /tmp/pids-port-forward
 
 cd "$ROOT_DIR"
 go test -tags=test_central_compatibility ./emailsender/compatibility
