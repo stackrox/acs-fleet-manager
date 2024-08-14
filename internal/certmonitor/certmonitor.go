@@ -42,7 +42,7 @@ type NamespaceGetter interface {
 // certMonitor is the Certificate Monitor. It watches Kubernetes secrets containing certificates, and populates prometheus metrics with the expiration time of those certificates.
 type certMonitor struct {
 	informerfactory informers.SharedInformerFactory
-	podInformer     cache.SharedIndexInformer
+	secretInformer  cache.SharedIndexInformer
 	config          *Config
 	namespaceGetter NamespaceGetter
 	metrics         *fleetshardmetrics.Metrics
@@ -50,24 +50,24 @@ type certMonitor struct {
 
 // Start the certificate monitor
 func (c *certMonitor) Start(stopCh <-chan struct{}) error {
-	c.podInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	c.secretInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.handleSecretCreation,
 		UpdateFunc: c.handleSecretUpdate,
 		DeleteFunc: c.handleSecretDeletion,
 	})
 	c.informerfactory.Start(stopCh)
 
-	if !cache.WaitForCacheSync(stopCh, c.podInformer.HasSynced) {
+	if !cache.WaitForCacheSync(stopCh, c.secretInformer.HasSynced) {
 		return fmt.Errorf("timed out waiting for caches to sync")
 	}
 	return nil
 }
 
 // NewCertMonitor creates new instance of certMonitor
-func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFactory, podInformer cache.SharedIndexInformer, namespaceGetter NamespaceGetter) *certMonitor {
+func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFactory, secretInformer cache.SharedIndexInformer, namespaceGetter NamespaceGetter) *certMonitor {
 	return &certMonitor{
 		informerfactory: informerFactory,
-		podInformer:     podInformer,
+		secretInformer:  secretInformer,
 		config:          config,
 		namespaceGetter: namespaceGetter,
 		metrics:         fleetshardmetrics.MetricsInstance(),

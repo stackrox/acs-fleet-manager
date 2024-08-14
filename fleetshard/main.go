@@ -129,10 +129,10 @@ func main() {
 
 	k8sInterface := k8s.CreateInterfaceOrDie()
 	informedFactory := informers.NewSharedInformerFactory(k8sInterface, time.Minute)
-	podInformer := informedFactory.Core().V1().Secrets().Informer()
+	secretInformer := informedFactory.Core().V1().Secrets().Informer()
 	namespaceLister := informedFactory.Core().V1().Namespaces().Lister()
 
-	monitor := certmonitor.NewCertMonitor(certmonitorConfig, informedFactory, podInformer, namespaceLister)
+	monitor := certmonitor.NewCertMonitor(certmonitorConfig, informedFactory, secretInformer, namespaceLister)
 	stopCh := make(chan struct{})
 	go monitor.Start(stopCh)
 	if err := monitor.Start(stopCh); err != nil {
