@@ -57,5 +57,7 @@ jobs:
           fetch-tags: true
       - name: Create Kind cluster"
         uses: helm/kind-action@v1
+        with:
+          cluster_name: kind
       - name: Run Test
         run: acs-fleet-manager/scripts/ci/central_compatibility/entrypoint.sh
