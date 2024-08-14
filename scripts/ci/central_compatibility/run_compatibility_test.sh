@@ -48,6 +48,9 @@ helm template --namespace "${EMAILSENDER_NS}" \
 kubectl apply -f emailsender-manifests.yaml
 kubectl apply -f "${SOURCE_DIR}/emailsender-db.yaml"
 
+log "Emailsender deployed to Kind."
+
+log "Starting to deploy central services..."
 # use nightly if GH action running for acs-fleet-manager
 # use the stackrox tag otherwise
 if [ "$GITHUB_REPOSITORY" = "stackrox/acs-fleet-manager" ]; then
@@ -57,6 +60,8 @@ if [ "$GITHUB_REPOSITORY" = "stackrox/acs-fleet-manager" ]; then
 else
   ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
 fi
+
+log "Running with ACS version: $ACS_VERSION"
 
 IMG_REPO="quay.io/rhacs-eng"
 MAIN_IMG_NAME="$IMG_REPO/main"
