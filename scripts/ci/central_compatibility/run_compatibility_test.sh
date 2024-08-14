@@ -53,15 +53,18 @@ log "Emailsender deployed to Kind."
 log "Starting to deploy central services..."
 # use nightly if GH action running for acs-fleet-manager
 # use the stackrox tag otherwise
+log "Running for repository: $GITHUB_REPOSITORY"
 if [ "$GITHUB_REPOSITORY" = "stackrox/acs-fleet-manager" ]; then
   ACS_VERSION="$( git -C "$STACKROX_DIR" tag | grep nightly | tail -n 1 )"
   git -C "$STACKROX_DIR" checkout "$ACS_VERSION"
-  SCANNER_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" scanner-tag)"
 else
   ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
 fi
 
-log "Running with ACS version: $ACS_VERSION"
+SCANNER_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" scanner-tag)"
+
+log "ACS version: $ACS_VERSION"
+log "Scanner version: $SCANNER_VERSION"
 
 IMG_REPO="quay.io/rhacs-eng"
 MAIN_IMG_NAME="$IMG_REPO/main"
