@@ -42,7 +42,7 @@ make binary && ./fleet-manager serve \
 
 ## Running containerized fleet-manager and fleetshard-sync on a test cluster
 
-A test cluster can be either local or remote. Recommended local clusters are _colima_ for macOS and _kind_ for linux. The easiest way to provision a remote OSD or ROSA cluster is to use StackRox Infra and the infractl tool.
+A test cluster can be either local or remote. Recommended local clusters are _colima_ for macOS and _kind_ for linux. The easiest way to provision a remote OpenShift cluster is to use StackRox Infra and the infractl tool.
 As an alternative, refer to this [guide](./setup-developer-osd-cluster.md) to set up an OSD cluster yourself.
 The makefile target `image/build` builds a combined image, containing both applications, `fleet-manager` and `fleetshard-sync`.
 To deploy the image please refer to the guide: [setup-test-environment.md](./setup-test-environment.md)

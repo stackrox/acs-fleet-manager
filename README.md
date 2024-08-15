@@ -46,7 +46,11 @@ ACS fleet-manager repository for the ACS managed service.
 
 #### Supported cluster types:
 * Local: Minikube, **Colima** (recommended for macOS), **Kind** (recommended for linux), Rancher Desktop, CRC
-* Remote: Infra OSD or ROSA (recommended), Infra OpenShift 4.x (not recommended due to untrusted TLS certificate), OpenShift CI
+* Remote: Infra OpenShift flavors*, OpenShift CI
+
+\* For 'OpenShift 4.x' flavor there's a couple of caveats to avoid tls certificate validation errors
+1. Set `trusted-certs-enabled` ("Should trusted certificates be created" in UI) parameter to `true` in order to generate trusted TLS certificates.
+2. Use `oc login` instead of the downloaded `KUBECONFIG` file. The issue is tracked in [ROX-25798](https://issues.redhat.com/browse/ROX-25798).
 
 #### Getting started
 
