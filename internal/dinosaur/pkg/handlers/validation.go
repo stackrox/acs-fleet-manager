@@ -3,8 +3,6 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"regexp"
-
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -14,6 +12,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 	corev1 "k8s.io/api/core/v1"
+	genericvalidation "k8s.io/apimachinery/pkg/api/validation"
+	"regexp"
 )
 
 var (
@@ -29,6 +29,10 @@ var (
 // ValidDinosaurClusterName ...
 func ValidDinosaurClusterName(value *string, field string) handlers.Validate {
 	return func() *errors.ServiceError {
+		errs := genericvalidation.NameIsDNSSubdomain(*value, false)
+		if len(errs) > 0 {
+			return errors.MalformedDinosaurClusterName("%s is invalid: %v", field, errs)
+		}
 		if !ValidDinosaurClusterNameRegexp.MatchString(*value) {
 			return errors.MalformedDinosaurClusterName("%s does not match %s", field, ValidDinosaurClusterNameRegexp.String())
 		}

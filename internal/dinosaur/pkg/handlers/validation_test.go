@@ -120,6 +120,11 @@ func Test_Validations_validateDinosaurClusterNames(t *testing.T) {
 			name:        "test cluster",
 			expectError: true,
 		},
+		{
+			description: "invalid dinosaur cluster name begins with character",
+			name:        "@1test-cluster",
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
