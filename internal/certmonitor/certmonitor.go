@@ -5,11 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
@@ -74,52 +73,6 @@ func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFact
 	}
 }
 
-// objectMatchesSelector checks if object matches given label selector
-func objectMatchesSelector(obj runtime.Object, selector *metav1.LabelSelector) bool {
-	if selector == nil {
-		return true
-	}
-	labelselector, err := metav1.LabelSelectorAsSelector(selector)
-	if err != nil {
-		return false
-	}
-
-	metaObj, ok := obj.(metav1.Object)
-	if !ok {
-		return false
-	}
-
-	return labelselector.Matches(labels.Set(metaObj.GetLabels()))
-
-}
-
-// secretMatches checks if a secret matches a monitor config
-func (c *certMonitor) secretMatches(s *corev1.Secret, monitor MonitorConfig) bool {
-	if s == nil {
-		return false
-	}
-	if len(monitor.Secret.Name) > 0 && s.Name != monitor.Secret.Name {
-		return false
-	}
-	if len(monitor.Namespace.Name) > 0 && s.Namespace != monitor.Namespace.Name {
-		return false
-	}
-	if monitor.Secret.LabelSelector != nil && !objectMatchesSelector(s, monitor.Secret.LabelSelector) {
-		return false
-	}
-
-	if monitor.Namespace.LabelSelector != nil {
-		ns, err := c.namespaceGetter.Get(s.Namespace)
-		if err != nil {
-			return false
-		}
-		if !objectMatchesSelector(ns, monitor.Secret.LabelSelector) {
-			return false
-		}
-	}
-	return true
-}
-
 // processSecret extracts, decodes, parses certificates from a secret, and populates prometheus metrics
 func (c *certMonitor) processSecret(secret *corev1.Secret) {
 	for dataKey, dataCert := range secret.Data {
@@ -135,7 +88,7 @@ func (c *certMonitor) processSecret(secret *corev1.Secret) {
 
 		certss, err := x509.ParseCertificate(pparse.Bytes)
 		if err != nil {
-			continue
+			glog.Errorf("Failed to parse certificate %s: %v", dataKey, err)
 		}
 		expiryTime := float64(certss.NotAfter.Unix())
 		c.metrics.SetCertKeyExpiryMetric(secret.Namespace, secret.Name, dataKey, expiryTime)
