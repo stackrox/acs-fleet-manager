@@ -142,7 +142,7 @@ func (c *certMonitor) processSecret(secret *corev1.Secret) {
 	}
 }
 
-// handleScretCreation handles secret creation events
+// handleSecretCreation handles secret creation events
 func (c *certMonitor) handleSecretCreation(obj interface{}) {
 	secret, ok := obj.(*corev1.Secret)
 	if !ok {
@@ -153,12 +153,12 @@ func (c *certMonitor) handleSecretCreation(obj interface{}) {
 
 // handleSecretUpdate handles secret updates
 func (c *certMonitor) handleSecretUpdate(oldObj, newObj interface{}) {
-	oldsecret, ok := oldObj.(*corev1.Secret)
+	oldSecret, ok := oldObj.(*corev1.Secret)
 	if !ok {
 		return
 	}
 
-	newsecret, ok := newObj.(*corev1.Secret)
+	newSecret, ok := newObj.(*corev1.Secret)
 	if !ok {
 		return
 	}
@@ -166,13 +166,13 @@ func (c *certMonitor) handleSecretUpdate(oldObj, newObj interface{}) {
 	if newObj == nil || oldObj == nil {
 		return
 	}
-	for oldKey := range oldsecret.Data {
-		if _, ok := newsecret.Data[oldKey]; !ok {
+	for oldKey := range oldSecret.Data {
+		if _, ok := newSecret.Data[oldKey]; !ok {
 			// secret has been updated, and oldKey does not exist in the new secret - so we delete the metric
-			c.metrics.DeleteKeyCertMetric(newsecret.Namespace, newsecret.Name, oldKey)
+			c.metrics.DeleteKeyCertMetric(newSecret.Namespace, newSecret.Name, oldKey)
 		}
 	}
-	c.processSecret(newsecret)
+	c.processSecret(newSecret)
 }
 
 // handleSecretDeletion handles deletion of secrets

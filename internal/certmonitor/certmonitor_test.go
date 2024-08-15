@@ -359,13 +359,9 @@ func verifyPrometheusMetric(t *testing.T, namespace, secret, data_key string, ex
 	assert.Equal(t, expectedValue, actualValue, "Value does not match")
 }
 
-// verifyPrometheusMetricDelete func verifies that the promethues metric has actually been deleted (delete handle)
-func verifyPrometheusMetricDelete(t *testing.T, namespace, secret, data_key string) {
-	metric, err := fleetshardmetrics.MetricsInstance().CertificatesExpiry.GetMetricWithLabelValues(namespace, secret, data_key)
-	if err != nil {
-		metrciValue := testutil.ToFloat64(metric)
-		if metrciValue != 0 {
-			t.Errorf("Error: %v", metrciValue)
-		}
-	}
+// verifyPrometheusMetricDelete func verifies that the prometheus metric has actually been deleted (delete handle)
+func verifyPrometheusMetricDelete(t *testing.T, namespace, secret, dataKey string) {
+	metric, err := fleetshardmetrics.MetricsInstance().CertificatesExpiry.GetMetricWithLabelValues(namespace, secret, dataKey)
+	require.NoError(t, err)
+	require.Equal(t, float64(0), testutil.ToFloat64(metric))
 }
