@@ -36,6 +36,9 @@ fi
 if [[ "$INSTALL_OPENSHIFT_ROUTER" == "true" ]]; then
     log "Installing OpenShift Router"
     apply "${MANIFESTS_DIR}/openshift-router"
+elif [[ "$EXPOSE_OPENSHIFT_ROUTER" == "true" ]]; then
+    log "Exposing OpenShift Router"
+    oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"defaultRoute":true}}'
 else
     log "Skipping installation of OpenShift Router"
 fi
