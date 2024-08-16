@@ -1,10 +1,15 @@
 package internal
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"net/http"
+)
 
 var (
 	CentralInstanceLimitMetric = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "Central-Instance_Limit",
+		Name: "Central_instance_limit",
 		Help: "Spots left in Central Instance Limit",
 	},
 		[]string{"clusterId"},
@@ -13,11 +18,6 @@ var (
 
 func init() {
 	prometheus.MustRegister(CentralInstanceLimitMetric)
-}
-
-// DataplaneClusterConfig ...
-type DataplaneClusterConfig struct {
-	ClusterConfig *ClusterConfig `json:"clusters_config"`
 }
 
 // ManualCluster manual cluster configuration
@@ -32,11 +32,20 @@ type ClusterConfig struct {
 	clusterConfigMap map[string]ManualCluster
 }
 
-// IsNumberOfDinosaurWithinClusterLimit ...
-func (conf *ClusterConfig) IsNumberOfDinosaurWithinClusterLimit(clusterID string, count int) bool {
-	if _, exist := conf.clusterConfigMap[clusterID]; exist {
-		limit := conf.clusterConfigMap[clusterID].CentralInstanceLimit
-		return limit == -1 || count <= limit
+// just gives me like the spots left in that cluster from the limit. Hopefully this is what we need for our metric
+func (conf *ClusterConfig) GettingLeftClusterInstance(clusterId string, currentFillings int) {
+	if cluster, exists := conf.clusterConfigMap[clusterId]; exists {
+		limit := cluster.CentralInstanceLimit
+		LeftClusterSpots := float64(limit - currentFillings)
+		CentralInstanceLimitMetric.WithLabelValues(cluster.ClusterID).Set(float64(LeftClusterSpots))
 	}
-	return true
+}
+
+func main() {
+	GettingLeftClusterInstance("cluster1", 10)
+	GettingLeftClusterInstance("cluster2", 15)
+	http.Handle("/metrics", promhttp.Handler())
+	fmt.Println("Beg. to connect to port")
+	http.ListenAndServe(":9091", nil)
+
 }
