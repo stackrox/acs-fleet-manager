@@ -133,10 +133,9 @@ func main() {
 	namespaceLister := informedFactory.Core().V1().Namespaces().Lister()
 
 	monitor := certmonitor.NewCertMonitor(certmonitorConfig, informedFactory, secretInformer, namespaceLister)
-	stopCh := make(chan struct{})
-	go monitor.Start(stopCh)
-	if err := monitor.Start(stopCh); err != nil {
-		glog.Fatalf("Error starting certmonitor monitor: %v", err)
+
+	if err := monitor.Start(); err != nil {
+		glog.Fatalf("Error starting certmonitor: %v", err)
 	}
 
 	glog.Info("Creating metrics server...")
@@ -156,6 +155,10 @@ func main() {
 	runtime.Stop()
 	if err := metricServer.Close(); err != nil {
 		glog.Errorf("closing metric server: %v", err)
+	}
+
+	if err := monitor.Stop(); err != nil {
+		glog.Errorf("Error stoping certmonitor: %v", err)
 	}
 
 	glog.Infof("Caught %s signal", sig)

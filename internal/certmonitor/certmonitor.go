@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,20 +46,34 @@ type certMonitor struct {
 	config          *Config
 	namespaceGetter NamespaceGetter
 	metrics         *fleetshardmetrics.Metrics
+	stopCh          chan struct{}
 }
 
 // Start the certificate monitor
-func (c *certMonitor) Start(stopCh <-chan struct{}) error {
+func (c *certMonitor) Start() error {
+	if c.stopCh != nil {
+		return errors.New("already started")
+	}
+	c.stopCh = make(chan struct{})
+
 	c.secretInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.handleSecretCreation,
 		UpdateFunc: c.handleSecretUpdate,
 		DeleteFunc: c.handleSecretDeletion,
 	})
-	c.informerfactory.Start(stopCh)
+	c.informerfactory.Start(c.stopCh)
 
-	if !cache.WaitForCacheSync(stopCh, c.secretInformer.HasSynced) {
+	if !cache.WaitForCacheSync(c.stopCh, c.secretInformer.HasSynced) {
 		return fmt.Errorf("timed out waiting for caches to sync")
 	}
+	return nil
+}
+
+func (c *certMonitor) Stop() error {
+	if c.stopCh == nil {
+		return errors.New("not started")
+	}
+	close(c.stopCh)
 	return nil
 }
 
