@@ -55,6 +55,7 @@ jobs:
           repository: stackrox/stackrox
           path: stackrox
           fetch-tags: true
+          fetch-depth: 0
       - name: Create Kind cluster"
         uses: helm/kind-action@v1
         with:
