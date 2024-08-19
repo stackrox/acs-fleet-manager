@@ -77,7 +77,7 @@ for img in "${IMAGES_TO_PULL[@]}"; do
   pull_to_kind "$img"
 done
 
-make --no-print-directory -C "$STACKROX_DIR" cli_host-arch
+TAG="$ACS_VERSION" make --no-print-directory -C "$STACKROX_DIR" cli_host-arch
 GOARCH="$(go env GOARCH)"
 GOOS="$(go env GOOS)"
 
