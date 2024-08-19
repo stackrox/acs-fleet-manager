@@ -1,6 +1,6 @@
 module github.com/stackrox/acs-fleet-manager
 
-go 1.21.13
+go 1.21.0
 
 toolchain go1.22.5
 
