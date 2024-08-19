@@ -73,7 +73,9 @@ IMAGES_TO_PULL=(
   "$CENTRAL_DB_IMG_NAME:$ACS_VERSION"
 )
 
+IMG_WAIT_TIMEOUT_SECONDS="${IMG_WAIT_TIMEOUT_SECONDS:-1200}"
 for img in "${IMAGES_TO_PULL[@]}"; do
+  wait_for_image "$img" "$IMG_WAIT_TIMEOUT_SECONDS"
   pull_to_kind "$img"
 done
 
