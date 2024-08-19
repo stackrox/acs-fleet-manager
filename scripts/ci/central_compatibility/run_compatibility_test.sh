@@ -77,10 +77,13 @@ for img in "${IMAGES_TO_PULL[@]}"; do
   pull_to_kind "$img"
 done
 
-make --no-print-directory -C "$STACKROX_DIR" cli_host-arch cli-install
+make --no-print-directory -C "$STACKROX_DIR" cli_host-arch
+GOARCH="$(go env GOARCH)"
+GOOS="$(go env GOOS)"
 
+ROXCTL="$STACKROX_DIR/bin/${GOOS}_${GOARCH}/roxctl"
 # --remove to make this script rerunnable on a local machine
-roxctl helm output central-services --remove --output-dir ./central-chart
+$ROXCTL helm output central-services --remove --output-dir ./central-chart
 
 # Using ACS_VERSION explicitly here since it would otherwise not use the nightly build tag
 helm upgrade --install -n $CENTRAL_NS stackrox-central-services ./central-chart \
