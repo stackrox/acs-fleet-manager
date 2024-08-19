@@ -2,11 +2,11 @@
 package k8s
 
 import (
+	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/golang/glog"
 	"github.com/openshift/addon-operator/apis/addons"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	argocdv1alpha1 "github.com/stackrox/acs-fleet-manager/argocd/v1alpha1"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -37,7 +37,7 @@ func CreateClientOrDie() ctrlClient.Client {
 	must(openshiftOperatorV1.Install(scheme))
 	must(addons.AddToScheme(scheme))
 	must(verticalpodautoscalingv1.AddToScheme(scheme))
-	must(argocdv1alpha1.AddToScheme(scheme))
+	must(argoCd.AddToScheme(scheme))
 
 	config, err := ctrl.GetConfig()
 	if err != nil {
