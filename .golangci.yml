@@ -4,7 +4,6 @@ run:
     - internal/dinosaur/pkg/api/private
     - internal/dinosaur/pkg/api/admin/private
     - pkg/client/redhatsso/api
-    - argocd
   skip-files:
     - ".*_moq.go"
   # timeout for analysis, e.g. 30s, 5m, default is 1m
