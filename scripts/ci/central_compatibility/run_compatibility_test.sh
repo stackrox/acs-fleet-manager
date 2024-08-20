@@ -22,7 +22,17 @@ source "$ROOT_DIR/dev/env/scripts/lib.sh"
 
 function pull_to_kind() {
   local img=$1
-  docker pull "${img}"
+  local retry="${2:-5}"
+  local backoff=30
+
+  for _ in $(seq "$retry"); do
+    if docker pull "${img}"; then
+      break
+    fi
+
+    sleep "$backoff"
+  done
+
   kind load docker-image "${img}"
 }
 
