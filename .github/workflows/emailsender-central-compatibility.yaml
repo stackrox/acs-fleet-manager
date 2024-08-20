@@ -15,6 +15,7 @@ on:
 
 jobs:
   e2e-test-on-kind:
+    timeout-minutes: 45
     name: "Test on kind cluster"
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.head.repo.fork }} # do not run for PRs from forks

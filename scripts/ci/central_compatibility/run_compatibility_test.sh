@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -eux
 
 # Deploy a kind cluster previously to running this script
 # This script expects:
@@ -64,12 +64,12 @@ log "Starting to deploy central services..."
 # use nightly if GH action running for acs-fleet-manager
 # use the stackrox tag otherwise
 log "Running for repository: $GITHUB_REPOSITORY"
-if [ "$GITHUB_REPOSITORY" = "stackrox/acs-fleet-manager" ]; then
+if [ "$GITHUB_REPOSITORY" = "stackrox/stackrox" ]; then
+  ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
+else
   git -C "$STACKROX_DIR" fetch --tags
   ACS_VERSION="$(git -C "$STACKROX_DIR" tag | grep nightly | tail -n 1)"
   git -C "$STACKROX_DIR" checkout "$ACS_VERSION"
-else
-  ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
 fi
 
 log "ACS version: $ACS_VERSION"
