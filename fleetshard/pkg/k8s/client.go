@@ -2,6 +2,7 @@
 package k8s
 
 import (
+	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/golang/glog"
 	"github.com/openshift/addon-operator/apis/addons"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
@@ -21,15 +22,22 @@ var routesGVK = schema.GroupVersionResource{
 	Resource: "routes",
 }
 
+func must(err error) {
+	if err != nil {
+		glog.Fatal(err)
+	}
+}
+
 // CreateClientOrDie creates a new kubernetes client or dies
 func CreateClientOrDie() ctrlClient.Client {
 	scheme := runtime.NewScheme()
-	_ = clientgoscheme.AddToScheme(scheme)
-	_ = v1alpha1.AddToScheme(scheme)
-	_ = openshiftRouteV1.Install(scheme)
-	_ = openshiftOperatorV1.Install(scheme)
-	_ = addons.AddToScheme(scheme)
-	_ = verticalpodautoscalingv1.AddToScheme(scheme)
+	must(clientgoscheme.AddToScheme(scheme))
+	must(v1alpha1.AddToScheme(scheme))
+	must(openshiftRouteV1.Install(scheme))
+	must(openshiftOperatorV1.Install(scheme))
+	must(addons.AddToScheme(scheme))
+	must(verticalpodautoscalingv1.AddToScheme(scheme))
+	must(argoCd.AddToScheme(scheme))
 
 	config, err := ctrl.GetConfig()
 	if err != nil {
