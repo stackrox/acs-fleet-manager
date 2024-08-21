@@ -1,0 +1,47 @@
+env:
+  managedServices: true
+allowNonstandardNamespace: true
+central:
+  resources:
+    requests:
+      memory: "200Mi"
+      cpu: "150m"
+    limits:
+      memory: "300Mi"
+      cpu: "200m"
+  db:
+    resources:
+      requests:
+        memory: "200Mi"
+        cpu: "200m"
+      limits:
+        memory: "300Mi"
+        cpu: "300m"
+    persistence:
+      persistentVolumeClaim:
+        size: 10Gi
+  persistence:
+    none: true
+  adminPassword:
+    value: "letmein"
+scanner:
+  disable: true
+  replicas: 1
+  resources:
+    requests:
+      memory: "200Mi"
+      cpu: "200m"
+    limits:
+      memory: "300Mi"
+      cpu: "300m"
+  dbResources:
+    requests:
+      memory: "200Mi"
+      cpu: "200m"
+    limits:
+      memory: "300Mi"
+      cpu: "300m"
+customize:
+  central:
+    envVars:
+      ROX_ACSCS_EMAIL_URL: "http://emailsender.rhacs.svc:443"

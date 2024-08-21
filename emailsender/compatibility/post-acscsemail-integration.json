@@ -1,0 +1,8 @@
+{
+  "id": "",
+  "name": "testACSCS",
+  "type": "acscsEmail",
+  "labelDefault": "soem-mail@test.some.domain",
+  "labelKey": "",
+  "uiEndpoint": "https://localhost:8443"
+}

@@ -207,6 +207,34 @@ PATH: ${PATH}
 EOF
 }
 
+wait_for_img() {
+    local img="$1"
+    local seconds="${2:-1200}"
+    local backoff=30
+
+    local start
+    start="$(date +%s)"
+    local time_diff=0
+
+    echo "Waiting for $img to become available..."
+    while [ "$time_diff" -le "$seconds" ]
+    do
+        # the grep depends on the error message docker prints if manifest is not found
+        if ! docker manifest inspect "$img" 2>&1 | grep "no such manifest"; then
+            echo "remote image: $img is available."
+            return 0
+        fi
+
+        local unix_seconds_now
+        unix_seconds_now="$(date +%s)"
+        time_diff=$(( unix_seconds_now - start))
+        sleep "$backoff"
+    done
+
+    echo "Timed out waiting for remote image: $img to become available"
+    return 1
+}
+
 wait_for_container_to_appear() {
     local namespace="$1"
     local pod_selector="$2"
