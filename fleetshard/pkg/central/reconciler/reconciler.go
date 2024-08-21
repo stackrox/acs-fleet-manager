@@ -70,7 +70,7 @@ const (
 	instanceTypeLabelKey          = "rhacs.redhat.com/instance-type"
 	managedByLabelKey             = "app.kubernetes.io/managed-by"
 	orgIDLabelKey                 = "rhacs.redhat.com/org-id"
-	tenantIDLabelKey              = "rhacs.redhat.com/tenant"
+	TenantIDLabelKey              = "rhacs.redhat.com/tenant"
 	centralExpiredAtKey           = "rhacs.redhat.com/expired-at"
 
 	auditLogNotifierKey  = "com.redhat.rhacs.auditLogNotifier"
@@ -1858,7 +1858,7 @@ func getTenantLabels(c private.ManagedCentral) map[string]string {
 		managedByLabelKey:    labelManagedByFleetshardValue,
 		instanceLabelKey:     c.Metadata.Name,
 		orgIDLabelKey:        c.Spec.Auth.OwnerOrgId,
-		tenantIDLabelKey:     c.Id,
+		TenantIDLabelKey:     c.Id,
 		instanceTypeLabelKey: c.Spec.InstanceType,
 	}
 }

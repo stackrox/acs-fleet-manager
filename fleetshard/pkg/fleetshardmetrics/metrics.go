@@ -32,6 +32,7 @@ type Metrics struct {
 	centralDBSnapshotsMax       prometheus.Gauge
 	pauseReconcileInstances     *prometheus.GaugeVec
 	operatorsHealthStatus       *prometheus.GaugeVec
+	CertificatesExpiry          *prometheus.GaugeVec
 }
 
 // Register registers the metrics with the given prometheus.Registerer
@@ -50,6 +51,7 @@ func (m *Metrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.centralDBSnapshotsMax)
 	r.MustRegister(m.pauseReconcileInstances)
 	r.MustRegister(m.operatorsHealthStatus)
+	r.MustRegister(m.CertificatesExpiry)
 }
 
 // IncFleetManagerRequests increments the metric counter for fleet-manager requests
@@ -121,6 +123,18 @@ func (m *Metrics) SetOperatorHealthStatus(image string, healthy bool) {
 	}
 
 	m.operatorsHealthStatus.With(prometheus.Labels{"image": image}).Set(healthyVal)
+}
+
+func (m *Metrics) SetCertKeyExpiryMetric(namespace, name, key string, expiry float64) {
+	m.CertificatesExpiry.With(prometheus.Labels{"namespace": namespace, "secret": name, "data_key": key}).Set(expiry) // pragma: allowlist secret
+}
+
+func (m *Metrics) DeleteCertMetric(namespace, name string) {
+	m.CertificatesExpiry.Delete(prometheus.Labels{"namespace": namespace, "secret": name}) // pragma: allowlist secret
+}
+
+func (m *Metrics) DeleteKeyCertMetric(namespace, name, key string) {
+	m.CertificatesExpiry.Delete(prometheus.Labels{"namespace": namespace, "secret": name, "data_key": key}) // pragma: allowlist secret
 }
 
 // MetricsInstance return the global Singleton instance for Metrics
@@ -196,6 +210,13 @@ func newMetrics() *Metrics {
 				Help: "The operator health status reports all operators images installed by fleetshard-sync",
 			},
 			[]string{"image"},
+		),
+
+		CertificatesExpiry: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: metricsPrefix + "certificate_expiration_timestamp",
+			Help: "Expiry of certificates",
+		},
+			[]string{"namespace", "secret", "data_key"},
 		),
 	}
 }

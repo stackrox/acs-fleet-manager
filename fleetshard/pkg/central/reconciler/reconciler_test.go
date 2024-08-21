@@ -797,7 +797,7 @@ func TestNamespaceLabelsAreSet(t *testing.T) {
 	namespace := &v1.Namespace{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
 	require.NoError(t, err)
-	assert.Equal(t, simpleManagedCentral.Id, namespace.GetLabels()[tenantIDLabelKey])
+	assert.Equal(t, simpleManagedCentral.Id, namespace.GetLabels()[TenantIDLabelKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, namespace.GetLabels()[orgIDLabelKey])
 }
 

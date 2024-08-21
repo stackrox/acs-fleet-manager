@@ -4,8 +4,13 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
+	"github.com/stackrox/acs-fleet-manager/internal/certmonitor"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/informers"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -62,6 +67,77 @@ func main() {
 		}
 	}()
 
+	glog.Info("Creating certMonitor")
+
+	tenantNamespaceSelector := certmonitor.SelectorConfig{
+		LabelSelector: &metav1.LabelSelector{
+			MatchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Key:      reconciler.TenantIDLabelKey,
+					Operator: metav1.LabelSelectorOpExists,
+				},
+			},
+		},
+	}
+	certmonitorConfig := &certmonitor.Config{
+		Monitors: []certmonitor.MonitorConfig{
+			{
+				Namespace: tenantNamespaceSelector,
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
+					Name: "scanner-tls",
+				},
+			},
+			{
+				Namespace: tenantNamespaceSelector,
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
+					Name: "central-tls",
+				},
+			},
+
+			{
+				Namespace: tenantNamespaceSelector,
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
+					Name: "scanner-db-tls",
+				},
+			},
+
+			{
+				Namespace: tenantNamespaceSelector,
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
+					Name: "scanner-v4-db-tls",
+				},
+			},
+
+			{
+				Namespace: tenantNamespaceSelector,
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
+					Name: "scanner-v4-indexer-tls",
+				},
+			},
+			{
+				Namespace: tenantNamespaceSelector,
+				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
+					Name: "scanner-v4-matcher-tls",
+				},
+			},
+		},
+	}
+
+	if errs := certmonitor.ValidateConfig(*certmonitorConfig); len(errs) > 0 {
+		glog.Fatalf("certmonitor validation error: %v", errs)
+	}
+
+	k8sInterface := k8s.CreateInterfaceOrDie()
+	informedFactory := informers.NewSharedInformerFactory(k8sInterface, time.Minute)
+	secretInformer := informedFactory.Core().V1().Secrets().Informer()
+	namespaceLister := informedFactory.Core().V1().Namespaces().Lister()
+
+	monitor := certmonitor.NewCertMonitor(certmonitorConfig, informedFactory, secretInformer, namespaceLister)
+
+	if err := monitor.Start(); err != nil {
+		glog.Fatalf("Error starting certmonitor: %v", err)
+	}
+
 	glog.Info("Creating metrics server...")
 	metricServer := fleetshardmetrics.NewMetricsServer(config.MetricsAddress)
 	go func() {
@@ -79,6 +155,10 @@ func main() {
 	runtime.Stop()
 	if err := metricServer.Close(); err != nil {
 		glog.Errorf("closing metric server: %v", err)
+	}
+
+	if err := monitor.Stop(); err != nil {
+		glog.Errorf("Error stoping certmonitor: %v", err)
 	}
 
 	glog.Infof("Caught %s signal", sig)
