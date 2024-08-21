@@ -2,10 +2,8 @@ package certmonitor
 
 import (
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	corev1 "k8s.io/api/core/v1"
@@ -57,15 +55,13 @@ func (c *certMonitor) Start() error {
 		return errors.New("already started")
 	}
 	c.stopCh = make(chan struct{})
-
 	c.secretInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.handleSecretCreation,
 		UpdateFunc: c.handleSecretUpdate,
 		DeleteFunc: c.handleSecretDeletion,
 	})
 	c.informerfactory.Start(c.stopCh)
-
-	if !cache.WaitForCacheSync(c.stopCh, c.secretInformer.HasSynced) {
+	if !cache.WaitForCacheSync(c.stopCh) {
 		return fmt.Errorf("timed out waiting for caches to sync")
 	}
 	return nil
@@ -93,20 +89,17 @@ func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFact
 // processSecret extracts, decodes, parses certificates from a secret, and populates prometheus metrics
 func (c *certMonitor) processSecret(secret *corev1.Secret) {
 	for dataKey, dataCert := range secret.Data {
-		certConv, err := base64.StdEncoding.DecodeString(string(dataCert))
-		if err != nil {
-			continue
-		}
 
-		pparse, _ := pem.Decode(certConv)
+		pparse, _ := pem.Decode(dataCert)
 		if pparse == nil {
 			continue
 		}
 
 		certss, err := x509.ParseCertificate(pparse.Bytes)
 		if err != nil {
-			glog.Errorf("Failed to parse certificate %s: %v", dataKey, err)
+			continue
 		}
+
 		expiryTime := float64(certss.NotAfter.Unix())
 		c.metrics.SetCertKeyExpiryMetric(secret.Namespace, secret.Name, dataKey, expiryTime)
 	}

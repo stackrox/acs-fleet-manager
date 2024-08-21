@@ -5,7 +5,6 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -307,6 +306,18 @@ func TestCertMonitor(t *testing.T) {
 	certMonitor := &certMonitor{
 		namespaceGetter: newFakeNamespaceGetter(namespaces),
 		metrics:         fleetshardmetrics.MetricsInstance(),
+		config: &Config{
+			Monitors: []MonitorConfig{
+				{
+					Namespace: SelectorConfig{
+						Name: "namespace-1",
+					},
+					Secret: SelectorConfig{ // pragma: allowlist secret
+						Name: "secret-1",
+					},
+				},
+			},
+		},
 	}
 	now1 := time.Now().UTC()
 	expirytime := now1.Add(1 * time.Hour)
@@ -335,7 +346,7 @@ func TestCertMonitor(t *testing.T) {
 
 }
 
-// generateCertWithExpiration func generates a base64encoded certificate
+// generateCertWithExpiration func generates a pem-encoded certificate
 func generateCertWithExpiration(t *testing.T, expiry time.Time) []byte {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	require.NoError(t, err)
@@ -349,8 +360,7 @@ func generateCertWithExpiration(t *testing.T, expiry time.Time) []byte {
 	certBytesDER, err := x509.CreateCertificate(rand.Reader, cert, cert, &privateKey.PublicKey, privateKey)
 	require.NoError(t, err)
 	pemCert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certBytesDER})
-	base64Encoded := base64.StdEncoding.EncodeToString(pemCert)
-	return []byte(base64Encoded)
+	return []byte(pemCert)
 }
 
 // verifyPrometheusMetric func verifies if the promethues metric matches the expected value (create + update handle)
