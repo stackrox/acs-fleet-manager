@@ -128,12 +128,11 @@ func main() {
 	}
 
 	k8sInterface := k8s.CreateInterfaceOrDie()
-	informedFactory := informers.NewSharedInformerFactory(k8sInterface, time.Minute)
-	secretInformer := informedFactory.Core().V1().Secrets().Informer()
-	namespaceLister := informedFactory.Core().V1().Namespaces().Lister()
+	informerFactory := informers.NewSharedInformerFactory(k8sInterface, time.Minute)
+	secretInformer := informerFactory.Core().V1().Secrets().Informer()
+	namespaceLister := informerFactory.Core().V1().Namespaces().Lister()
 
-	monitor := certmonitor.NewCertMonitor(certmonitorConfig, informedFactory, secretInformer, namespaceLister)
-
+	monitor := certmonitor.NewCertMonitor(certmonitorConfig, informerFactory, secretInformer, namespaceLister)
 	if err := monitor.Start(); err != nil {
 		glog.Fatalf("Error starting certmonitor: %v", err)
 	}
