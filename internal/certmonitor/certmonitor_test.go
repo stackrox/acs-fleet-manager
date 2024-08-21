@@ -14,8 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"math/big"
 	"testing"
 	"time"
@@ -42,52 +40,6 @@ func newFakeNamespaceGetter(namespaces []v1.Namespace) *fakeNamespaceGetter {
 		f.namespaces[ns.Name] = ns
 	}
 	return &f
-}
-
-// objectMatchesSelector checks if object matches given label selector
-func objectMatchesSelector(obj runtime.Object, selector *metav1.LabelSelector) bool {
-	if selector == nil {
-		return true
-	}
-	labelselector, err := metav1.LabelSelectorAsSelector(selector)
-	if err != nil {
-		return false
-	}
-
-	metaObj, ok := obj.(metav1.Object)
-	if !ok {
-		return false
-	}
-
-	return labelselector.Matches(labels.Set(metaObj.GetLabels()))
-
-}
-
-// secretMatches checks if a secret matches a monitor config
-func (c *certMonitor) secretMatches(s *v1.Secret, monitor MonitorConfig) bool {
-	if s == nil {
-		return false
-	}
-	if len(monitor.Secret.Name) > 0 && s.Name != monitor.Secret.Name {
-		return false
-	}
-	if len(monitor.Namespace.Name) > 0 && s.Namespace != monitor.Namespace.Name {
-		return false
-	}
-	if monitor.Secret.LabelSelector != nil && !objectMatchesSelector(s, monitor.Secret.LabelSelector) {
-		return false
-	}
-
-	if monitor.Namespace.LabelSelector != nil {
-		ns, err := c.namespaceGetter.Get(s.Namespace)
-		if err != nil {
-			return false
-		}
-		if !objectMatchesSelector(ns, monitor.Secret.LabelSelector) {
-			return false
-		}
-	}
-	return true
 }
 
 // TestCertMonitor_secretMatches func tests the secretMatches method in certmonitor.go
