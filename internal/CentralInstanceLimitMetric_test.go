@@ -15,8 +15,8 @@ func TestGettingLeftClusterInstance(t *testing.T) {
 		},
 	}
 	clusterConfig.GettingLeftClusterInstance("cluster1", 5)
-	clusterConfig.GettingLeftClusterInstance("cluster2", 10)
-	clusterConfig.GettingLeftClusterInstance("cluster3", 20)
+	GettingLeftClusterInstance("cluster2", 10)
+	GettingLeftClusterInstance("cluster3", 20)
 
 	expected := `
 # HELP Central_instance_limit Spots left in Central Instance Limit
