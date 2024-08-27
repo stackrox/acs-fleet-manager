@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 )
@@ -95,4 +96,50 @@ func TestSend_LimitExceeded(t *testing.T) {
 	assert.ErrorContains(t, err, "rate limit exceeded")
 	assert.True(t, mockedRateLimiter.calledIsAllowed)
 	assert.False(t, mockedRateLimiter.calledPersistEmailSendEvent)
+}
+
+func TestSendAppendsFromAndTo(t *testing.T) {
+	from := "sender@example.com"
+	to := []string{"to1@example.com", "to2@example.com"}
+	textBody := "text body"
+	tenantID := "test-tenant-id"
+
+	var calledWith *ses.SendRawEmailInput
+
+	mockClient := &MockSESClient{
+		SendRawEmailFunc: func(ctx context.Context, params *ses.SendRawEmailInput, optFns ...func(*ses.Options)) (*ses.SendRawEmailOutput, error) {
+			calledWith = params
+
+			return &ses.SendRawEmailOutput{
+				MessageId: aws.String("test-message-id"),
+			}, nil
+		},
+	}
+	mockedRateLimiter := &MockedRateLimiter{
+		IsAllowedFunc: func(tenantID string) bool {
+			return true
+		},
+		PersistEmailSendEventFunc: func(tenantID string) error {
+			return nil
+		},
+	}
+	mockedSES := &SES{sesClient: mockClient}
+	sender := AWSMailSender{
+		from,
+		mockedSES,
+		mockedRateLimiter,
+	}
+
+	err := sender.Send(context.Background(), to, []byte(textBody), tenantID)
+	require.NoError(t, err)
+	require.NotNil(t, calledWith)
+	require.NotNil(t, calledWith.RawMessage)
+
+	msg := calledWith.RawMessage.Data
+	require.NotEmpty(t, msg)
+
+	stringMsg := string(msg)
+	require.Contains(t, stringMsg, "From: RHACS Cloud Service <sender@example.com>\r\n")
+	require.Contains(t, stringMsg, "To: to1@example.com,to2@example.com\r\n")
+
 }

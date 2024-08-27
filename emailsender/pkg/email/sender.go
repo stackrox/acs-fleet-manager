@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/emailsender/config"
@@ -73,7 +74,9 @@ func (s *AWSMailSender) Send(ctx context.Context, to []string, rawMessage []byte
 		return fmt.Errorf("rate limit exceeded for tenant: %s", tenantID)
 	}
 	fromBytes := []byte(fmt.Sprintf(fromTemplate, s.from))
-	raw := bytes.Join([][]byte{fromBytes, rawMessage}, nil)
+	toBytes := []byte(fmt.Sprintf("To: %s\r\n", strings.Join(to, ",")))
+
+	raw := bytes.Join([][]byte{fromBytes, toBytes, rawMessage}, nil)
 	metrics.DefaultInstance().IncSendEmail(tenantID)
 	_, err := s.ses.SendRawEmail(ctx, s.from, to, raw)
 	if err != nil {
