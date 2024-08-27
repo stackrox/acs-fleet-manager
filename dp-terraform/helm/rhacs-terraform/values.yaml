@@ -81,6 +81,7 @@ emailsender:
   clusterName: ""
   environment: ""
   senderAddress: "noreply@mail.rhacs-dev.com"
+  senderAlias: "RHACS Cloud Service"
   authConfigFromKubernetes: true
   emailProvider: "AWS_SES"
   resources:

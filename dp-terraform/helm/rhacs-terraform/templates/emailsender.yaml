@@ -35,6 +35,8 @@ spec:
               value: {{ .Values.fleetshardSync.environment }}
             - name: SENDER_ADDRESS
               value: {{ .Values.emailsender.senderAddress }}
+            - name: SENDER_ALIAS
+              value: { { .Values.emailsender.senderAlias } }
             - name: EMAIL_PROVIDER
               value: {{ .Values.emailsender.emailProvider }}
             - name: HTTPS_CERT_FILE
