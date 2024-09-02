@@ -33,6 +33,7 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     done
     export STATIC_TOKEN="${FLEET_STATIC_TOKEN:-}"
     export STATIC_TOKEN_ADMIN="${FLEET_STATIC_TOKEN_ADMIN:-}"
+    export GITHUB_TOKEN="${GITHUB_TOKEN:-}"
     export CLUSTER_TYPE="openshift-ci"
     export GOARGS="-mod=mod" # For some reason we need this in the official base images.
     export GINKGO_FLAGS="--no-color -v"

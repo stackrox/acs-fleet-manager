@@ -713,10 +713,6 @@ components:
       properties:
         host:
           type: string
-    ManagedCentral_allOf_spec_argoCd:
-      properties:
-        enabled:
-          type: boolean
     ManagedCentral_allOf_spec:
       properties:
         instanceType:
@@ -740,8 +736,6 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint'
         dataEndpoint:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_dataEndpoint'
-        argoCd:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_argoCd'
     ManagedCentral_allOf:
       properties:
         metadata:

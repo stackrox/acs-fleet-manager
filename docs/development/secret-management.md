@@ -68,3 +68,9 @@ Check if your OS user matches the company User ID. If not, then specify it expli
 ```shell
 kinit bob
 ```
+
+## E2E
+
+See instructions on managing secrets in CI https://docs.ci.openshift.org/docs/how-tos/adding-a-new-secret-to-ci/
+
+Vault mount for e2e https://vault.ci.openshift.org/ui/vault/secrets/kv/kv/selfservice%2Frhacs-ms-e2e-tests%2Fcredentials/details

@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/golang/glog"
 	"github.com/hashicorp/go-multierror"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -40,6 +41,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
@@ -118,16 +120,20 @@ type encryptedSecrets struct {
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
-	UseRoutes             bool
-	WantsAuthProvider     bool
-	ManagedDBEnabled      bool
-	Telemetry             config.Telemetry
-	ClusterName           string
-	Environment           string
-	AuditLogging          config.AuditLogging
-	TenantImagePullSecret string
-	RouteParameters       config.RouteConfig
-	SecureTenantNetwork   bool
+	UseRoutes                                  bool
+	WantsAuthProvider                          bool
+	ManagedDBEnabled                           bool
+	Telemetry                                  config.Telemetry
+	ClusterName                                string
+	Environment                                string
+	AuditLogging                               config.AuditLogging
+	TenantImagePullSecret                      string
+	RouteParameters                            config.RouteConfig
+	SecureTenantNetwork                        bool
+	DefaultTenantArgoCdAppSourceRepoURL        string
+	DefaultTenantArgoCdAppSourceTargetRevision string
+	DefaultTenantArgoCdAppSourcePath           string
+	ArgoCdNamespace                            string
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -166,6 +172,11 @@ type CentralReconciler struct {
 	areSecretsStoredFunc      areSecretsStoredFunc
 	needsReconcileFunc        needsReconcileFunc
 	restoreCentralSecretsFunc restoreCentralSecretsFunc
+
+	defaultTenantArgoCdAppSourceRepoURL        string
+	defaultTenantArgoCdAppSourceTargetRevision string
+	defaultTenantArgoCdAppSourcePath           string
+	argoCdNamespace                            string
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -239,8 +250,27 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
+	if isArgoCdEnabledForTenant(remoteCentral) {
+		if err := r.ensureArgoCdApplicationExists(ctx, remoteCentral); err != nil {
+			return nil, errors.Wrapf(err, "unable to install ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
+		}
+	} else {
+
+		{
+			// This part handles the case where we enable, then disable ArgoCD for a tenant
+			// to make sure the ArgoCD application is cleaned up.
+			ok, err := r.ensureArgoCdApplicationDeleted(ctx, remoteCentral)
+			if err != nil {
+				return nil, errors.Wrapf(err, "unable to delete ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
+			}
+			if !ok {
+				return nil, errors.New("ArgoCD application not yet deleted")
+			}
+		}
+
+		if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
+			return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
+		}
 	}
 
 	if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
@@ -309,6 +339,30 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	glog.Infof("Returning central status %+v", logStatus)
 
 	return status, nil
+}
+
+func isArgoCdEnabledForTenant(remoteCentral private.ManagedCentral) bool {
+	tenantResourceValues := remoteCentral.Spec.TenantResourcesValues
+	if tenantResourceValues == nil {
+		return false
+	}
+	argoCdIntf, ok := tenantResourceValues["argoCd"]
+	if !ok {
+		return false
+	}
+	argoCd, ok := argoCdIntf.(map[string]interface{})
+	if !ok {
+		return false
+	}
+	enabled, ok := argoCd["enabled"]
+	if !ok {
+		return false
+	}
+	enabledBool, ok := enabled.(bool)
+	if !ok {
+		return false
+	}
+	return enabledBool
 }
 
 func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
@@ -1109,6 +1163,12 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 		globalDeleted = globalDeleted && secretDeleted
 	}
 
+	argoCdAppDeleted, err := r.ensureArgoCdApplicationDeleted(ctx, *remoteCentral)
+	if err != nil {
+		return false, err
+	}
+	globalDeleted = globalDeleted && argoCdAppDeleted
+
 	chartResourcesDeleted, err := r.ensureChartResourcesDeleted(ctx, remoteCentral)
 	if err != nil {
 		return false, err
@@ -1204,7 +1264,7 @@ func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespace
 }
 
 func (r *CentralReconciler) reconcileNamespace(ctx context.Context, c private.ManagedCentral) error {
-	desiredNamespace := getDesiredNamespace(c)
+	desiredNamespace := r.getDesiredNamespace(c)
 
 	existingNamespace, err := r.getNamespace(desiredNamespace.Name)
 	if err != nil {
@@ -1241,12 +1301,12 @@ func (r *CentralReconciler) reconcileNamespace(ctx context.Context, c private.Ma
 	return nil
 }
 
-func getDesiredNamespace(c private.ManagedCentral) *corev1.Namespace {
+func (r *CentralReconciler) getDesiredNamespace(c private.ManagedCentral) *corev1.Namespace {
 	return &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        c.Metadata.Namespace,
 			Annotations: getNamespaceAnnotations(c),
-			Labels:      getNamespaceLabels(c),
+			Labels:      r.getNamespaceLabels(c),
 		},
 	}
 }
@@ -1770,6 +1830,143 @@ func (r *CentralReconciler) isTenantResourcesChartObject(existingObject *unstruc
 		existingObject.GetNamespace() == remoteCentral.Metadata.Namespace
 }
 
+func (r *CentralReconciler) ensureArgoCdApplicationExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	const lastAppliedHashLabel = "last-applied-hash"
+
+	want, err := r.makeDesiredArgoCDApplication(remoteCentral)
+	if err != nil {
+		return fmt.Errorf("getting ArgoCD application: %w", err)
+	}
+
+	hash, err := util.MD5SumFromJSONStruct(want)
+	if err != nil {
+		return fmt.Errorf("calculating MD5 from JSON: %w", err)
+	}
+	if want.Labels == nil {
+		want.Labels = map[string]string{}
+	}
+	want.Labels[lastAppliedHashLabel] = fmt.Sprintf("%x", hash)
+
+	var existing argocd.Application
+	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: want.Namespace, Name: want.Name}, &existing)
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return fmt.Errorf("getting ArgoCD application: %w", err)
+		}
+		if err := r.client.Create(ctx, want); err != nil {
+			return fmt.Errorf("creating ArgoCD application: %w", err)
+		}
+		return nil
+	}
+
+	if existing.Labels == nil || existing.Labels[lastAppliedHashLabel] != want.Labels[lastAppliedHashLabel] {
+		want.ResourceVersion = existing.ResourceVersion
+		if err := r.client.Update(ctx, want); err != nil {
+			return fmt.Errorf("updating ArgoCD application: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (r *CentralReconciler) makeDesiredArgoCDApplication(remoteCentral private.ManagedCentral) (*argocd.Application, error) {
+
+	values := map[string]interface{}{
+		"tenant": map[string]interface{}{
+			"organizationId":   remoteCentral.Spec.Auth.OwnerOrgId,
+			"organizationName": remoteCentral.Spec.Auth.OwnerOrgName,
+			"id":               remoteCentral.Id,
+			"instanceType":     remoteCentral.Spec.InstanceType,
+			"name":             remoteCentral.Metadata.Name,
+		},
+		"centralRdsCidrBlock": "10.1.0.0/16",
+		"vpa": map[string]interface{}{
+			"central": map[string]interface{}{
+				"enabled": true,
+			},
+		},
+	}
+
+	valuesBytes, err := json.Marshal(values)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling values: %w", err)
+	}
+
+	return &argocd.Application{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      r.getArgoCdAppName(remoteCentral),
+			Namespace: r.getArgoCdAppNamespace(remoteCentral),
+		},
+		Spec: argocd.ApplicationSpec{
+			Project: "default",
+			SyncPolicy: &argocd.SyncPolicy{
+				Automated: &argocd.SyncPolicyAutomated{
+					Prune:    true,
+					SelfHeal: true,
+				},
+			},
+			Source: &argocd.ApplicationSource{
+				RepoURL:        r.defaultTenantArgoCdAppSourceRepoURL,
+				TargetRevision: r.defaultTenantArgoCdAppSourceTargetRevision,
+				Path:           r.defaultTenantArgoCdAppSourcePath,
+				Helm: &argocd.ApplicationSourceHelm{
+					ValuesObject: &runtime.RawExtension{
+						Raw: valuesBytes,
+					},
+				},
+			},
+			Destination: argocd.ApplicationDestination{
+				Server:    "https://kubernetes.default.svc",
+				Namespace: remoteCentral.Metadata.Namespace,
+			},
+		},
+	}, nil
+}
+
+func (r *CentralReconciler) ensureArgoCdApplicationDeleted(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
+	app := &argocd.Application{}
+	objectKey := r.getArgoCdAppObjectKey(remoteCentral)
+
+	err := wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
+		err := r.client.Get(ctx, objectKey, app)
+		if apiErrors.IsNotFound(err) {
+			return true, nil
+		} else if err != nil {
+			return false, fmt.Errorf("getting ArgoCD application: %w", err)
+		}
+
+		if app.DeletionTimestamp != nil {
+			return false, nil
+		}
+
+		if err := r.client.Delete(ctx, app); err != nil {
+			return false, fmt.Errorf("deleting ArgoCD application: %w", err)
+		}
+
+		return false, nil
+	})
+	if err != nil {
+		return false, fmt.Errorf("waiting for ArgoCD application deletion: %w", err)
+	}
+
+	return true, nil
+}
+
+func (r *CentralReconciler) getArgoCdAppName(remoteCentral private.ManagedCentral) string {
+	return fmt.Sprintf("rhacs-%s", remoteCentral.Id)
+}
+
+func (r *CentralReconciler) getArgoCdAppNamespace(_ private.ManagedCentral) string {
+	return r.argoCdNamespace
+}
+
+func (r *CentralReconciler) getArgoCdAppObjectKey(remoteCentral private.ManagedCentral) ctrlClient.ObjectKey {
+	return ctrlClient.ObjectKey{
+		Namespace: r.getArgoCdAppNamespace(remoteCentral),
+		Name:      r.getArgoCdAppName(remoteCentral),
+	}
+}
+
 func (r *CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	err := r.ensureReencryptRouteExists(ctx, remoteCentral)
 	if err != nil {
@@ -1879,12 +2076,12 @@ func getTenantAnnotations(c private.ManagedCentral) map[string]string {
 	}
 }
 
-func getNamespaceLabels(c private.ManagedCentral) map[string]string {
+func (r *CentralReconciler) getNamespaceLabels(c private.ManagedCentral) map[string]string {
 	ret := map[string]string{}
 	for k, v := range getTenantLabels(c) {
 		ret[k] = v
 	}
-	ret[argoCdManagedBy] = openshiftGitopsNamespace
+	ret[argoCdManagedBy] = r.argoCdNamespace
 	return ret
 }
 
@@ -2113,6 +2310,14 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 
 		resourcesChart: resourcesChart,
 		clock:          realClock{},
+
+		// Todo: Allow overriding the tenant source path, repo URL, and ref
+		// on a per-tenant basis.
+
+		defaultTenantArgoCdAppSourcePath:           opts.DefaultTenantArgoCdAppSourcePath,
+		defaultTenantArgoCdAppSourceRepoURL:        opts.DefaultTenantArgoCdAppSourceRepoURL,
+		defaultTenantArgoCdAppSourceTargetRevision: opts.DefaultTenantArgoCdAppSourceTargetRevision,
+		argoCdNamespace:                            opts.ArgoCdNamespace,
 	}
 	r.needsReconcileFunc = r.needsReconcile
 

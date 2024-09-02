@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -63,7 +64,9 @@ const (
 var (
 	defaultCentralConfig = private.ManagedCentral{}
 
-	defaultReconcilerOptions = CentralReconcilerOptions{}
+	defaultReconcilerOptions = CentralReconcilerOptions{
+		ArgoCdNamespace: "openshift-gitops",
+	}
 
 	useRoutesReconcilerOptions           = CentralReconcilerOptions{UseRoutes: true}
 	secureTenantNetworkReconcilerOptions = CentralReconcilerOptions{SecureTenantNetwork: true}
@@ -2700,4 +2703,81 @@ func TestEncyrptionSHASumSameObject(t *testing.T) {
 	for i := 1; i < amount; i++ {
 		require.Equal(t, sums[i-1], sums[i], "hash of the same object should always be equal but was not")
 	}
+}
+
+func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
+	ctx := context.Background()
+	chartFiles, err := charts.TraverseChart(testdata, "testdata/tenant-resources")
+	require.NoError(t, err)
+	chart, err := loader.LoadFiles(chartFiles)
+	require.NoError(t, err)
+	managedCentral := simpleManagedCentral
+
+	cli, _, r := getClientTrackerAndReconciler(
+		t,
+		managedCentral,
+		nil,
+		defaultReconcilerOptions,
+	)
+	r.resourcesChart = chart
+
+	assertLegacyChartPresent := func(t *testing.T, present bool) {
+		var netPol networkingv1.NetworkPolicy
+		err := cli.Get(ctx, client.ObjectKey{Name: "dummy", Namespace: managedCentral.Metadata.Namespace}, &netPol)
+		if present {
+			require.NoError(t, err)
+		} else {
+			require.True(t, k8sErrors.IsNotFound(err))
+		}
+	}
+
+	assertArgoCdAppPresent := func(t *testing.T, present bool) {
+		var app argocd.Application
+		objectKey := r.getArgoCdAppObjectKey(managedCentral)
+		err := cli.Get(ctx, objectKey, &app)
+		if present {
+			require.NoError(t, err)
+		} else {
+			require.True(t, k8sErrors.IsNotFound(err))
+		}
+	}
+
+	{
+		// Ensure argocd application is created
+		managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
+			"argoCd": map[string]interface{}{
+				"enabled": true,
+			},
+		}
+		_, err := r.Reconcile(ctx, managedCentral)
+		require.NoError(t, err)
+
+		assertArgoCdAppPresent(t, true)
+		assertLegacyChartPresent(t, false)
+	}
+
+	{
+		// Ensure argocd application is deleted
+		managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
+			"argoCd": map[string]interface{}{
+				"enabled": false,
+			},
+		}
+		_, err := r.Reconcile(ctx, managedCentral)
+		require.NoError(t, err)
+
+		assertArgoCdAppPresent(t, false)
+		assertLegacyChartPresent(t, true)
+	}
+
+	{
+		// Ensure argocd and charts application are deleted
+		managedCentral.Metadata.DeletionTimestamp = time.Now().Format(time.RFC3339)
+		_, err = r.Reconcile(ctx, managedCentral)
+		require.ErrorIs(t, err, ErrDeletionInProgress)
+
+		assertArgoCdAppPresent(t, false)
+		assertLegacyChartPresent(t, false)
+	}
+
 }

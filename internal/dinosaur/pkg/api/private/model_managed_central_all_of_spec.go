@@ -20,5 +20,4 @@ type ManagedCentralAllOfSpec struct {
 	AdditionalAuthProvider ManagedCentralAllOfSpecAdditionalAuthProvider `json:"additionalAuthProvider,omitempty"`
 	UiEndpoint             ManagedCentralAllOfSpecUiEndpoint             `json:"uiEndpoint,omitempty"`
 	DataEndpoint           ManagedCentralAllOfSpecDataEndpoint           `json:"dataEndpoint,omitempty"`
-	ArgoCd                 ManagedCentralAllOfSpecArgoCd                 `json:"argoCd,omitempty"`
 }

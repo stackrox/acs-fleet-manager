@@ -6,8 +6,18 @@ export GITROOT
 source "${GITROOT}/dev/env/scripts/lib.sh"
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/docker.sh"
+# shellcheck source=/dev/null
+source "${GITROOT}/scripts/lib/external_config.sh"
 
 init
+if [[ "$ENABLE_EXTERNAL_CONFIG" == "true" ]]; then
+    init_chamber
+    export CHAMBER_SECRET_BACKEND=secretsmanager
+else
+    add_bin_to_path
+    ensure_tool_installed chamber
+    export CHAMBER_SECRET_BACKEND=null
+fi
 
 log "** Preparing ACSCS Environment **"
 print_env
@@ -54,11 +64,11 @@ fi
 
 if [[ "$INSTALL_ARGOCD" == "true" ]]; then
     log "Installing ArgoCD"
-    kubectl create ns argocd || true
+    chamber exec gitops -- apply "${MANIFESTS_DIR}/argocd"
     kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 elif [[ "$INSTALL_OPENSHIFT_GITOPS" == "true" ]]; then
     log "Installing Openshift GitOps"
-    apply "${MANIFESTS_DIR}/openshift-gitops"
+    chamber exec gitops -- apply "${MANIFESTS_DIR}/openshift-gitops"
 else
     log "One of ArgoCD or OpenShift GitOps must be installed"
     exit 1

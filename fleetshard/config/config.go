@@ -35,13 +35,17 @@ type Config struct {
 	// If it is empty, nothing is injected (for example, it is not required when running on OpenShift).
 	// It is required when central images need to fetched from a private Quay registry.
 	// It needs to given as Docker Config JSON object.
-	TenantImagePullSecret string `env:"TENANT_IMAGE_PULL_SECRET"`
-	ManagedDB             ManagedDB
-	Telemetry             Telemetry
-	AuditLogging          AuditLogging
-	SecretEncryption      SecretEncryption
-	RouteParameters       RouteConfig
-	FleetshardAddonName   string `env:"FLEETSHARD_ADDON_NAME" envDefault:"acs-fleetshard"`
+	TenantImagePullSecret                      string `env:"TENANT_IMAGE_PULL_SECRET"`
+	DefaultTenantArgoCdAppSourceRepoURL        string `env:"DEFAULT_TENANT_ARGOCD_APP_SOURCE_REPO_URL" envDefault:"https://github.com/stackrox/acscs-manifests.git"`
+	DefaultTenantArgoCdAppSourceTargetRevision string `env:"DEFAULT_TENANT_ARGOCD_APP_SOURCE_TARGET_REVISION" envDefault:"HEAD"`
+	DefaultTenantArgoCdAppSourcePath           string `env:"DEFAULT_TENANT_ARGOCD_APP_SOURCE_PATH" envDefault:"tenant-resources"`
+	ArgoCdNamespace                            string `env:"ARGOCD_NAMESPACE" envDefault:"openshift-gitops"`
+	ManagedDB                                  ManagedDB
+	Telemetry                                  Telemetry
+	AuditLogging                               AuditLogging
+	SecretEncryption                           SecretEncryption
+	RouteParameters                            RouteConfig
+	FleetshardAddonName                        string `env:"FLEETSHARD_ADDON_NAME" envDefault:"acs-fleetshard"`
 
 	// The SecureTenantNetwork option controls whether the Tenant's K8s
 	// Namespace will be secured at the network level, e.g. by using

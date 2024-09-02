@@ -519,6 +519,7 @@ func newCreateCentralDBInstanceInput(input *createCentralDBInstanceInput) *rds.C
 		PromotionTier:             aws.Int64(dbInstancePromotionTier),
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
 		AutoMinorVersionUpgrade:   aws.Bool(dbAutoVersionUpgrade),
+
 		Tags: []*rds.Tag{
 			{
 				Key:   aws.String(dataplaneClusterNameKey),
