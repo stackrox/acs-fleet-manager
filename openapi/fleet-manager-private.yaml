@@ -376,6 +376,11 @@ components:
                   properties:
                     host:
                       type: string
+                argoCd:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
             requestStatus:
               type: string
 
