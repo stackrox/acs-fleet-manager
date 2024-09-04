@@ -31,8 +31,8 @@ import (
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
-	"github.com/stackrox/rox/pkg/maputil"
 	"github.com/stackrox/rox/pkg/random"
+	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -936,7 +936,7 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (e
 	allSecretData := []byte{}
 	// sort to ensure the loop always executed in the same order
 	// otherwise the sha sum can differ across multiple invocations
-	keys := maputil.Keys(secrets)
+	keys := maps.Keys(secrets)
 	sort.Strings(keys)
 	for _, key := range keys { // pragma: allowlist secret
 		secret := secrets[key]
@@ -947,7 +947,7 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (e
 
 		// sort to ensure the loop always executed in the same order
 		// otherwise the sha sum can differ across multiple invocations
-		dataKeys := maputil.Keys(secret.Data)
+		dataKeys := maps.Keys(secret.Data)
 		sort.Strings(dataKeys)
 		for _, dataKey := range dataKeys {
 			allSecretData = append(allSecretData, secret.Data[dataKey]...)

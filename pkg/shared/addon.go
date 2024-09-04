@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/stackrox/rox/pkg/maputil"
+	"golang.org/x/exp/maps"
 )
 
 // AddonParameters addon parameters
@@ -22,7 +22,7 @@ type Addon struct {
 
 // SHA256Sum returns SHA256 checksum of the addon parameters
 func (p AddonParameters) SHA256Sum() string {
-	keys := maputil.Keys(p)
+	keys := maps.Keys(p)
 	sort.Strings(keys) // to make hash generation deterministic
 
 	h := sha256.New()
