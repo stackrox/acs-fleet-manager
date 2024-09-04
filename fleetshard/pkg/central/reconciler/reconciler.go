@@ -56,6 +56,9 @@ const (
 
 	helmReleaseName = "tenant-resources"
 
+	argoCdManagedBy          = "argocd.argoproj.io/managed-by"
+	openshiftGitopsNamespace = "openshift-gitops"
+
 	centralPVCAnnotationKey   = "platform.stackrox.io/obsolete-central-pvc"
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 	envAnnotationKey          = "rhacs.redhat.com/environment"
@@ -1870,7 +1873,12 @@ func getTenantAnnotations(c private.ManagedCentral) map[string]string {
 }
 
 func getNamespaceLabels(c private.ManagedCentral) map[string]string {
-	return getTenantLabels(c)
+	ret := map[string]string{}
+	for k, v := range getTenantLabels(c) {
+		ret[k] = v
+	}
+	ret[argoCdManagedBy] = openshiftGitopsNamespace
+	return ret
 }
 
 func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {

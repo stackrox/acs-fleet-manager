@@ -2184,6 +2184,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 						"rhacs.redhat.com/instance-type": "standard",
 						"rhacs.redhat.com/org-id":        "12345",
 						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+						"argocd.argoproj.io/managed-by":  "openshift-gitops",
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "org-name",
@@ -2204,6 +2205,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 						"rhacs.redhat.com/instance-type": "wrong",
 						"rhacs.redhat.com/org-id":        "wrong",
 						"rhacs.redhat.com/tenant":        "wrong",
+						"argocd.argoproj.io/managed-by":  "wrong",
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "wrong",
@@ -2220,6 +2222,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 						"rhacs.redhat.com/instance-type": "standard",
 						"rhacs.redhat.com/org-id":        "12345",
 						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+						"argocd.argoproj.io/managed-by":  "openshift-gitops",
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "org-name",
@@ -2239,6 +2242,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 						"rhacs.redhat.com/instance-type": "standard",
 						"rhacs.redhat.com/org-id":        "12345",
 						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+						"argocd.argoproj.io/managed-by":  "openshift-gitops",
 						"extra":                          "extra",
 					},
 					Annotations: map[string]string{
@@ -2257,6 +2261,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 						"rhacs.redhat.com/instance-type": "standard",
 						"rhacs.redhat.com/org-id":        "12345",
 						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+						"argocd.argoproj.io/managed-by":  "openshift-gitops",
 						"extra":                          "extra",
 					},
 					Annotations: map[string]string{
@@ -2278,6 +2283,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 						"rhacs.redhat.com/instance-type": "standard",
 						"rhacs.redhat.com/org-id":        "12345",
 						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+						"argocd.argoproj.io/managed-by":  "openshift-gitops",
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "org-name",
@@ -2294,6 +2300,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 						"rhacs.redhat.com/instance-type": "standard",
 						"rhacs.redhat.com/org-id":        "12345",
 						"rhacs.redhat.com/tenant":        "cb45idheg5ip6dq1jo4g",
+						"argocd.argoproj.io/managed-by":  "openshift-gitops",
 					},
 					Annotations: map[string]string{
 						"rhacs.redhat.com/org-name": "org-name",
