@@ -1,6 +1,7 @@
 module github.com/stackrox/acs-fleet-manager
 
 go 1.21.8
+toolchain go1.22.5
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -64,9 +65,9 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/gorm v1.25.11
-	helm.sh/helm/v3 v3.14.3
-	k8s.io/api v0.29.6
-	k8s.io/apimachinery v0.29.6
+	helm.sh/helm/v3 v3.15.4
+	k8s.io/api v0.30.3
+	k8s.io/apimachinery v0.30.3
 	k8s.io/autoscaler/vertical-pod-autoscaler v1.2.0
 	k8s.io/client-go v11.0.1-0.20190816222228-6d55c1b1f1ca+incompatible
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
@@ -264,15 +265,15 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.4.6 // indirect
-	k8s.io/apiextensions-apiserver v0.29.6 // indirect
-	k8s.io/apiserver v0.29.6 // indirect
-	k8s.io/cli-runtime v0.29.6 // indirect
-	k8s.io/component-base v0.29.6 // indirect
+	k8s.io/apiextensions-apiserver v0.30.3 // indirect
+	k8s.io/apiserver v0.30.3 // indirect
+	k8s.io/cli-runtime v0.30.3 // indirect
+	k8s.io/component-base v0.30.3 // indirect
 	k8s.io/component-helpers v0.29.6 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
 	k8s.io/kube-aggregator v0.29.6 // indirect
-	k8s.io/kube-openapi v0.0.0-20240105020646-a37d4de58910 // indirect
-	k8s.io/kubectl v0.29.6 // indirect
+	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
+	k8s.io/kubectl v0.30.3 // indirect
 	k8s.io/kubernetes v1.29.6 // indirect
 	oras.land/oras-go/v2 v2.3.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
