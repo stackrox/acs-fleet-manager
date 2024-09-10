@@ -1297,8 +1297,8 @@ github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQb2IpWsCzug=
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
-github.com/openshift-online/ocm-sdk-go v0.1.433 h1:8i0Si9KrFkMprMBGR1a4ppmgVezMBjjXXkvhv28OVUk=
-github.com/openshift-online/ocm-sdk-go v0.1.433/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
+github.com/openshift-online/ocm-sdk-go v0.1.439 h1:ELrJjmYgtzhdUY1cOJ0chtbhBEGz682EiTvojt5/xVM=
+github.com/openshift-online/ocm-sdk-go v0.1.439/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
 github.com/openshift/addon-operator/apis v0.0.0-20231110045543-dd01f2f5c184 h1:P93o33VcHaOTjOTm6/UojtJdr1qLc2U7vPMBno39rdc=
 github.com/openshift/addon-operator/apis v0.0.0-20231110045543-dd01f2f5c184/go.mod h1:JS2tbakhIZRgBiULsIUSHGsdz7G/Vylvg1mqI1TlXzs=
 github.com/openshift/api v0.0.0-20231117201702-2ea16bbab164 h1:0dwIuUDjrKSnq/ujysraljX8Vk/lxDJDVUcUcl9bx9M=
