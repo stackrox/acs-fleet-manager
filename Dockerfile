@@ -42,7 +42,7 @@ WORKDIR /
 ENTRYPOINT ["/usr/local/bin/fleet-manager", "serve"]
 
 LABEL name="fleet-manager" \
-    vendor="Red Hat" \
+    vendor="Red Hat, Inc." \
     version="0.0.1" \
     summary="FleetManager" \
     description="Red Hat Advanced Cluster Security Fleet Manager"
