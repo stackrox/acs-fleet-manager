@@ -7,13 +7,15 @@ on:
       - main
     paths:
       - 'emailsender/**'
-      - 'scripts/ci/**'
+      - 'scripts/**'
       - '.github/workflows/emailsender-central-compatibility.yaml'
 
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'emailsender/**'
+      - 'scripts/**'
+      - '.github/workflows/emailsender-central-compatibility.yaml'
 
 jobs:
   e2e-test-on-kind:
