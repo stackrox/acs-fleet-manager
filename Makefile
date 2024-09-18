@@ -620,7 +620,7 @@ image/push/internal: docker/login/internal
 
 image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
 image/build/fleetshard-operator:
-	$(DOCKER) build -t $(IMAGE_REF) --build-arg IMAGE_TAG=$(image_tag) --load ${PROJECT_PATH}/dp-terraform/helm
+	$(DOCKER) buildx build -t $(IMAGE_REF) --build-arg IMAGE_TAG=$(image_tag) --load ${PROJECT_PATH}/dp-terraform/helm
 .PHONY: image/build/fleetshard-operator
 
 image/push/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
