@@ -18,6 +18,8 @@ RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
 USER unprivilegeduser
 
+ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /rds_ca/aws-rds-ca-global-bundle.pem
+
 COPY --from=build /src/emailsender/bin /acscs/
 EXPOSE 8080
 ENTRYPOINT ["/acscs/emailsender"]
