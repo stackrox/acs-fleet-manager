@@ -11,7 +11,7 @@ fleetshardSync:
 emailsender:
   db:
     sslMode: "disable"
-    caCertPath: ""
+    caCertFile: ""
   image:
     repo: "quay.io/rhacs-eng/emailsender"
   enabled: true

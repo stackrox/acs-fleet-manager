@@ -74,7 +74,7 @@ emailsender:
   # to turn of HTTPS and mounting the service-ca certs since they'll not be created
   db:
     sslMode: "verify-full"
-    caCertPath: /rds_ca/aws-rds-ca-global-bundle.pem
+    caCertFile: /rds_ca/aws-rds-ca-global-bundle.pem
   enableHTTPS: true
   replicas: 3
   image:
