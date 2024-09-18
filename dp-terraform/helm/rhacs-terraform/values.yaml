@@ -72,8 +72,6 @@ emailsender:
   enabled: false
   # Use this in case you apply this manifest against a cluster without service-ca operator
   # to turn of HTTPS and mounting the service-ca certs since they'll not be created
-  db:
-    sslMode: "verify-full"
   enableHTTPS: true
   replicas: 3
   image:
