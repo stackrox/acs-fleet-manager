@@ -41,8 +41,6 @@ spec:
               value: "/var/run/certs/tls.crt"
             - name: HTTPS_KEY_FILE
               value: "/var/run/certs/tls.key"
-            - name: DATABASE_SSL_MODE
-              value: {{ .Values.emailsender.db.sslMode }}
             {{- if .Values.emailsender.authConfigFromKubernetes }}
             - name: AUTH_CONFIG_FROM_KUBERNETES
               value: "true"
