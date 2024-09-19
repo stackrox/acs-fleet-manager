@@ -9,9 +9,6 @@ fleetshardSync:
     enabled: false
     subnetGroup: "dummyGroup"
 emailsender:
-  db:
-    sslMode: "disable"
-    caCertFile: ""
   image:
     repo: "quay.io/rhacs-eng/emailsender"
   enabled: true

@@ -15,8 +15,6 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9 as standard
 RUN microdnf install shadow-utils
 
 RUN useradd -u 1001 unprivilegeduser
-ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /rds_ca/aws-rds-ca-global-bundle.pem
-RUN chown unprivilegeduser /rds_ca/aws-rds-ca-global-bundle.pem
 # Switch to non-root user
 USER unprivilegeduser
 
