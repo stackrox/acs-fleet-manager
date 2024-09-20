@@ -24,7 +24,7 @@ COPY --from=build /src/emailsender/bin /acscs/
 EXPOSE 8080
 ENTRYPOINT ["/acscs/emailsender"]
 LABEL name="ACSCS email sender" \
-	vendor="Red Hat" \
+	vendor="Red Hat, Inc." \
 	version="0.0.1" \
 	summary="Email sender service for ACSCS" \
 	description="Email sender service for the Red Hat Advanced Cluster Security Cloud Services"
