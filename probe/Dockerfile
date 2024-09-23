@@ -24,7 +24,7 @@ EXPOSE 7070
 ENTRYPOINT ["/stackrox/probe"]
 CMD ["start"]
 LABEL name="probe" \
-	vendor="Red Hat" \
+	vendor="Red Hat, Inc." \
 	version="0.0.1" \
 	summary="Blackbox monitoring probe for ACS Fleet Manager" \
 	description="Blackbox monitoring probe for the Red Hat Advanced Cluster Security Fleet Manager"
