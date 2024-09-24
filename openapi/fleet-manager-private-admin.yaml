@@ -457,7 +457,52 @@ paths:
             application/json:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
-
+  '/api/rhacs/v1/admin/centrals/{id}/assign-cluster':
+    post:
+      summary: Reassign the cluster a central tenant should be scheduled to
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      requestBody:
+        description: Body for Cluster reassignment
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CentralAssignClusterRequest'
+        required: true
+      security:
+        - Bearer: [ ]
+      operationId: assignCentralCluster
+      responses:
+        "200":
+          description: Central cluster assignment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Central'
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "404":
+          description: No Central found with the specified ID
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
   '/api/rhacs/v1/admin/centrals/{id}/traits':
     get:
       summary: Returns a list of central traits.
@@ -719,6 +764,12 @@ components:
           type: string
           enum:
           - RHACS
+
+    CentralAssignClusterRequest:
+      type: object
+      properties:
+        cluster_id:
+          type: string
 
   parameters:
     trait:
