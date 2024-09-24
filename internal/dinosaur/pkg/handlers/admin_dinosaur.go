@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"time"
 
+	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
@@ -53,6 +55,9 @@ type AdminCentralHandler interface {
 	// a tenant. In particular, avoid two Central CRs appearing in the same
 	// tenant namespace. This may cause conflicts due to mixed resource ownership.
 	PatchName(w http.ResponseWriter, r *http.Request)
+	// AssignCluster assigns the dataplane cluster_id of the central tenant to
+	// the given cluster_id in the requests body.
+	AssignCluster(w http.ResponseWriter, r *http.Request)
 
 	// ListTraits returns all central traits
 	ListTraits(w http.ResponseWriter, r *http.Request)
@@ -70,6 +75,7 @@ type AdminCentralHandler interface {
 type adminCentralHandler struct {
 	service        services.DinosaurService
 	accountService account.AccountService
+	clusterService services.ClusterService
 	providerConfig *config.ProviderConfig
 	telemetry      *services.Telemetry
 }
@@ -80,12 +86,14 @@ var _ AdminCentralHandler = (*adminCentralHandler)(nil)
 func NewAdminCentralHandler(
 	service services.DinosaurService,
 	accountService account.AccountService,
+	clusterService services.ClusterService,
 	providerConfig *config.ProviderConfig,
 	telemetry *services.Telemetry,
 ) AdminCentralHandler {
 	return &adminCentralHandler{
 		service:        service,
 		accountService: accountService,
+		clusterService: clusterService,
 		providerConfig: providerConfig,
 		telemetry:      telemetry,
 	}
@@ -315,6 +323,44 @@ func (h adminCentralHandler) PatchName(w http.ResponseWriter, r *http.Request) {
 			return nil, h.service.Updates(central, map[string]interface{}{
 				"name": &updateNameRequest.Name,
 			})
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h adminCentralHandler) AssignCluster(w http.ResponseWriter, r *http.Request) {
+	assignClusterRequests := private.CentralAssignClusterRequest{}
+	centralID := mux.Vars(r)["id"]
+	cfg := &handlers.HandlerConfig{
+		MarshalInto: &assignClusterRequests,
+		Validate: []handlers.Validate{
+			handlers.ValidateMinLength(&assignClusterRequests.ClusterId, "cluster_id", handlers.MinRequiredFieldLength),
+			handlers.ValidateMinLength(&centralID, "id", handlers.MinRequiredFieldLength),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			glog.Infof("Assigning cluster_id for central %q to: %q", centralID, assignClusterRequests.ClusterId)
+
+			centralTenant, err := h.service.GetByID(centralID)
+			if err != nil {
+				return nil, err
+			}
+
+			readyStatus := dinosaurConstants.CentralRequestStatusReady.String()
+			if centralTenant.Status == readyStatus {
+				return nil, errors.BadRequest("Cannot assing cluster_id for tenant in status: %q, status %q is required", centralTenant.Status, readyStatus)
+			}
+
+			_, err = h.clusterService.FindClusterByID(assignClusterRequests.ClusterId)
+			if err != nil {
+				return nil, err
+			}
+
+			centralTenant.ClusterID = assignClusterRequests.ClusterId
+			if err := h.service.Updates(centralTenant, map[string]interface{}{"cluster_id": centralTenant.ClusterID}); err != nil {
+				return nil, err
+			}
+
+			return nil, nil
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
