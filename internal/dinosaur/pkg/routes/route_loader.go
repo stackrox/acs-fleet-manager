@@ -42,6 +42,7 @@ type options struct {
 
 	AMSClient               ocm.AMSClient
 	Central                 services.DinosaurService
+	ClusterService          services.ClusterService
 	CloudProviders          services.CloudProvidersService
 	Observatorium           services.ObservatoriumService
 	DataPlaneCluster        services.DataPlaneClusterService
@@ -222,7 +223,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseFleetShardAuthorizationMiddleware(apiV1DataPlaneRequestsRouter, s.IAMConfig, s.FleetShardAuthZConfig)
 
-	adminCentralHandler := handlers.NewAdminCentralHandler(s.Central, s.AccountService, s.ProviderConfig, s.Telemetry)
+	adminCentralHandler := handlers.NewAdminCentralHandler(s.Central, s.AccountService, s.ClusterService, s.ProviderConfig, s.Telemetry)
 	adminRouter := apiV1Router.PathPrefix(routes.AdminAPIPrefix).Subrouter()
 
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
@@ -260,6 +261,9 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminCentralsRouter.HandleFunc("/{id}/billing", adminCentralHandler.PatchBillingParameters).
 		Name(logger.NewLogEvent("admin-billing", "[admin] change central billing parameters").ToString()).
 		Methods(http.MethodPatch)
+	adminCentralsRouter.HandleFunc("/{id}/assign-cluster", adminCentralHandler.AssignCluster).
+		Name(logger.NewLogEvent("admin-central-assign-cluster", "[admin] change central cluster assignment").ToString()).
+		Methods(http.MethodPost)
 
 	adminCentralsRouter.HandleFunc("/{id}/traits", adminCentralHandler.ListTraits).
 		Name(logger.NewLogEvent("admin-list-traits", "[admin] list central traits").ToString()).
