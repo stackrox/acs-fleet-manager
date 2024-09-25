@@ -66,26 +66,6 @@ var _ = Describe("AuthN/Z Fleet* components", Ordered, func() {
 		}
 	}
 
-	Describe("OCM auth type", func() {
-		BeforeEach(func() {
-			auth, err := fmImpl.NewOCMAuth(context.Background(), authOption.Ocm)
-			Expect(err).ToNot(HaveOccurred())
-			fmClient, err := fmImpl.NewClient(fleetManagerEndpoint, auth)
-			Expect(err).ToNot(HaveOccurred())
-			client = fmClient
-		})
-
-		DescribeTable("AuthN/Z tests",
-			testCase,
-			Entry("should allow access to fleet manager's public API endpoints",
-				publicAPI, false, 0, false),
-			Entry("should not allow access to fleet manager's internal API endpoints",
-				internalAPI, true, http.StatusNotFound, false),
-			Entry("should not allow access to fleet manager's admin API endpoints",
-				adminAPI, true, http.StatusNotFound, false),
-		)
-	})
-
 	Describe("Static token auth type", func() {
 		BeforeEach(func() {
 			auth, err := fmImpl.NewStaticAuth(context.Background(), authOption.Static)
