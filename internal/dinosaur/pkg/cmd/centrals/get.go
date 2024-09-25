@@ -18,7 +18,7 @@ func NewGetCommand() *cobra.Command {
 		Short: "Get a central request",
 		Long:  "Get a central request.",
 		Run: func(cmd *cobra.Command, args []string) {
-			runGet(fleetmanagerclient.AuthenticatedClientWithOCM(cmd.Context()), cmd, args)
+			runGet(fleetmanagerclient.AuthenticatedClientWithStaticToken(cmd.Context()), cmd, args)
 		},
 	}
 	cmd.Flags().String(FlagID, "", "Central ID (required)")
