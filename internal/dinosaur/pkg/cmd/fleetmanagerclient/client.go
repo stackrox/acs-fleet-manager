@@ -1,4 +1,4 @@
-// Package fleetmanagerclient is a fmClientAuthWithOCMRefreshToken for the CLI to connect to the fleetmanager.
+// Package fleetmanagerclient is a fmAuthenticatedClientWithStaticToken for the CLI to connect to the fleetmanager.
 package fleetmanagerclient
 
 import (
@@ -67,12 +67,12 @@ func AuthenticatedClientWithRHOASToken(ctx context.Context) *fleetmanager.Client
 	return fmClientAuthWithRHOASToken
 }
 
-// AuthenticatedClientWithStaticToken returns a rest client to the fleet-manager and receives the static refresh token.
+// AuthenticatedClientWithStaticToken returns a rest client to the fleet-manager and receives the static token.
 // This function will panic on an error, designed to be used by the fleet-manager CLI.
 func AuthenticatedClientWithStaticToken(ctx context.Context) *fleetmanager.Client {
 	staticToken := os.Getenv(StaticTokenEnvVar)
 	if staticToken == "" {
-		panic(fmt.Sprintf("%s not set. Please set OCM token with 'export %s=$(ocm token --refresh)'", StaticTokenEnvVar, StaticTokenEnvVar))
+		panic(fmt.Sprintf("%s not set. Please set static token with 'export %s=<token>'", StaticTokenEnvVar, StaticTokenEnvVar))
 	}
 
 	fleetManagerEndpoint := os.Getenv(fleetManagerEndpointEnvVar)
