@@ -337,7 +337,7 @@ test/aws: $(GOTESTSUM_BIN)
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
 test/integration/dinosaur: $(GOTESTSUM_BIN)
-	$(GOTESTSUM_BIN) --junitfile data/results/fleet-manager-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
+	OCM_ENV=integration $(GOTESTSUM_BIN)  --junitfile data/results/fleet-manager-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
 				./internal/dinosaur/test/integration/...
 .PHONY: test/integration/dinosaur
 
