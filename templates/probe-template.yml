@@ -65,17 +65,17 @@ objects:
                 - name: FLEET_MANAGER_ENDPOINT
                   value: ${FLEET_MANAGER_ENDPOINT}
                 - name: AUTH_TYPE
-                  value: OCM
-                - name: OCM_USERNAME
+                  value: RHSSO
+                - name: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
                   valueFrom:
                     secretKeyRef:
                       name: probe-credentials
-                      key: OCM_USERNAME
-                - name: OCM_TOKEN
+                      key: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
+                - name: RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET
                   valueFrom:
                     secretKeyRef:
                       name: probe-credentials
-                      key: OCM_TOKEN
+                      key: RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET
                 - name: CENTRAL_SPECS
                   value: ${CENTRAL_SPECS}
               ports:
