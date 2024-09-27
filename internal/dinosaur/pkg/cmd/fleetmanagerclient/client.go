@@ -1,4 +1,4 @@
-// Package fleetmanagerclient is a fmClientAuthWithOCMRefreshToken for the CLI to connect to the fleetmanager.
+// Package fleetmanagerclient is a fmAuthenticatedClientWithStaticToken for the CLI to connect to the fleetmanager.
 package fleetmanagerclient
 
 import (
@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	singletonOCMRefreshTokenInstance sync.Once
-	fmClientAuthWithOCMRefreshToken  *fleetmanager.Client
+	singletonStaticTokenInstance         sync.Once
+	fmAuthenticatedClientWithStaticToken *fleetmanager.Client
 
 	fmClientAuthWithRHOASToken  *fleetmanager.Client
 	singletonRHOASTokenInstance sync.Once
@@ -24,7 +24,7 @@ var (
 const (
 	defaultFleetManagerEndpoint = "http://localhost:8000"
 	fleetManagerEndpointEnvVar  = "FMCLI_FLEET_MANAGER_ENDPOINT"
-	ocmRefreshTokenEnvVar       = "OCM_TOKEN"
+	StaticTokenEnvVar           = "STATIC_TOKEN"
 	rhoasTokenEnvVar            = "RHOAS_TOKEN"
 )
 
@@ -67,12 +67,12 @@ func AuthenticatedClientWithRHOASToken(ctx context.Context) *fleetmanager.Client
 	return fmClientAuthWithRHOASToken
 }
 
-// AuthenticatedClientWithOCM returns a rest client to the fleet-manager and receives the OCM refresh token.
+// AuthenticatedClientWithStaticToken returns a rest client to the fleet-manager and receives the static token.
 // This function will panic on an error, designed to be used by the fleet-manager CLI.
-func AuthenticatedClientWithOCM(ctx context.Context) *fleetmanager.Client {
-	ocmRefreshToken := os.Getenv(ocmRefreshTokenEnvVar)
-	if ocmRefreshToken == "" {
-		panic(fmt.Sprintf("%s not set. Please set OCM token with 'export %s=$(ocm token --refresh)'", ocmRefreshTokenEnvVar, ocmRefreshTokenEnvVar))
+func AuthenticatedClientWithStaticToken(ctx context.Context) *fleetmanager.Client {
+	staticToken := os.Getenv(StaticTokenEnvVar)
+	if staticToken == "" {
+		panic(fmt.Sprintf("%s not set. Please set static token with 'export %s=<token>'", StaticTokenEnvVar, StaticTokenEnvVar))
 	}
 
 	fleetManagerEndpoint := os.Getenv(fleetManagerEndpointEnvVar)
@@ -80,10 +80,10 @@ func AuthenticatedClientWithOCM(ctx context.Context) *fleetmanager.Client {
 		fleetManagerEndpoint = defaultFleetManagerEndpoint
 	}
 
-	singletonOCMRefreshTokenInstance.Do(func() {
-		auth, err := impl.NewAuth(ctx, impl.OCMAuthName, impl.Option{
-			Ocm: impl.OCMOption{
-				RefreshToken: ocmRefreshToken,
+	singletonStaticTokenInstance.Do(func() {
+		auth, err := impl.NewAuth(ctx, impl.StaticTokenAuthName, impl.Option{
+			Static: impl.StaticOption{
+				StaticToken: staticToken,
 			},
 		})
 		if err != nil {
@@ -91,7 +91,7 @@ func AuthenticatedClientWithOCM(ctx context.Context) *fleetmanager.Client {
 			return
 		}
 
-		fmClientAuthWithOCMRefreshToken, err = impl.NewClient(fleetManagerEndpoint, auth)
+		fmAuthenticatedClientWithStaticToken, err = impl.NewClient(fleetManagerEndpoint, auth)
 		if err != nil {
 			glog.Fatalf("Failed to create connection: %s", err)
 			return
@@ -103,5 +103,5 @@ func AuthenticatedClientWithOCM(ctx context.Context) *fleetmanager.Client {
 	if fleetManagerEndpoint == defaultFleetManagerEndpoint {
 		time.Sleep(5 * time.Second)
 	}
-	return fmClientAuthWithOCMRefreshToken
+	return fmAuthenticatedClientWithStaticToken
 }

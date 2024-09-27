@@ -27,7 +27,6 @@ type authFactory interface {
 // Option for the different Auth types.
 type Option struct {
 	Sso            RHSSOOption
-	Ocm            OCMOption
 	Static         StaticOption
 	ServiceAccount ServiceAccountOption
 }
@@ -38,12 +37,6 @@ type RHSSOOption struct {
 	ClientSecret string `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"` //pragma: allowlist secret
 	Realm        string `env:"RHSSO_REALM" envDefault:"redhat-external"`
 	Endpoint     string `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
-}
-
-// OCMOption for the OCM Auth type.
-type OCMOption struct {
-	RefreshToken string `env:"OCM_TOKEN"`
-	EnableLogger bool   `env:"OCM_ENABLE_LOGGER"`
 }
 
 // StaticOption for the Static Auth type.
@@ -60,7 +53,6 @@ var authFactoryRegistry map[string]authFactory
 
 func init() {
 	authFactoryRegistry = map[string]authFactory{
-		ocmFactory.GetName():                 ocmFactory,
 		rhSSOFactory.GetName():               rhSSOFactory,
 		staticTokenFactory.GetName():         staticTokenFactory,
 		serviceAccountTokenFactory.GetName(): serviceAccountTokenFactory,
@@ -89,11 +81,6 @@ func newAuth(ctx context.Context, t string, opt Option) (Auth, error) {
 // NewRHSSOAuth will return Auth that uses RH SSO to provide authentication for HTTP requests.
 func NewRHSSOAuth(ctx context.Context, opt RHSSOOption) (Auth, error) {
 	return newAuth(ctx, rhSSOFactory.GetName(), Option{Sso: opt})
-}
-
-// NewOCMAuth will return Auth that uses OCM to provide authentication for HTTP requests.
-func NewOCMAuth(ctx context.Context, opt OCMOption) (Auth, error) {
-	return newAuth(ctx, ocmFactory.GetName(), Option{Ocm: opt})
 }
 
 // NewStaticAuth will return Auth that uses a static token to provide authentication for HTTP requests.
