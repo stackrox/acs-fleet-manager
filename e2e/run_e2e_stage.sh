@@ -20,3 +20,4 @@ make \
     OCM_TOKEN="${STATIC_OCM_TOKEN}" \
     FLEET_MANAGER_ENDPOINT="${ACS_FLEET_MANAGER_ENDPOINT}" \
   test/e2e/probe/run
+#ask alex if we use it incase we need to remove script
