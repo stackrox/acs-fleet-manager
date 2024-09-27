@@ -39,6 +39,14 @@ parameters:
     displayName: Memory Limits
     value: 128Mi
 objects:
+  - kind: ServiceAccount
+    apiVersion: v1
+    metadata:
+      name: probe
+      labels:
+        app: probe
+    imagePullSecrets:
+      - name: quay.io
   - apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -89,6 +97,8 @@ objects:
                   cpu: ${CPU_LIMITS}
                   memory: ${MEMORY_LIMITS}
           terminationGracePeriodSeconds: 300
+          serviceAccount: probe
+          serviceAccountName: probe
   - kind: Service
     apiVersion: v1
     metadata:
