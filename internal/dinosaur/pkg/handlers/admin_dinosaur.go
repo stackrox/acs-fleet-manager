@@ -73,7 +73,6 @@ type AdminCentralHandler interface {
 type adminCentralHandler struct {
 	service        services.DinosaurService
 	accountService account.AccountService
-	clusterService services.ClusterService
 	providerConfig *config.ProviderConfig
 	telemetry      *services.Telemetry
 }
@@ -84,14 +83,12 @@ var _ AdminCentralHandler = (*adminCentralHandler)(nil)
 func NewAdminCentralHandler(
 	service services.DinosaurService,
 	accountService account.AccountService,
-	clusterService services.ClusterService,
 	providerConfig *config.ProviderConfig,
 	telemetry *services.Telemetry,
 ) AdminCentralHandler {
 	return &adminCentralHandler{
 		service:        service,
 		accountService: accountService,
-		clusterService: clusterService,
 		providerConfig: providerConfig,
 		telemetry:      telemetry,
 	}
