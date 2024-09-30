@@ -128,7 +128,7 @@ func TestCloudProviderRegions(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	_, _, teardown := test.NewDinosaurHelper(t, ocmServer)
+	_, _, teardown := test.NewCentralHelper(t, ocmServer)
 	defer teardown()
 
 	// Create two clusters each with different provider type
@@ -166,7 +166,7 @@ func TestCachedCloudProviderRegions(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	_, _, teardown := test.NewDinosaurHelper(t, ocmServer)
+	_, _, teardown := test.NewCentralHelper(t, ocmServer)
 	defer teardown()
 
 	// Create two clusters each with different provider type
@@ -201,7 +201,7 @@ func TestListCloudProviders(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewDinosaurHelper(t, ocmServer)
+	h, client, teardown := test.NewCentralHelper(t, ocmServer)
 	defer teardown()
 
 	// Create two clusters each with different provider type
@@ -236,7 +236,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	}
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(pc *config.ProviderConfig) {
+	h, client, teardown := test.NewCentralHelperWithHooks(t, ocmServer, func(pc *config.ProviderConfig) {
 		pc.ProvidersConfig.SupportedProviders = config.ProviderList{
 			{
 				Name:    "aws",
@@ -310,7 +310,7 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 	}
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(pc *config.ProviderConfig) {
+	h, client, teardown := test.NewCentralHelperWithHooks(t, ocmServer, func(pc *config.ProviderConfig) {
 		pc.ProvidersConfig.SupportedProviders = config.ProviderList{
 			{
 				Name:    "aws",

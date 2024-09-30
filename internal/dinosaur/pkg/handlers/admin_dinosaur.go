@@ -9,8 +9,6 @@ import (
 	"regexp"
 	"time"
 
-	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
@@ -75,7 +73,6 @@ type AdminCentralHandler interface {
 type adminCentralHandler struct {
 	service        services.DinosaurService
 	accountService account.AccountService
-	clusterService services.ClusterService
 	providerConfig *config.ProviderConfig
 	telemetry      *services.Telemetry
 }
@@ -86,14 +83,12 @@ var _ AdminCentralHandler = (*adminCentralHandler)(nil)
 func NewAdminCentralHandler(
 	service services.DinosaurService,
 	accountService account.AccountService,
-	clusterService services.ClusterService,
 	providerConfig *config.ProviderConfig,
 	telemetry *services.Telemetry,
 ) AdminCentralHandler {
 	return &adminCentralHandler{
 		service:        service,
 		accountService: accountService,
-		clusterService: clusterService,
 		providerConfig: providerConfig,
 		telemetry:      telemetry,
 	}
@@ -340,27 +335,7 @@ func (h adminCentralHandler) AssignCluster(w http.ResponseWriter, r *http.Reques
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			glog.Infof("Assigning cluster_id for central %q to: %q", centralID, assignClusterRequests.ClusterId)
 
-			centralTenant, err := h.service.GetByID(centralID)
-			if err != nil {
-				return nil, err
-			}
-
-			readyStatus := dinosaurConstants.CentralRequestStatusReady.String()
-			if centralTenant.Status == readyStatus {
-				return nil, errors.BadRequest("Cannot assing cluster_id for tenant in status: %q, status %q is required", centralTenant.Status, readyStatus)
-			}
-
-			_, err = h.clusterService.FindClusterByID(assignClusterRequests.ClusterId)
-			if err != nil {
-				return nil, err
-			}
-
-			centralTenant.ClusterID = assignClusterRequests.ClusterId
-			if err := h.service.Updates(centralTenant, map[string]interface{}{"cluster_id": centralTenant.ClusterID}); err != nil {
-				return nil, err
-			}
-
-			return nil, nil
+			return nil, h.service.AssignCluster(r.Context(), centralID, assignClusterRequests.ClusterId)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)

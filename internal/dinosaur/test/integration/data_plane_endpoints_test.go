@@ -34,7 +34,7 @@ func TestDataPlaneClusterStatus(t *testing.T) {
 	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
-	h, _, tearDown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, tearDown := test.NewCentralHelper(t, ocmServer)
 	defer tearDown()
 
 	clusterID := api.NewID()
