@@ -24,6 +24,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	coreHandlers "github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
@@ -261,9 +262,12 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminCentralsRouter.HandleFunc("/{id}/billing", adminCentralHandler.PatchBillingParameters).
 		Name(logger.NewLogEvent("admin-billing", "[admin] change central billing parameters").ToString()).
 		Methods(http.MethodPatch)
-	adminCentralsRouter.HandleFunc("/{id}/assign-cluster", adminCentralHandler.AssignCluster).
-		Name(logger.NewLogEvent("admin-central-assign-cluster", "[admin] change central cluster assignment").ToString()).
-		Methods(http.MethodPost)
+
+	if features.ClusterMigration.Enabled() {
+		adminCentralsRouter.HandleFunc("/{id}/assign-cluster", adminCentralHandler.AssignCluster).
+			Name(logger.NewLogEvent("admin-central-assign-cluster", "[admin] change central cluster assignment").ToString()).
+			Methods(http.MethodPost)
+	}
 
 	adminCentralsRouter.HandleFunc("/{id}/traits", adminCentralHandler.ListTraits).
 		Name(logger.NewLogEvent("admin-list-traits", "[admin] list central traits").ToString()).

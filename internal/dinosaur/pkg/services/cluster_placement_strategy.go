@@ -61,7 +61,7 @@ func (d FirstReadyPlacementStrategy) AllMatchingClustersForCentral(central *dbap
 		}
 	}
 
-	return matchingClusters, err
+	return matchingClusters, nil
 }
 
 func supportsInstanceType(c *api.Cluster, instanceType string) bool {
