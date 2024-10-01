@@ -262,9 +262,12 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminCentralsRouter.HandleFunc("/{id}/billing", adminCentralHandler.PatchBillingParameters).
 		Name(logger.NewLogEvent("admin-billing", "[admin] change central billing parameters").ToString()).
 		Methods(http.MethodPatch)
-	adminCentralsRouter.HandleFunc("/{id}/assign-cluster", adminCentralHandler.AssignCluster).
-		Name(logger.NewLogEvent("admin-central-assign-cluster", "[admin] change central cluster assignment").ToString()).
-		Methods(http.MethodPost)
+
+	if features.ClusterMigration.Enabled() {
+		adminCentralsRouter.HandleFunc("/{id}/assign-cluster", adminCentralHandler.AssignCluster).
+			Name(logger.NewLogEvent("admin-central-assign-cluster", "[admin] change central cluster assignment").ToString()).
+			Methods(http.MethodPost)
+	}
 
 	if features.ClusterMigration.Enabled() {
 		adminCentralsRouter.HandleFunc("/{id}/assign-cluster", adminCentralHandler.AssignCluster).

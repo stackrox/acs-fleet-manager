@@ -7,7 +7,6 @@ import (
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -36,26 +35,26 @@ func TestAssignCluster(t *testing.T) {
 
 	centrals := []*dbapi.CentralRequest{
 		{
-			MultiAZ:        false,
+			MultiAZ:        clusters[0].MultiAZ,
 			Owner:          "assigclusteruser1",
-			Region:         mocks.MockCluster.Region().ID(),
+			Region:         clusters[0].Region,
 			CloudProvider:  clusters[0].CloudProvider,
 			Name:           "assign-cluster-central",
 			OrganisationID: orgID,
 			Status:         constants2.CentralRequestStatusReady.String(),
-			InstanceType:   types.STANDARD.String(),
+			InstanceType:   clusters[0].SupportedInstanceType,
 			ClusterID:      clusters[0].ClusterID,
 			Meta:           api.Meta{ID: api.NewID()},
 		},
 		{
-			MultiAZ:        false,
+			MultiAZ:        clusters[0].MultiAZ,
 			Owner:          "assigclusteruser2",
-			Region:         mocks.MockCluster.Region().ID(),
+			Region:         clusters[0].Region,
 			CloudProvider:  clusters[0].CloudProvider,
 			Name:           "assign-cluster-central-2",
 			OrganisationID: orgID,
 			Status:         constants2.CentralRequestStatusReady.String(),
-			InstanceType:   types.STANDARD.String(),
+			InstanceType:   clusters[0].SupportedInstanceType,
 			ClusterID:      clusters[0].ClusterID,
 			Meta:           api.Meta{ID: api.NewID()},
 		},
