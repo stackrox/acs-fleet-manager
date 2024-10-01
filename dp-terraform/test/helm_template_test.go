@@ -153,12 +153,12 @@ func TestHelmTemplate_FleetshardSyncDeployment_Image(t *testing.T) {
 	}{
 		{
 			name:      "should set default image repo and tag when no values set",
-			wantImage: "quay.io/app-sre/acs-fleet-manager:main",
+			wantImage: "quay.io/redhat-services-prod/acscs-rhacs-tenant/acscs-main/acs-fleet-manager:latest",
 		},
 		{
 			name:      "should set default image repo when tag is set",
 			tag:       "custom",
-			wantImage: "quay.io/app-sre/acs-fleet-manager:custom",
+			wantImage: "quay.io/redhat-services-prod/acscs-rhacs-tenant/acscs-main/acs-fleet-manager:custom",
 		},
 		{
 			name:      "should set image when repo and tag are set",
