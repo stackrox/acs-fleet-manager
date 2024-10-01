@@ -3,12 +3,9 @@ package integration
 import (
 	"testing"
 
-	"github.com/golang-jwt/jwt/v4"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -21,60 +18,81 @@ func ReturningError() *errors.ServiceError {
 }
 
 func TestAssignCluster(t *testing.T) {
-
+	t.Setenv("RHACS_CLUSTER_MIGRATION", "true")
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	cluster1 := test.NewMockDataplaneCluster("initial-cluster", 5)
-	cluster1.ClusterID = "initial-cluster-1234"
-	cluster2 := test.NewMockDataplaneCluster("new-cluster", 5)
-	cluster2.ClusterID = "new-cluster-1234"
-	cluster2.CloudProvider = cluster1.CloudProvider
+	clusters := []*api.Cluster{
+		testCluster("initial-cluster-1234"),
+		testCluster("new-cluster-1234"),
+	}
 
-	helper, adminClient, teardown := test.NewAdminHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{cluster1, cluster2})
-	})
+	helper, adminClient, teardown := test.NewAdminHelperWithHooks(t, ocmServer, nil)
 	defer teardown()
 
 	orgID := "13640203"
 
 	centrals := []*dbapi.CentralRequest{
 		{
-			MultiAZ:        false,
+			MultiAZ:        clusters[0].MultiAZ,
 			Owner:          "assigclusteruser1",
-			Region:         mocks.MockCluster.Region().ID(),
-			CloudProvider:  cluster1.CloudProvider,
+			Region:         clusters[0].Region,
+			CloudProvider:  clusters[0].CloudProvider,
 			Name:           "assign-cluster-central",
 			OrganisationID: orgID,
 			Status:         constants2.CentralRequestStatusReady.String(),
-			InstanceType:   types.STANDARD.String(),
-			ClusterID:      cluster1.ClusterID,
+			InstanceType:   clusters[0].SupportedInstanceType,
+			ClusterID:      clusters[0].ClusterID,
 			Meta:           api.Meta{ID: api.NewID()},
 		},
 		{
-			MultiAZ:        false,
+			MultiAZ:        clusters[0].MultiAZ,
 			Owner:          "assigclusteruser2",
-			Region:         mocks.MockCluster.Region().ID(),
-			CloudProvider:  cluster1.CloudProvider,
+			Region:         clusters[0].Region,
+			CloudProvider:  clusters[0].CloudProvider,
 			Name:           "assign-cluster-central-2",
 			OrganisationID: orgID,
 			Status:         constants2.CentralRequestStatusReady.String(),
-			InstanceType:   types.STANDARD.String(),
-			ClusterID:      cluster1.ClusterID,
+			InstanceType:   clusters[0].SupportedInstanceType,
+			ClusterID:      clusters[0].ClusterID,
 			Meta:           api.Meta{ID: api.NewID()},
 		},
 	}
 
 	db := test.TestServices.DBFactory.New()
+	require.NoError(t, db.Create(&clusters).Error)
 	require.NoError(t, db.Create(&centrals).Error)
 
 	account := helper.NewRandAccount()
-	ctx := helper.NewAuthenticatedContext(account, jwt.MapClaims{
-		"realm_access": map[string]interface{}{
-			"roles": []string{"acs-fleet-manager-admin-full"},
-		},
-	})
+	ctx := helper.NewAuthenticatedAdminContext(account, nil)
 
-	_, err := adminClient.DefaultApi.AssignCentralCluster(ctx, centrals[0].Meta.ID, private.CentralAssignClusterRequest{ClusterId: cluster2.ClusterID})
-	require.NoError(t, err)
+	res, err := adminClient.DefaultApi.AssignCentralCluster(ctx, centrals[0].Meta.ID, private.CentralAssignClusterRequest{ClusterId: clusters[1].ClusterID})
+	if err != nil {
+		if err, ok := err.(private.GenericOpenAPIError); ok {
+			t.Fatal(string(err.Body()), res.StatusCode)
+		}
+	}
+
+	cr, sErr := test.TestServices.DinosaurService.GetByID(centrals[0].Meta.ID)
+	if sErr != nil {
+		// not using require.NoError because serviceErr is a type wrapping
+		// require would wrap it in an error interface which would cause it to fail on nil comparisons
+		t.Fatal("Unexpected error getting central request", err)
+	}
+
+	require.Equal(t, "new-cluster-1234", cr.ClusterID, "ClusterID was not set properly.")
+}
+
+func testCluster(clusterID string) *api.Cluster {
+	return &api.Cluster{
+		CloudProvider:         "testprovider",
+		Region:                "testregion",
+		MultiAZ:               false,
+		ClusterID:             clusterID,
+		Status:                api.ClusterReady,
+		ProviderType:          api.ClusterProviderStandalone,
+		ClusterDNS:            "some.test.dns",
+		SupportedInstanceType: "testtype",
+		Schedulable:           true,
+	}
 }

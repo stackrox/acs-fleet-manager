@@ -15,4 +15,7 @@ var (
 
 	// AddonAutoUpgrade enables addon auto upgrade feature
 	AddonAutoUpgrade = registerFeature("Addon auto upgrade", "RHACS_ADDON_AUTO_UPGRADE", true)
+
+	// ClusterMigration enables the feature to migrate a tenant to another cluster
+	ClusterMigration = registerFeature("Cluster migraiton", "RHACS_CLUSTER_MIGRATION", false)
 )

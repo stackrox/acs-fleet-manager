@@ -882,12 +882,13 @@ func (k *dinosaurService) AssignCluster(ctx context.Context, centralID string, c
 	}
 
 	readyStatus := dinosaurConstants.CentralRequestStatusReady.String()
-	if central.Status == readyStatus {
+	if central.Status != readyStatus {
 		return errors.BadRequest("Cannot assing cluster_id for tenant in status: %q, status %q is required", central.Status, readyStatus)
 	}
 
 	clusters, err := k.clusterPlacementStrategy.AllMatchingClustersForCentral(central)
 	if err != nil {
+		glog.Errorf("internal error getting all matching cluster for central: %q, err: %s", centralID, err.Error())
 		return errors.GeneralError("error getting matching clusters for central: %q", centralID)
 	}
 

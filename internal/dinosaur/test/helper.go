@@ -73,6 +73,12 @@ func NewAdminHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
 		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
 	}
+	var iamConfig *iam.IAMConfig
+	h.Env.MustResolve(&iamConfig)
+	if iamConfig == nil {
+		glog.Fatal("Unable to resolve IAMConfig")
+	}
+	h.AuthHelper.OcmTokenIssuer = iamConfig.InternalSSORealm.ValidIssuerURI
 
 	return h, NewAdminPrivateAPIClient(h), teardown
 }
