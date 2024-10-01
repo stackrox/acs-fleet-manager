@@ -314,7 +314,7 @@ func (c clusterService) FindClusterByID(clusterID string) (*api.Cluster, *apiErr
 
 	if err := dbConn.Where(clusterDetails).First(cluster).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, apiErrors.BadRequest("failed to find cluster with id: %s", clusterID)
+			return nil, nil
 		}
 		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find cluster with id: %s", clusterID)
 	}
