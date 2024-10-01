@@ -19,7 +19,7 @@ RUN microdnf install gzip tar && \
         chmod +x /usr/local/bin/yq && \
         rm /tmp/yq_linux_amd64.tar.gz
 
-ARG IMAGE_TAG=main
+ARG IMAGE_TAG=latest
 RUN yq -i ".global.image.tag = strenv(IMAGE_TAG)" rhacs-terraform/values.yaml
 
 FROM quay.io/operator-framework/helm-operator:v1.36.1
