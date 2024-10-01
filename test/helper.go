@@ -31,7 +31,7 @@ import (
 	"github.com/google/uuid"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/rs/xid"
-
+	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
@@ -43,6 +43,7 @@ const (
 	jwtKeyFile         = "test/support/jwt_private_key.pem"
 	jwtCAFile          = "test/support/jwt_ca.pem"
 	dataplaneIssuerURI = "https://dataplane.issuer.test.local"
+	adminIssuer        = "https://auth.redhat.com/"
 )
 
 // TODO jwk mock server needs to be refactored out of the helper and into the testing environment
@@ -282,6 +283,27 @@ func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.
 	}
 
 	return context.WithValue(context.Background(), compat.ContextAccessToken, token)
+}
+
+// NewAuthenticatedAdminContext return an authenticated context that can be used with openapi function generated for the admin API
+func (helper *Helper) NewAuthenticatedAdminContext(account *amv1.Account, claims jwt.MapClaims) context.Context {
+	if claims == nil {
+		claims = jwt.MapClaims{}
+	}
+
+	// do not override roles if explicitly defined
+	if _, hasRealmAccess := claims["realm_access"]; !hasRealmAccess {
+		claims["realm_access"] = map[string]interface{}{
+			"roles": []string{"acs-fleet-manager-admin-full"},
+		}
+	}
+
+	token, err := helper.AuthHelper.CreateSignedJWT(account, claims)
+	if err != nil {
+		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token: %s", err.Error()))
+	}
+
+	return context.WithValue(context.Background(), adminprivate.ContextAccessToken, token)
 }
 
 // StartJWKCertServerMock ...
