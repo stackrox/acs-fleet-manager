@@ -183,7 +183,7 @@ func Test_dinosaurService_Get(t *testing.T) {
 func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 	k := &dinosaurService{
 		connectionFactory: db.NewMockConnectionFactory(nil),
-		dinosaurConfig: &config.CentralConfig{
+		centralConfig: &config.CentralConfig{
 			CentralLifespan: config.NewCentralLifespanConfig(),
 		},
 	}
@@ -204,7 +204,7 @@ func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 		`expired_at IS NOT NULL AND expired_at < $4 ` +
 		`AND status NOT IN ($5,$6) AND "central_requests"."deleted_at" IS NULL`).
 		OneTime()
-	k.dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral = false
+	k.centralConfig.CentralLifespan.EnableDeletionOfExpiredCentral = false
 	svcErr = k.DeprovisionExpiredDinosaurs()
 	assert.Nil(t, svcErr)
 	assert.True(t, m.Triggered)
@@ -215,7 +215,7 @@ func Test_dinosaurService_RestoreExpiredDinosaurs(t *testing.T) {
 
 	centralService := &dinosaurService{
 		connectionFactory: dbConnectionFactory,
-		dinosaurConfig: &config.CentralConfig{
+		centralConfig: &config.CentralConfig{
 			CentralLifespan:            config.NewCentralLifespanConfig(),
 			CentralRetentionPeriodDays: 2,
 		},
@@ -263,7 +263,7 @@ func Test_dinosaurService_ChangeBillingParameters(t *testing.T) {
 		},
 	}
 	k := &dinosaurService{
-		dinosaurConfig:      config.NewCentralConfig(),
+		centralConfig:       config.NewCentralConfig(),
 		connectionFactory:   db.NewMockConnectionFactory(nil),
 		quotaServiceFactory: quotaServiceFactory,
 	}

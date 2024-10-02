@@ -471,8 +471,8 @@ func (mock *DinosaurServiceMock) ChangeBillingParametersCalls() []struct {
 	return calls
 }
 
-// ChangeDinosaurCNAMErecords calls ChangeDinosaurCNAMErecordsFunc.
-func (mock *DinosaurServiceMock) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
+// ChangeCentralCNAMErecords calls ChangeDinosaurCNAMErecordsFunc.
+func (mock *DinosaurServiceMock) ChangeCentralCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
 	if mock.ChangeDinosaurCNAMErecordsFunc == nil {
 		panic("DinosaurServiceMock.ChangeDinosaurCNAMErecordsFunc: method is nil but DinosaurService.ChangeDinosaurCNAMErecords was just called")
 	}
@@ -920,8 +920,8 @@ func (mock *DinosaurServiceMock) ListCentralsWithoutAuthConfigCalls() []struct {
 	return calls
 }
 
-// ListDinosaursWithRoutesNotCreated calls ListDinosaursWithRoutesNotCreatedFunc.
-func (mock *DinosaurServiceMock) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
+// ListCentralsWithRoutesNotCreated calls ListDinosaursWithRoutesNotCreatedFunc.
+func (mock *DinosaurServiceMock) ListCentralsWithRoutesNotCreated() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 	if mock.ListDinosaursWithRoutesNotCreatedFunc == nil {
 		panic("DinosaurServiceMock.ListDinosaursWithRoutesNotCreatedFunc: method is nil but DinosaurService.ListDinosaursWithRoutesNotCreated was just called")
 	}
