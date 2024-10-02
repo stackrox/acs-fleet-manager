@@ -29,3 +29,9 @@ ENV ADDON_NAME=acs-fleetshard
 COPY watches.yaml ${HOME}/watches.yaml
 COPY --from=build ${HOME}/rhacs-terraform ${HOME}/rhacs-terraform
 WORKDIR ${HOME}
+
+LABEL name="acs-fleetshard-operator" \
+    vendor="Red Hat, Inc." \
+    version="0.0.1" \
+    summary="ACSCS fleetshard Operator" \
+    description="Red Hat Advanced Cluster Security Fleetshard Operator for Addon"
