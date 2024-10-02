@@ -10,59 +10,59 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
-const centralDNSWorkerType = "dinosaur_dns"
+const centralDNSWorkerType = "central_dns"
 
-// DinosaurRoutesCNAMEManager ...
-type DinosaurRoutesCNAMEManager struct {
+// CentralRoutesCNAMEManager ...
+type CentralRoutesCNAMEManager struct {
 	workers.BaseWorker
-	dinosaurService services.DinosaurService
-	centralConfig   *config.CentralConfig
+	centralService services.DinosaurService
+	centralConfig  *config.CentralConfig
 }
 
-var _ workers.Worker = &DinosaurRoutesCNAMEManager{}
+var _ workers.Worker = &CentralRoutesCNAMEManager{}
 
-// NewDinosaurCNAMEManager ...
-func NewDinosaurCNAMEManager(centralService services.DinosaurService, centralConfig *config.CentralConfig) *DinosaurRoutesCNAMEManager {
+// NewCentralCNAMEManager ...
+func NewCentralCNAMEManager(centralService services.DinosaurService, centralConfig *config.CentralConfig) *CentralRoutesCNAMEManager {
 	metrics.InitReconcilerMetricsForType(centralDNSWorkerType)
-	return &DinosaurRoutesCNAMEManager{
+	return &CentralRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: centralDNSWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService: centralService,
-		centralConfig:   centralConfig,
+		centralService: centralService,
+		centralConfig:  centralConfig,
 	}
 }
 
 // Start ...
-func (k *DinosaurRoutesCNAMEManager) Start() {
+func (k *CentralRoutesCNAMEManager) Start() {
 	k.StartWorker(k)
 }
 
 // Stop ...
-func (k *DinosaurRoutesCNAMEManager) Stop() {
+func (k *CentralRoutesCNAMEManager) Stop() {
 	k.StopWorker(k)
 }
 
 // Reconcile ...
-func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
+func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 	var errs []error
 
-	dinosaurs, listErr := k.dinosaurService.ListDinosaursWithRoutesNotCreated()
+	centrals, listErr := k.centralService.ListCentralsWithRoutesNotCreated()
 	if listErr != nil {
 		errs = append(errs, errors.Wrap(listErr, "failed to list centrals whose routes are not created"))
 	}
-	if len(dinosaurs) > 0 {
-		glog.Infof("centrals need routes created count = %d", len(dinosaurs))
+	if len(centrals) > 0 {
+		glog.Infof("centrals need routes created count = %d", len(centrals))
 	}
 
-	for _, dinosaur := range dinosaurs {
+	for _, central := range centrals {
 		if k.centralConfig.EnableCentralExternalCertificate {
-			if dinosaur.RoutesCreationID == "" {
-				glog.Infof("creating CNAME records for central %s", dinosaur.ID)
+			if central.RoutesCreationID == "" {
+				glog.Infof("creating CNAME records for central %s", central.ID)
 
-				changeOutput, err := k.dinosaurService.ChangeDinosaurCNAMErecords(dinosaur, services.DinosaurRoutesActionCreate)
+				changeOutput, err := k.centralService.ChangeCentralCNAMErecords(central, services.DinosaurRoutesActionCreate)
 
 				if err != nil {
 					errs = append(errs, err)
@@ -78,22 +78,22 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 					continue
 				}
 
-				dinosaur.RoutesCreationID = *changeOutput.ChangeInfo.Id
-				dinosaur.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
+				central.RoutesCreationID = *changeOutput.ChangeInfo.Id
+				central.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
 			} else {
-				recordStatus, err := k.dinosaurService.GetCNAMERecordStatus(dinosaur)
+				recordStatus, err := k.centralService.GetCNAMERecordStatus(central)
 				if err != nil {
 					errs = append(errs, err)
 					continue
 				}
-				dinosaur.RoutesCreated = *recordStatus.Status == "INSYNC"
+				central.RoutesCreated = *recordStatus.Status == "INSYNC"
 			}
 		} else {
-			glog.Infof("external certificate is disabled, skip CNAME creation for Central %s", dinosaur.ID)
-			dinosaur.RoutesCreated = true
+			glog.Infof("external certificate is disabled, skip CNAME creation for Central %s", central.ID)
+			central.RoutesCreated = true
 		}
 
-		if err := k.dinosaurService.UpdateIgnoreNils(dinosaur); err != nil {
+		if err := k.centralService.UpdateIgnoreNils(central); err != nil {
 			errs = append(errs, err)
 			continue
 		}

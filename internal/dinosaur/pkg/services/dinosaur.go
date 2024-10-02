@@ -96,7 +96,7 @@ type DinosaurService interface {
 	// Use this only when you want to update the multiple columns that may contain zero-fields, otherwise use the `DinosaurService.Update()` method.
 	// See https://gorm.io/docs/update.html#Updates-multiple-columns for more info
 	Updates(dinosaurRequest *dbapi.CentralRequest, values map[string]interface{}) *errors.ServiceError
-	ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
+	ChangeCentralCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error)
 	DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType
 	RegisterDinosaurDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
@@ -105,7 +105,7 @@ type DinosaurService interface {
 	DeprovisionExpiredDinosaurs() *errors.ServiceError
 	CountByStatus(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error)
 	CountByRegionAndInstanceType() ([]DinosaurRegionCount, error)
-	ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
+	ListCentralsWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	Restore(ctx context.Context, id string) *errors.ServiceError
@@ -123,7 +123,7 @@ var _ DinosaurService = &dinosaurService{}
 type dinosaurService struct {
 	connectionFactory        *db.ConnectionFactory
 	clusterService           ClusterService
-	dinosaurConfig           *config.CentralConfig
+	centralConfig            *config.CentralConfig
 	awsConfig                *config.AWSConfig
 	quotaServiceFactory      QuotaServiceFactory
 	mu                       sync.Mutex
@@ -145,7 +145,7 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
 		iamConfig:                iamConfig,
-		dinosaurConfig:           dinosaurConfig,
+		centralConfig:            dinosaurConfig,
 		awsConfig:                awsConfig,
 		quotaServiceFactory:      quotaServiceFactory,
 		awsClientFactory:         awsClientFactory,
@@ -159,7 +159,7 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 
 func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	realmConfig := k.iamConfig.RedhatSSORealm
-	if k.dinosaurConfig.HasStaticAuth() {
+	if k.centralConfig.HasStaticAuth() {
 		return errors.New(errors.ErrorDynamicClientsNotUsed, "RHSSO is configured via static configuration")
 	}
 	if !realmConfig.IsConfigured() {
@@ -213,7 +213,7 @@ func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.Ce
 
 // DetectInstanceType - returns standard instance type if quota is available. Otherwise falls back to eval instance type.
 func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
-	quotaType := api.QuotaType(k.dinosaurConfig.Quota.Type)
+	quotaType := api.QuotaType(k.centralConfig.Quota.Type)
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(quotaType)
 	if factoryErr != nil {
 		glog.Error(errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to get quota service"))
@@ -238,7 +238,7 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dbapi.CentralRequest, bm string, product string) (subscriptionID string, err *errors.ServiceError) {
 	if dinosaurRequest.InstanceType == types.EVAL.String() &&
 		!(environments.GetEnvironmentStrFromEnv() == environments.DevelopmentEnv || environments.GetEnvironmentStrFromEnv() == environments.TestingEnv) {
-		if !k.dinosaurConfig.Quota.AllowEvaluatorInstance {
+		if !k.centralConfig.Quota.AllowEvaluatorInstance {
 			return "", errors.NewWithCause(errors.ErrorForbidden, err, "central eval instances are not allowed")
 		}
 
@@ -259,7 +259,7 @@ func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dba
 		}
 	}
 
-	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.dinosaurConfig.Quota.Type))
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.centralConfig.Quota.Type))
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
@@ -306,7 +306,7 @@ func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurReque
 	// A typical usecase is when a dinosaur A is created, at the time of creation the quota-type was ams. At some point in the future
 	// the API is restarted this time changing the --quota-type flag to quota-management-list, when dinosaur A is deleted at this point,
 	// we want to use the correct quota to perform the deletion.
-	dinosaurRequest.QuotaType = k.dinosaurConfig.Quota.Type
+	dinosaurRequest.QuotaType = k.centralConfig.Quota.Type
 
 	logStateChange("register dinosaur job", dinosaurRequest.ID, dinosaurRequest)
 
@@ -330,9 +330,9 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 	centralRequest.Namespace = namespace
 
 	// Set host.
-	if k.dinosaurConfig.EnableCentralExternalCertificate {
+	if k.centralConfig.EnableCentralExternalCertificate {
 		// If we enable DinosaurTLS, the host should use the external domain name rather than the cluster domain
-		centralRequest.Host = k.dinosaurConfig.CentralDomainName
+		centralRequest.Host = k.centralConfig.CentralDomainName
 	} else {
 		clusterDNS, err := k.clusterService.GetClusterDNS(centralRequest.ClusterID)
 		if err != nil {
@@ -549,11 +549,11 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs() *errors.ServiceError {
 	dbConn := k.connectionFactory.New().Model(&dbapi.CentralRequest{}).
 		Where("expired_at IS NOT NULL").Where("expired_at < ?", now.Add(-gracePeriod))
 
-	if k.dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral {
+	if k.centralConfig.CentralLifespan.EnableDeletionOfExpiredCentral {
 		dbConn = dbConn.Where(dbConn.
 			Or("instance_type = ?", types.EVAL.String()).
 			Where("created_at <= ?", now.Add(
-				-time.Duration(k.dinosaurConfig.CentralLifespan.CentralLifespanInHours)*time.Hour)))
+				-time.Duration(k.centralConfig.CentralLifespan.CentralLifespanInHours)*time.Hour)))
 	}
 
 	dbConn = dbConn.Where("status NOT IN (?)", dinosaurDeletionStatuses)
@@ -593,8 +593,8 @@ func (k *dinosaurService) Delete(centralRequest *dbapi.CentralRequest, force boo
 			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 		}
 		// Only delete the routes when they are set
-		if routes != nil && k.dinosaurConfig.EnableCentralExternalCertificate {
-			_, err := k.ChangeDinosaurCNAMErecords(centralRequest, DinosaurRoutesActionDelete)
+		if routes != nil && k.centralConfig.EnableCentralExternalCertificate {
+			_, err := k.ChangeCentralCNAMErecords(centralRequest, DinosaurRoutesActionDelete)
 			if err != nil {
 				if force {
 					glog.Warningf("Failed to delete CNAME records for Central tenant %q: %v", centralRequest.ID, err)
@@ -774,9 +774,9 @@ func (k *dinosaurService) UpdateStatus(id string, status dinosaurConstants.Centr
 	return true, nil
 }
 
-// ChangeDinosaurCNAMErecords ...
-func (k *dinosaurService) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
-	routes, err := dinosaurRequest.GetRoutes()
+// ChangeCentralCNAMErecords ...
+func (k *dinosaurService) ChangeCentralCNAMErecords(centralRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
+	routes, err := centralRequest.GetRoutes()
 	if routes == nil || err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 	}
@@ -788,12 +788,12 @@ func (k *dinosaurService) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.Cent
 		AccessKeyID:     k.awsConfig.Route53AccessKey,
 		SecretAccessKey: k.awsConfig.Route53SecretAccessKey, // pragma: allowlist secret
 	}
-	awsClient, err := k.awsClientFactory.NewClient(awsConfig, dinosaurRequest.Region)
+	awsClient, err := k.awsClientFactory.NewClient(awsConfig, centralRequest.Region)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
 	}
 
-	changeRecordsOutput, err := awsClient.ChangeResourceRecordSets(k.dinosaurConfig.CentralDomainName, domainRecordBatch)
+	changeRecordsOutput, err := awsClient.ChangeResourceRecordSets(k.centralConfig.CentralDomainName, domainRecordBatch)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create domain record sets")
 	}
@@ -802,17 +802,17 @@ func (k *dinosaurService) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.Cent
 }
 
 // GetCNAMERecordStatus ...
-func (k *dinosaurService) GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error) {
+func (k *dinosaurService) GetCNAMERecordStatus(centralRequest *dbapi.CentralRequest) (*CNameRecordStatus, error) {
 	awsConfig := aws.Config{
 		AccessKeyID:     k.awsConfig.Route53AccessKey,
 		SecretAccessKey: k.awsConfig.Route53SecretAccessKey, // pragma: allowlist secret
 	}
-	awsClient, err := k.awsClientFactory.NewClient(awsConfig, dinosaurRequest.Region)
+	awsClient, err := k.awsClientFactory.NewClient(awsConfig, centralRequest.Region)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
 	}
 
-	changeOutput, err := awsClient.GetChange(dinosaurRequest.RoutesCreationID)
+	changeOutput, err := awsClient.GetChange(centralRequest.RoutesCreationID)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to CNAME record status")
 	}
@@ -835,7 +835,7 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 	}
 
 	timeSinceDeletion := time.Since(centralRequest.DeletedAt.Time)
-	if timeSinceDeletion.Hours()/24 > float64(k.dinosaurConfig.CentralRetentionPeriodDays) {
+	if timeSinceDeletion.Hours()/24 > float64(k.centralConfig.CentralRetentionPeriodDays) {
 		return errors.BadRequest("CentralRequests retention period already expired")
 	}
 
@@ -924,8 +924,8 @@ func (k *dinosaurService) CountByStatus(status []dinosaurConstants.CentralStatus
 	return results, nil
 }
 
-// ListDinosaursWithRoutesNotCreated ...
-func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError) {
+// ListCentralsWithRoutesNotCreated ...
+func (k *dinosaurService) ListCentralsWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 	var results []*dbapi.CentralRequest
 	if err := dbConn.Where("routes IS NOT NULL").Where("routes_created = ?", "no").Find(&results).Error; err != nil {
