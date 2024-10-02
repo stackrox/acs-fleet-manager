@@ -64,25 +64,6 @@ log "Fleetshard Operator Image: ${FLEETSHARD_OPERATOR_IMAGE:-latest}"
 log "Log directory: ${LOG_DIR:-(none)}"
 log "Executing Auth E2E tests: ${RUN_AUTH_E2E}"
 
-# If auth E2E tests shall be run, ensure we have all authentication related secrets correctly set up.
-if [[ "$RUN_AUTH_E2E" == "true" ]]; then
-    log "Setting up authentication related environment variables for auth E2E tests"
-
-    OCM_OFFLINE_TOKEN=${OCM_OFFLINE_TOKEN:-}
-    if [[ -z "$OCM_OFFLINE_TOKEN" ]]; then
-        die "Error: OCM_OFFLINE_TOKEN not set, which is required for execution of Auth E2E tests"
-    fi
-
-    # Ensure we set the OCM refresh token
-    ocm login --token "${OCM_OFFLINE_TOKEN}"
-    OCM_TOKEN=$(ocm token --refresh)
-    export OCM_TOKEN
-
-    # The RH SSO secrets are correctly set up within vault, the tests will be skipped if they are empty.
-else
-    log "Skipping setup of authentication related environment variables for auth E2E tests because RUN_AUTH_E2E is not set to true"
-fi
-
 if [[ -z "$STATIC_TOKEN" ]]; then
     die "Error: No static token found in the environment.\nPlease set the environment variable STATIC_TOKEN to a valid static token."
 fi
