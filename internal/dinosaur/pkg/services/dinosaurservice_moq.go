@@ -31,8 +31,8 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			ChangeBillingParametersFunc: func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
 //				panic("mock out the ChangeBillingParameters method")
 //			},
-//			ChangeDinosaurCNAMErecordsFunc: func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
-//				panic("mock out the ChangeDinosaurCNAMErecords method")
+//			ChangeCentralCNAMErecordsFunc: func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
+//				panic("mock out the ChangeCentralCNAMErecords method")
 //			},
 //			CountByRegionAndInstanceTypeFunc: func() ([]DinosaurRegionCount, error) {
 //				panic("mock out the CountByRegionAndInstanceType method")
@@ -70,11 +70,11 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			ListByStatusFunc: func(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListByStatus method")
 //			},
+//			ListCentralsWithRoutesNotCreatedFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
+//				panic("mock out the ListCentralsWithRoutesNotCreated method")
+//			},
 //			ListCentralsWithoutAuthConfigFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListCentralsWithoutAuthConfig method")
-//			},
-//			ListDinosaursWithRoutesNotCreatedFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
-//				panic("mock out the ListDinosaursWithRoutesNotCreated method")
 //			},
 //			PrepareDinosaurRequestFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the PrepareDinosaurRequest method")
@@ -119,8 +119,8 @@ type DinosaurServiceMock struct {
 	// ChangeBillingParametersFunc mocks the ChangeBillingParameters method.
 	ChangeBillingParametersFunc func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError
 
-	// ChangeDinosaurCNAMErecordsFunc mocks the ChangeDinosaurCNAMErecords method.
-	ChangeDinosaurCNAMErecordsFunc func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
+	// ChangeCentralCNAMErecordsFunc mocks the ChangeCentralCNAMErecords method.
+	ChangeCentralCNAMErecordsFunc func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
 
 	// CountByRegionAndInstanceTypeFunc mocks the CountByRegionAndInstanceType method.
 	CountByRegionAndInstanceTypeFunc func() ([]DinosaurRegionCount, error)
@@ -158,11 +158,11 @@ type DinosaurServiceMock struct {
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
 
+	// ListCentralsWithRoutesNotCreatedFunc mocks the ListCentralsWithRoutesNotCreated method.
+	ListCentralsWithRoutesNotCreatedFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
+
 	// ListCentralsWithoutAuthConfigFunc mocks the ListCentralsWithoutAuthConfig method.
 	ListCentralsWithoutAuthConfigFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
-
-	// ListDinosaursWithRoutesNotCreatedFunc mocks the ListDinosaursWithRoutesNotCreated method.
-	ListDinosaursWithRoutesNotCreatedFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
 
 	// PrepareDinosaurRequestFunc mocks the PrepareDinosaurRequest method.
 	PrepareDinosaurRequestFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
@@ -216,8 +216,8 @@ type DinosaurServiceMock struct {
 			// Product is the product argument value.
 			Product string
 		}
-		// ChangeDinosaurCNAMErecords holds details about calls to the ChangeDinosaurCNAMErecords method.
-		ChangeDinosaurCNAMErecords []struct {
+		// ChangeCentralCNAMErecords holds details about calls to the ChangeCentralCNAMErecords method.
+		ChangeCentralCNAMErecords []struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 			// Action is the action argument value.
@@ -285,11 +285,11 @@ type DinosaurServiceMock struct {
 			// Status is the status argument value.
 			Status []dinosaurConstants.CentralStatus
 		}
+		// ListCentralsWithRoutesNotCreated holds details about calls to the ListCentralsWithRoutesNotCreated method.
+		ListCentralsWithRoutesNotCreated []struct {
+		}
 		// ListCentralsWithoutAuthConfig holds details about calls to the ListCentralsWithoutAuthConfig method.
 		ListCentralsWithoutAuthConfig []struct {
-		}
-		// ListDinosaursWithRoutesNotCreated holds details about calls to the ListDinosaursWithRoutesNotCreated method.
-		ListDinosaursWithRoutesNotCreated []struct {
 		}
 		// PrepareDinosaurRequest holds details about calls to the PrepareDinosaurRequest method.
 		PrepareDinosaurRequest []struct {
@@ -358,33 +358,33 @@ type DinosaurServiceMock struct {
 			DinosaurRequest *dbapi.CentralRequest
 		}
 	}
-	lockAcceptCentralRequest              sync.RWMutex
-	lockChangeBillingParameters           sync.RWMutex
-	lockChangeDinosaurCNAMErecords        sync.RWMutex
-	lockCountByRegionAndInstanceType      sync.RWMutex
-	lockCountByStatus                     sync.RWMutex
-	lockDelete                            sync.RWMutex
-	lockDeprovisionDinosaurForUsers       sync.RWMutex
-	lockDeprovisionExpiredDinosaurs       sync.RWMutex
-	lockDetectInstanceType                sync.RWMutex
-	lockGet                               sync.RWMutex
-	lockGetByID                           sync.RWMutex
-	lockGetCNAMERecordStatus              sync.RWMutex
-	lockHasAvailableCapacityInRegion      sync.RWMutex
-	lockList                              sync.RWMutex
-	lockListByStatus                      sync.RWMutex
-	lockListCentralsWithoutAuthConfig     sync.RWMutex
-	lockListDinosaursWithRoutesNotCreated sync.RWMutex
-	lockPrepareDinosaurRequest            sync.RWMutex
-	lockRegisterDinosaurDeprovisionJob    sync.RWMutex
-	lockRegisterDinosaurJob               sync.RWMutex
-	lockResetCentralSecretBackup          sync.RWMutex
-	lockRestore                           sync.RWMutex
-	lockRotateCentralRHSSOClient          sync.RWMutex
-	lockUpdateIgnoreNils                  sync.RWMutex
-	lockUpdateStatus                      sync.RWMutex
-	lockUpdates                           sync.RWMutex
-	lockVerifyAndUpdateDinosaurAdmin      sync.RWMutex
+	lockAcceptCentralRequest             sync.RWMutex
+	lockChangeBillingParameters          sync.RWMutex
+	lockChangeCentralCNAMErecords        sync.RWMutex
+	lockCountByRegionAndInstanceType     sync.RWMutex
+	lockCountByStatus                    sync.RWMutex
+	lockDelete                           sync.RWMutex
+	lockDeprovisionDinosaurForUsers      sync.RWMutex
+	lockDeprovisionExpiredDinosaurs      sync.RWMutex
+	lockDetectInstanceType               sync.RWMutex
+	lockGet                              sync.RWMutex
+	lockGetByID                          sync.RWMutex
+	lockGetCNAMERecordStatus             sync.RWMutex
+	lockHasAvailableCapacityInRegion     sync.RWMutex
+	lockList                             sync.RWMutex
+	lockListByStatus                     sync.RWMutex
+	lockListCentralsWithRoutesNotCreated sync.RWMutex
+	lockListCentralsWithoutAuthConfig    sync.RWMutex
+	lockPrepareDinosaurRequest           sync.RWMutex
+	lockRegisterDinosaurDeprovisionJob   sync.RWMutex
+	lockRegisterDinosaurJob              sync.RWMutex
+	lockResetCentralSecretBackup         sync.RWMutex
+	lockRestore                          sync.RWMutex
+	lockRotateCentralRHSSOClient         sync.RWMutex
+	lockUpdateIgnoreNils                 sync.RWMutex
+	lockUpdateStatus                     sync.RWMutex
+	lockUpdates                          sync.RWMutex
+	lockVerifyAndUpdateDinosaurAdmin     sync.RWMutex
 }
 
 // AcceptCentralRequest calls AcceptCentralRequestFunc.
@@ -471,10 +471,10 @@ func (mock *DinosaurServiceMock) ChangeBillingParametersCalls() []struct {
 	return calls
 }
 
-// ChangeCentralCNAMErecords calls ChangeDinosaurCNAMErecordsFunc.
+// ChangeCentralCNAMErecords calls ChangeCentralCNAMErecordsFunc.
 func (mock *DinosaurServiceMock) ChangeCentralCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
-	if mock.ChangeDinosaurCNAMErecordsFunc == nil {
-		panic("DinosaurServiceMock.ChangeDinosaurCNAMErecordsFunc: method is nil but DinosaurService.ChangeDinosaurCNAMErecords was just called")
+	if mock.ChangeCentralCNAMErecordsFunc == nil {
+		panic("DinosaurServiceMock.ChangeCentralCNAMErecordsFunc: method is nil but DinosaurService.ChangeCentralCNAMErecords was just called")
 	}
 	callInfo := struct {
 		DinosaurRequest *dbapi.CentralRequest
@@ -483,17 +483,17 @@ func (mock *DinosaurServiceMock) ChangeCentralCNAMErecords(dinosaurRequest *dbap
 		DinosaurRequest: dinosaurRequest,
 		Action:          action,
 	}
-	mock.lockChangeDinosaurCNAMErecords.Lock()
-	mock.calls.ChangeDinosaurCNAMErecords = append(mock.calls.ChangeDinosaurCNAMErecords, callInfo)
-	mock.lockChangeDinosaurCNAMErecords.Unlock()
-	return mock.ChangeDinosaurCNAMErecordsFunc(dinosaurRequest, action)
+	mock.lockChangeCentralCNAMErecords.Lock()
+	mock.calls.ChangeCentralCNAMErecords = append(mock.calls.ChangeCentralCNAMErecords, callInfo)
+	mock.lockChangeCentralCNAMErecords.Unlock()
+	return mock.ChangeCentralCNAMErecordsFunc(dinosaurRequest, action)
 }
 
-// ChangeDinosaurCNAMErecordsCalls gets all the calls that were made to ChangeDinosaurCNAMErecords.
+// ChangeCentralCNAMErecordsCalls gets all the calls that were made to ChangeCentralCNAMErecords.
 // Check the length with:
 //
-//	len(mockedDinosaurService.ChangeDinosaurCNAMErecordsCalls())
-func (mock *DinosaurServiceMock) ChangeDinosaurCNAMErecordsCalls() []struct {
+//	len(mockedDinosaurService.ChangeCentralCNAMErecordsCalls())
+func (mock *DinosaurServiceMock) ChangeCentralCNAMErecordsCalls() []struct {
 	DinosaurRequest *dbapi.CentralRequest
 	Action          DinosaurRoutesAction
 } {
@@ -501,9 +501,9 @@ func (mock *DinosaurServiceMock) ChangeDinosaurCNAMErecordsCalls() []struct {
 		DinosaurRequest *dbapi.CentralRequest
 		Action          DinosaurRoutesAction
 	}
-	mock.lockChangeDinosaurCNAMErecords.RLock()
-	calls = mock.calls.ChangeDinosaurCNAMErecords
-	mock.lockChangeDinosaurCNAMErecords.RUnlock()
+	mock.lockChangeCentralCNAMErecords.RLock()
+	calls = mock.calls.ChangeCentralCNAMErecords
+	mock.lockChangeCentralCNAMErecords.RUnlock()
 	return calls
 }
 
@@ -893,6 +893,33 @@ func (mock *DinosaurServiceMock) ListByStatusCalls() []struct {
 	return calls
 }
 
+// ListCentralsWithRoutesNotCreated calls ListCentralsWithRoutesNotCreatedFunc.
+func (mock *DinosaurServiceMock) ListCentralsWithRoutesNotCreated() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
+	if mock.ListCentralsWithRoutesNotCreatedFunc == nil {
+		panic("DinosaurServiceMock.ListCentralsWithRoutesNotCreatedFunc: method is nil but DinosaurService.ListCentralsWithRoutesNotCreated was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockListCentralsWithRoutesNotCreated.Lock()
+	mock.calls.ListCentralsWithRoutesNotCreated = append(mock.calls.ListCentralsWithRoutesNotCreated, callInfo)
+	mock.lockListCentralsWithRoutesNotCreated.Unlock()
+	return mock.ListCentralsWithRoutesNotCreatedFunc()
+}
+
+// ListCentralsWithRoutesNotCreatedCalls gets all the calls that were made to ListCentralsWithRoutesNotCreated.
+// Check the length with:
+//
+//	len(mockedDinosaurService.ListCentralsWithRoutesNotCreatedCalls())
+func (mock *DinosaurServiceMock) ListCentralsWithRoutesNotCreatedCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockListCentralsWithRoutesNotCreated.RLock()
+	calls = mock.calls.ListCentralsWithRoutesNotCreated
+	mock.lockListCentralsWithRoutesNotCreated.RUnlock()
+	return calls
+}
+
 // ListCentralsWithoutAuthConfig calls ListCentralsWithoutAuthConfigFunc.
 func (mock *DinosaurServiceMock) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 	if mock.ListCentralsWithoutAuthConfigFunc == nil {
@@ -917,33 +944,6 @@ func (mock *DinosaurServiceMock) ListCentralsWithoutAuthConfigCalls() []struct {
 	mock.lockListCentralsWithoutAuthConfig.RLock()
 	calls = mock.calls.ListCentralsWithoutAuthConfig
 	mock.lockListCentralsWithoutAuthConfig.RUnlock()
-	return calls
-}
-
-// ListCentralsWithRoutesNotCreated calls ListDinosaursWithRoutesNotCreatedFunc.
-func (mock *DinosaurServiceMock) ListCentralsWithRoutesNotCreated() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
-	if mock.ListDinosaursWithRoutesNotCreatedFunc == nil {
-		panic("DinosaurServiceMock.ListDinosaursWithRoutesNotCreatedFunc: method is nil but DinosaurService.ListDinosaursWithRoutesNotCreated was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockListDinosaursWithRoutesNotCreated.Lock()
-	mock.calls.ListDinosaursWithRoutesNotCreated = append(mock.calls.ListDinosaursWithRoutesNotCreated, callInfo)
-	mock.lockListDinosaursWithRoutesNotCreated.Unlock()
-	return mock.ListDinosaursWithRoutesNotCreatedFunc()
-}
-
-// ListDinosaursWithRoutesNotCreatedCalls gets all the calls that were made to ListDinosaursWithRoutesNotCreated.
-// Check the length with:
-//
-//	len(mockedDinosaurService.ListDinosaursWithRoutesNotCreatedCalls())
-func (mock *DinosaurServiceMock) ListDinosaursWithRoutesNotCreatedCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockListDinosaursWithRoutesNotCreated.RLock()
-	calls = mock.calls.ListDinosaursWithRoutesNotCreated
-	mock.lockListDinosaursWithRoutesNotCreated.RUnlock()
 	return calls
 }
 
