@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"net/http"
 	"testing"
 
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -81,6 +82,49 @@ func TestAssignCluster(t *testing.T) {
 	}
 
 	require.Equal(t, "new-cluster-1234", cr.ClusterID, "ClusterID was not set properly.")
+}
+
+func TestAssignClusterCentralMissmatch(t *testing.T) {
+	t.Setenv("RHACS_CLUSTER_MIGRATION", "true")
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	clusters := []*api.Cluster{
+		testCluster("initial-cluster-1234"),
+		testCluster("new-cluster-1234"),
+	}
+
+	helper, adminClient, teardown := test.NewAdminHelperWithHooks(t, ocmServer, nil)
+	defer teardown()
+
+	orgID := "13640203"
+
+	centrals := []*dbapi.CentralRequest{
+		{
+			MultiAZ:        clusters[0].MultiAZ,
+			Owner:          "assigclusteruser1",
+			Region:         "non-matching-region",
+			CloudProvider:  clusters[0].CloudProvider,
+			Name:           "assign-cluster-central",
+			OrganisationID: orgID,
+			Status:         constants2.CentralRequestStatusReady.String(),
+			InstanceType:   clusters[0].SupportedInstanceType,
+			ClusterID:      clusters[0].ClusterID,
+			Meta:           api.Meta{ID: api.NewID()},
+		},
+	}
+
+	db := test.TestServices.DBFactory.New()
+	require.NoError(t, db.Create(&clusters).Error)
+	require.NoError(t, db.Create(&centrals).Error)
+
+	account := helper.NewRandAccount()
+	ctx := helper.NewAuthenticatedAdminContext(account, nil)
+
+	res, err := adminClient.DefaultApi.AssignCentralCluster(ctx, centrals[0].Meta.ID, private.CentralAssignClusterRequest{ClusterId: clusters[1].ClusterID})
+	require.Error(t, err, "Expected bad requests error for central AssignCluster to non-matching region")
+	require.NotNil(t, res)
+	require.Equal(t, http.StatusBadRequest, res.StatusCode, "Expected bad request for central AssignCluster to non-matching region")
 }
 
 func testCluster(clusterID string) *api.Cluster {
