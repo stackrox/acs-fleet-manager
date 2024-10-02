@@ -31,7 +31,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			ChangeBillingParametersFunc: func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
 //				panic("mock out the ChangeBillingParameters method")
 //			},
-//			ChangeCentralCNAMErecordsFunc: func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
+//			ChangeCentralCNAMErecordsFunc: func(dinosaurRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
 //				panic("mock out the ChangeCentralCNAMErecords method")
 //			},
 //			CountByRegionAndInstanceTypeFunc: func() ([]DinosaurRegionCount, error) {
@@ -120,7 +120,7 @@ type DinosaurServiceMock struct {
 	ChangeBillingParametersFunc func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError
 
 	// ChangeCentralCNAMErecordsFunc mocks the ChangeCentralCNAMErecords method.
-	ChangeCentralCNAMErecordsFunc func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
+	ChangeCentralCNAMErecordsFunc func(dinosaurRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
 
 	// CountByRegionAndInstanceTypeFunc mocks the CountByRegionAndInstanceType method.
 	CountByRegionAndInstanceTypeFunc func() ([]DinosaurRegionCount, error)
@@ -221,7 +221,7 @@ type DinosaurServiceMock struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 			// Action is the action argument value.
-			Action DinosaurRoutesAction
+			Action CentralRoutesAction
 		}
 		// CountByRegionAndInstanceType holds details about calls to the CountByRegionAndInstanceType method.
 		CountByRegionAndInstanceType []struct {
@@ -472,13 +472,13 @@ func (mock *DinosaurServiceMock) ChangeBillingParametersCalls() []struct {
 }
 
 // ChangeCentralCNAMErecords calls ChangeCentralCNAMErecordsFunc.
-func (mock *DinosaurServiceMock) ChangeCentralCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
+func (mock *DinosaurServiceMock) ChangeCentralCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
 	if mock.ChangeCentralCNAMErecordsFunc == nil {
 		panic("DinosaurServiceMock.ChangeCentralCNAMErecordsFunc: method is nil but DinosaurService.ChangeCentralCNAMErecords was just called")
 	}
 	callInfo := struct {
 		DinosaurRequest *dbapi.CentralRequest
-		Action          DinosaurRoutesAction
+		Action          CentralRoutesAction
 	}{
 		DinosaurRequest: dinosaurRequest,
 		Action:          action,
@@ -495,11 +495,11 @@ func (mock *DinosaurServiceMock) ChangeCentralCNAMErecords(dinosaurRequest *dbap
 //	len(mockedDinosaurService.ChangeCentralCNAMErecordsCalls())
 func (mock *DinosaurServiceMock) ChangeCentralCNAMErecordsCalls() []struct {
 	DinosaurRequest *dbapi.CentralRequest
-	Action          DinosaurRoutesAction
+	Action          CentralRoutesAction
 } {
 	var calls []struct {
 		DinosaurRequest *dbapi.CentralRequest
-		Action          DinosaurRoutesAction
+		Action          CentralRoutesAction
 	}
 	mock.lockChangeCentralCNAMErecords.RLock()
 	calls = mock.calls.ChangeCentralCNAMErecords

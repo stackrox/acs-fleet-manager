@@ -45,14 +45,14 @@ var (
 	}
 )
 
-// DinosaurRoutesAction ...
-type DinosaurRoutesAction string
+// CentralRoutesAction ...
+type CentralRoutesAction string
 
-// DinosaurRoutesActionCreate ...
-const DinosaurRoutesActionCreate DinosaurRoutesAction = "CREATE"
+// CentralRoutesActionCreate ...
+const CentralRoutesActionCreate CentralRoutesAction = "CREATE"
 
-// DinosaurRoutesActionDelete ...
-const DinosaurRoutesActionDelete DinosaurRoutesAction = "DELETE"
+// CentralRoutesActionDelete ...
+const CentralRoutesActionDelete CentralRoutesAction = "DELETE"
 
 const gracePeriod = 14 * 24 * time.Hour
 
@@ -96,7 +96,7 @@ type DinosaurService interface {
 	// Use this only when you want to update the multiple columns that may contain zero-fields, otherwise use the `DinosaurService.Update()` method.
 	// See https://gorm.io/docs/update.html#Updates-multiple-columns for more info
 	Updates(dinosaurRequest *dbapi.CentralRequest, values map[string]interface{}) *errors.ServiceError
-	ChangeCentralCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
+	ChangeCentralCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error)
 	DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType
 	RegisterDinosaurDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
@@ -594,7 +594,7 @@ func (k *dinosaurService) Delete(centralRequest *dbapi.CentralRequest, force boo
 		}
 		// Only delete the routes when they are set
 		if routes != nil && k.centralConfig.EnableCentralExternalCertificate {
-			_, err := k.ChangeCentralCNAMErecords(centralRequest, DinosaurRoutesActionDelete)
+			_, err := k.ChangeCentralCNAMErecords(centralRequest, CentralRoutesActionDelete)
 			if err != nil {
 				if force {
 					glog.Warningf("Failed to delete CNAME records for Central tenant %q: %v", centralRequest.ID, err)
@@ -775,7 +775,7 @@ func (k *dinosaurService) UpdateStatus(id string, status dinosaurConstants.Centr
 }
 
 // ChangeCentralCNAMErecords ...
-func (k *dinosaurService) ChangeCentralCNAMErecords(centralRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
+func (k *dinosaurService) ChangeCentralCNAMErecords(centralRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
 	routes, err := centralRequest.GetRoutes()
 	if routes == nil || err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
