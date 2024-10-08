@@ -897,7 +897,16 @@ func (k *dinosaurService) AssignCluster(ctx context.Context, centralID string, c
 	}
 
 	central.ClusterID = clusterID
-	return k.Updates(central, map[string]interface{}{"cluster_id": central.ClusterID})
+	central.RoutesCreated = false
+	central.Routes = nil
+	central.Status = dinosaurConstants.CentralRequestStatusProvisioning.String()
+
+	return k.Updates(central, map[string]interface{}{
+		"cluster_id":     central.ClusterID,
+		"routes_created": central.RoutesCreated,
+		"routes":         central.Routes,
+		"status":         central.Status,
+	})
 }
 
 // DinosaurStatusCount ...
