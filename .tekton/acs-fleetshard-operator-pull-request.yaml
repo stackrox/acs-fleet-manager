@@ -29,7 +29,7 @@ spec:
   - name: dockerfile
     value: dp-terraform/helm/Dockerfile
   - name: path-context
-    value: .
+    value: dp-terraform/helm
   pipelineSpec:
     description: |
       This pipeline is ideal for building container images from a Containerfile while reducing network traffic.
