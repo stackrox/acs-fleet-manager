@@ -130,11 +130,15 @@ func (m *Metrics) SetCertKeyExpiryMetric(namespace, name, key string, expiry flo
 }
 
 func (m *Metrics) DeleteCertMetric(namespace, name string) {
-	m.CertificatesExpiry.Delete(prometheus.Labels{"namespace": namespace, "secret": name}) // pragma: allowlist secret
+	m.CertificatesExpiry.DeletePartialMatch(prometheus.Labels{"namespace": namespace, "secret": name}) // pragma: allowlist secret
+}
+
+func (m *Metrics) DeleteCertNamespaceMetric(namespace string) {
+	m.CertificatesExpiry.DeletePartialMatch(prometheus.Labels{"namespace": namespace}) // pragma: allowlist secret
 }
 
 func (m *Metrics) DeleteKeyCertMetric(namespace, name, key string) {
-	m.CertificatesExpiry.Delete(prometheus.Labels{"namespace": namespace, "secret": name, "data_key": key}) // pragma: allowlist secret
+	m.CertificatesExpiry.DeletePartialMatch(prometheus.Labels{"namespace": namespace, "secret": name, "data_key": key}) // pragma: allowlist secret
 }
 
 // MetricsInstance return the global Singleton instance for Metrics

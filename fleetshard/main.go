@@ -130,9 +130,10 @@ func main() {
 	k8sInterface := k8s.CreateInterfaceOrDie()
 	informerFactory := informers.NewSharedInformerFactory(k8sInterface, time.Minute)
 	secretInformer := informerFactory.Core().V1().Secrets().Informer()
+	namespaceInformer := informerFactory.Core().V1().Namespaces().Informer()
 	namespaceLister := informerFactory.Core().V1().Namespaces().Lister()
 
-	monitor := certmonitor.NewCertMonitor(certmonitorConfig, informerFactory, secretInformer, namespaceLister)
+	monitor := certmonitor.NewCertMonitor(certmonitorConfig, informerFactory, secretInformer, namespaceInformer, namespaceLister)
 	if err := monitor.Start(); err != nil {
 		glog.Fatalf("Error starting certmonitor: %v", err)
 	}
