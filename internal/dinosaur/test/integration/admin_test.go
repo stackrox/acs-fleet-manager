@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -33,6 +34,14 @@ func TestAssignCluster(t *testing.T) {
 
 	orgID := "13640203"
 
+	dummyRoutes := []dbapi.DataPlaneCentralRoute{
+		{Domain: "test", Router: "test"},
+		{Domain: "test", Router: "test"},
+	}
+
+	dummyRoutesJSON, err := json.Marshal(&dummyRoutes)
+	require.NoError(t, err, "Unexpected error setting up test central routes")
+
 	centrals := []*dbapi.CentralRequest{
 		{
 			MultiAZ:        clusters[0].MultiAZ,
@@ -45,6 +54,8 @@ func TestAssignCluster(t *testing.T) {
 			InstanceType:   clusters[0].SupportedInstanceType,
 			ClusterID:      clusters[0].ClusterID,
 			Meta:           api.Meta{ID: api.NewID()},
+			RoutesCreated:  true,
+			Routes:         dummyRoutesJSON,
 		},
 		{
 			MultiAZ:        clusters[0].MultiAZ,
@@ -57,6 +68,8 @@ func TestAssignCluster(t *testing.T) {
 			InstanceType:   clusters[0].SupportedInstanceType,
 			ClusterID:      clusters[0].ClusterID,
 			Meta:           api.Meta{ID: api.NewID()},
+			RoutesCreated:  true,
+			Routes:         dummyRoutesJSON,
 		},
 	}
 
@@ -82,6 +95,9 @@ func TestAssignCluster(t *testing.T) {
 	}
 
 	require.Equal(t, "new-cluster-1234", cr.ClusterID, "ClusterID was not set properly.")
+	require.False(t, cr.RoutesCreated, "RoutesCreated shout be reset to false.")
+	require.Nil(t, cr.Routes, "Stored Routes content should be nil.")
+	require.Equal(t, constants2.CentralRequestStatusProvisioning.String(), cr.Status, "Status should change from ready to provisioning.")
 }
 
 func TestAssignClusterCentralMismatch(t *testing.T) {
