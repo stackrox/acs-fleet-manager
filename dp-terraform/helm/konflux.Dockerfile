@@ -22,7 +22,8 @@ RUN microdnf install gzip tar && \
 ARG IMAGE_TAG=latest
 RUN yq -i ".global.image.tag = strenv(IMAGE_TAG)" rhacs-terraform/values.yaml
 
-FROM quay.io/operator-framework/helm-operator:v1.36.1
+# RH catalog see: https://catalog.redhat.com/software/containers/openshift4/ose-helm-operator
+FROM registry.redhat.io/openshift4/ose-helm-operator:v4.14.0-202409240108.p0.g0f0d1b2.assembly.stream.el8
 
 ENV HOME=/opt/helm
 ENV ADDON_NAME=acs-fleetshard
