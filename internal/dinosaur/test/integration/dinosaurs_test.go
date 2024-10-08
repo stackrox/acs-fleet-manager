@@ -41,7 +41,7 @@ func TestDinosaurCreate_Success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+	h, client, teardown := test.NewCentralHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
 		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 1)})
 	})
 	defer teardown()
@@ -76,7 +76,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+	h, client, tearDown := test.NewCentralHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
 		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 1)})
 	})
 	defer tearDown()
@@ -149,7 +149,7 @@ func TestDinosaur_Delete(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, tearDown := test.NewCentralHelper(t, ocmServer)
 	defer tearDown()
 
 	userAccount := h.NewAccount(owner, "test-user", "test@gmail.com", orgID)
