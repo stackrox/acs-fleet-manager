@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10 AS build
 ENV HOME=/opt/helm
-COPY rhacs-terraform  ${HOME}/rhacs-terraform
+COPY ./rhacs-terraform  ${HOME}/rhacs-terraform
 WORKDIR ${HOME}
 
 RUN curl -L --retry 10 --silent --show-error --fail -o /usr/local/bin/helm \
