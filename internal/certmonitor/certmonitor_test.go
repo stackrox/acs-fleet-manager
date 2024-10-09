@@ -333,6 +333,10 @@ func TestCertMonitor(t *testing.T) {
 		Data:       map[string][]byte{"tls-1.crt": generateCertWithExpiration(t, newExpiryTime)},
 	}
 
+	mockNamespace := &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-1", Name: "secret-1"},
+	}
+
 	expirationUnix := float64(expirytime.Unix())
 	certMonitor.handleSecretCreation(secret)
 	verifyPrometheusMetric(t, "namespace-1", "secret-1", "tls.crt", expirationUnix)
@@ -342,6 +346,9 @@ func TestCertMonitor(t *testing.T) {
 	verifyPrometheusMetric(t, "namespace-1", "secret-1", "tls-1.crt", updatedUnix)
 
 	certMonitor.handleSecretDeletion(secretUpdated)
+	verifyPrometheusMetricDelete(t, "namespace-1", "secret-1", "tls.crt")
+
+	certMonitor.handleNamespaceDeletion(mockNamespace)
 	verifyPrometheusMetricDelete(t, "namespace-1", "secret-1", "tls.crt")
 
 }
