@@ -324,18 +324,18 @@ func (h adminCentralHandler) PatchName(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h adminCentralHandler) AssignCluster(w http.ResponseWriter, r *http.Request) {
-	assignClusterRequests := private.CentralAssignClusterRequest{}
+	assignClusterRequest := private.CentralAssignClusterRequest{}
 	centralID := mux.Vars(r)["id"]
 	cfg := &handlers.HandlerConfig{
-		MarshalInto: &assignClusterRequests,
+		MarshalInto: &assignClusterRequest,
 		Validate: []handlers.Validate{
-			handlers.ValidateMinLength(&assignClusterRequests.ClusterId, "cluster_id", handlers.MinRequiredFieldLength),
+			handlers.ValidateMinLength(&assignClusterRequest.ClusterId, "cluster_id", handlers.MinRequiredFieldLength),
 			handlers.ValidateMinLength(&centralID, "id", handlers.MinRequiredFieldLength),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			glog.Infof("Assigning cluster_id for central %q to: %q", centralID, assignClusterRequests.ClusterId)
+			glog.Infof("Assigning cluster_id for central %q to: %q", centralID, assignClusterRequest.ClusterId)
 
-			return nil, h.service.AssignCluster(r.Context(), centralID, assignClusterRequests.ClusterId)
+			return nil, h.service.AssignCluster(r.Context(), centralID, assignClusterRequest.ClusterId)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
