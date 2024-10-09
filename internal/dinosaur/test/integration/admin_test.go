@@ -36,7 +36,7 @@ func TestAssignCluster(t *testing.T) {
 	centrals := []*dbapi.CentralRequest{
 		{
 			MultiAZ:        clusters[0].MultiAZ,
-			Owner:          "assigclusteruser1",
+			Owner:          "assignclusteruser1",
 			Region:         clusters[0].Region,
 			CloudProvider:  clusters[0].CloudProvider,
 			Name:           "assign-cluster-central",
@@ -48,7 +48,7 @@ func TestAssignCluster(t *testing.T) {
 		},
 		{
 			MultiAZ:        clusters[0].MultiAZ,
-			Owner:          "assigclusteruser2",
+			Owner:          "assignclusteruser2",
 			Region:         clusters[0].Region,
 			CloudProvider:  clusters[0].CloudProvider,
 			Name:           "assign-cluster-central-2",
@@ -84,7 +84,7 @@ func TestAssignCluster(t *testing.T) {
 	require.Equal(t, "new-cluster-1234", cr.ClusterID, "ClusterID was not set properly.")
 }
 
-func TestAssignClusterCentralMissmatch(t *testing.T) {
+func TestAssignClusterCentralMismatch(t *testing.T) {
 	t.Setenv("RHACS_CLUSTER_MIGRATION", "true")
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()

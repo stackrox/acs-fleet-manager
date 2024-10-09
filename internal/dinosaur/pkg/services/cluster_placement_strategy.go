@@ -13,8 +13,6 @@ import (
 type ClusterPlacementStrategy interface {
 	// FindCluster finds and returns a Cluster depends on the specific impl.
 	FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error)
-	// AllMatchingClustersForCentral returns all cluster that fit the criteria to run a central
-	AllMatchingClustersForCentral(central *dbapi.CentralRequest) ([]*api.Cluster, error)
 }
 
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the
@@ -48,8 +46,8 @@ func (d FirstReadyPlacementStrategy) FindCluster(central *dbapi.CentralRequest) 
 }
 
 // AllMatchingClustersForCentral returns all cluster that fit the criteria to run a central
-func (d FirstReadyPlacementStrategy) AllMatchingClustersForCentral(central *dbapi.CentralRequest) ([]*api.Cluster, error) {
-	clusters, err := d.clusterService.FindAllClusters(centralToFindClusterCriteria(central))
+func AllMatchingClustersForCentral(central *dbapi.CentralRequest, clusterService ClusterService) ([]*api.Cluster, error) {
+	clusters, err := clusterService.FindAllClusters(centralToFindClusterCriteria(central))
 	if err != nil {
 		return nil, err
 	}
