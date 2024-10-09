@@ -24,7 +24,7 @@ spec:
   - name: output-image
     value: quay.io/redhat-user-workloads/acscs-rhacs-tenant/acscs-main/acs-fleetshard-operator:{{revision}}
   - name: dockerfile
-    value: dp-terraform/helm/Dockerfile
+    value: dp-terraform/helm/konflux.Dockerfile
   - name: path-context
     value: dp-terraform/helm
   pipelineSpec:
