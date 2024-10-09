@@ -38,6 +38,7 @@ jobs:
         with:
           extra_args: --hook-stage=manual --all-files
 
+
   verify-test:
     name: "Verify & Test"
     runs-on: ubuntu-latest
