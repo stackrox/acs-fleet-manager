@@ -333,7 +333,7 @@ func TestCertMonitor(t *testing.T) {
 		Data:       map[string][]byte{"tls-1.crt": generateCertWithExpiration(t, newExpiryTime)},
 	}
 
-	mockNamespace := &v1.Namespace{
+	mockNamespace := &v1.Namespace{ // pragma: allowlist secret
 		ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-1", Name: "secret-1"},
 	}
 
