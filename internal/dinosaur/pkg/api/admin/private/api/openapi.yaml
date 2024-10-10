@@ -605,6 +605,53 @@ paths:
       security:
       - Bearer: []
       summary: Delete a Central directly in the Database by ID
+  /api/rhacs/v1/admin/centrals/{id}/assign-cluster:
+    post:
+      operationId: assignCentralCluster
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CentralAssignClusterRequest'
+        description: Body for Cluster reassignment
+        required: true
+      responses:
+        "200":
+          description: Central cluster assignment updated
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Reassign the cluster a central tenant should be scheduled to
   /api/rhacs/v1/admin/centrals/{id}/traits:
     get:
       operationId: getCentralTraits
@@ -855,6 +902,13 @@ components:
         product:
           enum:
           - RHACS
+          type: string
+      type: object
+    CentralAssignClusterRequest:
+      example:
+        cluster_id: cluster_id
+      properties:
+        cluster_id:
           type: string
       type: object
     Error:
