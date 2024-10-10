@@ -75,7 +75,7 @@ func ServiceProviders() di.Option {
 		di.Provide(dinosaurmgrs.NewDeletingDinosaurManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewProvisioningDinosaurManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewReadyDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewDinosaurCNAMEManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewCentralCNAMEManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewCentralAuthConfigManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewExpirationDateManager, di.As(new(workers.Worker))),
 		di.Provide(gitops.NewEmptyReader),
