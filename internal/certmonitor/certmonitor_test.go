@@ -334,7 +334,7 @@ func TestCertMonitor(t *testing.T) {
 	}
 
 	mockNamespace := &v1.Namespace{ // pragma: allowlist secret
-		ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-1", Name: "secret-1"},
+		ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-1"},
 	}
 
 	expirationUnix := float64(expirytime.Unix())
