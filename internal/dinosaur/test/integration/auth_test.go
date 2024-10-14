@@ -27,7 +27,7 @@ func TestAuth_success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, _, teardown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, teardown := test.NewCentralHelper(t, ocmServer)
 	defer teardown()
 
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
@@ -45,7 +45,7 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewDinosaurHelper(t, ocmServer)
+	h, client, teardown := test.NewCentralHelper(t, ocmServer)
 	defer teardown()
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
@@ -68,7 +68,7 @@ func TestAuthSuccess_usingSSORHToken(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, teardown := test.NewCentralHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -90,7 +90,7 @@ func TestAuthFailure_withoutToken(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, teardown := test.NewCentralHelper(t, ocmServer)
 	defer teardown()
 
 	restyResp, err := resty.R().
@@ -107,7 +107,7 @@ func TestAuthFailure_invalidTokenWithInvalidTyp(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, teardown := test.NewCentralHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -131,7 +131,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, teardown := test.NewCentralHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -154,7 +154,7 @@ func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, teardown := test.NewCentralHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -177,7 +177,7 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, teardown := test.NewCentralHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -209,7 +209,7 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, teardown := test.NewCentralHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{

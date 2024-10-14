@@ -13,6 +13,8 @@ import (
 type ClusterPlacementStrategy interface {
 	// FindCluster finds and returns a Cluster depends on the specific impl.
 	FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error)
+	// AllMatchingClustersForCentral returns all cluster that fit the criteria to run a central
+	AllMatchingClustersForCentral(central *dbapi.CentralRequest) ([]*api.Cluster, error)
 }
 
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the
@@ -31,12 +33,7 @@ type FirstReadyPlacementStrategy struct {
 
 // FindCluster ...
 func (d FirstReadyPlacementStrategy) FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error) {
-	clusters, err := d.clusterService.FindAllClusters(FindClusterCriteria{
-		Provider: central.CloudProvider,
-		Region:   central.Region,
-		MultiAZ:  central.MultiAZ,
-		Status:   api.ClusterReady,
-	})
+	clusters, err := d.clusterService.FindAllClusters(centralToFindClusterCriteria(central))
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +47,23 @@ func (d FirstReadyPlacementStrategy) FindCluster(central *dbapi.CentralRequest) 
 	return nil, nil
 }
 
+// AllMatchingClustersForCentral returns all cluster that fit the criteria to run a central
+func (d FirstReadyPlacementStrategy) AllMatchingClustersForCentral(central *dbapi.CentralRequest) ([]*api.Cluster, error) {
+	clusters, err := d.clusterService.FindAllClusters(centralToFindClusterCriteria(central))
+	if err != nil {
+		return nil, err
+	}
+
+	matchingClusters := []*api.Cluster{}
+	for _, c := range clusters {
+		if c.Schedulable && supportsInstanceType(c, central.InstanceType) {
+			matchingClusters = append(matchingClusters, c)
+		}
+	}
+
+	return matchingClusters, err
+}
+
 func supportsInstanceType(c *api.Cluster, instanceType string) bool {
 	supportedTypes := strings.Split(c.SupportedInstanceType, ",")
 	for _, t := range supportedTypes {
@@ -59,4 +73,13 @@ func supportsInstanceType(c *api.Cluster, instanceType string) bool {
 	}
 
 	return false
+}
+
+func centralToFindClusterCriteria(central *dbapi.CentralRequest) FindClusterCriteria {
+	return FindClusterCriteria{
+		Provider: central.CloudProvider,
+		Region:   central.Region,
+		MultiAZ:  central.MultiAZ,
+		Status:   api.ClusterReady,
+	}
 }

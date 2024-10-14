@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+	"slices"
 	"sync"
 	"time"
 
@@ -116,6 +117,7 @@ type DinosaurService interface {
 	// to accomated for regular processes like central TLS cert rotation.
 	ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 	ChangeBillingParameters(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *errors.ServiceError
+	AssignCluster(ctx context.Context, centralID string, clusterID string) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -207,7 +209,7 @@ func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.Ce
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count central request")
 	}
 
-	glog.Infof("%d of %d central clusters currently instantiated in region %v", count, regionCapacity, dinosaurRequest.Region)
+	glog.Infof("%d of %d central tenants currently instantiated in region %v", count, regionCapacity, dinosaurRequest.Region)
 	return count < regionCapacity, nil
 }
 
@@ -871,6 +873,30 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 	}
 
 	return nil
+}
+
+func (k *dinosaurService) AssignCluster(ctx context.Context, centralID string, clusterID string) *errors.ServiceError {
+	central, serviceErr := k.GetByID(centralID)
+	if serviceErr != nil {
+		return serviceErr
+	}
+
+	readyStatus := dinosaurConstants.CentralRequestStatusReady.String()
+	if central.Status == readyStatus {
+		return errors.BadRequest("Cannot assing cluster_id for tenant in status: %q, status %q is required", central.Status, readyStatus)
+	}
+
+	clusters, err := k.clusterPlacementStrategy.AllMatchingClustersForCentral(central)
+	if err != nil {
+		return errors.GeneralError("error getting matching clusters for central: %q", centralID)
+	}
+
+	if !slices.ContainsFunc(clusters, func(c *api.Cluster) bool { return c.ClusterID == clusterID }) {
+		return errors.BadRequest("Given cluster_id: %q not found in list of matching clusters for central: %q.", clusterID, centralID)
+	}
+
+	central.ClusterID = clusterID
+	return k.Updates(central, map[string]interface{}{"cluster_id": central.ClusterID})
 }
 
 // DinosaurStatusCount ...

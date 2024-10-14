@@ -475,10 +475,6 @@ paths:
       responses:
         "200":
           description: Central cluster assignment updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Central'
         "401":
           description: Auth token is invalid
           content:
