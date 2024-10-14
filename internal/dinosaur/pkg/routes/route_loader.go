@@ -269,12 +269,6 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 			Methods(http.MethodPost)
 	}
 
-	if features.ClusterMigration.Enabled() {
-		adminCentralsRouter.HandleFunc("/{id}/assign-cluster", adminCentralHandler.AssignCluster).
-			Name(logger.NewLogEvent("admin-central-assign-cluster", "[admin] change central cluster assignment").ToString()).
-			Methods(http.MethodPost)
-	}
-
 	adminCentralsRouter.HandleFunc("/{id}/traits", adminCentralHandler.ListTraits).
 		Name(logger.NewLogEvent("admin-list-traits", "[admin] list central traits").ToString()).
 		Methods(http.MethodGet)

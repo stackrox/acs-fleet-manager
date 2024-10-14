@@ -19,9 +19,6 @@ var _ ClusterPlacementStrategy = &ClusterPlacementStrategyMock{}
 //
 //		// make and configure a mocked ClusterPlacementStrategy
 //		mockedClusterPlacementStrategy := &ClusterPlacementStrategyMock{
-//			AllMatchingClustersForCentralFunc: func(central *dbapi.CentralRequest) ([]*api.Cluster, error) {
-//				panic("mock out the AllMatchingClustersForCentral method")
-//			},
 //			FindClusterFunc: func(central *dbapi.CentralRequest) (*api.Cluster, error) {
 //				panic("mock out the FindCluster method")
 //			},
@@ -32,59 +29,18 @@ var _ ClusterPlacementStrategy = &ClusterPlacementStrategyMock{}
 //
 //	}
 type ClusterPlacementStrategyMock struct {
-	// AllMatchingClustersForCentralFunc mocks the AllMatchingClustersForCentral method.
-	AllMatchingClustersForCentralFunc func(central *dbapi.CentralRequest) ([]*api.Cluster, error)
-
 	// FindClusterFunc mocks the FindCluster method.
 	FindClusterFunc func(central *dbapi.CentralRequest) (*api.Cluster, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// AllMatchingClustersForCentral holds details about calls to the AllMatchingClustersForCentral method.
-		AllMatchingClustersForCentral []struct {
-			// Central is the central argument value.
-			Central *dbapi.CentralRequest
-		}
 		// FindCluster holds details about calls to the FindCluster method.
 		FindCluster []struct {
 			// Central is the central argument value.
 			Central *dbapi.CentralRequest
 		}
 	}
-	lockAllMatchingClustersForCentral sync.RWMutex
-	lockFindCluster                   sync.RWMutex
-}
-
-// AllMatchingClustersForCentral calls AllMatchingClustersForCentralFunc.
-func (mock *ClusterPlacementStrategyMock) AllMatchingClustersForCentral(central *dbapi.CentralRequest) ([]*api.Cluster, error) {
-	if mock.AllMatchingClustersForCentralFunc == nil {
-		panic("ClusterPlacementStrategyMock.AllMatchingClustersForCentralFunc: method is nil but ClusterPlacementStrategy.AllMatchingClustersForCentral was just called")
-	}
-	callInfo := struct {
-		Central *dbapi.CentralRequest
-	}{
-		Central: central,
-	}
-	mock.lockAllMatchingClustersForCentral.Lock()
-	mock.calls.AllMatchingClustersForCentral = append(mock.calls.AllMatchingClustersForCentral, callInfo)
-	mock.lockAllMatchingClustersForCentral.Unlock()
-	return mock.AllMatchingClustersForCentralFunc(central)
-}
-
-// AllMatchingClustersForCentralCalls gets all the calls that were made to AllMatchingClustersForCentral.
-// Check the length with:
-//
-//	len(mockedClusterPlacementStrategy.AllMatchingClustersForCentralCalls())
-func (mock *ClusterPlacementStrategyMock) AllMatchingClustersForCentralCalls() []struct {
-	Central *dbapi.CentralRequest
-} {
-	var calls []struct {
-		Central *dbapi.CentralRequest
-	}
-	mock.lockAllMatchingClustersForCentral.RLock()
-	calls = mock.calls.AllMatchingClustersForCentral
-	mock.lockAllMatchingClustersForCentral.RUnlock()
-	return calls
+	lockFindCluster sync.RWMutex
 }
 
 // FindCluster calls FindClusterFunc.
