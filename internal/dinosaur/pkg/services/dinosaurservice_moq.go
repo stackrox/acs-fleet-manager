@@ -28,6 +28,9 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			AcceptCentralRequestFunc: func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the AcceptCentralRequest method")
 //			},
+//			AssignClusterFunc: func(ctx context.Context, centralID string, clusterID string) *serviceError.ServiceError {
+//				panic("mock out the AssignCluster method")
+//			},
 //			ChangeBillingParametersFunc: func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
 //				panic("mock out the ChangeBillingParameters method")
 //			},
@@ -116,6 +119,9 @@ type DinosaurServiceMock struct {
 	// AcceptCentralRequestFunc mocks the AcceptCentralRequest method.
 	AcceptCentralRequestFunc func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
+	// AssignClusterFunc mocks the AssignCluster method.
+	AssignClusterFunc func(ctx context.Context, centralID string, clusterID string) *serviceError.ServiceError
+
 	// ChangeBillingParametersFunc mocks the ChangeBillingParameters method.
 	ChangeBillingParametersFunc func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError
 
@@ -200,6 +206,15 @@ type DinosaurServiceMock struct {
 		AcceptCentralRequest []struct {
 			// CentralRequest is the centralRequest argument value.
 			CentralRequest *dbapi.CentralRequest
+		}
+		// AssignCluster holds details about calls to the AssignCluster method.
+		AssignCluster []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// CentralID is the centralID argument value.
+			CentralID string
+			// ClusterID is the clusterID argument value.
+			ClusterID string
 		}
 		// ChangeBillingParameters holds details about calls to the ChangeBillingParameters method.
 		ChangeBillingParameters []struct {
@@ -359,6 +374,7 @@ type DinosaurServiceMock struct {
 		}
 	}
 	lockAcceptCentralRequest             sync.RWMutex
+	lockAssignCluster                    sync.RWMutex
 	lockChangeBillingParameters          sync.RWMutex
 	lockChangeCentralCNAMErecords        sync.RWMutex
 	lockCountByRegionAndInstanceType     sync.RWMutex
@@ -416,6 +432,46 @@ func (mock *DinosaurServiceMock) AcceptCentralRequestCalls() []struct {
 	mock.lockAcceptCentralRequest.RLock()
 	calls = mock.calls.AcceptCentralRequest
 	mock.lockAcceptCentralRequest.RUnlock()
+	return calls
+}
+
+// AssignCluster calls AssignClusterFunc.
+func (mock *DinosaurServiceMock) AssignCluster(ctx context.Context, centralID string, clusterID string) *serviceError.ServiceError {
+	if mock.AssignClusterFunc == nil {
+		panic("DinosaurServiceMock.AssignClusterFunc: method is nil but DinosaurService.AssignCluster was just called")
+	}
+	callInfo := struct {
+		Ctx       context.Context
+		CentralID string
+		ClusterID string
+	}{
+		Ctx:       ctx,
+		CentralID: centralID,
+		ClusterID: clusterID,
+	}
+	mock.lockAssignCluster.Lock()
+	mock.calls.AssignCluster = append(mock.calls.AssignCluster, callInfo)
+	mock.lockAssignCluster.Unlock()
+	return mock.AssignClusterFunc(ctx, centralID, clusterID)
+}
+
+// AssignClusterCalls gets all the calls that were made to AssignCluster.
+// Check the length with:
+//
+//	len(mockedDinosaurService.AssignClusterCalls())
+func (mock *DinosaurServiceMock) AssignClusterCalls() []struct {
+	Ctx       context.Context
+	CentralID string
+	ClusterID string
+} {
+	var calls []struct {
+		Ctx       context.Context
+		CentralID string
+		ClusterID string
+	}
+	mock.lockAssignCluster.RLock()
+	calls = mock.calls.AssignCluster
+	mock.lockAssignCluster.RUnlock()
 	return calls
 }
 

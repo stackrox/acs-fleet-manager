@@ -29,7 +29,7 @@ const (
 type AuthHelper struct {
 	JWTPrivateKey  *rsa.PrivateKey
 	JWTCA          *rsa.PublicKey
-	ocmTokenIssuer string
+	OcmTokenIssuer string
 }
 
 // NewAuthHelper Creates an auth helper to be used for creating new accounts and jwt.
@@ -47,7 +47,7 @@ func NewAuthHelper(jwtKeyFilePath, jwtCAFilePath, ocmTokenIssuer string) (*AuthH
 	return &AuthHelper{
 		JWTPrivateKey:  jwtKey, // pragma: allowlist secret
 		JWTCA:          jwtCA,
-		ocmTokenIssuer: ocmTokenIss,
+		OcmTokenIssuer: ocmTokenIss,
 	}, nil
 }
 
@@ -104,9 +104,9 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 		"exp": time.Now().Add(time.Minute * time.Duration(TokenExpMin)).Unix(),
 	}
 
-	if jwtClaims == nil || jwtClaims["iss"] == nil || jwtClaims["iss"] == "" || jwtClaims["iss"] == authHelper.ocmTokenIssuer {
+	if jwtClaims == nil || jwtClaims["iss"] == nil || jwtClaims["iss"] == "" || jwtClaims["iss"] == authHelper.OcmTokenIssuer {
 		// Set default claim values for ocm tokens
-		claims["iss"] = authHelper.ocmTokenIssuer
+		claims["iss"] = authHelper.OcmTokenIssuer
 		claims[tenantUsernameClaim] = account.Username()
 		claims["first_name"] = account.FirstName()
 		claims["last_name"] = account.LastName()

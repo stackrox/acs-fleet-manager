@@ -52,15 +52,39 @@ type Services struct {
 // TestServices ...
 var TestServices Services
 
-// NewDinosaurHelper Register a test
+// NewCentralHelper Register a test
 // This should be run before every integration test
-func NewDinosaurHelper(t *testing.T, server *httptest.Server) (*test.Helper, *public.APIClient, func()) {
-	return NewDinosaurHelperWithHooks(t, server, nil)
+func NewCentralHelper(t *testing.T, server *httptest.Server) (*test.Helper, *public.APIClient, func()) {
+	return NewCentralHelperWithHooks(t, server, nil)
 }
 
-// NewDinosaurHelperWithHooks ...
-func NewDinosaurHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
-	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, dinosaur.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
+// NewCentralHelperWithHooks helper, public API Client and teardown function for integration testing public API endpoints
+func NewCentralHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
+	h, teardown := newCentralHelperWithHooks(t, server, configurationHook)
+	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
+		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
+	}
+	return h, NewAPIClient(h), teardown
+}
+
+// NewAdminHelperWithHooks returns helper, adminprivate.APIClient and teardown function for integration testing Admin API endpoints
+func NewAdminHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *adminprivate.APIClient, func()) {
+	h, teardown := newCentralHelperWithHooks(t, server, configurationHook)
+	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
+		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
+	}
+	var iamConfig *iam.IAMConfig
+	h.Env.MustResolve(&iamConfig)
+	if iamConfig == nil {
+		glog.Fatal("Unable to resolve IAMConfig")
+	}
+	h.AuthHelper.OcmTokenIssuer = iamConfig.InternalSSORealm.ValidIssuerURI
+
+	return h, NewAdminPrivateAPIClient(h), teardown
+}
+
+func newCentralHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, func()) {
+	return test.NewHelperWithHooks(t, server, configurationHook, dinosaur.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
 		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, dinosaurConfig *config.CentralConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, fleetshardConfig *config.FleetshardConfig, ocmConfig *ocm.OCMConfig) {
 			dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral = true
 			observabilityConfiguration.EnableMock = true
@@ -70,10 +94,6 @@ func NewDinosaurHelperWithHooks(t *testing.T, server *httptest.Server, configura
 			ocmConfig.ReadFiles()
 		},
 	}))
-	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
-		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
-	}
-	return h, NewAPIClient(h), teardown
 }
 
 // NewAPIClient ...

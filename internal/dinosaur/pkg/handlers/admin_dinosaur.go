@@ -53,6 +53,9 @@ type AdminCentralHandler interface {
 	// a tenant. In particular, avoid two Central CRs appearing in the same
 	// tenant namespace. This may cause conflicts due to mixed resource ownership.
 	PatchName(w http.ResponseWriter, r *http.Request)
+	// AssignCluster assigns the dataplane cluster_id of the central tenant to
+	// the given cluster_id in the requests body.
+	AssignCluster(w http.ResponseWriter, r *http.Request)
 
 	// ListTraits returns all central traits
 	ListTraits(w http.ResponseWriter, r *http.Request)
@@ -315,6 +318,24 @@ func (h adminCentralHandler) PatchName(w http.ResponseWriter, r *http.Request) {
 			return nil, h.service.Updates(central, map[string]interface{}{
 				"name": &updateNameRequest.Name,
 			})
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h adminCentralHandler) AssignCluster(w http.ResponseWriter, r *http.Request) {
+	assignClusterRequest := private.CentralAssignClusterRequest{}
+	centralID := mux.Vars(r)["id"]
+	cfg := &handlers.HandlerConfig{
+		MarshalInto: &assignClusterRequest,
+		Validate: []handlers.Validate{
+			handlers.ValidateMinLength(&assignClusterRequest.ClusterId, "cluster_id", handlers.MinRequiredFieldLength),
+			handlers.ValidateMinLength(&centralID, "id", handlers.MinRequiredFieldLength),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			glog.Infof("Assigning cluster_id for central %q to: %q", centralID, assignClusterRequest.ClusterId)
+
+			return nil, h.service.AssignCluster(r.Context(), centralID, assignClusterRequest.ClusterId)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
