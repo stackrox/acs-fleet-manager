@@ -13,8 +13,6 @@ import (
 type ClusterPlacementStrategy interface {
 	// FindCluster finds and returns a Cluster depends on the specific impl.
 	FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error)
-	// AllMatchingClustersForCentral returns all cluster that fit the criteria to run a central
-	AllMatchingClustersForCentral(central *dbapi.CentralRequest) ([]*api.Cluster, error)
 }
 
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the
