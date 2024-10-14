@@ -291,7 +291,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 }
 
 // TestCertMonitor func tests certificates event handlers + prometheus metrics handling
-func TestCertMonitor(t *testing.T) {
+func TestCertMonitor_Secret(t *testing.T) {
 	fleetshardmetrics.MetricsInstance().CertificatesExpiry.Reset()
 
 	namespaces := []v1.Namespace{
@@ -333,10 +333,6 @@ func TestCertMonitor(t *testing.T) {
 		Data:       map[string][]byte{"tls-1.crt": generateCertWithExpiration(t, newExpiryTime)},
 	}
 
-	mockNamespace := &v1.Namespace{ // pragma: allowlist secret
-		ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-1"},
-	}
-
 	expirationUnix := float64(expirytime.Unix())
 	certMonitor.handleSecretCreation(secret)
 	verifyPrometheusMetric(t, "namespace-1", "secret-1", "tls.crt", expirationUnix)
@@ -347,6 +343,41 @@ func TestCertMonitor(t *testing.T) {
 
 	certMonitor.handleSecretDeletion(secretUpdated)
 	verifyPrometheusMetricDelete(t, "namespace-1", "secret-1", "tls.crt")
+}
+
+// TestCertMonitor func tests certificates event handlers + prometheus metrics handling
+func TestCertMonitor_Namespace(t *testing.T) {
+	fleetshardmetrics.MetricsInstance().CertificatesExpiry.Reset()
+
+	namespaces := []v1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace-1",
+				Labels: map[string]string{
+					"foo": "bar"},
+			},
+		},
+	}
+	certMonitor := &certMonitor{
+		namespaceGetter: newFakeNamespaceGetter(namespaces),
+		metrics:         fleetshardmetrics.MetricsInstance(),
+		config: &Config{
+			Monitors: []MonitorConfig{
+				{
+					Namespace: SelectorConfig{
+						Name: "namespace-1",
+					},
+					Secret: SelectorConfig{ // pragma: allowlist secret
+						Name: "secret-1",
+					},
+				},
+			},
+		},
+	}
+
+	mockNamespace := &v1.Namespace{ // pragma: allowlist secret
+		ObjectMeta: metav1.ObjectMeta{Namespace: "namespace-1"},
+	}
 
 	certMonitor.handleNamespaceDeletion(mockNamespace)
 	verifyPrometheusMetricDelete(t, "namespace-1", "secret-1", "tls.crt")
