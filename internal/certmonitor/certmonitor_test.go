@@ -290,7 +290,7 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 	}
 }
 
-// TestCertMonitor func tests certificates event handlers + prometheus metrics handling
+// TestCertMonitor_Secret tests that secret event handlers correctly populate prometheus metrics
 func TestCertMonitor_Secret(t *testing.T) {
 	fleetshardmetrics.MetricsInstance().CertificatesExpiry.Reset()
 
@@ -345,6 +345,7 @@ func TestCertMonitor_Secret(t *testing.T) {
 	verifyPrometheusMetricDelete(t, "namespace-1", "secret-1", "tls.crt")
 }
 
+// TestCertMonitor_Namespace tests that namespace secret handlers remove prometheus metrics when the namespace is deleted
 func TestCertMonitor_Namespace(t *testing.T) {
 	fleetshardmetrics.MetricsInstance().CertificatesExpiry.Reset()
 
