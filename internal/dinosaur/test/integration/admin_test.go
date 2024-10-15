@@ -97,7 +97,7 @@ func TestAssignCluster(t *testing.T) {
 	}
 
 	require.Equal(t, "new-cluster-1234", cr.ClusterID, "ClusterID was not set properly.")
-	require.False(t, true)
+	require.False(t, cr.RoutesCreated, "RoutesCreated should be reset to false.")
 	require.Nil(t, cr.Routes, "Stored Routes content should be nil.")
 	require.Empty(t, cr.RoutesCreationID, "Stored RoutesCreationID should be reset to empty string")
 	require.Equal(t, constants2.CentralRequestStatusProvisioning.String(), cr.Status, "Status should change from ready to provisioning.")
