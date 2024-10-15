@@ -41,25 +41,36 @@ type NamespaceGetter interface {
 
 // certMonitor is the Certificate Monitor. It watches Kubernetes secrets containing certificates, and populates prometheus metrics with the expiration time of those certificates.
 type certMonitor struct {
-	informerfactory informers.SharedInformerFactory
-	secretInformer  cache.SharedIndexInformer
-	config          *Config
-	namespaceGetter NamespaceGetter
-	metrics         *fleetshardmetrics.Metrics
-	stopCh          chan struct{}
+	informerfactory   informers.SharedInformerFactory
+	secretInformer    cache.SharedIndexInformer
+	config            *Config
+	namespaceInformer cache.SharedIndexInformer
+	namespaceGetter   NamespaceGetter
+	metrics           *fleetshardmetrics.Metrics
+	stopCh            chan struct{}
 }
 
 // Start the certificate monitor
 func (c *certMonitor) Start() error {
+	var err error
 	if c.stopCh != nil {
 		return errors.New("already started")
 	}
 	c.stopCh = make(chan struct{})
-	c.secretInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err = c.secretInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.handleSecretCreation,
 		UpdateFunc: c.handleSecretUpdate,
 		DeleteFunc: c.handleSecretDeletion,
 	})
+	if err != nil {
+		return err
+	}
+	_, err = c.namespaceInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		DeleteFunc: c.handleNamespaceDeletion,
+	})
+	if err != nil {
+		return err
+	}
 	c.informerfactory.Start(c.stopCh)
 	if !cache.WaitForCacheSync(c.stopCh) {
 		return fmt.Errorf("timed out waiting for caches to sync")
@@ -76,13 +87,14 @@ func (c *certMonitor) Stop() error {
 }
 
 // NewCertMonitor creates new instance of certMonitor
-func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFactory, secretInformer cache.SharedIndexInformer, namespaceGetter NamespaceGetter) *certMonitor {
+func NewCertMonitor(config *Config, informerFactory informers.SharedInformerFactory, secretInformer cache.SharedIndexInformer, namespaceInformer cache.SharedIndexInformer, namespaceGetter NamespaceGetter) *certMonitor {
 	return &certMonitor{
-		informerfactory: informerFactory,
-		secretInformer:  secretInformer, // pragma: allowlist secret
-		config:          config,
-		namespaceGetter: namespaceGetter,
-		metrics:         fleetshardmetrics.MetricsInstance(),
+		informerfactory:   informerFactory,
+		secretInformer:    secretInformer, // pragma: allowlist secret
+		config:            config,
+		namespaceInformer: namespaceInformer, // pragma: allowlist secret
+		namespaceGetter:   namespaceGetter,
+		metrics:           fleetshardmetrics.MetricsInstance(),
 	}
 }
 
@@ -156,6 +168,15 @@ func (c *certMonitor) handleSecretDeletion(obj interface{}) {
 		return
 	}
 	c.metrics.DeleteCertMetric(secret.Namespace, secret.Name)
+}
+
+func (c *certMonitor) handleNamespaceDeletion(obj interface{}) {
+	namespace, ok := obj.(*corev1.Namespace)
+	if !ok {
+		return
+	}
+
+	c.metrics.DeleteCertNamespaceMetric(namespace.Name)
 }
 
 func (c *certMonitor) shouldProcessSecret(s *corev1.Secret) bool {

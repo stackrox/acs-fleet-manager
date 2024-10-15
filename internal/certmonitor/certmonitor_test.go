@@ -290,8 +290,8 @@ func TestCertMonitor_secretMatches(t *testing.T) {
 	}
 }
 
-// TestCertMonitor func tests certificates event handlers + prometheus metrics handling
-func TestCertMonitor(t *testing.T) {
+// TestCertMonitor_Secret tests that secret event handlers correctly populate prometheus metrics
+func TestCertMonitor_Secret(t *testing.T) {
 	fleetshardmetrics.MetricsInstance().CertificatesExpiry.Reset()
 
 	namespaces := []v1.Namespace{
@@ -342,6 +342,53 @@ func TestCertMonitor(t *testing.T) {
 	verifyPrometheusMetric(t, "namespace-1", "secret-1", "tls-1.crt", updatedUnix)
 
 	certMonitor.handleSecretDeletion(secretUpdated)
+	verifyPrometheusMetricDelete(t, "namespace-1", "secret-1", "tls.crt")
+}
+
+// TestCertMonitor_Namespace tests that namespace secret handlers remove prometheus metrics when the namespace is deleted
+func TestCertMonitor_Namespace(t *testing.T) {
+	fleetshardmetrics.MetricsInstance().CertificatesExpiry.Reset()
+
+	namespaces := []v1.Namespace{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "namespace-1",
+				Labels: map[string]string{
+					"foo": "bar"},
+			},
+		},
+	}
+	certMonitor := &certMonitor{
+		namespaceGetter: newFakeNamespaceGetter(namespaces),
+		metrics:         fleetshardmetrics.MetricsInstance(),
+		config: &Config{
+			Monitors: []MonitorConfig{
+				{
+					Namespace: SelectorConfig{
+						Name: "namespace-1",
+					},
+					Secret: SelectorConfig{ // pragma: allowlist secret
+						Name: "secret-1",
+					},
+				},
+			},
+		},
+	}
+	now1 := time.Now().UTC()
+	expirytime := now1.Add(1 * time.Hour)
+
+	mockNamespace := &v1.Namespace{ // pragma: allowlist secret
+		ObjectMeta: metav1.ObjectMeta{Name: "namespace-1"},
+	}
+	secret := &v1.Secret{ // pragma: allowlist secret
+		ObjectMeta: metav1.ObjectMeta{Namespace: mockNamespace.Name, Name: "secret-1"},
+		Data:       map[string][]byte{"tls.crt": generateCertWithExpiration(t, expirytime)},
+	}
+	expirationUnix := float64(expirytime.Unix())
+	certMonitor.handleSecretCreation(secret)
+	verifyPrometheusMetric(t, "namespace-1", "secret-1", "tls.crt", expirationUnix)
+
+	certMonitor.handleNamespaceDeletion(mockNamespace)
 	verifyPrometheusMetricDelete(t, "namespace-1", "secret-1", "tls.crt")
 
 }
