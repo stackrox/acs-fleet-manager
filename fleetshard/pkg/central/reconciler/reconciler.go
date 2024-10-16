@@ -252,7 +252,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	} else {
 
 		{
-			// This little part would only happen if we enable, then disable ArgoCD for a tenant
+			// This part handles the case where we enable, then disable ArgoCD for a tenant
+			// to make sure the ArgoCD application is cleaned up.
 			ok, err := r.ensureArgoCdApplicationDeleted(ctx, remoteCentral)
 			if err != nil {
 				return nil, errors.Wrapf(err, "unable to delete ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
@@ -1803,7 +1804,7 @@ func (r *CentralReconciler) isTenantResourcesChartObject(existingObject *unstruc
 func (r *CentralReconciler) ensureArgoCdApplicationExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	const lastAppliedHashLabel = "last-applied-hash"
 
-	want, err := r.getArgoCDApplication(remoteCentral)
+	want, err := r.makeDesiredArgoCDApplication(remoteCentral)
 	if err != nil {
 		return fmt.Errorf("getting ArgoCD application: %w", err)
 	}
@@ -1839,7 +1840,7 @@ func (r *CentralReconciler) ensureArgoCdApplicationExists(ctx context.Context, r
 	return nil
 }
 
-func (r *CentralReconciler) getArgoCDApplication(remoteCentral private.ManagedCentral) (*argocd.Application, error) {
+func (r *CentralReconciler) makeDesiredArgoCDApplication(remoteCentral private.ManagedCentral) (*argocd.Application, error) {
 
 	values := map[string]interface{}{
 		"tenant": map[string]interface{}{
@@ -2253,6 +2254,9 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 
 		resourcesChart: resourcesChart,
 		clock:          realClock{},
+
+		// Todo: Allow overriding the tenant source path, repo URL, and ref
+		// on a per-tenant basis.
 
 		defaultTenantArgoCdAppSourcePath:    opts.DefaultTenantArgoCdAppSourcePath,
 		defaultTenantArgoCdAppSourceRepoURL: opts.DefaultTenantArgoCdAppSourceRepoURL,

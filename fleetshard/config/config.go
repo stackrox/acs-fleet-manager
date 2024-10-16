@@ -36,9 +36,9 @@ type Config struct {
 	// It is required when central images need to fetched from a private Quay registry.
 	// It needs to given as Docker Config JSON object.
 	TenantImagePullSecret               string `env:"TENANT_IMAGE_PULL_SECRET"`
-	DefaultTenantArgoCdAppSourceRepoURL string `env:"TENANT_ARGOCD_APP_SOURCE_REPO_URL_DEFAULT" envDefault:"https://github.com/stackrox/acscs-manifests.git"`
-	DefaultTenantArgoCdAppSourceRef     string `env:"TENANT_ARGOCD_APP_SOURCE_REF_DEFAULT" envDefault:"HEAD"`
-	DefaultTenantArgoCdAppSourcePath    string `env:"TENANT_ARGOCD_APP_SOURCE_PATH_DEFAULT" envDefault:"tenant-resources"`
+	DefaultTenantArgoCdAppSourceRepoURL string `env:"DEFAULT_TENANT_ARGOCD_APP_SOURCE_REPO_URL" envDefault:"https://github.com/stackrox/acscs-manifests.git"`
+	DefaultTenantArgoCdAppSourceRef     string `env:"DEFAULT_TENANT_ARGOCD_APP_SOURCE_REF" envDefault:"HEAD"`
+	DefaultTenantArgoCdAppSourcePath    string `env:"DEFAULT_TENANT_ARGOCD_APP_SOURCE_PATH" envDefault:"tenant-resources"`
 	ManagedDB                           ManagedDB
 	Telemetry                           Telemetry
 	AuditLogging                        AuditLogging
