@@ -52,6 +52,17 @@ else
     log "Skipping installation of Vertical Pod Autoscaler"
 fi
 
+if [[ "$INSTALL_ARGOCD" == "true" ]]; then
+    log "Installing ArgoCD"
+    kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+elif [[ "$INSTALL_OPENSHIFT_GITOPS" == "true" ]]; then
+    log "Installing Openshift GitOps"
+    apply "${MANIFESTS_DIR}/openshift-gitops"
+else
+    log "One of ArgoCD or OpenShift GitOps must be installed"
+    exit 1
+fi
+
 # skip manifests if openshift cluster using is_openshift_cluster
 if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     apply "${MANIFESTS_DIR}/monitoring"
