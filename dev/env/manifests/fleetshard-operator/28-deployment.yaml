@@ -32,6 +32,8 @@ spec:
                 fieldPath: metadata.namespace
           - name: ADDON_NAME
             value: acs-fleetshard-dev
+          - name: OPENSHIFT_GITOPS_NAMESPACE
+            value: "${OPENSHIFT_GITOPS_NAMESPACE}"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

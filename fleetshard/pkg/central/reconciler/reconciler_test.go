@@ -64,7 +64,9 @@ const (
 var (
 	defaultCentralConfig = private.ManagedCentral{}
 
-	defaultReconcilerOptions = CentralReconcilerOptions{}
+	defaultReconcilerOptions = CentralReconcilerOptions{
+		OpenshiftGitopsNamespace: "openshift-gitops",
+	}
 
 	useRoutesReconcilerOptions           = CentralReconcilerOptions{UseRoutes: true}
 	secureTenantNetworkReconcilerOptions = CentralReconcilerOptions{SecureTenantNetwork: true}
@@ -2731,7 +2733,7 @@ func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
 
 	assertArgoCdAppPresent := func(t *testing.T, present bool) {
 		var app argocd.Application
-		objectKey := client.ObjectKey{Name: managedCentral.Metadata.Namespace, Namespace: openshiftGitopsNamespace}
+		objectKey := client.ObjectKey{Name: managedCentral.Metadata.Namespace, Namespace: "openshift-gitops"}
 		err := cli.Get(ctx, objectKey, &app)
 		if present {
 			require.NoError(t, err)
@@ -2770,4 +2772,11 @@ func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
 		assertLegacyChartPresent(t, false)
 	}
 
+}
+
+func Test_ReconcilerSetsArgoCDNamespaceLabel(t *testing.T) {
+	// We must set the "argocd.argoproj.io/managed-by" label on the namespace
+	// so that ArgoCD has the correct permissions to manage the resources in the namespace
+	r := CentralReconciler{openshiftGitopsNamespace: "foo"}
+	assert.Equal(t, "foo", r.getNamespaceLabels(private.ManagedCentral{})["argocd.argoproj.io/managed-by"])
 }
