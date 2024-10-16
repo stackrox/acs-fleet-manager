@@ -64,7 +64,9 @@ const (
 var (
 	defaultCentralConfig = private.ManagedCentral{}
 
-	defaultReconcilerOptions = CentralReconcilerOptions{}
+	defaultReconcilerOptions = CentralReconcilerOptions{
+		OpenshiftGitopsNamespace: "openshift-gitops",
+	}
 
 	useRoutesReconcilerOptions           = CentralReconcilerOptions{UseRoutes: true}
 	secureTenantNetworkReconcilerOptions = CentralReconcilerOptions{SecureTenantNetwork: true}
@@ -2731,7 +2733,7 @@ func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
 
 	assertArgoCdAppPresent := func(t *testing.T, present bool) {
 		var app argocd.Application
-		objectKey := client.ObjectKey{Name: managedCentral.Metadata.Namespace, Namespace: openshiftGitopsNamespace}
+		objectKey := client.ObjectKey{Name: managedCentral.Metadata.Namespace, Namespace: "openshift-gitops"}
 		err := cli.Get(ctx, objectKey, &app)
 		if present {
 			require.NoError(t, err)

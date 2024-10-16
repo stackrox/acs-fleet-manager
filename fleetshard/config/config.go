@@ -39,12 +39,14 @@ type Config struct {
 	DefaultTenantArgoCdAppSourceRepoURL string `env:"TENANT_ARGOCD_APP_SOURCE_REPO_URL_DEFAULT" envDefault:"https://github.com/stackrox/acscs-manifests.git"`
 	DefaultTenantArgoCdAppSourceRef     string `env:"TENANT_ARGOCD_APP_SOURCE_REF_DEFAULT" envDefault:"HEAD"`
 	DefaultTenantArgoCdAppSourcePath    string `env:"TENANT_ARGOCD_APP_SOURCE_PATH_DEFAULT" envDefault:"tenant-resources"`
-	ManagedDB                           ManagedDB
-	Telemetry                           Telemetry
-	AuditLogging                        AuditLogging
-	SecretEncryption                    SecretEncryption
-	RouteParameters                     RouteConfig
-	FleetshardAddonName                 string `env:"FLEETSHARD_ADDON_NAME" envDefault:"acs-fleetshard"`
+	OpenshiftGitopsNamespace            string `env:"OPENSHIFT_GITOPS_NAMESPACE" envDefault:"openshift-gitops"`
+
+	ManagedDB           ManagedDB
+	Telemetry           Telemetry
+	AuditLogging        AuditLogging
+	SecretEncryption    SecretEncryption
+	RouteParameters     RouteConfig
+	FleetshardAddonName string `env:"FLEETSHARD_ADDON_NAME" envDefault:"acs-fleetshard"`
 
 	// The SecureTenantNetwork option controls whether the Tenant's K8s
 	// Namespace will be secured at the network level, e.g. by using

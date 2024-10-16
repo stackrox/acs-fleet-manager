@@ -145,6 +145,7 @@ func (r *Runtime) Start() error {
 		DefaultTenantArgoCdAppSourceRef:     r.config.DefaultTenantArgoCdAppSourceRef,
 		DefaultTenantArgoCdAppSourcePath:    r.config.DefaultTenantArgoCdAppSourcePath,
 		DefaultTenantArgoCdAppSourceRepoURL: r.config.DefaultTenantArgoCdAppSourceRepoURL,
+		OpenshiftGitopsNamespace:            r.config.OpenshiftGitopsNamespace,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {

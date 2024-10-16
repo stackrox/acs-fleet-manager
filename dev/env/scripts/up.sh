@@ -54,7 +54,7 @@ if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-tls 2> /dev/null || true
     $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-envoy-tls 2> /dev/null || true
     $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-active-tls 2> /dev/null || true
-    # Create the redhat-pull-secret in the rhacs-vertical-pod-autoscaler namespace
+    # Create the redhat-pull-secret
     make -C "$GITROOT" deploy/redhat-pull-secret
 fi
 
@@ -78,7 +78,7 @@ apply "${MANIFESTS_DIR}/fleetshard-operator"
 
 wait_for_container_to_appear "$ACSCS_NAMESPACE" "app=fleetshard-sync" "fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
-    $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
+    $KUBECTL -n "$ACSCS_NAMESPACE" logs -l app=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
 fi
 
 if [[ "$ENABLE_EMAIL_SENDER" == "true" ]]; then

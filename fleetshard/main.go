@@ -48,6 +48,8 @@ func main() {
 	glog.Infof("ManagedDB.Enabled: %t", config.ManagedDB.Enabled)
 	glog.Infof("ManagedDB.SecurityGroup: %s", config.ManagedDB.SecurityGroup)
 	glog.Infof("ManagedDB.SubnetGroup: %s", config.ManagedDB.SubnetGroup)
+	glog.Infof("Openshift Gitops Namespace: %s", config.OpenshiftGitopsNamespace)
+
 	if len(config.TenantImagePullSecret) > 0 {
 		glog.Infof("Image pull secret configured, will be injected into tenant namespaces.")
 	}

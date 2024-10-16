@@ -54,7 +54,8 @@ fi
 
 if [[ "$INSTALL_ARGOCD" == "true" ]]; then
     log "Installing ArgoCD"
-    kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+    kubectl create ns argocd || true
+    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 elif [[ "$INSTALL_OPENSHIFT_GITOPS" == "true" ]]; then
     log "Installing Openshift GitOps"
     apply "${MANIFESTS_DIR}/openshift-gitops"
