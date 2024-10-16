@@ -2773,3 +2773,10 @@ func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
 	}
 
 }
+
+func Test_ReconcilerSetsArgoCDNamespaceLabel(t *testing.T) {
+	// We must set the "argocd.argoproj.io/managed-by" label on the namespace
+	// so that ArgoCD has the correct permissions to manage the resources in the namespace
+	r := CentralReconciler{openshiftGitopsNamespace: "foo"}
+	assert.Equal(t, "foo", r.getNamespaceLabels(private.ManagedCentral{})["argocd.argoproj.io/managed-by"])
+}
