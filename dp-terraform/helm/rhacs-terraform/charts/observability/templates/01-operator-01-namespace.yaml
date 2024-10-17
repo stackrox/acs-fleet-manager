@@ -3,7 +3,7 @@ kind: Namespace
 metadata:
   name: {{ include "observability.namespace" . }}
   annotations:
-    {{/* Keep the namespace to retain PVCs after uninstall */}}
+    # Keep the namespace to retain PVCs after uninstall
     helm.sh/resource-policy: keep
   labels:
     argocd.argoproj.io/managed-by: openshift-gitops
