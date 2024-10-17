@@ -6,10 +6,12 @@ import (
 
 	"github.com/gruntwork-io/terratest/modules/helm"
 	"github.com/gruntwork-io/terratest/modules/k8s"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestHelmTemplate_FleetshardSyncDeployment_ServiceAccountTokenAuthType(t *testing.T) {
@@ -273,6 +275,61 @@ func TestHelmTemplate_ObservabilityCR_blackboxExporterEnabled(t *testing.T) {
 
 				disablBlackboxExporter := *observability.Spec.SelfContained.DisableBlackboxExporter
 				require.Equal(t, tt.wantDisabled, disablBlackboxExporter)
+			}
+		})
+	}
+}
+
+func TestHelmTemplate_ObservabilityCR_enabled(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		enabled string
+		wantErr string
+	}{
+		{
+			name:    "should enable CR by default",
+			enabled: "true",
+		},
+		{
+			name:    "should not install CR when the value is disabled",
+			enabled: "false",
+			wantErr: "could not find template",
+		},
+		{
+			name:    "should install CR when the value is enabled",
+			enabled: "true",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			values := map[string]string{
+				"secured-cluster.enabled":          "false",
+				"fleetshardSync.managedDB.enabled": "false",
+			}
+			if tt.enabled != "" {
+				values["observability.customResourceEnabled"] = tt.enabled
+			}
+
+			releaseName := "rhacs-terraform"
+			namespaceName := "rhacs"
+			helmChartPath, err := filepath.Abs("../helm/rhacs-terraform")
+			require.NoError(t, err)
+
+			options := &helm.Options{
+				SetValues:      values,
+				KubectlOptions: k8s.NewKubectlOptions("", "", namespaceName),
+			}
+
+			output, err := helm.RenderTemplateE(t, options, helmChartPath, releaseName, []string{"charts/observability/templates/01-operator-06-cr.yaml"})
+			if tt.wantErr != "" {
+				assert.ErrorContainsf(t, err, tt.wantErr, "error = %v, wantErr = %q", err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				var observability unstructured.Unstructured
+				helm.UnmarshalK8SYaml(t, output, &observability) // also asserts that there's no error
 			}
 		})
 	}

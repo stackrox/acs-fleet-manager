@@ -1,3 +1,4 @@
+{{- if .Values.customResourceEnabled }}
 apiVersion: observability.redhat.com/v1
 kind: Observability
 metadata:
@@ -101,3 +102,4 @@ spec:
           resources:
             requests:
               storage: {{ .Values.prometheus.resources.requests.storage | quote }}
+{{- end }}

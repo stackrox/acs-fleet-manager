@@ -6,6 +6,7 @@
 # https://github.com/redhat-developer/observability-operator/releases
 observabilityOperatorVersion: "v4.2.1"
 
+customResourceEnabled: true
 github:
   repository: "https://api.github.com/repos/stackrox/rhacs-observability-resources/contents"
   tag: "master"
