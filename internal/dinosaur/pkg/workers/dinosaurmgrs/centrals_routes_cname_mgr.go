@@ -62,7 +62,7 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 			if central.RoutesCreationID == "" {
 				glog.Infof("creating CNAME records for central %s", central.ID)
 
-				changeOutput, err := k.centralService.ChangeCentralCNAMErecords(central, services.CentralRoutesActionCreate)
+				changeOutput, err := k.centralService.ChangeCentralCNAMErecords(central, services.CentralRoutesActionUpsert)
 
 				if err != nil {
 					errs = append(errs, err)
