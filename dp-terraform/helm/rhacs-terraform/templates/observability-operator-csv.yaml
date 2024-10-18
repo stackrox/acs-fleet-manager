@@ -1,0 +1,16 @@
+{{/* This template does not create a CSV (this should be done by OLM).
+The existing CSV is deleted when disabling the subchart, with the help of helm hooks.*/}}
+{{- if not .Values.observability.enabled }}
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  name: observability-operator.{{ .Values.observability.observabilityOperatorVersion }}
+  namespace: {{ .Release.Namespace }}-observability
+  annotations:
+    "helm.sh/hook": "post-upgrade"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  displayName: "dummy"
+  install:
+    strategy: ""
+{{- end }}
