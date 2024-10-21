@@ -22,10 +22,10 @@ func NewNamespaceReconciler(client ctrlClient.Client) *NamespaceReconciler {
 	return &NamespaceReconciler{Client: client}
 }
 
-// EnsureNamespaceDeleted sends a delete request for K8s namespace with given name
+// EnsureDeleted sends a delete request for K8s namespace with given name
 // it return true if the namespace doesn't exist anymore.
 // It will not send additional delete requests if the NS is already in state terminating
-func (r *NamespaceReconciler) EnsureNamespaceDeleted(ctx context.Context, name string) (bool, error) {
+func (r *NamespaceReconciler) EnsureDeleted(ctx context.Context, name string) (bool, error) {
 	namespace, err := r.GetNamespaceObj(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -43,8 +43,8 @@ func (r *NamespaceReconciler) EnsureNamespaceDeleted(ctx context.Context, name s
 	return false, nil
 }
 
-// ReconcileNamespace reconciles the given namespace in cluster to fit to the given desired namespace
-func (r *NamespaceReconciler) ReconcileNamespace(ctx context.Context, desiredNamespace *corev1.Namespace) error {
+// Reconcile reconciles the given namespace in cluster to fit to the given desired namespace
+func (r *NamespaceReconciler) Reconcile(ctx context.Context, desiredNamespace *corev1.Namespace) error {
 	existingNamespace, err := r.GetNamespaceObj(desiredNamespace.Name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {

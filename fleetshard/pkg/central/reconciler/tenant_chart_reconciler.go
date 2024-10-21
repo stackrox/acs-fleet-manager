@@ -37,8 +37,8 @@ func (r *TenantChartReconciler) WithChart(c *chart.Chart) *TenantChartReconciler
 	return r
 }
 
-// EnsureChartResourcesExist installs or updates the chart for remoteCentral on the Kuberntes cluster
-func (r *TenantChartReconciler) EnsureChartResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
+// EnsureResourcesExist installs or updates the chart for remoteCentral on the Kuberntes cluster
+func (r *TenantChartReconciler) EnsureResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	getObjectKey := func(obj *unstructured.Unstructured) string {
 		return fmt.Sprintf("%s/%s/%s",
 			obj.GetAPIVersion(),
@@ -133,8 +133,8 @@ func (r *TenantChartReconciler) EnsureChartResourcesExist(ctx context.Context, r
 	return nil
 }
 
-// EnsureChartResourcesDeleted deletes all resources associated with the chart and namepsace from the Kubernetes cluster
-func (r *TenantChartReconciler) EnsureChartResourcesDeleted(ctx context.Context, namespace string) (bool, error) {
+// EnsureResourcesDeleted deletes all resources associated with the chart and namepsace from the Kubernetes cluster
+func (r *TenantChartReconciler) EnsureResourcesDeleted(ctx context.Context, namespace string) (bool, error) {
 	allObjectsDeleted := true
 
 	for _, gvk := range tenantChartResourceGVKs {
