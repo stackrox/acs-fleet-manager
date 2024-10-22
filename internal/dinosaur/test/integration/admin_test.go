@@ -101,6 +101,10 @@ func TestAssignCluster(t *testing.T) {
 	require.Nil(t, cr.Routes, "Stored Routes content should be nil.")
 	require.Empty(t, cr.RoutesCreationID, "Stored RoutesCreationID should be reset to empty string")
 	require.Equal(t, constants2.CentralRequestStatusProvisioning.String(), cr.Status, "Status should change from ready to provisioning.")
+	require.True(t, cr.EnteredProvisionig.Valid, "EnteredProvisioning time should be valid")
+	// can't require only after here as this might introduce a timing flake when this test runs through faster then
+	// the precision of the stored time
+	require.True(t, cr.CreatedAt.Equal(cr.EnteredProvisionig.Time) || cr.CreatedAt.After(cr.EnteredProvisionig.Time))
 }
 
 func TestAssignClusterCentralMismatch(t *testing.T) {
