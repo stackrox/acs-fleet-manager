@@ -148,6 +148,8 @@ func (r *Runtime) Start() error {
 		ArgoCdNamespace:                            r.config.ArgoCdNamespace,
 	}
 
+	tenantCleanup := centralReconciler.NewTenantCleanup(r.k8sClient, r.config.SecureTenantNetwork)
+
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, _, err := r.client.PrivateAPI().GetCentrals(ctx, r.clusterID)
 		if err != nil {
@@ -230,6 +232,13 @@ func (r *Runtime) Start() error {
 		}
 
 		r.deleteStaleReconcilers(&list)
+
+		if features.ClusterMigration.Enabled() {
+			if err := tenantCleanup.DeleteStaleTenantK8sResources(ctx, &list); err != nil {
+				glog.Errorf("Failed to delete stale tenant k8s resources: %s", err.Error())
+			}
+		}
+
 		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
 
