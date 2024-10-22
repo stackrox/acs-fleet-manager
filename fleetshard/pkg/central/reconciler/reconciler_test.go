@@ -64,7 +64,9 @@ const (
 var (
 	defaultCentralConfig = private.ManagedCentral{}
 
-	defaultReconcilerOptions = CentralReconcilerOptions{}
+	defaultReconcilerOptions = CentralReconcilerOptions{
+		ArgoCdNamespace: "openshift-gitops",
+	}
 
 	useRoutesReconcilerOptions           = CentralReconcilerOptions{UseRoutes: true}
 	secureTenantNetworkReconcilerOptions = CentralReconcilerOptions{SecureTenantNetwork: true}

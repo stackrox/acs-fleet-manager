@@ -130,6 +130,7 @@ type CentralReconcilerOptions struct {
 	DefaultTenantArgoCdAppSourceRepoURL string
 	DefaultTenantArgoCdAppSourceRef     string
 	DefaultTenantArgoCdAppSourcePath    string
+	ArgoCdNamespace                     string
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -172,6 +173,7 @@ type CentralReconciler struct {
 	defaultTenantArgoCdAppSourceRepoURL string
 	defaultTenantArgoCdAppSourceRef     string
 	defaultTenantArgoCdAppSourcePath    string
+	argoCdNamespace                     string
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -1235,7 +1237,7 @@ func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespace
 }
 
 func (r *CentralReconciler) reconcileNamespace(ctx context.Context, c private.ManagedCentral) error {
-	desiredNamespace := getDesiredNamespace(c)
+	desiredNamespace := r.getDesiredNamespace(c)
 
 	existingNamespace, err := r.getNamespace(desiredNamespace.Name)
 	if err != nil {
@@ -1272,12 +1274,12 @@ func (r *CentralReconciler) reconcileNamespace(ctx context.Context, c private.Ma
 	return nil
 }
 
-func getDesiredNamespace(c private.ManagedCentral) *corev1.Namespace {
+func (r *CentralReconciler) getDesiredNamespace(c private.ManagedCentral) *corev1.Namespace {
 	return &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        c.Metadata.Namespace,
 			Annotations: getNamespaceAnnotations(c),
-			Labels:      getNamespaceLabels(c),
+			Labels:      r.getNamespaceLabels(c),
 		},
 	}
 }
@@ -2020,12 +2022,12 @@ func getTenantAnnotations(c private.ManagedCentral) map[string]string {
 	}
 }
 
-func getNamespaceLabels(c private.ManagedCentral) map[string]string {
+func (r *CentralReconciler) getNamespaceLabels(c private.ManagedCentral) map[string]string {
 	ret := map[string]string{}
 	for k, v := range getTenantLabels(c) {
 		ret[k] = v
 	}
-	ret[argoCdManagedBy] = openshiftGitopsNamespace
+	ret[argoCdManagedBy] = r.argoCdNamespace
 	return ret
 }
 
@@ -2261,6 +2263,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		defaultTenantArgoCdAppSourcePath:    opts.DefaultTenantArgoCdAppSourcePath,
 		defaultTenantArgoCdAppSourceRepoURL: opts.DefaultTenantArgoCdAppSourceRepoURL,
 		defaultTenantArgoCdAppSourceRef:     opts.DefaultTenantArgoCdAppSourceRef,
+		argoCdNamespace:                     opts.ArgoCdNamespace,
 	}
 	r.needsReconcileFunc = r.needsReconcile
 
