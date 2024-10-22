@@ -164,6 +164,7 @@ func centralDBInitFunc(_ context.Context, _ postgres.DBConnection, _, _ string) 
 }
 
 func centralTLSSecretObject() *v1.Secret {
+
 	return &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "central-tls",
@@ -546,8 +547,8 @@ func TestReconcileDelete(t *testing.T) {
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	assert.True(t, k8sErrors.IsNotFound(err))
 
-	route := &openshiftRouteV1.Route{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
+	namespace := &v1.Namespace{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
 	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
@@ -614,12 +615,8 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	assert.True(t, k8sErrors.IsNotFound(err))
 
-	route := &openshiftRouteV1.Route{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
-	assert.True(t, k8sErrors.IsNotFound(err))
-
-	secret := &v1.Secret{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralDbSecretName, Namespace: centralNamespace}, secret)
+	namespace := &v1.Namespace{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
 	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
@@ -833,7 +830,9 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 		nil,
 		defaultReconcilerOptions,
 	)
-	r.resourcesChart = chart
+	r.tenantChartReconciler = NewTenantChartReconciler(fakeClient, true).WithChart(chart)
+	r.tenantCleanup = NewTenantCleanup(fakeClient, true)
+	r.tenantCleanup.chart = chart
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -899,7 +898,7 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 		nil,
 		defaultReconcilerOptions,
 	)
-	r.resourcesChart = chart
+	r.tenantChartReconciler = NewTenantChartReconciler(fakeClient, true).WithChart(chart)
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -2299,7 +2298,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 			}
 			updateCount := 0
 			createCount := 0
-			r.client = interceptor.NewClient(fakeClient, interceptor.Funcs{
+			r.namespaceReconciler.Client = interceptor.NewClient(fakeClient, interceptor.Funcs{
 				Update: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
 					updateCount++
 					return client.Update(ctx, obj, opts...)

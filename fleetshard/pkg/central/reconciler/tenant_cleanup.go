@@ -7,6 +7,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"helm.sh/helm/v3/pkg/chart"
 	"k8s.io/kubernetes/pkg/apis/core"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -18,6 +19,7 @@ const crNameLabelKey = "app.kubernetes.io/instance"
 type TenantCleanup struct {
 	k8sClient           ctrlClient.Client
 	secureTenantNetwork bool
+	chart               *chart.Chart
 }
 
 // NewTenantCleanup returns a new TenantCleanup using given arguments
@@ -67,6 +69,10 @@ func (t *TenantCleanup) DeleteK8sResources(ctx context.Context, namespace string
 	globalDeleted := true
 
 	chartReconciler := NewTenantChartReconciler(t.k8sClient, t.secureTenantNetwork)
+	if t.chart != nil {
+		chartReconciler = chartReconciler.WithChart(t.chart)
+	}
+
 	deleted, err := chartReconciler.EnsureResourcesDeleted(ctx, namespace)
 	if err != nil {
 		return false, fmt.Errorf("Failed to delete chart resources in namespace %q: %w", namespace, err)
