@@ -387,12 +387,14 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 	}
 
 	// UpdateIgnoreNils the fields of the CentralRequest record in the database.
+	now := time.Now()
 	updatedCentralRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
-		OrganisationName: orgName,
-		Status:           dinosaurConstants.CentralRequestStatusProvisioning.String(),
+		OrganisationName:   orgName,
+		Status:             dinosaurConstants.CentralRequestStatusProvisioning.String(),
+		EnteredProvisionig: dbapi.TimePtrToNullTime(&now),
 	}
 	if err := k.UpdateIgnoreNils(updatedCentralRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update central request")
@@ -901,13 +903,16 @@ func (k *dinosaurService) AssignCluster(ctx context.Context, centralID string, c
 	central.Routes = nil
 	central.RoutesCreationID = ""
 	central.Status = dinosaurConstants.CentralRequestStatusProvisioning.String()
+	now := time.Now()
+	central.EnteredProvisionig = dbapi.TimePtrToNullTime(&now)
 
 	return k.Updates(central, map[string]interface{}{
-		"cluster_id":         central.ClusterID,
-		"routes_created":     central.RoutesCreated,
-		"routes":             central.Routes,
-		"status":             central.Status,
-		"routes_creation_id": central.RoutesCreationID,
+		"cluster_id":           central.ClusterID,
+		"routes_created":       central.RoutesCreated,
+		"routes":               central.Routes,
+		"status":               central.Status,
+		"routes_creation_id":   central.RoutesCreationID,
+		"entered_provisioning": central.EnteredProvisionig,
 	})
 }
 

@@ -55,6 +55,7 @@ func getMigrations() []*gormigrate.Migration {
 		addAlternateUserIDFieldToCentralRequests(),
 		addTraitsFieldToCentralRequests(),
 		addSecretDataSha256SumToCentralRequest(),
+		addEnteredProvisioningToCentralRequest(),
 	}
 }
 
