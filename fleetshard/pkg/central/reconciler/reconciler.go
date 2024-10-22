@@ -968,7 +968,7 @@ func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCen
 func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (bool, error) {
 	globalDeleted := true
 
-	k8sResourcesDeleted, err := r.tenantCleanup.DeleteK8sResources(ctx, remoteCentral.Metadata.Namespace)
+	k8sResourcesDeleted, err := r.tenantCleanup.DeleteK8sResources(ctx, remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	if err != nil {
 		return false, err
 	}

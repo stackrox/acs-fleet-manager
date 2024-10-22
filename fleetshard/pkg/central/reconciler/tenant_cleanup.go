@@ -11,6 +11,8 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const crNameLabelKey = "app.kubernetes.io/instance"
+
 // TenantCleanup defines methods to cleanup Kubernetes resources and namespaces for tenants
 // that are no longer in the list of tenants fleetshard-sync schould run on a cluster
 type TenantCleanup struct {
@@ -36,18 +38,18 @@ func (t *TenantCleanup) DeleteStaleTenantK8sResources(ctx context.Context, centr
 		return nil
 	}
 
-	namespaceNames := make(map[string]bool, len(namespaceList.Items))
+	namespaceNameToCrName := make(map[string]string, len(namespaceList.Items))
 	for _, ns := range namespaceList.Items {
-		namespaceNames[ns.Name] = true
+		namespaceNameToCrName[ns.Name] = ns.Labels[crNameLabelKey]
 	}
 
 	for _, central := range centralListFromFmAPI.Items {
 		// the namespaceName is equal to the ID of a central
-		delete(namespaceNames, central.Id)
+		delete(namespaceNameToCrName, central.Id)
 	}
 
-	for namespace := range namespaceNames {
-		if _, err := t.DeleteK8sResources(ctx, namespace); err != nil {
+	for namespace, crName := range namespaceNameToCrName {
+		if _, err := t.DeleteK8sResources(ctx, namespace, crName); err != nil {
 			glog.Errorf("Failed to delete k8s resources for central: %s: %s", namespace, err.Error())
 		}
 	}
@@ -57,7 +59,7 @@ func (t *TenantCleanup) DeleteStaleTenantK8sResources(ctx context.Context, centr
 
 // DeleteK8sResources deletes all associated resources for a managed central from the cluster.
 // Returns potential errors and a bool indicating whether deletion went through successfully
-func (t *TenantCleanup) DeleteK8sResources(ctx context.Context, namespace string) (bool, error) {
+func (t *TenantCleanup) DeleteK8sResources(ctx context.Context, namespace string, tenantName string) (bool, error) {
 	// Deleting the NS is not enough to cleanup a tenant as there could be non-namespaced resources
 	// within the tenant resource chart or created by the CR. Because of that we delete chart and CR first
 	// to allow propper cleanup of such resources throug helm/ACS operator before removing the namespace.
@@ -73,8 +75,7 @@ func (t *TenantCleanup) DeleteK8sResources(ctx context.Context, namespace string
 
 	crReconciler := NewCentralCrReconciler(t.k8sClient)
 
-	// TODO(ROX-26277): add logic to figure out the actual CR name here
-	deleted, err = crReconciler.EnsureDeleted(ctx, namespace, "")
+	deleted, err = crReconciler.EnsureDeleted(ctx, namespace, tenantName)
 	if err != nil {
 		return false, fmt.Errorf("Failed to delete central CR in namespace %q: %w", namespace, err)
 	}
