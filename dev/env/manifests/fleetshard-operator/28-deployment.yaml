@@ -32,8 +32,6 @@ spec:
                 fieldPath: metadata.namespace
           - name: ADDON_NAME
             value: acs-fleetshard-dev
-          - name: ARGOCD_NAMESPACE
-            value: "${ARGOCD_NAMESPACE}"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
