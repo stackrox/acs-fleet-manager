@@ -363,6 +363,10 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		resourcesChart:         resourcesChart,
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
+		namespaceReconciler:    NewNamespaceReconciler(fakeClient),
+		tenantChartReconciler:  NewTenantChartReconciler(fakeClient, true),
+		centralCrReconciler:    NewCentralCrReconciler(fakeClient),
+		tenantCleanup:          NewTenantCleanup(fakeClient, true),
 	}
 	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
 	r.needsReconcileFunc = r.needsReconcile
