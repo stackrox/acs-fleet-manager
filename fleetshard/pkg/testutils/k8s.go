@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/hashicorp/go-multierror"
 	"github.com/openshift/addon-operator/apis/addons"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
@@ -97,6 +98,7 @@ func NewScheme(t *testing.T) *runtime.Scheme {
 	require.NoError(t, openshiftRouteV1.Install(scheme))
 	require.NoError(t, openshiftOperatorV1.Install(scheme))
 	require.NoError(t, addons.AddToScheme(scheme))
+	require.NoError(t, argoCd.AddToScheme(scheme))
 
 	return scheme
 }

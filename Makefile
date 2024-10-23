@@ -920,7 +920,7 @@ deploy/dev-fast/fleet-manager: image/build
 
 deploy/dev-fast/fleetshard-sync: image/build
 	kubectl -n $(NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
-	kubectl -n $(NAMESPACE) delete pod -l application=fleetshard-sync
+	kubectl -n $(NAMESPACE) delete pod -l app=fleetshard-sync
 
 deploy/probe: IMAGE_REGISTRY?="$(external_image_registry)"
 deploy/probe: IMAGE_REPOSITORY?="$(probe_image_repository)"

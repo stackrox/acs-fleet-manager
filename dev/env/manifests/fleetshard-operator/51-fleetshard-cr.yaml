@@ -15,6 +15,7 @@ spec:
     environment: "dev"
     fleetManagerEndpoint: "http://fleet-manager:8000"
     secureTenantNetwork: $SECURE_TENANT_NETWORK
+    argoCdNamespace: $ARGOCD_NAMESPACE
     managedDB:
       enabled: $MANAGED_DB_ENABLED
       subnetGroup: "$MANAGED_DB_SUBNET_GROUP"
