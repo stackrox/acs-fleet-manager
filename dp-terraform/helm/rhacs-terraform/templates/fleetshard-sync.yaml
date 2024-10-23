@@ -134,6 +134,8 @@ spec:
         {{- end }}
         - name: RHACS_PRINT_CENTRAL_UPDATE_DIFF
           value: {{ .Values.fleetshardSync.printCentralUpdateDiff | quote }}
+        - name: ARGOCD_NAMESPACE
+          value: {{ .Values.fleetshardSync.argoCdNamespace | quote }}
         volumeMounts:
           - mountPath: /var/run/secrets/tokens
             name: tokens

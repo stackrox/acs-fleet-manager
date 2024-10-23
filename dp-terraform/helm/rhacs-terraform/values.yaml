@@ -65,6 +65,7 @@ fleetshardSync:
     name: ""
     key: .dockerconfigjson
   printCentralUpdateDiff: false
+  argoCdNamespace: openshift-gitops
 
 # Email sender service parameters
 # - enabled flag is used to completely enable/disable email sender service
