@@ -19,7 +19,7 @@ func addEnteredProvisioningToCentralRequest() *gormigrate.Migration {
 		db.Model
 		EnteredProvisioning sql.NullTime `json:"entered_provisioning"`
 	}
-	migrationID := "20240703120000"
+	migrationID := "20241022160000"
 
 	return &gormigrate.Migration{
 		ID: migrationID,
