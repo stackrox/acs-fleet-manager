@@ -14,8 +14,8 @@ import (
 // Returns true if timeout is exceeded, otherwise false.
 func FailIfTimeoutExceeded(centralService services.DinosaurService, timeout time.Duration, centralRequest *dbapi.CentralRequest) error {
 	referencePoint := centralRequest.CreatedAt
-	if centralRequest.EnteredProvisionig.Valid {
-		referencePoint = centralRequest.EnteredProvisionig.Time
+	if centralRequest.EnteredProvisioning.Valid {
+		referencePoint = centralRequest.EnteredProvisioning.Time
 	}
 
 	if referencePoint.Before(time.Now().Add(-timeout)) {

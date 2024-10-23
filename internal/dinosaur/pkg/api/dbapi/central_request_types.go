@@ -100,7 +100,7 @@ type CentralRequest struct {
 	// EnteredProvisioning is the timestamp when Central status was set to provisioning.
 	// It is required to track the provisioning duration and timeout on re-provision operations
 	// when the creation time is not reliable because it was way back in the past.
-	EnteredProvisionig sql.NullTime `json:"entered_provisioning"`
+	EnteredProvisioning sql.NullTime `json:"entered_provisioning"`
 
 	// Traits is a set of random strings assigned to an instance. Some traits
 	// can be hardcoded, and change some processing parameters.
