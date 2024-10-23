@@ -21,6 +21,8 @@ tenantResources:
       rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
     secureTenantNetwork: false
     centralRdsCidrBlock: "10.1.0.0/16"
+    argoCd:
+      enabled: true
     verticalPodAutoscalers:
       central:
         enabled: true

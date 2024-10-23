@@ -39,7 +39,7 @@ type Config struct {
 	DefaultTenantArgoCdAppSourceRepoURL string `env:"DEFAULT_TENANT_ARGOCD_APP_SOURCE_REPO_URL" envDefault:"https://github.com/stackrox/acscs-manifests.git"`
 	DefaultTenantArgoCdAppSourceRef     string `env:"DEFAULT_TENANT_ARGOCD_APP_SOURCE_REF" envDefault:"HEAD"`
 	DefaultTenantArgoCdAppSourcePath    string `env:"DEFAULT_TENANT_ARGOCD_APP_SOURCE_PATH" envDefault:"tenant-resources"`
-	ArgoCdNamespace                     string `env:"ARGOCD_NAMESPACE"`
+	ArgoCdNamespace                     string `env:"ARGOCD_NAMESPACE" envDefault:"openshift-gitops"`
 	ManagedDB                           ManagedDB
 	Telemetry                           Telemetry
 	AuditLogging                        AuditLogging

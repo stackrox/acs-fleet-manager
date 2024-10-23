@@ -2744,7 +2744,11 @@ func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
 
 	{
 		// Ensure argocd application is created
-		managedCentral.Spec.ArgoCd.Enabled = true
+		managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
+			"argoCd": map[string]interface{}{
+				"enabled": true,
+			},
+		}
 		_, err := r.Reconcile(ctx, managedCentral)
 		require.NoError(t, err)
 
@@ -2754,7 +2758,11 @@ func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
 
 	{
 		// Ensure argocd application is deleted
-		managedCentral.Spec.ArgoCd.Enabled = false
+		managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
+			"argoCd": map[string]interface{}{
+				"enabled": false,
+			},
+		}
 		_, err := r.Reconcile(ctx, managedCentral)
 		require.NoError(t, err)
 

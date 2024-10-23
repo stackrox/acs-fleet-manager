@@ -247,7 +247,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if remoteCentral.Spec.ArgoCd.Enabled {
+	if isArgoCdEnabledForTenant(remoteCentral) {
 		if err := r.ensureArgoCdApplicationExists(ctx, remoteCentral); err != nil {
 			return nil, errors.Wrapf(err, "unable to install ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		}
@@ -336,6 +336,30 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	glog.Infof("Returning central status %+v", logStatus)
 
 	return status, nil
+}
+
+func isArgoCdEnabledForTenant(remoteCentral private.ManagedCentral) bool {
+	tenantResourceValues := remoteCentral.Spec.TenantResourcesValues
+	if tenantResourceValues == nil {
+		return false
+	}
+	argoCdIntf, ok := tenantResourceValues["argoCd"]
+	if !ok {
+		return false
+	}
+	argoCd, ok := argoCdIntf.(map[string]interface{})
+	if !ok {
+		return false
+	}
+	enabled, ok := argoCd["enabled"]
+	if !ok {
+		return false
+	}
+	enabledBool, ok := enabled.(bool)
+	if !ok {
+		return false
+	}
+	return enabledBool
 }
 
 func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
@@ -1867,7 +1891,7 @@ func (r *CentralReconciler) makeDesiredArgoCDApplication(remoteCentral private.M
 	return &argocd.Application{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentral.Metadata.Namespace,
-			Namespace: openshiftGitopsNamespace,
+			Namespace: r.argoCdNamespace,
 		},
 		Spec: argocd.ApplicationSpec{
 			Project: "default",
