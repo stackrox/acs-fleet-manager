@@ -35,11 +35,9 @@ import (
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
@@ -138,6 +136,10 @@ type CentralReconciler struct {
 	lastCentralHashTime    time.Time
 	useRoutes              bool
 	Resources              bool
+	namespaceReconciler    *NamespaceReconciler
+	tenantChartReconciler  *TenantChartReconciler
+	centralCrReconciler    *CentralCrReconciler
+	tenantCleanup          *TenantCleanup
 	routeService           *k8s.RouteService
 	secretBackup           *k8s.SecretBackup
 	secretCipher           cipher.Cipher
@@ -145,7 +147,6 @@ type CentralReconciler struct {
 	clusterName            string
 	environment            string
 	auditLogging           config.AuditLogging
-	secureTenantNetwork    bool
 	encryptionKeyGenerator cipher.KeyGenerator
 
 	managedDBEnabled            bool
@@ -215,7 +216,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return status, err
 	}
 
-	if err := r.reconcileNamespace(ctx, remoteCentral); err != nil {
+	ns := getDesiredNamespace(remoteCentral)
+	if err := r.namespaceReconciler.Reconcile(ctx, ns); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
@@ -236,7 +238,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
+	if err := r.tenantChartReconciler.EnsureResourcesExist(ctx, remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
 	}
 
@@ -252,7 +254,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if err = r.reconcileCentral(ctx, &remoteCentral, central); err != nil {
+	if err = r.centralCrReconciler.Reconcile(ctx, &remoteCentral, central); err != nil {
 		return nil, err
 	}
 
@@ -661,74 +663,6 @@ func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Co
 	)
 }
 
-func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
-	remoteCentralName := remoteCentral.Metadata.Name
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
-	centralExists := true
-	existingCentral := v1alpha1.Central{}
-	centralKey := ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}
-	err := r.client.Get(ctx, centralKey, &existingCentral)
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return errors.Wrapf(err, "unable to check the existence of central %v", centralKey)
-		}
-		centralExists = false
-	}
-
-	if remoteCentral.Metadata.ExpiredAt != nil {
-		if central.GetAnnotations() == nil {
-			central.Annotations = map[string]string{}
-		}
-		central.Annotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
-	}
-
-	if !centralExists {
-		if central.GetAnnotations() == nil {
-			central.Annotations = map[string]string{}
-		}
-		if err := util.IncrementCentralRevision(central); err != nil {
-			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
-		}
-
-		glog.Infof("Creating Central %v", centralKey)
-		if err := r.client.Create(ctx, central); err != nil {
-			return errors.Wrapf(err, "creating new Central %v", centralKey)
-		}
-		glog.Infof("Central %v created", centralKey)
-	} else {
-		// perform a dry run to see if the update would change anything.
-		// This would apply the defaults and the mutating webhooks without actually updating the object.
-		// We can then compare the existing object with the object that would be resulting from the update.
-		// This will prevent unnecessary operator reconciliation loops.
-
-		desiredCentral := existingCentral.DeepCopy()
-		desiredCentral.Spec = *central.Spec.DeepCopy()
-		mergeLabelsAndAnnotations(central, desiredCentral)
-
-		requiresUpdate, err := centralNeedsUpdating(ctx, r.client, &existingCentral, desiredCentral)
-		if err != nil {
-			return errors.Wrapf(err, "checking if Central %v needs to be updated", centralKey)
-		}
-
-		if !requiresUpdate {
-			glog.Infof("Central %v is already up to date", centralKey)
-			return nil
-		}
-
-		if err := util.IncrementCentralRevision(desiredCentral); err != nil {
-			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
-		}
-
-		if err := r.client.Update(context.Background(), desiredCentral); err != nil {
-			return errors.Wrapf(err, "updating Central %v", centralKey)
-		}
-
-	}
-
-	return nil
-}
-
 func mergeLabelsAndAnnotations(from, into *v1alpha1.Central) {
 	if into.Annotations == nil {
 		into.Annotations = map[string]string{}
@@ -1001,24 +935,6 @@ func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, s
 	return nil
 }
 
-func (r *CentralReconciler) ensureDeclarativeConfigurationSecretCleaned(ctx context.Context, remoteCentralNamespace string) error {
-	secret := &corev1.Secret{}
-	secretKey := ctrlClient.ObjectKey{ // pragma: allowlist secret
-		Namespace: remoteCentralNamespace,
-		Name:      sensibleDeclarativeConfigSecretName,
-	}
-
-	err := r.client.Get(ctx, secretKey, secret)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
-
-	return r.client.Delete(ctx, secret)
-}
-
 func isRemoteCentralProvisioning(remoteCentral private.ManagedCentral) bool {
 	return remoteCentral.RequestStatus == centralConstants.CentralRequestStatusProvisioning.String()
 }
@@ -1051,34 +967,18 @@ func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCen
 
 func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (bool, error) {
 	globalDeleted := true
-	if r.useRoutes {
-		reencryptRouteDeleted, err := r.ensureReencryptRouteDeleted(ctx, central.GetNamespace())
-		if err != nil {
-			return false, err
-		}
-		passthroughRouteDeleted, err := r.ensurePassthroughRouteDeleted(ctx, central.GetNamespace())
-		if err != nil {
-			return false, err
-		}
 
-		globalDeleted = globalDeleted && reencryptRouteDeleted && passthroughRouteDeleted
-	}
-
-	centralDeleted, err := r.ensureCentralCRDeleted(ctx, central)
+	k8sResourcesDeleted, err := r.tenantCleanup.DeleteK8sResources(ctx, remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	if err != nil {
 		return false, err
 	}
-	globalDeleted = globalDeleted && centralDeleted
+	globalDeleted = globalDeleted && k8sResourcesDeleted
 
 	podsTerminated, err := r.ensureInstancePodsTerminated(ctx, central)
 	if err != nil {
 		return false, err
 	}
 	globalDeleted = globalDeleted && podsTerminated
-
-	if err := r.ensureDeclarativeConfigurationSecretCleaned(ctx, central.GetNamespace()); err != nil {
-		return false, nil
-	}
 
 	if r.managedDBEnabled {
 		// skip Snapshot for remoteCentral created by probe
@@ -1098,25 +998,10 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 
 			return false, fmt.Errorf("deprovisioning DB: %v", err)
 		}
-
-		secretDeleted, err := r.ensureCentralDBSecretDeleted(ctx, central.GetNamespace())
-		if err != nil {
-			return false, err
-		}
-		globalDeleted = globalDeleted && secretDeleted
+		dbDeleted := true
+		globalDeleted = globalDeleted && dbDeleted
 	}
 
-	chartResourcesDeleted, err := r.ensureChartResourcesDeleted(ctx, remoteCentral)
-	if err != nil {
-		return false, err
-	}
-	globalDeleted = globalDeleted && chartResourcesDeleted
-
-	nsDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace())
-	if err != nil {
-		return false, err
-	}
-	globalDeleted = globalDeleted && nsDeleted
 	return globalDeleted, nil
 }
 
@@ -1160,14 +1045,6 @@ func (r *CentralReconciler) computeCentralHash(central private.ManagedCentral) (
 	return hash, nil
 }
 
-func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) {
-	var namespace corev1.Namespace
-	if err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, &namespace); err != nil {
-		return nil, fmt.Errorf("getting namespace %q: %w", name, err)
-	}
-	return &namespace, nil
-}
-
 func (r *CentralReconciler) getSecret(namespaceName string, secretName string) (*corev1.Secret, error) {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1200,44 +1077,6 @@ func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespace
 	return nil
 }
 
-func (r *CentralReconciler) reconcileNamespace(ctx context.Context, c private.ManagedCentral) error {
-	desiredNamespace := getDesiredNamespace(c)
-
-	existingNamespace, err := r.getNamespace(desiredNamespace.Name)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			if err := r.client.Create(ctx, desiredNamespace); err != nil {
-				return fmt.Errorf("creating namespace %q: %w", desiredNamespace.Name, err)
-			}
-			return nil
-		}
-		return fmt.Errorf("getting namespace %q: %w", desiredNamespace.Name, err)
-	}
-
-	if stringMapNeedsUpdating(desiredNamespace.Annotations, existingNamespace.Annotations) || stringMapNeedsUpdating(desiredNamespace.Labels, existingNamespace.Labels) {
-		glog.Infof("Updating namespace %q", desiredNamespace.Name)
-		if existingNamespace.Annotations == nil {
-			existingNamespace.Annotations = map[string]string{}
-		}
-		for k, v := range desiredNamespace.Annotations {
-			existingNamespace.Annotations[k] = v
-		}
-		if existingNamespace.Labels == nil {
-			existingNamespace.Labels = map[string]string{}
-		}
-		for k, v := range desiredNamespace.Labels {
-			existingNamespace.Labels[k] = v
-		}
-		if err = r.client.Update(ctx, existingNamespace, &ctrlClient.UpdateOptions{
-			FieldManager: "fleetshard-sync",
-		}); err != nil {
-			return fmt.Errorf("updating namespace %q: %w", desiredNamespace.Name, err)
-		}
-	}
-
-	return nil
-}
-
 func getDesiredNamespace(c private.ManagedCentral) *corev1.Namespace {
 	return &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1262,24 +1101,6 @@ func (r *CentralReconciler) ensureImagePullSecretConfigured(ctx context.Context,
 	// We have an IsNotFound error.
 	glog.Infof("Creating image pull secret %s/%s", namespaceName, secretName)
 	return r.createImagePullSecret(ctx, namespaceName, secretName, imagePullSecret)
-}
-
-func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name string) (bool, error) {
-	namespace, err := r.getNamespace(name)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return true, nil
-		}
-		return false, errors.Wrapf(err, "delete central namespace %s", name)
-	}
-	if namespace.Status.Phase == corev1.NamespaceTerminating {
-		return false, nil // Deletion is already in progress, skipping deletion request
-	}
-	if err = r.client.Delete(ctx, namespace); err != nil {
-		return false, errors.Wrapf(err, "delete central namespace %s", name)
-	}
-	glog.Infof("Central namespace %s is marked for deletion", name)
-	return false, nil
 }
 
 func (r *CentralReconciler) ensureEncryptionKeySecretExists(ctx context.Context, remoteCentralNamespace string) error {
@@ -1475,25 +1296,6 @@ func (r *CentralReconciler) centralDBUserExists(ctx context.Context, remoteCentr
 	return dbUserType == dbUserTypeCentral, nil
 }
 
-func (r *CentralReconciler) ensureCentralDBSecretDeleted(ctx context.Context, remoteCentralNamespace string) (bool, error) {
-	secret := &corev1.Secret{}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return true, nil
-		}
-
-		return false, fmt.Errorf("deleting Central DB secret: %w", err)
-	}
-
-	if err := r.client.Delete(ctx, secret); err != nil {
-		return false, fmt.Errorf("deleting central DB secret %s/%s", remoteCentralNamespace, centralDbSecretName)
-	}
-
-	glog.Infof("Central DB secret %s/%s is marked for deletion", remoteCentralNamespace, centralDbSecretName)
-	return false, nil
-}
-
 func (r *CentralReconciler) getDBPasswordFromSecret(ctx context.Context, centralNamespace string) (string, error) {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1510,48 +1312,6 @@ func (r *CentralReconciler) getDBPasswordFromSecret(ctx context.Context, central
 	}
 
 	return "", fmt.Errorf("central DB secret does not contain password field: %w", err)
-}
-
-func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
-	centralKey := ctrlClient.ObjectKey{
-		Namespace: central.GetNamespace(),
-		Name:      central.GetName(),
-	}
-
-	err := wait.PollUntilContextCancel(ctx, centralDeletePollInterval, true, func(ctx context.Context) (bool, error) {
-		var centralToDelete v1alpha1.Central
-
-		if err := r.client.Get(ctx, centralKey, &centralToDelete); err != nil {
-			if apiErrors.IsNotFound(err) {
-				return true, nil
-			}
-			return false, errors.Wrapf(err, "failed to get central CR %v", centralKey)
-		}
-
-		// avoid being stuck in a deprovisioning state due to the pause reconcile annotation
-		if err := r.disablePauseReconcileIfPresent(ctx, &centralToDelete); err != nil {
-			return false, err
-		}
-
-		if centralToDelete.GetDeletionTimestamp() == nil {
-			glog.Infof("Marking Central CR %v for deletion", centralKey)
-			if err := r.client.Delete(ctx, &centralToDelete); err != nil {
-				if apiErrors.IsNotFound(err) {
-					return true, nil
-				}
-				return false, errors.Wrapf(err, "failed to delete central CR %v", centralKey)
-			}
-		}
-
-		glog.Infof("Waiting for Central CR %v to be deleted", centralKey)
-		return false, nil
-	})
-
-	if err != nil {
-		return false, errors.Wrapf(err, "waiting for central CR %v to be deleted", centralKey)
-	}
-	glog.Infof("Central CR %v is deleted", centralKey)
-	return true, nil
 }
 
 func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, central *v1alpha1.Central) (bool, error) {
@@ -1601,172 +1361,6 @@ func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, ce
 	return true, nil
 }
 
-func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, central *v1alpha1.Central) error {
-	if central.Annotations == nil {
-		return nil
-	}
-
-	if value, exists := central.Annotations[PauseReconcileAnnotation]; !exists || value != "true" {
-		return nil
-	}
-
-	central.Annotations[PauseReconcileAnnotation] = "false"
-	err := r.client.Update(ctx, central)
-	if err != nil {
-		return fmt.Errorf("removing pause reconcile annotation: %v", err)
-	}
-
-	return nil
-}
-
-func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
-	getObjectKey := func(obj *unstructured.Unstructured) string {
-		return fmt.Sprintf("%s/%s/%s",
-			obj.GetAPIVersion(),
-			obj.GetKind(),
-			obj.GetName(),
-		)
-	}
-
-	vals, err := r.chartValues(remoteCentral)
-	if err != nil {
-		return fmt.Errorf("obtaining values for resources chart: %w", err)
-	}
-
-	if features.PrintTenantResourcesChartValues.Enabled() {
-		glog.Infof("Tenant resources for central %q: %s", remoteCentral.Metadata.Name, vals)
-	}
-
-	objs, err := charts.RenderToObjects(helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
-	if err != nil {
-		return fmt.Errorf("rendering resources chart: %w", err)
-	}
-
-	helmChartLabelValue := r.getTenantResourcesChartHelmLabelValue()
-
-	// objectsThatShouldExist stores the keys of the objects we want to exist
-	var objectsThatShouldExist = map[string]struct{}{}
-
-	for _, obj := range objs {
-		objectsThatShouldExist[getObjectKey(obj)] = struct{}{}
-
-		if obj.GetNamespace() == "" {
-			obj.SetNamespace(remoteCentral.Metadata.Namespace)
-		}
-		if obj.GetLabels() == nil {
-			obj.SetLabels(map[string]string{})
-		}
-		labels := obj.GetLabels()
-		labels[managedByLabelKey] = labelManagedByFleetshardValue
-		labels[helmChartLabelKey] = helmChartLabelValue
-		labels[helmChartNameLabel] = r.resourcesChart.Name()
-		obj.SetLabels(labels)
-
-		objectKey := ctrlClient.ObjectKey{Namespace: remoteCentral.Metadata.Namespace, Name: obj.GetName()}
-		glog.Infof("Upserting object %v of type %v", objectKey, obj.GroupVersionKind())
-		if err := charts.InstallOrUpdateChart(ctx, obj, r.client); err != nil {
-			return fmt.Errorf("Failed to upsert object %v of type %v: %w", objectKey, obj.GroupVersionKind(), err)
-		}
-	}
-
-	// Perform garbage collection
-	for _, gvk := range tenantChartResourceGVKs {
-		gvk := gvk
-		var existingObjects unstructured.UnstructuredList
-		existingObjects.SetGroupVersionKind(gvk)
-
-		if err := r.client.List(ctx, &existingObjects,
-			ctrlClient.InNamespace(remoteCentral.Metadata.Namespace),
-			ctrlClient.MatchingLabels{helmChartNameLabel: r.resourcesChart.Name()},
-		); err != nil {
-			return fmt.Errorf("failed to list tenant resources chart objects %v: %w", gvk, err)
-		}
-
-		for _, existingObject := range existingObjects.Items {
-			existingObject := &existingObject
-			if _, shouldExist := objectsThatShouldExist[getObjectKey(existingObject)]; shouldExist {
-				continue
-			}
-
-			// Re-check that the helm label is present & namespace matches.
-			// Failsafe against some potential k8s-client bug when listing objects with a label selector
-			if !r.isTenantResourcesChartObject(existingObject, &remoteCentral) {
-				glog.Infof("Object %v of type %v is not managed by the resources chart", existingObject.GetName(), gvk)
-				continue
-			}
-
-			if existingObject.GetDeletionTimestamp() != nil {
-				glog.Infof("Object %v of type %v is already being deleted", existingObject.GetName(), gvk)
-				continue
-			}
-
-			// The object exists but it should not. Delete it.
-			glog.Infof("Deleting object %v of type %v", existingObject.GetName(), gvk)
-			if err := r.client.Delete(ctx, existingObject); err != nil {
-				if !apiErrors.IsNotFound(err) {
-					return fmt.Errorf("failed to delete central tenant object %v %q in namespace %s: %w", gvk, existingObject.GetName(), remoteCentral.Metadata.Namespace, err)
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func (r *CentralReconciler) getTenantResourcesChartHelmLabelValue() string {
-	// the objects rendered by the helm chart will have a label in the format
-	// helm.sh/chart: <chart-name>-<chart-version>
-	return fmt.Sprintf("%s-%s", r.resourcesChart.Name(), r.resourcesChart.Metadata.Version)
-}
-
-func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, remoteCentral *private.ManagedCentral) (bool, error) {
-
-	allObjectsDeleted := true
-
-	for _, gvk := range tenantChartResourceGVKs {
-		gvk := gvk
-		var existingObjects unstructured.UnstructuredList
-		existingObjects.SetGroupVersionKind(gvk)
-
-		if err := r.client.List(ctx, &existingObjects,
-			ctrlClient.InNamespace(remoteCentral.Metadata.Namespace),
-			ctrlClient.MatchingLabels{helmChartNameLabel: r.resourcesChart.Name()},
-		); err != nil {
-			return false, fmt.Errorf("failed to list tenant resources chart objects %v in namespace %s: %w", gvk, remoteCentral.Metadata.Namespace, err)
-		}
-
-		for _, existingObject := range existingObjects.Items {
-			existingObject := &existingObject
-
-			// Re-check that the helm label is present & namespace matches.
-			// Failsafe against some potential k8s-client bug when listing objects with a label selector
-			if !r.isTenantResourcesChartObject(existingObject, remoteCentral) {
-				continue
-			}
-
-			if existingObject.GetDeletionTimestamp() != nil {
-				allObjectsDeleted = false
-				continue
-			}
-
-			if err := r.client.Delete(ctx, existingObject); err != nil {
-				if !apiErrors.IsNotFound(err) {
-					return false, fmt.Errorf("failed to delete central tenant object %v in namespace %q: %w", gvk, remoteCentral.Metadata.Namespace, err)
-				}
-			}
-		}
-	}
-
-	return allObjectsDeleted, nil
-}
-
-func (r *CentralReconciler) isTenantResourcesChartObject(existingObject *unstructured.Unstructured, remoteCentral *private.ManagedCentral) bool {
-	return existingObject.GetLabels() != nil &&
-		existingObject.GetLabels()[helmChartNameLabel] == r.resourcesChart.Name() &&
-		existingObject.GetLabels()[managedByLabelKey] == labelManagedByFleetshardValue &&
-		existingObject.GetNamespace() == remoteCentral.Metadata.Namespace
-}
-
 func (r *CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	err := r.ensureReencryptRouteExists(ctx, remoteCentral)
 	if err != nil {
@@ -1800,16 +1394,6 @@ func (r *CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remo
 	return nil
 }
 
-type routeSupplierFunc func() (*openshiftRouteV1.Route, error)
-
-// TODO(ROX-9310): Move re-encrypt route reconciliation to the StackRox operator
-// TODO(ROX-11918): Make hostname configurable on the StackRox operator
-func (r *CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, namespace string) (bool, error) {
-	return r.ensureRouteDeleted(ctx, func() (*openshiftRouteV1.Route, error) {
-		return r.routeService.FindReencryptRoute(ctx, namespace) //nolint:wrapcheck
-	})
-}
-
 // TODO(ROX-11918): Make hostname configurable on the StackRox operator
 func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	namespace := remoteCentral.Metadata.Namespace
@@ -1833,27 +1417,6 @@ func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, re
 	}
 
 	return nil
-}
-
-// TODO(ROX-11918): Make hostname configurable on the StackRox operator
-func (r *CentralReconciler) ensurePassthroughRouteDeleted(ctx context.Context, namespace string) (bool, error) {
-	return r.ensureRouteDeleted(ctx, func() (*openshiftRouteV1.Route, error) {
-		return r.routeService.FindPassthroughRoute(ctx, namespace) //nolint:wrapcheck
-	})
-}
-
-func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplier routeSupplierFunc) (bool, error) {
-	route, err := routeSupplier()
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return true, nil
-		}
-		return false, errors.Wrapf(err, "get central route %s/%s", route.GetNamespace(), route.GetName())
-	}
-	if err := r.client.Delete(ctx, route); err != nil {
-		return false, errors.Wrapf(err, "delete central route %s/%s", route.GetNamespace(), route.GetName())
-	}
-	return false, nil
 }
 
 func getTenantLabels(c private.ManagedCentral) map[string]string {
@@ -1888,29 +1451,6 @@ func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
 	}
 	namespaceAnnotations[ovnACLLoggingAnnotationKey] = ovnACLLoggingAnnotationDefault
 	return namespaceAnnotations
-}
-
-func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Values, error) {
-	if r.resourcesChart == nil {
-		return nil, errors.New("resources chart is not set")
-	}
-	src := r.resourcesChart.Values
-
-	// We are introducing the passing of helm values from fleetManager (and gitops). If the managed central
-	// includes the tenant resource values, we will use them. Otherwise, defaults to the previous
-	// implementation.
-	if len(c.Spec.TenantResourcesValues) > 0 {
-		values := chartutil.CoalesceTables(c.Spec.TenantResourcesValues, src)
-		glog.Infof("Values: %v", values)
-		return values, nil
-	}
-
-	dst := map[string]interface{}{
-		"labels":      stringMapToMapInterface(getTenantLabels(c)),
-		"annotations": stringMapToMapInterface(getTenantAnnotations(c)),
-	}
-	dst["secureTenantNetwork"] = r.secureTenantNetwork
-	return chartutil.CoalesceTables(dst, src), nil
 }
 
 func stringMapToMapInterface(m map[string]string) map[string]interface{} {
@@ -2087,6 +1627,10 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		status:                 pointer.Int32(FreeStatus),
 		useRoutes:              opts.UseRoutes,
 		wantsAuthProvider:      opts.WantsAuthProvider,
+		namespaceReconciler:    NewNamespaceReconciler(k8sClient),
+		tenantChartReconciler:  NewTenantChartReconciler(k8sClient, opts.SecureTenantNetwork),
+		centralCrReconciler:    NewCentralCrReconciler(k8sClient),
+		tenantCleanup:          &TenantCleanup{k8sClient: k8sClient, secureTenantNetwork: opts.SecureTenantNetwork},
 		routeService:           k8s.NewRouteService(k8sClient, &opts.RouteParameters),
 		secretBackup:           k8s.NewSecretBackup(k8sClient, opts.ManagedDBEnabled),
 		secretCipher:           secretCipher, // pragma: allowlist secret
@@ -2094,7 +1638,6 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		clusterName:            opts.ClusterName,
 		environment:            opts.Environment,
 		auditLogging:           opts.AuditLogging,
-		secureTenantNetwork:    opts.SecureTenantNetwork,
 		encryptionKeyGenerator: encryptionKeyGenerator,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,

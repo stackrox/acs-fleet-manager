@@ -164,6 +164,7 @@ func centralDBInitFunc(_ context.Context, _ postgres.DBConnection, _, _ string) 
 }
 
 func centralTLSSecretObject() *v1.Secret {
+
 	return &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "central-tls",
@@ -360,6 +361,10 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		resourcesChart:         resourcesChart,
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
+		namespaceReconciler:    NewNamespaceReconciler(fakeClient),
+		tenantChartReconciler:  NewTenantChartReconciler(fakeClient, true),
+		centralCrReconciler:    NewCentralCrReconciler(fakeClient),
+		tenantCleanup:          NewTenantCleanup(fakeClient, true),
 	}
 	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
 	r.needsReconcileFunc = r.needsReconcile
@@ -542,35 +547,9 @@ func TestReconcileDelete(t *testing.T) {
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	assert.True(t, k8sErrors.IsNotFound(err))
 
-	route := &openshiftRouteV1.Route{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
+	namespace := &v1.Namespace{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
 	assert.True(t, k8sErrors.IsNotFound(err))
-}
-
-func TestDisablePauseAnnotation(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		useRoutesReconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	central := &v1alpha1.Central{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
-	require.NoError(t, err)
-	central.Annotations[PauseReconcileAnnotation] = "true"
-	err = fakeClient.Update(context.TODO(), central)
-	require.NoError(t, err)
-
-	err = r.disablePauseReconcileIfPresent(context.TODO(), central)
-	require.NoError(t, err)
-
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
-	require.NoError(t, err)
-	require.Equal(t, "false", central.Annotations[PauseReconcileAnnotation])
 }
 
 func TestReconcileDeleteWithManagedDB(t *testing.T) {
@@ -636,12 +615,8 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	assert.True(t, k8sErrors.IsNotFound(err))
 
-	route := &openshiftRouteV1.Route{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
-	assert.True(t, k8sErrors.IsNotFound(err))
-
-	secret := &v1.Secret{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralDbSecretName, Namespace: centralNamespace}, secret)
+	namespace := &v1.Namespace{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
 	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
@@ -855,7 +830,9 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 		nil,
 		defaultReconcilerOptions,
 	)
-	r.resourcesChart = chart
+	r.tenantChartReconciler = NewTenantChartReconciler(fakeClient, true).WithChart(chart)
+	r.tenantCleanup = NewTenantCleanup(fakeClient, true)
+	r.tenantCleanup.chart = chart
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -921,7 +898,7 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 		nil,
 		defaultReconcilerOptions,
 	)
-	r.resourcesChart = chart
+	r.tenantChartReconciler = NewTenantChartReconciler(fakeClient, true).WithChart(chart)
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -2321,7 +2298,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 			}
 			updateCount := 0
 			createCount := 0
-			r.client = interceptor.NewClient(fakeClient, interceptor.Funcs{
+			r.namespaceReconciler.Client = interceptor.NewClient(fakeClient, interceptor.Funcs{
 				Update: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
 					updateCount++
 					return client.Update(ctx, obj, opts...)
@@ -2331,7 +2308,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 					return client.Create(ctx, obj, opts...)
 				},
 			})
-			err := r.reconcileNamespace(context.Background(), managedCentral)
+			err := r.namespaceReconciler.Reconcile(context.Background(), getDesiredNamespace(managedCentral))
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -2560,59 +2537,6 @@ func withCpuLimit(t *testing.T, central private.ManagedCentral, cpuLimit string)
 	var clone private.ManagedCentral = central
 	clone.Spec.CentralCRYAML = string(central2Yaml)
 	return clone
-}
-
-func TestChartValues(t *testing.T) {
-
-	r := CentralReconciler{resourcesChart: resourcesChart}
-
-	tests := []struct {
-		name           string
-		managedCentral private.ManagedCentral
-		assertFn       func(t *testing.T, values map[string]interface{}, err error)
-	}{
-		{
-			name: "withTenantResources",
-			managedCentral: private.ManagedCentral{
-				Spec: private.ManagedCentralAllOfSpec{
-					TenantResourcesValues: map[string]interface{}{
-						"verticalPodAutoscalers": map[string]interface{}{
-							"central": map[string]interface{}{
-								"enabled": true,
-								"updatePolicy": map[string]interface{}{
-									"minReplicas": 1,
-								},
-							},
-						},
-					},
-				},
-			},
-			assertFn: func(t *testing.T, values map[string]interface{}, err error) {
-				require.NoError(t, err)
-				verticalPodAutoscalers, ok := values["verticalPodAutoscalers"].(map[string]interface{})
-				require.True(t, ok)
-				central, ok := verticalPodAutoscalers["central"].(map[string]interface{})
-				require.True(t, ok)
-				enabled, ok := central["enabled"].(bool)
-				require.True(t, ok)
-				assert.True(t, enabled)
-
-				updatePolicy, ok := central["updatePolicy"].(map[string]interface{})
-				require.True(t, ok)
-				minReplicas, ok := updatePolicy["minReplicas"].(int)
-				require.True(t, ok)
-				assert.Equal(t, 1, minReplicas)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			values, err := r.chartValues(tt.managedCentral)
-			tt.assertFn(t, values, err)
-		})
-	}
-
 }
 
 func TestEncryptionShaSum(t *testing.T) {
