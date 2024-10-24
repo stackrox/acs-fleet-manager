@@ -8,7 +8,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"helm.sh/helm/v3/pkg/chart"
-	"k8s.io/kubernetes/pkg/apis/core"
+	corev1 "k8s.io/api/core/v1"
+
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -30,9 +31,10 @@ func NewTenantCleanup(k8sClient ctrlClient.Client, secureTenantNetwork bool) *Te
 // DeleteStaleTenantK8sResources deletes all namespaces on the cluster that are labeled
 // as tenant namespaces but are not in the given list of ManagedCentrals
 func (t *TenantCleanup) DeleteStaleTenantK8sResources(ctx context.Context, centralListFromFmAPI *private.ManagedCentralList) error {
-	namespaceList := core.NamespaceList{}
-	labels := map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue}
-	if err := t.k8sClient.List(ctx, &namespaceList, ctrlClient.MatchingLabels(labels)); err != nil {
+	namespaceList := corev1.NamespaceList{}
+	matchLabels := ctrlClient.MatchingLabels{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue}
+	hasLabels := ctrlClient.HasLabels{TenantIDLabelKey, crNameLabelKey}
+	if err := t.k8sClient.List(ctx, &namespaceList, matchLabels, hasLabels); err != nil {
 		return fmt.Errorf("Failed to list all tenant namespaces: %w", err)
 	}
 
@@ -46,13 +48,17 @@ func (t *TenantCleanup) DeleteStaleTenantK8sResources(ctx context.Context, centr
 	}
 
 	for _, central := range centralListFromFmAPI.Items {
-		// the namespaceName is equal to the ID of a central
-		delete(namespaceNameToCrName, central.Id)
+		delete(namespaceNameToCrName, central.Metadata.Namespace)
 	}
 
 	for namespace, crName := range namespaceNameToCrName {
+		glog.Infof("delete resources for stale tenant in namespace: %s", namespace)
+		if crName == "" {
+			glog.Infof("namespace %q was not propperly labeled with a tenant name, skipping deletion", namespace)
+			continue
+		}
 		if _, err := t.DeleteK8sResources(ctx, namespace, crName); err != nil {
-			glog.Errorf("Failed to delete k8s resources for central: %s: %s", namespace, err.Error())
+			glog.Errorf("failed to delete k8s resources for central: %s: %s", namespace, err.Error())
 		}
 	}
 
