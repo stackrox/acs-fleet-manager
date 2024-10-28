@@ -252,8 +252,8 @@ external-secrets:
   fullnameOverride: rhacs-external-secrets
   installCRDs: false
   image:
-    repository: quay.io/app-sre/external-secrets
-    tag: v0.9.18
+    repository: quay.io/redhat-appstudio/external-secrets-controller
+    tag: 9c730a4
   securityContext:
     runAsUser: null
   webhook:
