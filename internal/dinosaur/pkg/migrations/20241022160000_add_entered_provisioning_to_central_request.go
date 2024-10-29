@@ -14,22 +14,22 @@ import (
 	"gorm.io/gorm"
 )
 
-func addEnteredProvisioningToCentralRequest() *gormigrate.Migration {
+func addEnteredProvisioningAtToCentralRequest() *gormigrate.Migration {
 	type CentralRequest struct {
 		db.Model
-		EnteredProvisioning sql.NullTime `json:"entered_provisioning"`
+		EnteredProvisioningAt sql.NullTime `json:"entered_provisioning_at"`
 	}
 	migrationID := "20241022160000"
 
 	return &gormigrate.Migration{
 		ID: migrationID,
 		Migrate: func(tx *gorm.DB) error {
-			return addColumnIfNotExists(tx, &CentralRequest{}, "entered_provisioning")
+			return addColumnIfNotExists(tx, &CentralRequest{}, "entered_provisioning_at")
 		},
 		Rollback: func(tx *gorm.DB) error {
 			return errors.Wrap(
-				tx.Migrator().DropColumn(&CentralRequest{}, "entered_provisioning"),
-				"failed to drop entered_provisioning column",
+				tx.Migrator().DropColumn(&CentralRequest{}, "entered_provisioning_at"),
+				"failed to drop entered_provisioning_at column",
 			)
 		},
 	}

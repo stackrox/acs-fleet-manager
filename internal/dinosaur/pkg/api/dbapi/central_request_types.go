@@ -97,10 +97,10 @@ type CentralRequest struct {
 	// After a grace period, the Central instance will be marked for deletion, its status will be set to 'deprovision'.
 	ExpiredAt sql.NullTime `json:"expired_at"`
 
-	// EnteredProvisioning is the timestamp when Central status was set to provisioning.
-	// It is required to track the provisioning duration and timeout on re-provision operations
-	// when the creation time is not reliable because it was way back in the past.
-	EnteredProvisioning sql.NullTime `json:"entered_provisioning"`
+	// EnteredProvisioningAt is the timestamp when Central status was set to provisioning.
+	// This timestamp should be set manually each time when a tenant enters the provisioning state.
+	// This can happen during the usual creation flow or by admin actions that trigger re-provisioning.
+	EnteredProvisioningAt sql.NullTime `json:"entered_provisioning_at"`
 
 	// Traits is a set of random strings assigned to an instance. Some traits
 	// can be hardcoded, and change some processing parameters.
