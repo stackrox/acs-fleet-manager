@@ -74,7 +74,10 @@ const (
 	managedByLabelKey             = "app.kubernetes.io/managed-by"
 	orgIDLabelKey                 = "rhacs.redhat.com/org-id"
 	TenantIDLabelKey              = "rhacs.redhat.com/tenant"
-	centralExpiredAtKey           = "rhacs.redhat.com/expired-at"
+
+	ProbeLabelKey = "rhacs.redhat.com/probe"
+
+	centralExpiredAtKey = "rhacs.redhat.com/expired-at"
 
 	auditLogNotifierKey  = "com.redhat.rhacs.auditLogNotifier"
 	auditLogNotifierName = "Platform Audit Logs"
@@ -1857,13 +1860,17 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 }
 
 func getTenantLabels(c private.ManagedCentral) map[string]string {
-	return map[string]string{
+	labels := map[string]string{
 		managedByLabelKey:    labelManagedByFleetshardValue,
 		instanceLabelKey:     c.Metadata.Name,
 		orgIDLabelKey:        c.Spec.Auth.OwnerOrgId,
 		TenantIDLabelKey:     c.Id,
 		instanceTypeLabelKey: c.Spec.InstanceType,
 	}
+	if c.Metadata.Internal {
+		labels[ProbeLabelKey] = "true"
+	}
+	return labels
 }
 
 func getTenantAnnotations(c private.ManagedCentral) map[string]string {
