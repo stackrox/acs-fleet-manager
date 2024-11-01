@@ -1868,7 +1868,7 @@ func getTenantLabels(c private.ManagedCentral) map[string]string {
 		instanceTypeLabelKey: c.Spec.InstanceType,
 	}
 	if c.Metadata.Internal {
-		labels[ProbeLabelKey] = "true"
+		labels[ProbeLabelKey] = ""
 	}
 	return labels
 }
