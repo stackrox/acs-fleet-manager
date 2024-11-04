@@ -13,7 +13,12 @@ import (
 // FailIfTimeoutExceeded checks timeout on a central instance and moves it to failed if timeout is exceeded.
 // Returns true if timeout is exceeded, otherwise false.
 func FailIfTimeoutExceeded(centralService services.DinosaurService, timeout time.Duration, centralRequest *dbapi.CentralRequest) error {
-	if centralRequest.CreatedAt.Before(time.Now().Add(-timeout)) {
+	referencePoint := centralRequest.CreatedAt
+	if centralRequest.EnteredProvisioningAt.Valid {
+		referencePoint = centralRequest.EnteredProvisioningAt.Time
+	}
+
+	if referencePoint.Before(time.Now().Add(-timeout)) {
 		centralRequest.Status = constants2.CentralRequestStatusFailed.String()
 		centralRequest.FailedReason = "Creation time went over the timeout. Interrupting central initialization."
 
