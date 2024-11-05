@@ -1866,6 +1866,9 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 	secretCipher cipher.Cipher, encryptionKeyGenerator cipher.KeyGenerator,
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
+	nsReconciler := NewNamespaceReconciler(k8sClient)
+	chartReconciler := NewTenantChartReconciler(k8sClient, opts.SecureTenantNetwork)
+	crReconciler := NewCentralCrReconciler(k8sClient)
 	r := &CentralReconciler{
 		client:                 k8sClient,
 		fleetmanagerClient:     fleetmanagerClient,
@@ -1873,10 +1876,10 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		status:                 pointer.Int32(FreeStatus),
 		useRoutes:              opts.UseRoutes,
 		wantsAuthProvider:      opts.WantsAuthProvider,
-		namespaceReconciler:    NewNamespaceReconciler(k8sClient),
-		tenantChartReconciler:  NewTenantChartReconciler(k8sClient, opts.SecureTenantNetwork),
-		centralCrReconciler:    NewCentralCrReconciler(k8sClient),
-		tenantCleanup:          &TenantCleanup{k8sClient: k8sClient, secureTenantNetwork: opts.SecureTenantNetwork},
+		namespaceReconciler:    nsReconciler,
+		tenantChartReconciler:  chartReconciler,
+		centralCrReconciler:    crReconciler,
+		tenantCleanup:          NewTenantCleanup(k8sClient, chartReconciler, nsReconciler, crReconciler, opts.SecureTenantNetwork),
 		routeService:           k8s.NewRouteService(k8sClient, &opts.RouteParameters),
 		secretBackup:           k8s.NewSecretBackup(k8sClient, opts.ManagedDBEnabled),
 		secretCipher:           secretCipher, // pragma: allowlist secret
