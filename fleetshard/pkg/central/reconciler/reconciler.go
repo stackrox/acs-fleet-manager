@@ -372,18 +372,16 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	if err := yaml2.Unmarshal([]byte(remoteCentral.Spec.CentralCRYAML), central); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal central yaml")
 	}
-	if err := r.applyCentralConfig(remoteCentral, central); err != nil {
-		return nil, err
-	}
+	r.applyCentralConfig(remoteCentral, central)
+
 	return central, nil
 }
 
-func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) {
 	r.applyTelemetry(remoteCentral, central)
 	r.applyRoutes(central)
 	r.applyDeclarativeConfig(central)
 	r.applyAnnotations(remoteCentral, central)
-	return nil
 }
 
 func (r *CentralReconciler) applyAnnotations(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) {

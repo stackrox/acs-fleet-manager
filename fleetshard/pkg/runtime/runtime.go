@@ -148,7 +148,13 @@ func (r *Runtime) Start() error {
 		ArgoCdNamespace:                            r.config.ArgoCdNamespace,
 	}
 
-	tenantCleanup := centralReconciler.NewTenantCleanup(r.k8sClient, r.config.SecureTenantNetwork)
+	tenantCleanup := centralReconciler.NewTenantCleanup(
+		r.k8sClient,
+		centralReconciler.NewTenantChartReconciler(r.k8sClient, r.config.SecureTenantNetwork),
+		centralReconciler.NewNamespaceReconciler(r.k8sClient),
+		centralReconciler.NewCentralCrReconciler(r.k8sClient),
+		r.config.SecureTenantNetwork,
+	)
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, _, err := r.client.PrivateAPI().GetCentrals(ctx, r.clusterID)

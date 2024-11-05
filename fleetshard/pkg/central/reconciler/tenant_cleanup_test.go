@@ -110,7 +110,7 @@ func TestDeleteStaleTenant(t *testing.T) {
 	}
 
 	fakeClient, _ := testutils.NewFakeClientWithTracker(t, existingObjs...)
-	tenantCleanup := NewTenantCleanup(fakeClient, true)
+	tenantCleanup := NewTenantCleanup(fakeClient, NewTenantChartReconciler(fakeClient, true), NewNamespaceReconciler(fakeClient), NewCentralCrReconciler(fakeClient), true)
 	err := tenantCleanup.DeleteStaleTenantK8sResources(context.TODO(), listFromFM)
 	require.NoError(t, err, "unexpected error deleting stale tenants")
 

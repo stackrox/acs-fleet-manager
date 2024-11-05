@@ -357,6 +357,10 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		},
 	}, centralDeploymentObject()).Build()
 
+	nsReconciler := NewNamespaceReconciler(fakeClient)
+	chartReconciler := NewTenantChartReconciler(fakeClient, true)
+	crReconciler := NewCentralCrReconciler(fakeClient)
+
 	r := CentralReconciler{
 		status:                 pointer.Int32(0),
 		client:                 fakeClient,
@@ -364,10 +368,10 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		resourcesChart:         resourcesChart,
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
-		namespaceReconciler:    NewNamespaceReconciler(fakeClient),
-		tenantChartReconciler:  NewTenantChartReconciler(fakeClient, true),
-		centralCrReconciler:    NewCentralCrReconciler(fakeClient),
-		tenantCleanup:          NewTenantCleanup(fakeClient, true),
+		namespaceReconciler:    nsReconciler,
+		tenantChartReconciler:  chartReconciler,
+		centralCrReconciler:    crReconciler,
+		tenantCleanup:          NewTenantCleanup(fakeClient, chartReconciler, nsReconciler, crReconciler, true),
 	}
 	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
 	r.needsReconcileFunc = r.needsReconcile
@@ -834,8 +838,7 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 		defaultReconcilerOptions,
 	)
 	r.tenantChartReconciler = NewTenantChartReconciler(fakeClient, true).WithChart(chart)
-	r.tenantCleanup = NewTenantCleanup(fakeClient, true)
-	r.tenantCleanup.chart = chart
+	r.tenantCleanup = NewTenantCleanup(fakeClient, r.tenantChartReconciler, NewNamespaceReconciler(fakeClient), NewCentralCrReconciler(fakeClient), true)
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
