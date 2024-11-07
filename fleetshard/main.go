@@ -76,6 +76,10 @@ func main() {
 					Key:      reconciler.TenantIDLabelKey,
 					Operator: metav1.LabelSelectorOpExists,
 				},
+				{
+					Key:      reconciler.ProbeLabelKey,
+					Operator: metav1.LabelSelectorOpDoesNotExist,
+				},
 			},
 		},
 	}
