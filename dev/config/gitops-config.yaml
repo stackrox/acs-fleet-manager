@@ -43,12 +43,14 @@ centrals:
     - instanceIds:
         - "*"
       patch: |
-        # Set label for all centrals to fast-stream
+        # Set label for all centrals to dev
         metadata:
           labels:
             rhacs.redhat.com/version-selector: "dev"
         # Adjust centrals for development environment
         spec:
+          network:
+            policies: Disabled
           monitoring:
             openshift:
               enabled: false

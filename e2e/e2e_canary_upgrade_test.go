@@ -528,6 +528,8 @@ spec:
   monitoring:
     openshift:
       enabled: false
+  network:
+	policies: Disabled
   central:
     db:
       resources:
@@ -615,9 +617,9 @@ func defaultGitopsConfig() gitops.Config {
 			CRDURLs: defaultCRDUrls,
 			Configs: []operator.OperatorConfig{
 				{
-					"deploymentName":                  "rhacs-operator-4.4.2",
-					"image":                           "quay.io/rhacs-eng/stackrox-operator:4.4.2",
-					"centralLabelSelector":            "rhacs.redhat.com/version-selector=4.4.2",
+					"deploymentName":                  "rhacs-operator-dev",
+					"image":                           "quay.io/rhacs-eng/stackrox-operator:4.5.4",
+					"centralLabelSelector":            "rhacs.redhat.com/version-selector=dev",
 					"securedClusterReconcilerEnabled": false,
 				},
 			},
@@ -629,7 +631,7 @@ func defaultGitopsConfig() gitops.Config {
 					Patch: `
 metadata:
   labels:
-    rhacs.redhat.com/version-selector: "4.4.2"`,
+    rhacs.redhat.com/version-selector: "dev"`,
 				}, {
 					InstanceIDs: []string{"*"},
 					Patch: `
@@ -637,6 +639,8 @@ spec:
   monitoring:
     openshift:
       enabled: false
+  network:
+    policies: Disabled
   central:
     db:
       resources:
