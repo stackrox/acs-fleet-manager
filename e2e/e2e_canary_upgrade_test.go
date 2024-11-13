@@ -529,7 +529,7 @@ spec:
     openshift:
       enabled: false
   network:
-	policies: Disabled
+    policies: Disabled
   central:
     db:
       resources:
