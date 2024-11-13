@@ -662,6 +662,13 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			if tt.want != nil {
 				tt.want(tt.fields.ocmClient)
 			}
+
+			if tt.fields.ocmClient != nil {
+				if len(tt.fields.ocmClient.UpdateAddonInstallationCalls()) > 0 {
+					Expect(p.lastUpgradeRequestTime).NotTo(Equal(time.Time{}))
+				}
+			}
+
 			Expect(updates).To(Equal(tt.wantStatuses))
 		})
 	}

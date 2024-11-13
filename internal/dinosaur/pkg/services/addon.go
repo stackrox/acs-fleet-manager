@@ -23,9 +23,9 @@ const fleetshardImageTagParameter = "fleetshardSyncImageTag"
 
 // This backoff was introduced to prevent reaching OCM service log limits
 // by sending too many addon upgrade requests. The limit is 1000. A backoff
-// of 15 minutes would result in 504 requests per week, which leaves some space
+// of 20 minutes would result in 504 requests per week, which leaves some space
 // for other openshift components to call the API as well.
-const addonUpgradeBackoffSeconds = 900
+const addonUpgradeBackoffSeconds = 1200
 
 type updateAddonStatusMetricFunc func(addonID, clusterName string, status metrics.AddonStatus)
 
@@ -244,6 +244,7 @@ func (p *AddonProvisioner) updateAddon(clusterID string, config gitops.AddonConf
 	if err != nil {
 		return err
 	}
+	p.lastUpgradeRequestTime = time.Now()
 	if err := p.ocmClient.UpdateAddonInstallation(clusterID, update); err != nil {
 		return fmt.Errorf("update addon %s: %w", update.ID(), err)
 	}
