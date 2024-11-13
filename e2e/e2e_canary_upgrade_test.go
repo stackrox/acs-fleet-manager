@@ -31,14 +31,14 @@ const (
 	namespace              = "rhacs"
 	gitopsConfigmapName    = "gitops-config"
 	gitopsConfigmapDataKey = "config.yaml"
-	operatorVersion1       = "4.4.1"
-	operatorVersion2       = "4.4.2"
+	operatorVersion1       = "4.5.4"
+	operatorVersion2       = "4.5.3"
 )
 
 var (
 	defaultCRDUrls = []string{
-		"https://raw.githubusercontent.com/stackrox/stackrox/4.4.2/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
-		"https://raw.githubusercontent.com/stackrox/stackrox/4.4.2/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
+		"https://raw.githubusercontent.com/stackrox/stackrox/4.5.4/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
+		"https://raw.githubusercontent.com/stackrox/stackrox/4.5.4/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
 	}
 	operatorConfig1         = operatorConfigForVersion(operatorVersion1)
 	operatorConfig2         = operatorConfigForVersion(operatorVersion2)
