@@ -1908,7 +1908,7 @@ func (r *CentralReconciler) makeDesiredArgoCDApplication(ctx context.Context, re
 			return nil, fmt.Errorf("getting Central DB connection string: %w", err)
 		}
 
-		values["centralDbSecretName"] = centralDbSecretName
+		values["centralDbSecretName"] = centralDbSecretName // pragma: allowlist secret
 		values["centralDbConnectionString"] = centralDBConnectionString
 
 		dbCA, err := postgres.GetDatabaseCACertificates()
