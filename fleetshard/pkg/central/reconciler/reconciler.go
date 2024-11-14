@@ -1833,7 +1833,7 @@ func (r *CentralReconciler) isTenantResourcesChartObject(existingObject *unstruc
 func (r *CentralReconciler) ensureArgoCdApplicationExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	const lastAppliedHashLabel = "last-applied-hash"
 
-	want, err := r.makeDesiredArgoCDApplication(remoteCentral)
+	want, err := r.makeDesiredArgoCDApplication(ctx, remoteCentral)
 	if err != nil {
 		return fmt.Errorf("getting ArgoCD application: %w", err)
 	}
@@ -1869,9 +1869,41 @@ func (r *CentralReconciler) ensureArgoCdApplicationExists(ctx context.Context, r
 	return nil
 }
 
-func (r *CentralReconciler) makeDesiredArgoCDApplication(remoteCentral private.ManagedCentral) (*argocd.Application, error) {
+func (r *CentralReconciler) makeDesiredArgoCDApplication(ctx context.Context, remoteCentral private.ManagedCentral) (*argocd.Application, error) {
+
+	expiredAt := ""
+	if remoteCentral.Metadata.ExpiredAt != nil {
+		expiredAt = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
+	}
+
+	additionalCAs := []map[string]interface{}{}
+	if r.managedDBEnabled {
+		dbCA, err := postgres.GetDatabaseCACertificates()
+		if err != nil {
+			glog.Warningf("Could not read DB server CA bundle: %v", err)
+		} else {
+			additionalCAs = append(additionalCAs, map[string]interface{}{
+				"name":    postgres.CentralDatabaseCACertificateBaseName,
+				"content": string(dbCA),
+			})
+		}
+	}
 
 	values := map[string]interface{}{
+		"environment":                 r.environment,
+		"clusterName":                 r.clusterName,
+		"organizationId":              remoteCentral.Spec.Auth.OwnerOrgId,
+		"organizationName":            remoteCentral.Spec.Auth.OwnerOrgName,
+		"instanceId":                  remoteCentral.Id,
+		"instanceName":                remoteCentral.Metadata.Name,
+		"instanceType":                remoteCentral.Spec.InstanceType,
+		"instanceExpiredAt":           expiredAt,
+		"isInternal":                  remoteCentral.Metadata.Internal,
+		"additionalCAs":               additionalCAs,
+		"telemetryStorageKey":         r.telemetry.StorageKey,
+		"telemetryStorageEndpoint":    r.telemetry.StorageEndpoint,
+		"centralAdminPasswordEnabled": !r.wantsAuthProvider,
+		"centralDbSecretName":         centralDbSecretName,
 		"tenant": map[string]interface{}{
 			"organizationId":   remoteCentral.Spec.Auth.OwnerOrgId,
 			"organizationName": remoteCentral.Spec.Auth.OwnerOrgName,
@@ -1885,6 +1917,18 @@ func (r *CentralReconciler) makeDesiredArgoCDApplication(remoteCentral private.M
 				"enabled": true,
 			},
 		},
+	}
+
+	if r.managedDBEnabled {
+		centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, &remoteCentral)
+		if err != nil {
+			return nil, fmt.Errorf("getting Central DB connection string: %w", err)
+		}
+		values["centralDbConnectionString"] = centralDBConnectionString
+	}
+
+	if remoteCentral.Metadata.Internal || r.telemetry.StorageKey == "" {
+		values["telemetryStorageKey"] = "DISABLED"
 	}
 
 	valuesBytes, err := json.Marshal(values)
