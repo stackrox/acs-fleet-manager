@@ -1871,11 +1871,6 @@ func (r *CentralReconciler) ensureArgoCdApplicationExists(ctx context.Context, r
 
 func (r *CentralReconciler) makeDesiredArgoCDApplication(ctx context.Context, remoteCentral private.ManagedCentral) (*argocd.Application, error) {
 
-	expiredAt := ""
-	if remoteCentral.Metadata.ExpiredAt != nil {
-		expiredAt = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
-	}
-
 	values := map[string]interface{}{
 		"environment":                 r.environment,
 		"clusterName":                 r.clusterName,
@@ -1884,7 +1879,6 @@ func (r *CentralReconciler) makeDesiredArgoCDApplication(ctx context.Context, re
 		"instanceId":                  remoteCentral.Id,
 		"instanceName":                remoteCentral.Metadata.Name,
 		"instanceType":                remoteCentral.Spec.InstanceType,
-		"instanceExpiredAt":           expiredAt,
 		"isInternal":                  remoteCentral.Metadata.Internal,
 		"telemetryStorageKey":         r.telemetry.StorageKey,
 		"telemetryStorageEndpoint":    r.telemetry.StorageEndpoint,
@@ -1902,6 +1896,10 @@ func (r *CentralReconciler) makeDesiredArgoCDApplication(ctx context.Context, re
 				"enabled": true,
 			},
 		},
+	}
+
+	if remoteCentral.Metadata.ExpiredAt != nil {
+		values["expiredAt"] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
 	}
 
 	if r.managedDBEnabled {
