@@ -10,7 +10,7 @@ import (
 
 func TestChartValues(t *testing.T) {
 
-	r := TenantChartReconciler{chart: resourcesChart}
+	r := tenantChartReconciler{chart: resourcesChart}
 
 	tests := []struct {
 		name           string

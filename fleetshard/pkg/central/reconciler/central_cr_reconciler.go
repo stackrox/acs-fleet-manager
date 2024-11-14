@@ -15,19 +15,19 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// CentralCrReconciler provides methods to reconcile the Central CR associated with a tenant
-type CentralCrReconciler struct {
+// centralCrReconciler provides methods to reconcile the Central CR associated with a tenant
+type centralCrReconciler struct {
 	client ctrlClient.Client
 }
 
-// NewCentralCrReconciler creates a CentralCrReconciler using given arguments
-func NewCentralCrReconciler(k8sClient ctrlClient.Client) *CentralCrReconciler {
-	return &CentralCrReconciler{client: k8sClient}
+// newCentralCrReconciler creates a CentralCrReconciler using given arguments
+func newCentralCrReconciler(k8sClient ctrlClient.Client) *centralCrReconciler {
+	return &centralCrReconciler{client: k8sClient}
 }
 
-// Reconcile create or updates the central CR for the tenant in the cluster so that
+// reconcile create or updates the central CR for the tenant in the cluster so that
 // it fits to the remote central object received.
-func (r *CentralCrReconciler) Reconcile(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+func (r *centralCrReconciler) reconcile(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
@@ -95,8 +95,8 @@ func (r *CentralCrReconciler) Reconcile(ctx context.Context, remoteCentral *priv
 	return nil
 }
 
-// EnsureDeleted deletes the central CR from the cluster
-func (r *CentralCrReconciler) EnsureDeleted(ctx context.Context, namespace, crName string) (bool, error) {
+// ensureDeleted deletes the central CR from the cluster
+func (r *centralCrReconciler) ensureDeleted(ctx context.Context, namespace, crName string) (bool, error) {
 	centralKey := ctrlClient.ObjectKey{
 		Namespace: namespace,
 		Name:      crName,
@@ -138,7 +138,7 @@ func (r *CentralCrReconciler) EnsureDeleted(ctx context.Context, namespace, crNa
 	return true, nil
 }
 
-func (r *CentralCrReconciler) disablePauseReconcileIfPresent(ctx context.Context, central *v1alpha1.Central) error {
+func (r *centralCrReconciler) disablePauseReconcileIfPresent(ctx context.Context, central *v1alpha1.Central) error {
 	if central.Annotations == nil {
 		return nil
 	}

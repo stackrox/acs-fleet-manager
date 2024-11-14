@@ -131,6 +131,12 @@ func (r *Runtime) Start() error {
 
 	routesAvailable := r.routesAvailable()
 
+	argoReconcilerOpts := centralReconciler.ArgoReconcilerOptions{
+		DefaultTenantArgoCdAppSourceTargetRevision: r.config.DefaultTenantArgoCdAppSourceTargetRevision,
+		DefaultTenantArgoCdAppSourcePath:           r.config.DefaultTenantArgoCdAppSourcePath,
+		DefaultTenantArgoCdAppSourceRepoURL:        r.config.DefaultTenantArgoCdAppSourceRepoURL,
+		ArgoCdNamespace:                            r.config.ArgoCdNamespace,
+	}
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
 		UseRoutes:             routesAvailable,
 		WantsAuthProvider:     r.config.CreateAuthProvider,
@@ -142,18 +148,17 @@ func (r *Runtime) Start() error {
 		TenantImagePullSecret: r.config.TenantImagePullSecret, // pragma: allowlist secret
 		RouteParameters:       r.config.RouteParameters,
 		SecureTenantNetwork:   r.config.SecureTenantNetwork,
-		DefaultTenantArgoCdAppSourceTargetRevision: r.config.DefaultTenantArgoCdAppSourceTargetRevision,
-		DefaultTenantArgoCdAppSourcePath:           r.config.DefaultTenantArgoCdAppSourcePath,
-		DefaultTenantArgoCdAppSourceRepoURL:        r.config.DefaultTenantArgoCdAppSourceRepoURL,
-		ArgoCdNamespace:                            r.config.ArgoCdNamespace,
+		ArgoReconcilerOptions: argoReconcilerOpts,
+	}
+
+	tenantCleanupOpts := centralReconciler.TenantCleanupOptions{
+		SecureTenantNetwork:   r.config.SecureTenantNetwork,
+		ArgoReconcilerOptions: argoReconcilerOpts,
 	}
 
 	tenantCleanup := centralReconciler.NewTenantCleanup(
 		r.k8sClient,
-		centralReconciler.NewTenantChartReconciler(r.k8sClient, r.config.SecureTenantNetwork),
-		centralReconciler.NewNamespaceReconciler(r.k8sClient),
-		centralReconciler.NewCentralCrReconciler(r.k8sClient),
-		r.config.SecureTenantNetwork,
+		tenantCleanupOpts,
 	)
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {

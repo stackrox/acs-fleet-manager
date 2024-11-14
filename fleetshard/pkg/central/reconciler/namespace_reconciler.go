@@ -11,22 +11,22 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// NamespaceReconciler provides methods to reconcile the namespace required for central tenants
-type NamespaceReconciler struct {
-	// Client is the controller runtime client used for namespace reconciliation
-	Client ctrlClient.Client
+// namespaceReconciler provides methods to reconcile the namespace required for central tenants
+type namespaceReconciler struct {
+	// client is the controller runtime client used for namespace reconciliation
+	client ctrlClient.Client
 }
 
-// NewNamespaceReconciler creates a NamespaceReconciler with given arguments
-func NewNamespaceReconciler(client ctrlClient.Client) *NamespaceReconciler {
-	return &NamespaceReconciler{Client: client}
+// newNamespaceReconciler creates a NamespaceReconciler with given arguments
+func newNamespaceReconciler(client ctrlClient.Client) *namespaceReconciler {
+	return &namespaceReconciler{client: client}
 }
 
-// EnsureDeleted sends a delete request for K8s namespace with given name
+// ensureDeleted sends a delete request for K8s namespace with given name
 // it return true if the namespace doesn't exist anymore.
 // It will not send additional delete requests if the NS is already in state terminating
-func (r *NamespaceReconciler) EnsureDeleted(ctx context.Context, name string) (bool, error) {
-	namespace, err := r.GetNamespaceObj(name)
+func (r *namespaceReconciler) ensureDeleted(ctx context.Context, name string) (bool, error) {
+	namespace, err := r.getNamespaceObj(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return true, nil
@@ -36,19 +36,19 @@ func (r *NamespaceReconciler) EnsureDeleted(ctx context.Context, name string) (b
 	if namespace.Status.Phase == corev1.NamespaceTerminating {
 		return false, nil // Deletion is already in progress, skipping deletion request
 	}
-	if err = r.Client.Delete(ctx, namespace); err != nil {
+	if err = r.client.Delete(ctx, namespace); err != nil {
 		return false, errors.Wrapf(err, "delete central namespace %s", name)
 	}
 	glog.Infof("Central namespace %s is marked for deletion", name)
 	return false, nil
 }
 
-// Reconcile reconciles the given namespace in cluster to fit to the given desired namespace
-func (r *NamespaceReconciler) Reconcile(ctx context.Context, desiredNamespace *corev1.Namespace) error {
-	existingNamespace, err := r.GetNamespaceObj(desiredNamespace.Name)
+// reconcile reconciles the given namespace in cluster to fit to the given desired namespace
+func (r *namespaceReconciler) reconcile(ctx context.Context, desiredNamespace *corev1.Namespace) error {
+	existingNamespace, err := r.getNamespaceObj(desiredNamespace.Name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			if err := r.Client.Create(ctx, desiredNamespace); err != nil {
+			if err := r.client.Create(ctx, desiredNamespace); err != nil {
 				return fmt.Errorf("creating namespace %q: %w", desiredNamespace.Name, err)
 			}
 			return nil
@@ -70,7 +70,7 @@ func (r *NamespaceReconciler) Reconcile(ctx context.Context, desiredNamespace *c
 		for k, v := range desiredNamespace.Labels {
 			existingNamespace.Labels[k] = v
 		}
-		if err = r.Client.Update(ctx, existingNamespace, &ctrlClient.UpdateOptions{
+		if err = r.client.Update(ctx, existingNamespace, &ctrlClient.UpdateOptions{
 			FieldManager: "fleetshard-sync",
 		}); err != nil {
 			return fmt.Errorf("updating namespace %q: %w", desiredNamespace.Name, err)
@@ -80,10 +80,10 @@ func (r *NamespaceReconciler) Reconcile(ctx context.Context, desiredNamespace *c
 	return nil
 }
 
-// GetNamespaceObj gets the *corev1.Namespace object for namespace with given name from the cluster
-func (r *NamespaceReconciler) GetNamespaceObj(name string) (*corev1.Namespace, error) {
+// getNamespaceObj gets the *corev1.Namespace object for namespace with given name from the cluster
+func (r *namespaceReconciler) getNamespaceObj(name string) (*corev1.Namespace, error) {
 	var namespace corev1.Namespace
-	if err := r.Client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, &namespace); err != nil {
+	if err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, &namespace); err != nil {
 		return nil, fmt.Errorf("getting namespace %q: %w", name, err)
 	}
 	return &namespace, nil

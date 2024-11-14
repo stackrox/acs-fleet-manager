@@ -7,6 +7,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -17,26 +18,28 @@ const crNameLabelKey = "app.kubernetes.io/instance"
 // TenantCleanup defines methods to cleanup Kubernetes resources and namespaces for tenants
 // that are no longer in the list of tenants fleetshard-sync schould run on a cluster
 type TenantCleanup struct {
-	k8sClient           ctrlClient.Client
-	secureTenantNetwork bool
-	chartReconciler     *TenantChartReconciler
-	nsReconciler        *NamespaceReconciler
-	crReconciler        *CentralCrReconciler
+	k8sClient       ctrlClient.Client
+	chartReconciler *tenantChartReconciler
+	nsReconciler    *namespaceReconciler
+	crReconciler    *centralCrReconciler
+	argoReconciler  *argoReconciler
+}
+
+// TenantCleanupOptions defines configuration options for the TenantCleanup logic
+type TenantCleanupOptions struct {
+	SecureTenantNetwork   bool
+	Chart                 *chart.Chart
+	ArgoReconcilerOptions ArgoReconcilerOptions
 }
 
 // NewTenantCleanup returns a new TenantCleanup using given arguments
-func NewTenantCleanup(
-	k8sClient ctrlClient.Client,
-	chartReconciler *TenantChartReconciler,
-	nsReconciler *NamespaceReconciler,
-	crReconciler *CentralCrReconciler,
-	secureTenantNetwork bool) *TenantCleanup {
+func NewTenantCleanup(k8sClient ctrlClient.Client, opts TenantCleanupOptions) *TenantCleanup {
 	return &TenantCleanup{
-		k8sClient:           k8sClient,
-		chartReconciler:     chartReconciler,
-		nsReconciler:        nsReconciler,
-		crReconciler:        crReconciler,
-		secureTenantNetwork: secureTenantNetwork,
+		k8sClient:       k8sClient,
+		nsReconciler:    newNamespaceReconciler(k8sClient),
+		crReconciler:    newCentralCrReconciler(k8sClient),
+		chartReconciler: newTenantChartReconciler(k8sClient, opts.SecureTenantNetwork),
+		argoReconciler:  newArgoReconciler(k8sClient, opts.ArgoReconcilerOptions),
 	}
 }
 
@@ -86,19 +89,27 @@ func (t *TenantCleanup) DeleteK8sResources(ctx context.Context, namespace string
 	// If any resources wouldn't be deleted by namespace deletion add them here.
 	globalDeleted := true
 
-	deleted, err := t.chartReconciler.EnsureResourcesDeleted(ctx, namespace)
+	deleted, err := t.chartReconciler.ensureResourcesDeleted(ctx, namespace)
 	if err != nil {
 		return false, fmt.Errorf("Failed to delete chart resources in namespace %q: %w", namespace, err)
 	}
 	globalDeleted = globalDeleted && deleted
 
-	deleted, err = t.crReconciler.EnsureDeleted(ctx, namespace, tenantName)
+	// TODO(ROX-26277): This has to go into the tenantCleanup implementation
+	// it is here for now for merge conflict resolution, and need additional impl before mergin ROX-26277 PR.
+	argoCdAppDeleted, err := t.argoReconciler.ensureApplicationDeleted(ctx, namespace)
+	if err != nil {
+		return false, err
+	}
+	globalDeleted = globalDeleted && argoCdAppDeleted
+
+	deleted, err = t.crReconciler.ensureDeleted(ctx, namespace, tenantName)
 	if err != nil {
 		return false, fmt.Errorf("Failed to delete central CR in namespace %q: %w", namespace, err)
 	}
 	globalDeleted = globalDeleted && deleted
 
-	deleted, err = t.nsReconciler.EnsureDeleted(ctx, namespace)
+	deleted, err = t.nsReconciler.ensureDeleted(ctx, namespace)
 	if err != nil {
 		return false, fmt.Errorf("Failed to delete namespace for tenant in namespace %q: %w", namespace, err)
 	}

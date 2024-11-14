@@ -16,29 +16,29 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// TenantChartReconciler provides methods to reconcile additional kubernetes resources
+// tenantChartReconciler provides methods to reconcile additional kubernetes resources
 // required for a central tenant and defined by a helm chart
-type TenantChartReconciler struct {
+type tenantChartReconciler struct {
 	// client is the controller runtime client used for chart reconciliations
 	client              ctrlClient.Client
 	chart               *chart.Chart
 	secureTenantNetwork bool
 }
 
-// NewTenantChartReconciler creates a TenantChartReconciler with given arguments
+// newTenantChartReconciler creates a TenantChartReconciler with given arguments
 // This function uses the resourceChart default
-func NewTenantChartReconciler(client ctrlClient.Client, secureTenantNetwork bool) *TenantChartReconciler {
-	return &TenantChartReconciler{client: client, chart: resourcesChart, secureTenantNetwork: secureTenantNetwork}
+func newTenantChartReconciler(client ctrlClient.Client, secureTenantNetwork bool) *tenantChartReconciler {
+	return &tenantChartReconciler{client: client, chart: resourcesChart, secureTenantNetwork: secureTenantNetwork}
 }
 
-// WithChart overrides the default chart used by the TenantChartReconciler
-func (r *TenantChartReconciler) WithChart(c *chart.Chart) *TenantChartReconciler {
+// withChart overrides the default chart used by the TenantChartReconciler
+func (r *tenantChartReconciler) withChart(c *chart.Chart) *tenantChartReconciler {
 	r.chart = c
 	return r
 }
 
-// EnsureResourcesExist installs or updates the chart for remoteCentral on the Kuberntes cluster
-func (r *TenantChartReconciler) EnsureResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
+// ensureResourcesExist installs or updates the chart for remoteCentral on the Kuberntes cluster
+func (r *tenantChartReconciler) ensureResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	getObjectKey := func(obj *unstructured.Unstructured) string {
 		return fmt.Sprintf("%s/%s/%s",
 			obj.GetAPIVersion(),
@@ -133,8 +133,8 @@ func (r *TenantChartReconciler) EnsureResourcesExist(ctx context.Context, remote
 	return nil
 }
 
-// EnsureResourcesDeleted deletes all resources associated with the chart and namepsace from the Kubernetes cluster
-func (r *TenantChartReconciler) EnsureResourcesDeleted(ctx context.Context, namespace string) (bool, error) {
+// ensureResourcesDeleted deletes all resources associated with the chart and namepsace from the Kubernetes cluster
+func (r *tenantChartReconciler) ensureResourcesDeleted(ctx context.Context, namespace string) (bool, error) {
 	allObjectsDeleted := true
 
 	for _, gvk := range tenantChartResourceGVKs {
@@ -175,7 +175,7 @@ func (r *TenantChartReconciler) EnsureResourcesDeleted(ctx context.Context, name
 	return allObjectsDeleted, nil
 }
 
-func (r *TenantChartReconciler) chartValues(c private.ManagedCentral) (chartutil.Values, error) {
+func (r *tenantChartReconciler) chartValues(c private.ManagedCentral) (chartutil.Values, error) {
 	if r.chart == nil {
 		return nil, errors.New("resources chart is not set")
 	}
@@ -198,14 +198,14 @@ func (r *TenantChartReconciler) chartValues(c private.ManagedCentral) (chartutil
 	return chartutil.CoalesceTables(dst, src), nil
 }
 
-func (r *TenantChartReconciler) isTenantResourcesChartObject(existingObject *unstructured.Unstructured, namespace string) bool {
+func (r *tenantChartReconciler) isTenantResourcesChartObject(existingObject *unstructured.Unstructured, namespace string) bool {
 	return existingObject.GetLabels() != nil &&
 		existingObject.GetLabels()[helmChartNameLabel] == r.chart.Name() &&
 		existingObject.GetLabels()[managedByLabelKey] == labelManagedByFleetshardValue &&
 		existingObject.GetNamespace() == namespace
 }
 
-func (r *TenantChartReconciler) getTenantResourcesChartHelmLabelValue() string {
+func (r *tenantChartReconciler) getTenantResourcesChartHelmLabelValue() string {
 	// the objects rendered by the helm chart will have a label in the format
 	// helm.sh/chart: <chart-name>-<chart-version>
 	return fmt.Sprintf("%s-%s", r.chart.Name(), r.chart.Metadata.Version)

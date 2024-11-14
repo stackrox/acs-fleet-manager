@@ -65,7 +65,9 @@ var (
 	defaultCentralConfig = private.ManagedCentral{}
 
 	defaultReconcilerOptions = CentralReconcilerOptions{
-		ArgoCdNamespace: "openshift-gitops",
+		ArgoReconcilerOptions: ArgoReconcilerOptions{
+			ArgoCdNamespace: "openshift-gitops",
+		},
 	}
 
 	useRoutesReconcilerOptions           = CentralReconcilerOptions{UseRoutes: true}
@@ -357,9 +359,9 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		},
 	}, centralDeploymentObject()).Build()
 
-	nsReconciler := NewNamespaceReconciler(fakeClient)
-	chartReconciler := NewTenantChartReconciler(fakeClient, true)
-	crReconciler := NewCentralCrReconciler(fakeClient)
+	nsReconciler := newNamespaceReconciler(fakeClient)
+	chartReconciler := newTenantChartReconciler(fakeClient, true)
+	crReconciler := newCentralCrReconciler(fakeClient)
 
 	r := CentralReconciler{
 		status:                 pointer.Int32(0),
@@ -371,8 +373,9 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		namespaceReconciler:    nsReconciler,
 		tenantChartReconciler:  chartReconciler,
 		centralCrReconciler:    crReconciler,
-		tenantCleanup:          NewTenantCleanup(fakeClient, chartReconciler, nsReconciler, crReconciler, true),
+		tenantCleanup:          NewTenantCleanup(fakeClient, TenantCleanupOptions{}),
 	}
+
 	r.areSecretsStoredFunc = r.areSecretsStored //pragma: allowlist secret
 	r.needsReconcileFunc = r.needsReconcile
 	r.restoreCentralSecretsFunc = r.restoreCentralSecrets //pragma: allowlist secret
@@ -837,8 +840,8 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 		nil,
 		defaultReconcilerOptions,
 	)
-	r.tenantChartReconciler = NewTenantChartReconciler(fakeClient, true).WithChart(chart)
-	r.tenantCleanup = NewTenantCleanup(fakeClient, r.tenantChartReconciler, NewNamespaceReconciler(fakeClient), NewCentralCrReconciler(fakeClient), true)
+	r.tenantChartReconciler = newTenantChartReconciler(fakeClient, true).withChart(chart)
+	r.tenantCleanup = NewTenantCleanup(fakeClient, TenantCleanupOptions{})
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -904,7 +907,7 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 		nil,
 		defaultReconcilerOptions,
 	)
-	r.tenantChartReconciler = NewTenantChartReconciler(fakeClient, true).WithChart(chart)
+	r.tenantChartReconciler = newTenantChartReconciler(fakeClient, true).withChart(chart)
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -2304,7 +2307,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 			}
 			updateCount := 0
 			createCount := 0
-			r.namespaceReconciler.Client = interceptor.NewClient(fakeClient, interceptor.Funcs{
+			r.namespaceReconciler.client = interceptor.NewClient(fakeClient, interceptor.Funcs{
 				Update: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
 					updateCount++
 					return client.Update(ctx, obj, opts...)
@@ -2314,7 +2317,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 					return client.Create(ctx, obj, opts...)
 				},
 			})
-			err := r.namespaceReconciler.Reconcile(context.Background(), r.getDesiredNamespace(managedCentral))
+			err := r.namespaceReconciler.reconcile(context.Background(), r.getDesiredNamespace(managedCentral))
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -2647,6 +2650,7 @@ func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
 		defaultReconcilerOptions,
 	)
 	r.resourcesChart = chart
+	r.tenantChartReconciler.chart = chart
 
 	assertLegacyChartPresent := func(t *testing.T, present bool) {
 		var netPol networkingv1.NetworkPolicy
@@ -2660,7 +2664,7 @@ func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
 
 	assertArgoCdAppPresent := func(t *testing.T, present bool) {
 		var app argocd.Application
-		objectKey := r.getArgoCdAppObjectKey(managedCentral)
+		objectKey := r.argoReconciler.getArgoCdAppObjectKey(managedCentral.Id)
 		err := cli.Get(ctx, objectKey, &app)
 		if present {
 			require.NoError(t, err)
