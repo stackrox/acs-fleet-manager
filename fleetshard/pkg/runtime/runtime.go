@@ -142,6 +142,10 @@ func (r *Runtime) Start() error {
 		TenantImagePullSecret: r.config.TenantImagePullSecret, // pragma: allowlist secret
 		RouteParameters:       r.config.RouteParameters,
 		SecureTenantNetwork:   r.config.SecureTenantNetwork,
+		DefaultTenantArgoCdAppSourceTargetRevision: r.config.DefaultTenantArgoCdAppSourceTargetRevision,
+		DefaultTenantArgoCdAppSourcePath:           r.config.DefaultTenantArgoCdAppSourcePath,
+		DefaultTenantArgoCdAppSourceRepoURL:        r.config.DefaultTenantArgoCdAppSourceRepoURL,
+		ArgoCdNamespace:                            r.config.ArgoCdNamespace,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {

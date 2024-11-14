@@ -1,2 +1,4 @@
 export FLEETSHARD_SYNC_RESOURCES_DEFAULT='{"requests":{"cpu":"400m","memory":"1000Mi"},"limits":{"cpu":"400m","memory":"1000Mi"}}'
 export EXPOSE_OPENSHIFT_ROUTER_DEFAULT="true"
+export ENABLE_EXTERNAL_CONFIG_DEFAULT="true"
+export AWS_AUTH_HELPER_DEFAULT="aws-saml"

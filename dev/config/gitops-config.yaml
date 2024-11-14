@@ -1,11 +1,11 @@
 rhacsOperators:
   crdUrls:
-    - https://raw.githubusercontent.com/stackrox/stackrox/4.4.4/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml
-    - https://raw.githubusercontent.com/stackrox/stackrox/4.4.4/operator/bundle/manifests/platform.stackrox.io_centrals.yaml
+    - https://raw.githubusercontent.com/stackrox/stackrox/4.5.4/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml
+    - https://raw.githubusercontent.com/stackrox/stackrox/4.5.4/operator/bundle/manifests/platform.stackrox.io_centrals.yaml
   operators:
-    - deploymentName: "rhacs-operator-fast-stream"
-      image: "quay.io/rhacs-eng/stackrox-operator:4.6.x-233-gd6b1869836-fast"
-      centralLabelSelector: "rhacs.redhat.com/version-selector=fast-stream"
+    - deploymentName: "rhacs-operator-dev"
+      image: "quay.io/rhacs-eng/stackrox-operator:4.5.4"
+      centralLabelSelector: "rhacs.redhat.com/version-selector=dev"
       securedClusterReconcilerEnabled: false
 verticalPodAutoscaling:
   recommenders: []
@@ -21,6 +21,8 @@ tenantResources:
       rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
     secureTenantNetwork: false
     centralRdsCidrBlock: "10.1.0.0/16"
+    argoCd:
+      enabled: true
     verticalPodAutoscalers:
       central:
         enabled: true
@@ -41,12 +43,14 @@ centrals:
     - instanceIds:
         - "*"
       patch: |
-        # Set label for all centrals to fast-stream
+        # Set label for all centrals to dev
         metadata:
           labels:
-            rhacs.redhat.com/version-selector: "fast-stream"
+            rhacs.redhat.com/version-selector: "dev"
         # Adjust centrals for development environment
         spec:
+          network:
+            policies: Disabled
           monitoring:
             openshift:
               enabled: false
