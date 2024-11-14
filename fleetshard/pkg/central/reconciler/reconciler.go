@@ -1876,19 +1876,6 @@ func (r *CentralReconciler) makeDesiredArgoCDApplication(ctx context.Context, re
 		expiredAt = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
 	}
 
-	additionalCAs := []map[string]interface{}{}
-	if r.managedDBEnabled {
-		dbCA, err := postgres.GetDatabaseCACertificates()
-		if err != nil {
-			glog.Warningf("Could not read DB server CA bundle: %v", err)
-		} else {
-			additionalCAs = append(additionalCAs, map[string]interface{}{
-				"name":    postgres.CentralDatabaseCACertificateBaseName,
-				"content": string(dbCA),
-			})
-		}
-	}
-
 	values := map[string]interface{}{
 		"environment":                 r.environment,
 		"clusterName":                 r.clusterName,
@@ -1899,11 +1886,9 @@ func (r *CentralReconciler) makeDesiredArgoCDApplication(ctx context.Context, re
 		"instanceType":                remoteCentral.Spec.InstanceType,
 		"instanceExpiredAt":           expiredAt,
 		"isInternal":                  remoteCentral.Metadata.Internal,
-		"additionalCAs":               additionalCAs,
 		"telemetryStorageKey":         r.telemetry.StorageKey,
 		"telemetryStorageEndpoint":    r.telemetry.StorageEndpoint,
 		"centralAdminPasswordEnabled": !r.wantsAuthProvider,
-		"centralDbSecretName":         centralDbSecretName,
 		"tenant": map[string]interface{}{
 			"organizationId":   remoteCentral.Spec.Auth.OwnerOrgId,
 			"organizationName": remoteCentral.Spec.Auth.OwnerOrgName,
@@ -1924,7 +1909,22 @@ func (r *CentralReconciler) makeDesiredArgoCDApplication(ctx context.Context, re
 		if err != nil {
 			return nil, fmt.Errorf("getting Central DB connection string: %w", err)
 		}
+
+		values["centralDbSecretName"] = centralDbSecretName
 		values["centralDbConnectionString"] = centralDBConnectionString
+
+		dbCA, err := postgres.GetDatabaseCACertificates()
+		if err != nil {
+			glog.Warningf("Could not read DB server CA bundle: %v", err)
+		} else {
+			values["additionalCAs"] = []map[string]interface{}{
+				{
+					"name":    postgres.CentralDatabaseCACertificateBaseName,
+					"content": string(dbCA),
+				},
+			}
+		}
+
 	}
 
 	if remoteCentral.Metadata.Internal || r.telemetry.StorageKey == "" {
