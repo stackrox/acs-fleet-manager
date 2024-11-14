@@ -234,8 +234,6 @@ func (p *AddonProvisioner) newInstallation(config gitops.AddonConfig) (*clusters
 
 func (p *AddonProvisioner) updateAddon(clusterID string, config gitops.AddonConfig) error {
 	if p.backoffUpgradeRequest() {
-		// if a upgrade request was send and the last status has not changed to something else than upgrade
-		// in the meantime the upgrade is stuck and we need to backoff to prevent limits on the OCM service log API
 		glog.V(5).Infof("update addon request backoff for cluster: %s", clusterID)
 		return nil
 	}
