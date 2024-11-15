@@ -136,7 +136,13 @@ func (r *Runtime) Start() error {
 		DefaultTenantArgoCdAppSourcePath:           r.config.DefaultTenantArgoCdAppSourcePath,
 		DefaultTenantArgoCdAppSourceRepoURL:        r.config.DefaultTenantArgoCdAppSourceRepoURL,
 		ArgoCdNamespace:                            r.config.ArgoCdNamespace,
+		ManagedDBEnabled:                           r.config.ManagedDB.Enabled,
+		ClusterName:                                r.config.ClusterName,
+		Environment:                                r.config.Environment,
+		Telemetry:                                  r.config.Telemetry,
+		WantsAuthProvider:                          r.config.CreateAuthProvider,
 	}
+
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
 		UseRoutes:             routesAvailable,
 		WantsAuthProvider:     r.config.CreateAuthProvider,
