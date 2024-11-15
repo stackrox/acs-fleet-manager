@@ -321,7 +321,7 @@ func (r *Runtime) routesAvailable() bool {
 
 func (r *Runtime) isReconcilePaused(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
 	values := remoteCentral.Spec.TenantResourcesValues
-	pausedValue, ok := values["paused"]
+	pausedValue, ok := values["isPaused"]
 	if !ok {
 		return false, nil
 	}

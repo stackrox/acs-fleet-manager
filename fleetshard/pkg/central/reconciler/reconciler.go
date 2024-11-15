@@ -1274,7 +1274,7 @@ func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, 
 		return fmt.Errorf("unmarshaling ArgoCD application values: %w", err)
 	}
 
-	pausedIntf, ok := values["paused"]
+	pausedIntf, ok := values["isPaused"]
 	if !ok {
 		return nil
 	}
@@ -1285,7 +1285,7 @@ func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, 
 	}
 
 	if paused {
-		values["paused"] = false
+		values["isPaused"] = false
 		valuesBytes, err := json.Marshal(values)
 		if err != nil {
 			return fmt.Errorf("marshaling ArgoCD application values: %w", err)
@@ -1342,9 +1342,12 @@ func (r *CentralReconciler) ensureArgoCdApplicationExists(ctx context.Context, r
 func (r *CentralReconciler) makeArgoCDApplicationValues(ctx context.Context, remoteCentral private.ManagedCentral) (result map[string]interface{}, err error) {
 
 	defaults := map[string]interface{}{
-		"central": map[string]interface{}{
-			"enabled": true,
+		"vpa": map[string]interface{}{
+			"central": map[string]interface{}{
+				"enabled": true,
+			},
 		},
+		"isPaused": false,
 	}
 
 	result = remoteCentral.Spec.TenantResourcesValues

@@ -573,7 +573,7 @@ func TestDisablePauseAnnotation(t *testing.T) {
 	argoCdApp.Spec.Source = &argocd.ApplicationSource{
 		Helm: &argocd.ApplicationSourceHelm{
 			ValuesObject: &runtime.RawExtension{
-				Raw: []byte(`{"paused": true}`),
+				Raw: []byte(`{"isPaused": true}`),
 			},
 		},
 	}
@@ -588,7 +588,7 @@ func TestDisablePauseAnnotation(t *testing.T) {
 	require.NoError(t, err)
 
 	type values struct {
-		Paused bool `json:"paused"`
+		Paused bool `json:"isPaused"`
 	}
 	var v values
 	err = yaml.Unmarshal(argoCdApp.Spec.Source.Helm.ValuesObject.Raw, &v)
