@@ -248,8 +248,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
+	if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
+		return nil, err
+	}
+
+	centralDBConnectionString := central.Spec.Central.DB.ConnectionStringOverride
 	if isArgoCdEnabledForTenant(remoteCentral) {
-		if err := r.argoReconciler.ensureApplicationExists(ctx, remoteCentral); err != nil {
+		if err := r.argoReconciler.ensureApplicationExists(ctx, remoteCentral, *centralDBConnectionString); err != nil {
 			return nil, errors.Wrapf(err, "unable to install ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		}
 	} else {
@@ -269,10 +274,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if err := r.tenantChartReconciler.ensureResourcesExist(ctx, remoteCentral); err != nil {
 			return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
 		}
-	}
-
-	if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
-		return nil, err
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {

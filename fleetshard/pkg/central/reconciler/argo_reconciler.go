@@ -7,6 +7,9 @@ import (
 	"time"
 
 	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,6 +30,11 @@ type ArgoReconcilerOptions struct {
 	DefaultTenantArgoCdAppSourceTargetRevision string
 	DefaultTenantArgoCdAppSourcePath           string
 	ArgoCdNamespace                            string
+	ManagedDBEnabled                           bool
+	ClusterName                                string
+	Environment                                string
+	Telemetry                                  config.Telemetry
+	WantsAuthProvider                          bool
 }
 
 func newArgoReconciler(
@@ -38,10 +46,10 @@ func newArgoReconciler(
 	}
 }
 
-func (r *argoReconciler) ensureApplicationExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
+func (r *argoReconciler) ensureApplicationExists(ctx context.Context, remoteCentral private.ManagedCentral, centralDBConnectionString string) error {
 	const lastAppliedHashLabel = "last-applied-hash"
 
-	want, err := r.makeDesiredArgoCDApplication(remoteCentral)
+	want, err := r.makeDesiredArgoCDApplication(ctx, remoteCentral, centralDBConnectionString)
 	if err != nil {
 		return fmt.Errorf("getting ArgoCD application: %w", err)
 	}
@@ -77,9 +85,20 @@ func (r *argoReconciler) ensureApplicationExists(ctx context.Context, remoteCent
 	return nil
 }
 
-func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.ManagedCentral) (*argocd.Application, error) {
+func (r *argoReconciler) makeDesiredArgoCDApplication(ctx context.Context, remoteCentral private.ManagedCentral, centralDBConnectionString string) (*argocd.Application, error) {
 
 	values := map[string]interface{}{
+		"environment":                 r.argoOpts.Environment,
+		"clusterName":                 r.argoOpts.ClusterName,
+		"organizationId":              remoteCentral.Spec.Auth.OwnerOrgId,
+		"organizationName":            remoteCentral.Spec.Auth.OwnerOrgName,
+		"instanceId":                  remoteCentral.Id,
+		"instanceName":                remoteCentral.Metadata.Name,
+		"instanceType":                remoteCentral.Spec.InstanceType,
+		"isInternal":                  remoteCentral.Metadata.Internal,
+		"telemetryStorageKey":         r.argoOpts.Telemetry.StorageKey,
+		"telemetryStorageEndpoint":    r.argoOpts.Telemetry.StorageEndpoint,
+		"centralAdminPasswordEnabled": !r.argoOpts.WantsAuthProvider,
 		"tenant": map[string]interface{}{
 			"organizationId":   remoteCentral.Spec.Auth.OwnerOrgId,
 			"organizationName": remoteCentral.Spec.Auth.OwnerOrgName,
@@ -93,6 +112,32 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 				"enabled": true,
 			},
 		},
+	}
+
+	if remoteCentral.Metadata.ExpiredAt != nil {
+		values["expiredAt"] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
+	}
+
+	if r.argoOpts.ManagedDBEnabled {
+		values["centralDbSecretName"] = centralDbSecretName // pragma: allowlist secret
+		values["centralDbConnectionString"] = centralDBConnectionString
+
+		dbCA, err := postgres.GetDatabaseCACertificates()
+		if err != nil {
+			glog.Warningf("Could not read DB server CA bundle: %v", err)
+		} else {
+			values["additionalCAs"] = []map[string]interface{}{
+				{
+					"name":    postgres.CentralDatabaseCACertificateBaseName,
+					"content": string(dbCA),
+				},
+			}
+		}
+
+	}
+
+	if remoteCentral.Metadata.Internal || r.argoOpts.Telemetry.StorageKey == "" {
+		values["telemetryStorageKey"] = "DISABLED"
 	}
 
 	valuesBytes, err := json.Marshal(values)
