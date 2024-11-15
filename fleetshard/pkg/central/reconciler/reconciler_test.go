@@ -362,6 +362,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	nsReconciler := newNamespaceReconciler(fakeClient)
 	chartReconciler := newTenantChartReconciler(fakeClient, true)
 	crReconciler := newCentralCrReconciler(fakeClient)
+	argoReconciler := newArgoReconciler(fakeClient, ArgoReconcilerOptions{ArgoCdNamespace: "openshift-gitops"})
 
 	r := CentralReconciler{
 		status:                 pointer.Int32(0),
@@ -373,6 +374,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		namespaceReconciler:    nsReconciler,
 		tenantChartReconciler:  chartReconciler,
 		centralCrReconciler:    crReconciler,
+		argoReconciler:         argoReconciler,
 		tenantCleanup:          NewTenantCleanup(fakeClient, TenantCleanupOptions{}),
 	}
 
