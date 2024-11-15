@@ -1355,6 +1355,7 @@ func (r *CentralReconciler) makeArgoCDApplicationValues(ctx context.Context, rem
 	chartutil.CoalesceTables(result, defaults)
 
 	// Invariants
+	result["centralEnabled"] = true // to enable central CR reconciliation in the argocd chart manifests
 	result["environment"] = r.environment
 	result["clusterName"] = r.clusterName
 	result["organizationId"] = remoteCentral.Spec.Auth.OwnerOrgId
