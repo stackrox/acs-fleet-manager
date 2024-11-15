@@ -24,9 +24,7 @@ import (
 	fleetmanager "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/concurrency"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -322,32 +320,16 @@ func (r *Runtime) routesAvailable() bool {
 }
 
 func (r *Runtime) isReconcilePaused(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
-	central := &v1alpha1.Central{}
-	err := r.k8sClient.Get(ctx, ctrlClient.ObjectKey{
-		Namespace: remoteCentral.Metadata.Namespace,
-		Name:      remoteCentral.Metadata.Name}, central)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return false, nil
-		}
-
-		return false, errors.Wrapf(err, "getting CR for Central: %s", remoteCentral.Id)
-	}
-
-	if central.Annotations == nil {
+	values := remoteCentral.Spec.TenantResourcesValues
+	pausedValue, ok := values["paused"]
+	if !ok {
 		return false, nil
 	}
-
-	value, exists := central.Annotations[centralReconciler.PauseReconcileAnnotation]
-	if !exists {
-		return false, nil
+	paused, ok := pausedValue.(bool)
+	if !ok {
+		return false, fmt.Errorf("paused value is not a bool")
 	}
-
-	if value == "true" {
-		return true, nil
-	}
-
-	return false, nil
+	return paused, nil
 }
 
 func (r *Runtime) sendClusterStatus(ctx context.Context) error {

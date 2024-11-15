@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"sort"
 	"sync/atomic"
 	"time"
@@ -19,7 +18,6 @@ import (
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cipher"
@@ -28,25 +26,19 @@ import (
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/random"
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	yaml2 "sigs.k8s.io/yaml"
 )
 
 // FreeStatus ...
@@ -54,17 +46,9 @@ const (
 	FreeStatus int32 = iota
 	BlockedStatus
 
-	PauseReconcileAnnotation = "stackrox.io/pause-reconcile"
+	argoCdManagedBy = "argocd.argoproj.io/managed-by"
 
-	helmReleaseName = "tenant-resources"
-
-	argoCdManagedBy          = "argocd.argoproj.io/managed-by"
-	openshiftGitopsNamespace = "openshift-gitops"
-
-	centralPVCAnnotationKey   = "platform.stackrox.io/obsolete-central-pvc"
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
-	envAnnotationKey          = "rhacs.redhat.com/environment"
-	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
 	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
 
 	ovnACLLoggingAnnotationKey     = "k8s.ovn.org/acl-logging"
@@ -97,19 +81,15 @@ const (
 	centralEncryptionKeySecretName = "central-encryption-key-chain" // pragma: allowlist secret
 
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
-	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
 
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
 	additionalAuthProviderConfigKey  = "additional-auth-provider"
 
 	tenantImagePullSecretName = "stackrox" // pragma: allowlist secret
-
-	helmChartLabelKey  = "helm.sh/chart"
-	helmChartNameLabel = "helm.sh/chart-name"
 )
 
 type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error)
-type needsReconcileFunc func(changed bool, central *v1alpha1.Central, storedSecrets []string) bool
+type needsReconcileFunc func(changed bool, central private.ManagedCentral, storedSecrets []string) bool
 type restoreCentralSecretsFunc func(ctx context.Context, remoteCentral private.ManagedCentral) error
 type areSecretsStoredFunc func(secretsStored []string) bool
 
@@ -161,8 +141,6 @@ type CentralReconciler struct {
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
 
-	resourcesChart *chart.Chart
-
 	wantsAuthProvider      bool
 	hasAuthProvider        bool
 	verifyAuthProviderFunc verifyAuthProviderExistsFunc
@@ -195,10 +173,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrap(err, "computing central hash")
 	}
 
-	central, err := r.getInstanceConfig(&remoteCentral)
-	if err != nil {
-		return nil, err
-	}
+	namespace := remoteCentral.Metadata.Namespace
+	name := remoteCentral.Metadata.Name
 
 	shouldUpdateCentralHash := false
 	defer func() {
@@ -212,7 +188,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	changed := r.centralChanged(centralHash)
 
-	needsReconcile := r.needsReconcileFunc(changed, central, remoteCentral.Metadata.SecretsStored)
+	needsReconcile := r.needsReconcileFunc(changed, remoteCentral, remoteCentral.Metadata.SecretsStored)
 
 	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
 		shouldUpdateCentralHash = true
@@ -224,7 +200,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
-		status, err := r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
+		status, err := r.reconcileInstanceDeletion(ctx, &remoteCentral)
 		shouldUpdateCentralHash = err == nil
 		return status, err
 	}
@@ -250,42 +226,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if isArgoCdEnabledForTenant(remoteCentral) {
-		if err := r.ensureArgoCdApplicationExists(ctx, remoteCentral); err != nil {
-			return nil, errors.Wrapf(err, "unable to install ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
-		}
-	} else {
-
-		{
-			// This part handles the case where we enable, then disable ArgoCD for a tenant
-			// to make sure the ArgoCD application is cleaned up.
-			ok, err := r.ensureArgoCdApplicationDeleted(ctx, remoteCentral)
-			if err != nil {
-				return nil, errors.Wrapf(err, "unable to delete ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
-			}
-			if !ok {
-				return nil, errors.New("ArgoCD application not yet deleted")
-			}
-		}
-
-		if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
-			return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
-		}
-	}
-
-	if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
-		return nil, err
+	if err := r.ensureArgoCdApplicationExists(ctx, remoteCentral); err != nil {
+		return nil, errors.Wrapf(err, "unable to install ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
-		return nil, err
-	}
-
-	if err := r.reconcileAdminPasswordGeneration(central); err != nil {
-		return nil, err
-	}
-
-	if err = r.reconcileCentral(ctx, &remoteCentral, central); err != nil {
 		return nil, err
 	}
 
@@ -306,7 +251,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if err = r.ensureSecretHasOwnerReference(ctx, k8s.CentralTLSSecretName, &remoteCentral, central); err != nil {
+	if err = r.ensureSecretHasOwnerReference(ctx, k8s.CentralTLSSecretName, &remoteCentral); err != nil {
 		return nil, err
 	}
 
@@ -323,7 +268,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 	if !exists {
 		glog.Infof("Default auth provider for central %s/%s is not yet ready.",
-			central.GetNamespace(), central.GetName())
+			namespace, name)
 		return nil, ErrCentralNotChanged
 	}
 
@@ -339,113 +284,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	glog.Infof("Returning central status %+v", logStatus)
 
 	return status, nil
-}
-
-func isArgoCdEnabledForTenant(remoteCentral private.ManagedCentral) bool {
-	tenantResourceValues := remoteCentral.Spec.TenantResourcesValues
-	if tenantResourceValues == nil {
-		return false
-	}
-	argoCdIntf, ok := tenantResourceValues["argoCd"]
-	if !ok {
-		return false
-	}
-	argoCd, ok := argoCdIntf.(map[string]interface{})
-	if !ok {
-		return false
-	}
-	enabled, ok := argoCd["enabled"]
-	if !ok {
-		return false
-	}
-	enabledBool, ok := enabled.(bool)
-	if !ok {
-		return false
-	}
-	return enabledBool
-}
-
-func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
-	var central = new(v1alpha1.Central)
-	if err := yaml2.Unmarshal([]byte(remoteCentral.Spec.CentralCRYAML), central); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal central yaml")
-	}
-	if err := r.applyCentralConfig(remoteCentral, central); err != nil {
-		return nil, err
-	}
-	return central, nil
-}
-
-func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
-	r.applyTelemetry(remoteCentral, central)
-	r.applyRoutes(central)
-	r.applyDeclarativeConfig(central)
-	r.applyAnnotations(remoteCentral, central)
-	return nil
-}
-
-func (r *CentralReconciler) applyAnnotations(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) {
-	if central.Spec.Customize == nil {
-		central.Spec.Customize = &v1alpha1.CustomizeSpec{}
-	}
-	if central.Spec.Customize.Annotations == nil {
-		central.Spec.Customize.Annotations = map[string]string{}
-	}
-	central.Spec.Customize.Annotations[envAnnotationKey] = r.environment
-	central.Spec.Customize.Annotations[clusterNameAnnotationKey] = r.clusterName
-	if remoteCentral.Metadata.ExpiredAt != nil {
-		central.Spec.Customize.Annotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
-	}
-}
-
-func (r *CentralReconciler) applyDeclarativeConfig(central *v1alpha1.Central) {
-	if central.Spec.Central == nil {
-		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
-	}
-	declarativeConfig := &v1alpha1.DeclarativeConfiguration{
-		Secrets: []v1alpha1.LocalSecretReference{
-			{
-				Name: sensibleDeclarativeConfigSecretName,
-			},
-			{
-				Name: manualDeclarativeConfigSecretName,
-			},
-		},
-	}
-
-	central.Spec.Central.DeclarativeConfiguration = declarativeConfig
-}
-
-func (r *CentralReconciler) applyRoutes(central *v1alpha1.Central) {
-	if central.Spec.Central == nil {
-		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
-	}
-	exposure := &v1alpha1.Exposure{
-		Route: &v1alpha1.ExposureRoute{
-			Enabled: pointer.Bool(r.useRoutes),
-		},
-	}
-	central.Spec.Central.Exposure = exposure
-}
-
-func (r *CentralReconciler) applyTelemetry(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) {
-	if central.Spec.Central == nil {
-		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
-	}
-	// Telemetry is always enabled, but the key is set to DISABLED for probe and other internal instances.
-	// Cloud-service specificity: empty key also disables telemetry to prevent reporting to the self-managed bucket.
-	key := r.telemetry.StorageKey
-	if remoteCentral.Metadata.Internal || key == "" {
-		key = "DISABLED"
-	}
-	telemetry := &v1alpha1.Telemetry{
-		Enabled: pointer.Bool(true),
-		Storage: &v1alpha1.TelemetryStorage{
-			Endpoint: &r.telemetry.StorageEndpoint,
-			Key:      &key,
-		},
-	}
-	central.Spec.Central.Telemetry = telemetry
 }
 
 func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
@@ -492,17 +330,6 @@ func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCen
 	return nil
 }
 
-func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *v1alpha1.Central) error {
-	if !r.wantsAuthProvider {
-		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(false)
-		glog.Infof("No auth provider desired, enabling basic authentication for Central %s/%s",
-			central.GetNamespace(), central.GetName())
-		return nil
-	}
-	central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
-	return nil
-}
-
 func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
 	// Short-circuit if an auth provider isn't desired or already exists.
 	if !r.wantsAuthProvider {
@@ -521,11 +348,11 @@ func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remote
 	return false, nil
 }
 
-func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (*private.DataPlaneCentralStatus, error) {
+func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
-	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral, central)
+	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral)
 	if err != nil {
 		return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
 	}
@@ -533,46 +360,6 @@ func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remot
 		return deletedStatus(), nil
 	}
 	return nil, ErrDeletionInProgress
-}
-
-func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
-
-	if central.Spec.Central == nil {
-		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
-	}
-	if central.Spec.Central.DB == nil {
-		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{}
-	}
-	central.Spec.Central.DB.IsEnabled = v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue)
-
-	if !r.managedDBEnabled {
-		return nil
-	}
-
-	centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
-	if err != nil {
-		return fmt.Errorf("getting Central DB connection string: %w", err)
-	}
-
-	central.Spec.Central.DB.ConnectionStringOverride = pointer.String(centralDBConnectionString)
-	central.Spec.Central.DB.PasswordSecret = &v1alpha1.LocalSecretReference{
-		Name: centralDbSecretName,
-	}
-
-	dbCA, err := postgres.GetDatabaseCACertificates()
-	if err != nil {
-		glog.Warningf("Could not read DB server CA bundle: %v", err)
-	} else {
-		central.Spec.TLS = &v1alpha1.TLSConfig{
-			AdditionalCAs: []v1alpha1.AdditionalCA{
-				{
-					Name:    postgres.CentralDatabaseCACertificateBaseName,
-					Content: string(dbCA),
-				},
-			},
-		}
-	}
-	return nil
 }
 
 func getAuditLogNotifierConfig(
@@ -718,126 +505,6 @@ func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Co
 	)
 }
 
-func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
-	remoteCentralName := remoteCentral.Metadata.Name
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
-	centralExists := true
-	existingCentral := v1alpha1.Central{}
-	centralKey := ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}
-	err := r.client.Get(ctx, centralKey, &existingCentral)
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return errors.Wrapf(err, "unable to check the existence of central %v", centralKey)
-		}
-		centralExists = false
-	}
-
-	if remoteCentral.Metadata.ExpiredAt != nil {
-		if central.GetAnnotations() == nil {
-			central.Annotations = map[string]string{}
-		}
-		central.Annotations[centralExpiredAtKey] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
-	}
-
-	if !centralExists {
-		if central.GetAnnotations() == nil {
-			central.Annotations = map[string]string{}
-		}
-		if err := util.IncrementCentralRevision(central); err != nil {
-			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
-		}
-
-		glog.Infof("Creating Central %v", centralKey)
-		if err := r.client.Create(ctx, central); err != nil {
-			return errors.Wrapf(err, "creating new Central %v", centralKey)
-		}
-		glog.Infof("Central %v created", centralKey)
-	} else {
-		// perform a dry run to see if the update would change anything.
-		// This would apply the defaults and the mutating webhooks without actually updating the object.
-		// We can then compare the existing object with the object that would be resulting from the update.
-		// This will prevent unnecessary operator reconciliation loops.
-
-		desiredCentral := existingCentral.DeepCopy()
-		desiredCentral.Spec = *central.Spec.DeepCopy()
-		mergeLabelsAndAnnotations(central, desiredCentral)
-
-		requiresUpdate, err := centralNeedsUpdating(ctx, r.client, &existingCentral, desiredCentral)
-		if err != nil {
-			return errors.Wrapf(err, "checking if Central %v needs to be updated", centralKey)
-		}
-
-		if !requiresUpdate {
-			glog.Infof("Central %v is already up to date", centralKey)
-			return nil
-		}
-
-		if err := util.IncrementCentralRevision(desiredCentral); err != nil {
-			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
-		}
-
-		if err := r.client.Update(context.Background(), desiredCentral); err != nil {
-			return errors.Wrapf(err, "updating Central %v", centralKey)
-		}
-
-	}
-
-	return nil
-}
-
-func mergeLabelsAndAnnotations(from, into *v1alpha1.Central) {
-	if into.Annotations == nil {
-		into.Annotations = map[string]string{}
-	}
-	if into.Labels == nil {
-		into.Labels = map[string]string{}
-	}
-	into.Annotations = mergeStringsMap(from.Annotations, into.Annotations)
-	into.Labels = mergeStringsMap(from.Labels, into.Labels)
-}
-
-func mergeStringsMap(from, into map[string]string) map[string]string {
-	var result = map[string]string{}
-	for key, value := range into {
-		result[key] = value
-	}
-	for key, value := range from {
-		result[key] = value
-	}
-	return result
-}
-
-func centralNeedsUpdating(ctx context.Context, client ctrlClient.Client, existing *v1alpha1.Central, desired *v1alpha1.Central) (bool, error) {
-	wouldBeCentral := desired.DeepCopy()
-	centralKey := ctrlClient.ObjectKey{Namespace: existing.Namespace, Name: existing.Name}
-	if err := client.Update(ctx, desired, ctrlClient.DryRunAll); err != nil {
-		return false, errors.Wrapf(err, "dry-run updating Central %v", centralKey)
-	}
-
-	var shouldUpdate = false
-	if !reflect.DeepEqual(existing.Spec, wouldBeCentral.Spec) {
-		glog.Infof("Detected that Central %v is out of date and needs to be updated", centralKey)
-		shouldUpdate = true
-	}
-
-	if !shouldUpdate && stringMapNeedsUpdating(desired.Annotations, existing.Annotations) {
-		glog.Infof("Detected that Central %v annotations are out of date and needs to be updated", centralKey)
-		shouldUpdate = true
-	}
-
-	if !shouldUpdate && stringMapNeedsUpdating(desired.Labels, existing.Labels) {
-		glog.Infof("Detected that Central %v labels are out of date and needs to be updated", centralKey)
-		shouldUpdate = true
-	}
-
-	if shouldUpdate {
-		printCentralDiff(wouldBeCentral, existing)
-	}
-
-	return shouldUpdate, nil
-}
-
 func stringMapNeedsUpdating(desired, actual map[string]string) bool {
 	if len(desired) == 0 {
 		return false
@@ -851,28 +518,6 @@ func stringMapNeedsUpdating(desired, actual map[string]string) bool {
 		}
 	}
 	return false
-}
-
-func printCentralDiff(desired, actual *v1alpha1.Central) {
-	if !features.PrintCentralUpdateDiff.Enabled() {
-		return
-	}
-	desiredBytes, err := json.Marshal(desired.Spec)
-	if err != nil {
-		glog.Warningf("Failed to marshal desired Central %s/%s spec: %v", desired.Namespace, desired.Name, err)
-		return
-	}
-	actualBytes, err := json.Marshal(actual.Spec)
-	if err != nil {
-		glog.Warningf("Failed to marshal actual Central %s/%s spec: %v", desired.Namespace, desired.Name, err)
-		return
-	}
-	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(actualBytes, desiredBytes, &v1alpha1.CentralSpec{})
-	if err != nil {
-		glog.Warningf("Failed to create Central %s/%s patch: %v", desired.Namespace, desired.Name, err)
-		return
-	}
-	glog.Infof("Central %s/%s diff: %s", desired.Namespace, desired.Name, string(patchBytes))
 }
 
 func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
@@ -1028,7 +673,7 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (e
 // ensureSecretHasOwnerReference is used to make sure the central-tls secret has it's
 // owner reference properly set after a restore operation so that the automatic cert rotation
 // in the operator is working
-func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, secretName string, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, secretName string, remoteCentral *private.ManagedCentral) error {
 	secret, err := r.getSecret(remoteCentral.Metadata.Namespace, secretName)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -1042,8 +687,10 @@ func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, s
 		return nil
 	}
 
+	objectKey := ctrlClient.ObjectKey{Namespace: remoteCentral.Metadata.Namespace, Name: remoteCentral.Metadata.Name}
+
 	centralCR := &v1alpha1.Central{}
-	if err := r.client.Get(ctx, ctrlClient.ObjectKeyFromObject(central), centralCR); err != nil {
+	if err := r.client.Get(ctx, objectKey, centralCR); err != nil {
 		return fmt.Errorf("getting current central CR from k8s: %w", err)
 	}
 
@@ -1106,14 +753,14 @@ func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCen
 	}
 }
 
-func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (bool, error) {
+func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral *private.ManagedCentral) (bool, error) {
 	globalDeleted := true
 	if r.useRoutes {
-		reencryptRouteDeleted, err := r.ensureReencryptRouteDeleted(ctx, central.GetNamespace())
+		reencryptRouteDeleted, err := r.ensureReencryptRouteDeleted(ctx, remoteCentral.Metadata.Namespace)
 		if err != nil {
 			return false, err
 		}
-		passthroughRouteDeleted, err := r.ensurePassthroughRouteDeleted(ctx, central.GetNamespace())
+		passthroughRouteDeleted, err := r.ensurePassthroughRouteDeleted(ctx, remoteCentral.Metadata.Namespace)
 		if err != nil {
 			return false, err
 		}
@@ -1121,19 +768,13 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 		globalDeleted = globalDeleted && reencryptRouteDeleted && passthroughRouteDeleted
 	}
 
-	centralDeleted, err := r.ensureCentralCRDeleted(ctx, central)
-	if err != nil {
-		return false, err
-	}
-	globalDeleted = globalDeleted && centralDeleted
-
-	podsTerminated, err := r.ensureInstancePodsTerminated(ctx, central)
+	podsTerminated, err := r.ensureInstancePodsTerminated(ctx, remoteCentral.Metadata.Namespace)
 	if err != nil {
 		return false, err
 	}
 	globalDeleted = globalDeleted && podsTerminated
 
-	if err := r.ensureDeclarativeConfigurationSecretCleaned(ctx, central.GetNamespace()); err != nil {
+	if err := r.ensureDeclarativeConfigurationSecretCleaned(ctx, remoteCentral.Metadata.Namespace); err != nil {
 		return false, nil
 	}
 
@@ -1156,7 +797,7 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 			return false, fmt.Errorf("deprovisioning DB: %v", err)
 		}
 
-		secretDeleted, err := r.ensureCentralDBSecretDeleted(ctx, central.GetNamespace())
+		secretDeleted, err := r.ensureCentralDBSecretDeleted(ctx, remoteCentral.Metadata.Namespace)
 		if err != nil {
 			return false, err
 		}
@@ -1169,13 +810,7 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && argoCdAppDeleted
 
-	chartResourcesDeleted, err := r.ensureChartResourcesDeleted(ctx, remoteCentral)
-	if err != nil {
-		return false, err
-	}
-	globalDeleted = globalDeleted && chartResourcesDeleted
-
-	nsDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace())
+	nsDeleted, err := r.ensureNamespaceDeleted(ctx, remoteCentral.Metadata.Namespace)
 	if err != nil {
 		return false, err
 	}
@@ -1575,56 +1210,14 @@ func (r *CentralReconciler) getDBPasswordFromSecret(ctx context.Context, central
 	return "", fmt.Errorf("central DB secret does not contain password field: %w", err)
 }
 
-func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
-	centralKey := ctrlClient.ObjectKey{
-		Namespace: central.GetNamespace(),
-		Name:      central.GetName(),
-	}
-
-	err := wait.PollUntilContextCancel(ctx, centralDeletePollInterval, true, func(ctx context.Context) (bool, error) {
-		var centralToDelete v1alpha1.Central
-
-		if err := r.client.Get(ctx, centralKey, &centralToDelete); err != nil {
-			if apiErrors.IsNotFound(err) {
-				return true, nil
-			}
-			return false, errors.Wrapf(err, "failed to get central CR %v", centralKey)
-		}
-
-		// avoid being stuck in a deprovisioning state due to the pause reconcile annotation
-		if err := r.disablePauseReconcileIfPresent(ctx, &centralToDelete); err != nil {
-			return false, err
-		}
-
-		if centralToDelete.GetDeletionTimestamp() == nil {
-			glog.Infof("Marking Central CR %v for deletion", centralKey)
-			if err := r.client.Delete(ctx, &centralToDelete); err != nil {
-				if apiErrors.IsNotFound(err) {
-					return true, nil
-				}
-				return false, errors.Wrapf(err, "failed to delete central CR %v", centralKey)
-			}
-		}
-
-		glog.Infof("Waiting for Central CR %v to be deleted", centralKey)
-		return false, nil
-	})
-
-	if err != nil {
-		return false, errors.Wrapf(err, "waiting for central CR %v to be deleted", centralKey)
-	}
-	glog.Infof("Central CR %v is deleted", centralKey)
-	return true, nil
-}
-
-func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, namespace string) (bool, error) {
 	err := wait.PollUntilContextCancel(ctx, centralDeletePollInterval, true, func(ctx context.Context) (bool, error) {
 		pods := &corev1.PodList{}
 		labelKey := "app.kubernetes.io/part-of"
 		labelValue := "stackrox-central-services"
 		labels := map[string]string{labelKey: labelValue}
 		err := r.client.List(ctx, pods,
-			ctrlClient.InNamespace(central.GetNamespace()),
+			ctrlClient.InNamespace(namespace),
 			ctrlClient.MatchingLabels(labels),
 		)
 
@@ -1635,7 +1228,7 @@ func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, ce
 		// Make sure that the returned pods are central service pods in the correct namespace
 		var filteredPods []corev1.Pod
 		for _, pod := range pods.Items {
-			if pod.Namespace != central.GetNamespace() {
+			if pod.Namespace != namespace {
 				continue
 			}
 			if val, exists := pod.Labels[labelKey]; !exists || val != labelValue {
@@ -1660,174 +1253,50 @@ func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, ce
 	if err != nil {
 		return false, fmt.Errorf("waiting for pods to terminate: %w", err)
 	}
-	glog.Infof("All pods terminated for tenant %s in namespace %s.", central.GetName(), central.GetNamespace())
+	glog.Infof("All pods terminated in namespace %s.", namespace)
 	return true, nil
 }
 
-func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, central *v1alpha1.Central) error {
-	if central.Annotations == nil {
+func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, central private.ManagedCentral) error {
+
+	app := &argocd.Application{}
+	key := r.getArgoCdAppObjectKey(central)
+	if err := r.client.Get(ctx, key, app); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("getting ArgoCD application %s: %w", central.Metadata.Name, err)
+	}
+
+	values := map[string]interface{}{}
+	if err := json.Unmarshal(app.Spec.Source.Helm.ValuesObject.Raw, &values); err != nil {
+		return fmt.Errorf("unmarshaling ArgoCD application values: %w", err)
+	}
+
+	pausedIntf, ok := values["paused"]
+	if !ok {
 		return nil
 	}
 
-	if value, exists := central.Annotations[PauseReconcileAnnotation]; !exists || value != "true" {
-		return nil
+	paused, ok := pausedIntf.(bool)
+	if !ok {
+		return fmt.Errorf("paused value is not a boolean")
 	}
 
-	central.Annotations[PauseReconcileAnnotation] = "false"
-	err := r.client.Update(ctx, central)
-	if err != nil {
-		return fmt.Errorf("removing pause reconcile annotation: %v", err)
-	}
-
-	return nil
-}
-
-func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
-	getObjectKey := func(obj *unstructured.Unstructured) string {
-		return fmt.Sprintf("%s/%s/%s",
-			obj.GetAPIVersion(),
-			obj.GetKind(),
-			obj.GetName(),
-		)
-	}
-
-	vals, err := r.chartValues(remoteCentral)
-	if err != nil {
-		return fmt.Errorf("obtaining values for resources chart: %w", err)
-	}
-
-	if features.PrintTenantResourcesChartValues.Enabled() {
-		glog.Infof("Tenant resources for central %q: %s", remoteCentral.Metadata.Name, vals)
-	}
-
-	objs, err := charts.RenderToObjects(helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
-	if err != nil {
-		return fmt.Errorf("rendering resources chart: %w", err)
-	}
-
-	helmChartLabelValue := r.getTenantResourcesChartHelmLabelValue()
-
-	// objectsThatShouldExist stores the keys of the objects we want to exist
-	var objectsThatShouldExist = map[string]struct{}{}
-
-	for _, obj := range objs {
-		objectsThatShouldExist[getObjectKey(obj)] = struct{}{}
-
-		if obj.GetNamespace() == "" {
-			obj.SetNamespace(remoteCentral.Metadata.Namespace)
+	if paused {
+		values["paused"] = false
+		valuesBytes, err := json.Marshal(values)
+		if err != nil {
+			return fmt.Errorf("marshaling ArgoCD application values: %w", err)
 		}
-		if obj.GetLabels() == nil {
-			obj.SetLabels(map[string]string{})
-		}
-		labels := obj.GetLabels()
-		labels[managedByLabelKey] = labelManagedByFleetshardValue
-		labels[helmChartLabelKey] = helmChartLabelValue
-		labels[helmChartNameLabel] = r.resourcesChart.Name()
-		obj.SetLabels(labels)
-
-		objectKey := ctrlClient.ObjectKey{Namespace: remoteCentral.Metadata.Namespace, Name: obj.GetName()}
-		glog.Infof("Upserting object %v of type %v", objectKey, obj.GroupVersionKind())
-		if err := charts.InstallOrUpdateChart(ctx, obj, r.client); err != nil {
-			return fmt.Errorf("Failed to upsert object %v of type %v: %w", objectKey, obj.GroupVersionKind(), err)
-		}
-	}
-
-	// Perform garbage collection
-	for _, gvk := range tenantChartResourceGVKs {
-		gvk := gvk
-		var existingObjects unstructured.UnstructuredList
-		existingObjects.SetGroupVersionKind(gvk)
-
-		if err := r.client.List(ctx, &existingObjects,
-			ctrlClient.InNamespace(remoteCentral.Metadata.Namespace),
-			ctrlClient.MatchingLabels{helmChartNameLabel: r.resourcesChart.Name()},
-		); err != nil {
-			return fmt.Errorf("failed to list tenant resources chart objects %v: %w", gvk, err)
-		}
-
-		for _, existingObject := range existingObjects.Items {
-			existingObject := &existingObject
-			if _, shouldExist := objectsThatShouldExist[getObjectKey(existingObject)]; shouldExist {
-				continue
-			}
-
-			// Re-check that the helm label is present & namespace matches.
-			// Failsafe against some potential k8s-client bug when listing objects with a label selector
-			if !r.isTenantResourcesChartObject(existingObject, &remoteCentral) {
-				glog.Infof("Object %v of type %v is not managed by the resources chart", existingObject.GetName(), gvk)
-				continue
-			}
-
-			if existingObject.GetDeletionTimestamp() != nil {
-				glog.Infof("Object %v of type %v is already being deleted", existingObject.GetName(), gvk)
-				continue
-			}
-
-			// The object exists but it should not. Delete it.
-			glog.Infof("Deleting object %v of type %v", existingObject.GetName(), gvk)
-			if err := r.client.Delete(ctx, existingObject); err != nil {
-				if !apiErrors.IsNotFound(err) {
-					return fmt.Errorf("failed to delete central tenant object %v %q in namespace %s: %w", gvk, existingObject.GetName(), remoteCentral.Metadata.Namespace, err)
-				}
-			}
+		app.Spec.Source.Helm.ValuesObject.Raw = valuesBytes
+		if err := r.client.Update(ctx, app); err != nil {
+			return fmt.Errorf("updating ArgoCD application %s: %w", central.Metadata.Name, err)
 		}
 	}
 
 	return nil
-}
 
-func (r *CentralReconciler) getTenantResourcesChartHelmLabelValue() string {
-	// the objects rendered by the helm chart will have a label in the format
-	// helm.sh/chart: <chart-name>-<chart-version>
-	return fmt.Sprintf("%s-%s", r.resourcesChart.Name(), r.resourcesChart.Metadata.Version)
-}
-
-func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, remoteCentral *private.ManagedCentral) (bool, error) {
-
-	allObjectsDeleted := true
-
-	for _, gvk := range tenantChartResourceGVKs {
-		gvk := gvk
-		var existingObjects unstructured.UnstructuredList
-		existingObjects.SetGroupVersionKind(gvk)
-
-		if err := r.client.List(ctx, &existingObjects,
-			ctrlClient.InNamespace(remoteCentral.Metadata.Namespace),
-			ctrlClient.MatchingLabels{helmChartNameLabel: r.resourcesChart.Name()},
-		); err != nil {
-			return false, fmt.Errorf("failed to list tenant resources chart objects %v in namespace %s: %w", gvk, remoteCentral.Metadata.Namespace, err)
-		}
-
-		for _, existingObject := range existingObjects.Items {
-			existingObject := &existingObject
-
-			// Re-check that the helm label is present & namespace matches.
-			// Failsafe against some potential k8s-client bug when listing objects with a label selector
-			if !r.isTenantResourcesChartObject(existingObject, remoteCentral) {
-				continue
-			}
-
-			if existingObject.GetDeletionTimestamp() != nil {
-				allObjectsDeleted = false
-				continue
-			}
-
-			if err := r.client.Delete(ctx, existingObject); err != nil {
-				if !apiErrors.IsNotFound(err) {
-					return false, fmt.Errorf("failed to delete central tenant object %v in namespace %q: %w", gvk, remoteCentral.Metadata.Namespace, err)
-				}
-			}
-		}
-	}
-
-	return allObjectsDeleted, nil
-}
-
-func (r *CentralReconciler) isTenantResourcesChartObject(existingObject *unstructured.Unstructured, remoteCentral *private.ManagedCentral) bool {
-	return existingObject.GetLabels() != nil &&
-		existingObject.GetLabels()[helmChartNameLabel] == r.resourcesChart.Name() &&
-		existingObject.GetLabels()[managedByLabelKey] == labelManagedByFleetshardValue &&
-		existingObject.GetNamespace() == remoteCentral.Metadata.Namespace
 }
 
 func (r *CentralReconciler) ensureArgoCdApplicationExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
@@ -2136,43 +1605,12 @@ func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
 	return namespaceAnnotations
 }
 
-func (r *CentralReconciler) chartValues(c private.ManagedCentral) (chartutil.Values, error) {
-	if r.resourcesChart == nil {
-		return nil, errors.New("resources chart is not set")
-	}
-	src := r.resourcesChart.Values
-
-	// We are introducing the passing of helm values from fleetManager (and gitops). If the managed central
-	// includes the tenant resource values, we will use them. Otherwise, defaults to the previous
-	// implementation.
-	if len(c.Spec.TenantResourcesValues) > 0 {
-		values := chartutil.CoalesceTables(c.Spec.TenantResourcesValues, src)
-		glog.Infof("Values: %v", values)
-		return values, nil
-	}
-
-	dst := map[string]interface{}{
-		"labels":      stringMapToMapInterface(getTenantLabels(c)),
-		"annotations": stringMapToMapInterface(getTenantAnnotations(c)),
-	}
-	dst["secureTenantNetwork"] = r.secureTenantNetwork
-	return chartutil.CoalesceTables(dst, src), nil
-}
-
-func stringMapToMapInterface(m map[string]string) map[string]interface{} {
-	result := make(map[string]interface{}, len(m))
-	for k, v := range m {
-		result[k] = v
-	}
-	return result
-}
-
 func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
 	return r.wantsAuthProvider == r.hasAuthProvider &&
 		isRemoteCentralReady(&remoteCentral)
 }
 
-func (r *CentralReconciler) needsReconcile(changed bool, central *v1alpha1.Central, storedSecrets []string) bool {
+func (r *CentralReconciler) needsReconcile(changed bool, central private.ManagedCentral, storedSecrets []string) bool {
 	if !r.areSecretsStoredFunc(storedSecrets) {
 		return true
 	}
@@ -2185,11 +1623,15 @@ func (r *CentralReconciler) needsReconcile(changed bool, central *v1alpha1.Centr
 		return true
 	}
 
-	forceReconcile, ok := central.Labels["rhacs.redhat.com/force-reconcile"]
-	return ok && forceReconcile == "true"
-}
+	forceReconcileIntf, ok := central.Spec.TenantResourcesValues["forceReconcile"]
+	if !ok {
+		return false
+	}
 
-var resourcesChart = charts.MustGetChart("tenant-resources", nil)
+	forceReconcile, ok := forceReconcileIntf.(bool)
+	return ok && forceReconcile
+
+}
 
 func (r *CentralReconciler) checkSecretExists(
 	ctx context.Context,
@@ -2350,8 +1792,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		verifyAuthProviderFunc: hasAuthProvider,
 		tenantImagePullSecret:  []byte(opts.TenantImagePullSecret),
 
-		resourcesChart: resourcesChart,
-		clock:          realClock{},
+		clock: realClock{},
 
 		// Todo: Allow overriding the tenant source path, repo URL, and ref
 		// on a per-tenant basis.

@@ -3,10 +3,11 @@ package testutils
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"testing"
 
+	"encoding/json"
 	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
-	"github.com/hashicorp/go-multierror"
 	"github.com/openshift/addon-operator/apis/addons"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -29,6 +30,11 @@ var (
 		Group:    "platform.stackrox.io",
 		Version:  "v1alpha1",
 		Resource: "centrals",
+	}
+	appGVR = schema.GroupVersionResource{
+		Group:    "argoproj.io",
+		Version:  "v1alpha1",
+		Resource: "applications",
 	}
 	// pragma: allowlist nextline secret
 	secretsGVR = schema.GroupVersionResource{
@@ -146,12 +152,24 @@ func (t *ReconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.O
 	if err := t.ObjectTracker.Create(gvr, obj, ns); err != nil {
 		return fmt.Errorf("adding GVR %q to reconcile tracker: %w", gvr, err)
 	}
-	if gvr == centralsGVR {
+	if gvr == appGVR {
+		app := obj.(*argoCd.Application)
+		type values struct {
+			InstanceName string `json:"instanceName"`
+		}
+		var v values
+		if err := json.Unmarshal(app.Spec.Source.Helm.ValuesObject.Raw, &v); err != nil {
+			return fmt.Errorf("unmarshaling values: %w", err)
+		}
+		instanceName := v.InstanceName
+		instanceNamespace := app.Spec.Destination.Namespace
+
 		var multiErr *multierror.Error
-		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(secretsGVR, newCentralTLSSecret(ns), ns))
-		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralRoute(ns)))
-		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralMtlsRoute(ns)))
-		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(deploymentGVR, NewCentralDeployment(ns), ns))
+		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(centralsGVR, t.newCentral(instanceName, instanceNamespace), instanceNamespace))
+		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(secretsGVR, newCentralTLSSecret(instanceNamespace), instanceNamespace))
+		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralRoute(instanceNamespace)))
+		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralMtlsRoute(instanceNamespace)))
+		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(deploymentGVR, NewCentralDeployment(instanceNamespace), instanceNamespace))
 		err := multiErr.ErrorOrNil()
 		if err != nil {
 			return fmt.Errorf("creating group version resource: %w", err)
@@ -182,6 +200,15 @@ func (t *ReconcileTracker) createRoute(route *openshiftRouteV1.Route) error {
 	}
 	err := t.ObjectTracker.Create(routesGVR, route, route.GetNamespace())
 	return errors.Wrapf(err, "create route")
+}
+
+func (t *ReconcileTracker) newCentral(name, ns string) *platform.Central {
+	return &platform.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+	}
 }
 
 func (t *ReconcileTracker) newCentralRoute(ns string) *openshiftRouteV1.Route {
