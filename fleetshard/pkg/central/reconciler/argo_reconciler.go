@@ -49,7 +49,7 @@ func newArgoReconciler(
 func (r *argoReconciler) ensureApplicationExists(ctx context.Context, remoteCentral private.ManagedCentral, centralDBConnectionString string) error {
 	const lastAppliedHashLabel = "last-applied-hash"
 
-	want, err := r.makeDesiredArgoCDApplication(ctx, remoteCentral, centralDBConnectionString)
+	want, err := r.makeDesiredArgoCDApplication(remoteCentral, centralDBConnectionString)
 	if err != nil {
 		return fmt.Errorf("getting ArgoCD application: %w", err)
 	}
@@ -85,7 +85,7 @@ func (r *argoReconciler) ensureApplicationExists(ctx context.Context, remoteCent
 	return nil
 }
 
-func (r *argoReconciler) makeDesiredArgoCDApplication(ctx context.Context, remoteCentral private.ManagedCentral, centralDBConnectionString string) (*argocd.Application, error) {
+func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.ManagedCentral, centralDBConnectionString string) (*argocd.Application, error) {
 
 	values := map[string]interface{}{
 		"environment":                 r.argoOpts.Environment,

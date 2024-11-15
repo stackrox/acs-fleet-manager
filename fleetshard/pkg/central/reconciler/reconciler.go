@@ -169,11 +169,6 @@ type CentralReconciler struct {
 	areSecretsStoredFunc      areSecretsStoredFunc
 	needsReconcileFunc        needsReconcileFunc
 	restoreCentralSecretsFunc restoreCentralSecretsFunc
-
-	defaultTenantArgoCdAppSourceRepoURL        string
-	defaultTenantArgoCdAppSourceTargetRevision string
-	defaultTenantArgoCdAppSourcePath           string
-	argoCdNamespace                            string
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -252,9 +247,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	centralDBConnectionString := central.Spec.Central.DB.ConnectionStringOverride
+	var centralDBConnectionString string
+	if central.Spec.Central.GetDB().ConnectionStringOverride != nil {
+		centralDBConnectionString = *central.Spec.Central.GetDB().ConnectionStringOverride
+	}
+
 	if isArgoCdEnabledForTenant(remoteCentral) {
-		if err := r.argoReconciler.ensureApplicationExists(ctx, remoteCentral, *centralDBConnectionString); err != nil {
+		if err := r.argoReconciler.ensureApplicationExists(ctx, remoteCentral, centralDBConnectionString); err != nil {
 			return nil, errors.Wrapf(err, "unable to install ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		}
 	} else {
@@ -262,7 +261,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		{
 			// This part handles the case where we enable, then disable ArgoCD for a tenant
 			// to make sure the ArgoCD application is cleaned up.
-			ok, err := r.argoReconciler.ensureApplicationDeleted(ctx, remoteCentral.Id)
+			ok, err := r.argoReconciler.ensureApplicationDeleted(ctx, remoteCentralNamespace)
 			if err != nil {
 				return nil, errors.Wrapf(err, "unable to delete ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 			}
@@ -1496,7 +1495,7 @@ func (r *CentralReconciler) getNamespaceLabels(c private.ManagedCentral) map[str
 	for k, v := range getTenantLabels(c) {
 		ret[k] = v
 	}
-	ret[argoCdManagedBy] = r.argoCdNamespace
+	ret[argoCdManagedBy] = r.argoReconciler.argoOpts.ArgoCdNamespace
 	return ret
 }
 

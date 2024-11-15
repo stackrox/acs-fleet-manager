@@ -844,7 +844,7 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 	)
 	r.tenantChartReconciler = newTenantChartReconciler(fakeClient, true).withChart(chart)
 	r.tenantCleanup = NewTenantCleanup(fakeClient, TenantCleanupOptions{})
-
+	r.tenantCleanup.chartReconciler = newTenantChartReconciler(fakeClient, true).withChart(chart)
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
 
@@ -2653,6 +2653,7 @@ func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
 	)
 	r.resourcesChart = chart
 	r.tenantChartReconciler.chart = chart
+	r.tenantCleanup.chartReconciler.chart = chart
 
 	assertLegacyChartPresent := func(t *testing.T, present bool) {
 		var netPol networkingv1.NetworkPolicy
@@ -2666,7 +2667,7 @@ func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
 
 	assertArgoCdAppPresent := func(t *testing.T, present bool) {
 		var app argocd.Application
-		objectKey := r.argoReconciler.getArgoCdAppObjectKey(managedCentral.Id)
+		objectKey := r.argoReconciler.getArgoCdAppObjectKey(managedCentral.Metadata.Namespace)
 		err := cli.Get(ctx, objectKey, &app)
 		if present {
 			require.NoError(t, err)
