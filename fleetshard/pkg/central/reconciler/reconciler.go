@@ -1415,8 +1415,6 @@ func (r *CentralReconciler) makeArgoCDApplicationValues(ctx context.Context, rem
 
 	if remoteCentral.Metadata.Internal || r.telemetry.StorageKey == "" {
 		result["telemetryStorageKey"] = "DISABLED"
-	} else {
-		delete(result, "telemetryStorageKey")
 	}
 
 	return result, nil
