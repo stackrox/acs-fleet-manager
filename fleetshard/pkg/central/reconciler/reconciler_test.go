@@ -2098,6 +2098,7 @@ metadata:
 				},
 				Spec: v1alpha1.CentralSpec{
 					Central: &v1alpha1.CentralComponentSpec{
+						AdminPasswordGenerationDisabled: pointer.Bool(true),
 						Exposure: &v1alpha1.Exposure{
 							Route: &v1alpha1.ExposureRoute{
 								Enabled: pointer.Bool(false),

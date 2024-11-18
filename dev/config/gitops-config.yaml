@@ -12,9 +12,39 @@ verticalPodAutoscaling:
 tenantResources:
   default: |
     rolloutGroup: "dev"
+
     argoCd:
       enabled: true
       centralEnabled: true
+    
+    centralResources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+    
+    centralDbResources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+
+    scannerResources:
+        limits:
+          memory: 2Gi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+    
+    scannerDbResources:
+      limits:
+        memory: 3Gi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+    
     labels:
       app.kubernetes.io/managed-by: rhacs-fleetshard
       app.kubernetes.io/instance: "{{ .Name }}"
@@ -25,6 +55,7 @@ tenantResources:
       rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
     secureTenantNetwork: false
     centralRdsCidrBlock: "10.1.0.0/16"    
+    
     verticalPodAutoscalers:
       central:
         enabled: true
