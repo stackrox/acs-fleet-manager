@@ -131,6 +131,18 @@ func (r *Runtime) Start() error {
 
 	routesAvailable := r.routesAvailable()
 
+	argoReconcilerOpts := centralReconciler.ArgoReconcilerOptions{
+		DefaultTenantArgoCdAppSourceTargetRevision: r.config.DefaultTenantArgoCdAppSourceTargetRevision,
+		DefaultTenantArgoCdAppSourcePath:           r.config.DefaultTenantArgoCdAppSourcePath,
+		DefaultTenantArgoCdAppSourceRepoURL:        r.config.DefaultTenantArgoCdAppSourceRepoURL,
+		ArgoCdNamespace:                            r.config.ArgoCdNamespace,
+		ManagedDBEnabled:                           r.config.ManagedDB.Enabled,
+		ClusterName:                                r.config.ClusterName,
+		Environment:                                r.config.Environment,
+		Telemetry:                                  r.config.Telemetry,
+		WantsAuthProvider:                          r.config.CreateAuthProvider,
+	}
+
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
 		UseRoutes:             routesAvailable,
 		WantsAuthProvider:     r.config.CreateAuthProvider,
@@ -142,11 +154,18 @@ func (r *Runtime) Start() error {
 		TenantImagePullSecret: r.config.TenantImagePullSecret, // pragma: allowlist secret
 		RouteParameters:       r.config.RouteParameters,
 		SecureTenantNetwork:   r.config.SecureTenantNetwork,
-		DefaultTenantArgoCdAppSourceTargetRevision: r.config.DefaultTenantArgoCdAppSourceTargetRevision,
-		DefaultTenantArgoCdAppSourcePath:           r.config.DefaultTenantArgoCdAppSourcePath,
-		DefaultTenantArgoCdAppSourceRepoURL:        r.config.DefaultTenantArgoCdAppSourceRepoURL,
-		ArgoCdNamespace:                            r.config.ArgoCdNamespace,
+		ArgoReconcilerOptions: argoReconcilerOpts,
 	}
+
+	tenantCleanupOpts := centralReconciler.TenantCleanupOptions{
+		SecureTenantNetwork:   r.config.SecureTenantNetwork,
+		ArgoReconcilerOptions: argoReconcilerOpts,
+	}
+
+	tenantCleanup := centralReconciler.NewTenantCleanup(
+		r.k8sClient,
+		tenantCleanupOpts,
+	)
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, _, err := r.client.PrivateAPI().GetCentrals(ctx, r.clusterID)
@@ -230,6 +249,13 @@ func (r *Runtime) Start() error {
 		}
 
 		r.deleteStaleReconcilers(&list)
+
+		if features.ClusterMigration.Enabled() {
+			if err := tenantCleanup.DeleteStaleTenantK8sResources(ctx, &list); err != nil {
+				glog.Errorf("Failed to delete stale tenant k8s resources: %s", err.Error())
+			}
+		}
+
 		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
 
