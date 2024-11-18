@@ -23,7 +23,7 @@ tenantResources:
       requests:
         cpu: 100m
         memory: 100Mi
-    
+
     centralDbResources:
       limits:
         memory: 1Gi
@@ -37,14 +37,14 @@ tenantResources:
       requests:
         cpu: 100m
         memory: 100Mi
-    
+
     scannerDbResources:
       limits:
         memory: 3Gi
       requests:
         cpu: 100m
         memory: 100Mi
-    
+
     labels:
       app.kubernetes.io/managed-by: rhacs-fleetshard
       app.kubernetes.io/instance: "{{ .Name }}"
@@ -54,9 +54,9 @@ tenantResources:
     annotations:
       rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
     secureTenantNetwork: false
-    
+
     centralRdsCidrBlock: "10.1.0.0/16"
-    
+
     verticalPodAutoscalers:
       central:
         enabled: true
