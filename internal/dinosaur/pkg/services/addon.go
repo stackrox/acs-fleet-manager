@@ -25,7 +25,7 @@ const fleetshardImageTagParameter = "fleetshardSyncImageTag"
 // by sending too many addon upgrade requests. The limit is 1000. A backoff
 // of 20 minutes would result in 504 requests per week, which leaves some space
 // for other openshift components to call the API as well.
-const addonUpgradeBackoffSeconds = 1200
+const addonUpgradeBackoff = 20 * time.Minute
 
 type updateAddonStatusMetricFunc func(addonID, clusterName string, status metrics.AddonStatus)
 
@@ -251,7 +251,7 @@ func (p *AddonProvisioner) updateAddon(clusterID string, config gitops.AddonConf
 }
 
 func (p *AddonProvisioner) backoffUpgradeRequest() bool {
-	return p.lastStatus == metrics.AddonUpgrade && time.Since(p.lastUpgradeRequestTime) < time.Second*addonUpgradeBackoffSeconds
+	return p.lastStatus == metrics.AddonUpgrade && time.Since(p.lastUpgradeRequestTime) < addonUpgradeBackoff
 }
 
 func (p *AddonProvisioner) uninstallAddon(clusterID string, addonID string) error {
