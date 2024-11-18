@@ -1690,7 +1690,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		tenantChartReconciler:  chartReconciler,
 		centralCrReconciler:    crReconciler,
 		argoReconciler:         argoReconciler,
-		tenantCleanup:          NewTenantCleanup(k8sClient, TenantCleanupOptions{SecureTenantNetwork: true}),
+		tenantCleanup:          NewTenantCleanup(k8sClient, TenantCleanupOptions{SecureTenantNetwork: opts.SecureTenantNetwork, ArgoReconcilerOptions: opts.ArgoReconcilerOptions}),
 		routeService:           k8s.NewRouteService(k8sClient, &opts.RouteParameters),
 		secretBackup:           k8s.NewSecretBackup(k8sClient, opts.ManagedDBEnabled),
 		secretCipher:           secretCipher, // pragma: allowlist secret
