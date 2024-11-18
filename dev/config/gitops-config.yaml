@@ -4,13 +4,17 @@ rhacsOperators:
     - https://raw.githubusercontent.com/stackrox/stackrox/4.5.4/operator/bundle/manifests/platform.stackrox.io_centrals.yaml
   operators:
     - deploymentName: "rhacs-operator-dev"
-      image: "quay.io/rhacs-eng/stackrox-operator:4.5.4"
+      image: "quay.io/rhacs-eng/stackrox-operator:4.6.0-rc.2-2-g8e97af1bf5-fast"
       centralLabelSelector: "rhacs.redhat.com/version-selector=dev"
       securedClusterReconcilerEnabled: false
 verticalPodAutoscaling:
   recommenders: []
 tenantResources:
   default: |
+    rolloutGroup: "dev"
+    argoCd:
+      enabled: true
+      centralEnabled: false
     labels:
       app.kubernetes.io/managed-by: rhacs-fleetshard
       app.kubernetes.io/instance: "{{ .Name }}"
@@ -20,9 +24,7 @@ tenantResources:
     annotations:
       rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
     secureTenantNetwork: false
-    centralRdsCidrBlock: "10.1.0.0/16"
-    argoCd:
-      enabled: true
+    centralRdsCidrBlock: "10.1.0.0/16"    
     verticalPodAutoscalers:
       central:
         enabled: true

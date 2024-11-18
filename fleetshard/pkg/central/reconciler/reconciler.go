@@ -279,12 +279,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if err := r.reconcileAdminPasswordGeneration(central); err != nil {
-		return nil, err
-	}
-
-	if err = r.centralCrReconciler.reconcile(ctx, &remoteCentral, central); err != nil {
-		return nil, err
+	if !isArgoCdCentralEnabledForTenant(remoteCentral) {
+		if err = r.centralCrReconciler.reconcile(ctx, &remoteCentral, central); err != nil {
+			return nil, err
+		}
 	}
 
 	centralTLSSecretFound := true // pragma: allowlist secret
@@ -363,6 +361,33 @@ func isArgoCdEnabledForTenant(remoteCentral private.ManagedCentral) bool {
 	return enabledBool
 }
 
+func isArgoCdCentralEnabledForTenant(remoteCentral private.ManagedCentral) bool {
+	if !isArgoCdEnabledForTenant(remoteCentral) {
+		return false
+	}
+	tenantResourceValues := remoteCentral.Spec.TenantResourcesValues
+	if tenantResourceValues == nil {
+		return false
+	}
+	argoCdIntf, ok := tenantResourceValues["argoCd"]
+	if !ok {
+		return false
+	}
+	argoCd, ok := argoCdIntf.(map[string]interface{})
+	if !ok {
+		return false
+	}
+	centralCREnabled, ok := argoCd["centralEnabled"]
+	if !ok {
+		return false
+	}
+	enabledBool, ok := centralCREnabled.(bool)
+	if !ok {
+		return false
+	}
+	return enabledBool
+}
+
 func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
 	var central = new(v1alpha1.Central)
 	if err := yaml2.Unmarshal([]byte(remoteCentral.Spec.CentralCRYAML), central); err != nil {
@@ -378,6 +403,7 @@ func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCen
 	r.applyRoutes(central)
 	r.applyDeclarativeConfig(central)
 	r.applyAnnotations(remoteCentral, central)
+	r.applyAdminPasswordGeneration(central)
 }
 
 func (r *CentralReconciler) applyAnnotations(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) {
@@ -488,15 +514,13 @@ func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCen
 	return nil
 }
 
-func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *v1alpha1.Central) error {
+func (r *CentralReconciler) applyAdminPasswordGeneration(central *v1alpha1.Central) {
 	if !r.wantsAuthProvider {
 		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(false)
 		glog.Infof("No auth provider desired, enabling basic authentication for Central %s/%s",
 			central.GetNamespace(), central.GetName())
-		return nil
 	}
 	central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
-	return nil
 }
 
 func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
