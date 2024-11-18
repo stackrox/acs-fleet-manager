@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -20,6 +21,12 @@ import (
 
 const fleetshardImageTagParameter = "fleetshardSyncImageTag"
 
+// This backoff was introduced to prevent reaching OCM service log limits
+// by sending too many addon upgrade requests. The limit is 1000. A backoff
+// of 20 minutes would result in 504 requests per week, which leaves some space
+// for other openshift components to call the API as well.
+const addonUpgradeBackoff = 20 * time.Minute
+
 type updateAddonStatusMetricFunc func(addonID, clusterName string, status metrics.AddonStatus)
 
 // AddonProvisioner keeps addon installations on the data plane clusters up-to-date
@@ -27,6 +34,8 @@ type AddonProvisioner struct {
 	ocmClient                   ocm.Client
 	customizations              []addonCustomization
 	updateAddonStatusMetricFunc updateAddonStatusMetricFunc
+	lastStatus                  metrics.AddonStatus
+	lastUpgradeRequestTime      time.Time
 }
 
 // NewAddonProvisioner creates a new instance of AddonProvisioner
@@ -224,15 +233,25 @@ func (p *AddonProvisioner) newInstallation(config gitops.AddonConfig) (*clusters
 }
 
 func (p *AddonProvisioner) updateAddon(clusterID string, config gitops.AddonConfig) error {
+	if p.backoffUpgradeRequest() {
+		glog.V(5).Infof("update addon request backoff for cluster: %s", clusterID)
+		return nil
+	}
+
 	update, err := p.newInstallation(config)
 	if err != nil {
 		return err
 	}
+	p.lastUpgradeRequestTime = time.Now()
 	if err := p.ocmClient.UpdateAddonInstallation(clusterID, update); err != nil {
 		return fmt.Errorf("update addon %s: %w", update.ID(), err)
 	}
 	glog.V(5).Infof("Addon %s has been updated on the cluster %s", config.ID, clusterID)
 	return nil
+}
+
+func (p *AddonProvisioner) backoffUpgradeRequest() bool {
+	return p.lastStatus == metrics.AddonUpgrade && time.Since(p.lastUpgradeRequestTime) < addonUpgradeBackoff
 }
 
 func (p *AddonProvisioner) uninstallAddon(clusterID string, addonID string) error {
