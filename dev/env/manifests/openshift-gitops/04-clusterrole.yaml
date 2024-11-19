@@ -1,0 +1,23 @@
+# Allows the ArgoCD application controller to manage additional resources
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: custom-acscs-openshift-gitops
+rules:
+  - apiGroups: [ "platform.stackrox.io" ]
+    resources: [ "centrals" ]
+    verbs: [ "*" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: custom-acscs-openshift-gitops
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: custom-acscs-openshift-gitops
+subjects:
+  - kind: ServiceAccount
+    name: openshift-gitops-argocd-application-controller
+    namespace: openshift-gitops
