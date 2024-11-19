@@ -16,7 +16,7 @@ tenantResources:
     argoCd:
       enabled: true
       centralEnabled: true
-    
+
     centralResources:
       limits:
         memory: 1Gi
