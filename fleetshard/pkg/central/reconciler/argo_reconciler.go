@@ -87,36 +87,36 @@ func (r *argoReconciler) ensureApplicationExists(ctx context.Context, remoteCent
 
 func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.ManagedCentral, centralDBConnectionString string) (*argocd.Application, error) {
 
-	values := map[string]interface{}{
-		"environment":                 r.argoOpts.Environment,
-		"clusterName":                 r.argoOpts.ClusterName,
-		"organizationId":              remoteCentral.Spec.Auth.OwnerOrgId,
-		"organizationName":            remoteCentral.Spec.Auth.OwnerOrgName,
-		"instanceId":                  remoteCentral.Id,
-		"instanceName":                remoteCentral.Metadata.Name,
-		"instanceType":                remoteCentral.Spec.InstanceType,
-		"isInternal":                  remoteCentral.Metadata.Internal,
-		"telemetryStorageKey":         r.argoOpts.Telemetry.StorageKey,
-		"telemetryStorageEndpoint":    r.argoOpts.Telemetry.StorageEndpoint,
-		"centralAdminPasswordEnabled": !r.argoOpts.WantsAuthProvider,
-		"tenant": map[string]interface{}{
-			"organizationId":   remoteCentral.Spec.Auth.OwnerOrgId,
-			"organizationName": remoteCentral.Spec.Auth.OwnerOrgName,
-			"id":               remoteCentral.Id,
-			"instanceType":     remoteCentral.Spec.InstanceType,
-			"name":             remoteCentral.Metadata.Name,
-		},
-		"centralRdsCidrBlock": "10.1.0.0/16",
-		"vpa": map[string]interface{}{
-			"central": map[string]interface{}{
-				"enabled": true,
-			},
-		},
+	values := remoteCentral.Spec.TenantResourcesValues
+	if values == nil {
+		values = map[string]interface{}{}
 	}
+
+	// Invariants
+	values["environment"] = r.argoOpts.Environment
+	values["clusterName"] = r.argoOpts.ClusterName
+	values["organizationId"] = remoteCentral.Spec.Auth.OwnerOrgId
+	values["organizationName"] = remoteCentral.Spec.Auth.OwnerOrgName
+	values["instanceId"] = remoteCentral.Id
+	values["instanceName"] = remoteCentral.Metadata.Name
+	values["instanceType"] = remoteCentral.Spec.InstanceType
+	values["isInternal"] = remoteCentral.Metadata.Internal
+	values["telemetryStorageEndpoint"] = r.argoOpts.Telemetry.StorageEndpoint
+	values["centralAdminPasswordEnabled"] = !r.argoOpts.WantsAuthProvider
 
 	if remoteCentral.Metadata.ExpiredAt != nil {
 		values["expiredAt"] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
+	} else {
+		values["expiredAt"] = ""
 	}
+
+	if !remoteCentral.Metadata.Internal && r.argoOpts.Telemetry.StorageKey != "" {
+		values["telemetryStorageKey"] = r.argoOpts.Telemetry.StorageKey
+	} else {
+		values["telemetryStorageKey"] = "DISABLED"
+	}
+
+	values["centralEnabled"] = isArgoCdCentralEnabledForTenant(remoteCentral)
 
 	if r.argoOpts.ManagedDBEnabled {
 		values["centralDbSecretName"] = centralDbSecretName // pragma: allowlist secret
@@ -133,11 +133,10 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 				},
 			}
 		}
-
-	}
-
-	if remoteCentral.Metadata.Internal || r.argoOpts.Telemetry.StorageKey == "" {
-		values["telemetryStorageKey"] = "DISABLED"
+	} else {
+		delete(values, "centralDbSecretName")
+		delete(values, "centralDbConnectionString")
+		delete(values, "additionalCAs")
 	}
 
 	valuesBytes, err := json.Marshal(values)
