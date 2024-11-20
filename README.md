@@ -42,6 +42,7 @@ ACS fleet-manager repository for the ACS managed service.
 * Setting up configurations described [here](./docs/development/populating-configuration.md#interacting-with-the-fleet-manager-api)
 
 #### Supported cluster types:
+
 * Local: Minikube, **Colima** (recommended for macOS), **Kind** (recommended for linux), Rancher Desktop, CRC
 * Remote: Infra OpenShift flavors*, OpenShift CI
 
