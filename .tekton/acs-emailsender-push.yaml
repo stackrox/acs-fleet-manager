@@ -8,7 +8,7 @@ metadata:
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-cel-expression: |
-      target_branch == "main" 
+      target_branch == "main"
       && (event == "push" || event == "pull_request")
   creationTimestamp: null
   labels:
