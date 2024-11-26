@@ -44,8 +44,6 @@ spec:
     enabled: false
   logging:
     enabled: false
-  observability:
-    enabled: false
   audit-logs:
     enabled: false
   secured-cluster:

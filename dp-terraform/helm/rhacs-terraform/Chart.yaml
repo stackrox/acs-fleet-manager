@@ -28,9 +28,6 @@ dependencies:
   - name: cloudwatch
     version: "0.1.0"
     condition: cloudwatch.enabled
-  - name: observability
-    version: "0.1.0"
-    condition: observability.enabled
   - name: logging
     version: "0.1.0"
     condition: logging.enabled
