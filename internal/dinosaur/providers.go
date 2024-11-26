@@ -14,7 +14,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services/quota"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/workers"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/workers/dinosaurmgrs"
-	observatoriumClient "github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	environments2 "github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/providers"
 )
@@ -40,7 +39,6 @@ func ConfigProviders() di.Option {
 		// Configuration for the Dinosaur service...
 		di.Provide(config.NewAWSConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewSupportedProvidersConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
-		di.Provide(observatoriumClient.NewObservabilityConfigurationConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewCentralConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewDataplaneClusterConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewFleetshardConfig, di.As(new(environments2.ConfigModule))),
@@ -57,7 +55,6 @@ func ServiceProviders() di.Option {
 		di.Provide(services.NewClusterService),
 		di.Provide(services.NewDinosaurService),
 		di.Provide(services.NewCloudProvidersService),
-		di.Provide(services.NewObservatoriumService),
 		di.Provide(services.NewAddonProvisioner),
 		di.Provide(services.NewClusterPlacementStrategy),
 		di.Provide(services.NewDataPlaneClusterService),

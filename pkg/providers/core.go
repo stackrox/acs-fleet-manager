@@ -8,7 +8,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/aws"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/telemetry"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
@@ -61,7 +60,6 @@ func ServiceProviders() di.Option {
 
 		// provide the service constructors
 		di.Provide(db.NewConnectionFactory),
-		di.Provide(observatorium.NewObservatoriumClient),
 
 		di.Provide(func(config *ocm.OCMConfig) ocm.ClusterManagementClient {
 			if config.EnableMock {

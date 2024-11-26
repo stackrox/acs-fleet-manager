@@ -10,7 +10,6 @@ import (
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 
@@ -26,8 +25,6 @@ import (
 
 	authv1 "github.com/openshift/api/authorization/v1"
 	userv1 "github.com/openshift/api/user/v1"
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/api/pkg/operators/v1alpha2"
 	"github.com/pkg/errors"
 
 	k8sCoreV1 "k8s.io/api/core/v1"
@@ -36,13 +33,6 @@ import (
 
 // TODO change these constants to match your own
 const (
-	observabilityNamespace          = "managed-application-services-observability"
-	observabilityCatalogSourceImage = "quay.io/rhoas/observability-operator-index:v3.0.8"
-	observabilityOperatorGroupName  = "observability-operator-group-name"
-	observabilityCatalogSourceName  = "observability-operator-manifests"
-	observabilitySubscriptionName   = "observability-operator"
-	observatoriumSSOSecretName      = "observatorium-configuration-red-hat-sso" // pragma: allowlist secret
-	observatoriumAuthType           = "redhat"
 	mkReadOnlyGroupName             = "mk-readonly-access"
 	mkSREGroupName                  = "dinosaur-sre"
 	mkReadOnlyRoleBindingName       = "mk-dedicated-readers"
@@ -85,15 +75,14 @@ type ClusterManager struct {
 // ClusterManagerOptions ...
 type ClusterManagerOptions struct {
 	di.Inject
-	Reconciler                 workers.Reconciler
-	OCMConfig                  *ocm.OCMConfig
-	ObservabilityConfiguration *observatorium.ObservabilityConfiguration
-	DataplaneClusterConfig     *config.DataplaneClusterConfig
-	SupportedProviders         *config.ProviderConfig
-	ClusterService             services.ClusterService
-	CloudProvidersService      services.CloudProvidersService
-	AddonProvisioner           *services.AddonProvisioner
-	GitOpsConfigProvider       gitops.ConfigProvider
+	Reconciler             workers.Reconciler
+	OCMConfig              *ocm.OCMConfig
+	DataplaneClusterConfig *config.DataplaneClusterConfig
+	SupportedProviders     *config.ProviderConfig
+	ClusterService         services.ClusterService
+	CloudProvidersService  services.CloudProvidersService
+	AddonProvisioner       *services.AddonProvisioner
+	GitOpsConfigProvider   gitops.ConfigProvider
 }
 
 type processor func() []error
@@ -715,98 +704,6 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 		} // region
 	} // provider
 	return errs
-}
-
-func (c *ClusterManager) buildObservabilityNamespaceResource() *k8sCoreV1.Namespace {
-	return &k8sCoreV1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: observabilityNamespace,
-		},
-	}
-}
-
-func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret {
-	observabilityConfig := c.ObservabilityConfiguration
-	stringDataMap := map[string]string{
-		"authType":               observatoriumAuthType,
-		"gateway":                observabilityConfig.RedHatSSOGatewayURL,
-		"tenant":                 observabilityConfig.RedHatSSOTenant,
-		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSSOAuthServerURL,
-		"redHatSsoRealm":         observabilityConfig.RedHatSSORealm,
-		"metricsClientId":        observabilityConfig.MetricsClientID,
-		"metricsSecret":          observabilityConfig.MetricsSecret, // pragma: allowlist secret
-		"logsClientId":           observabilityConfig.LogsClientID,
-		"logsSecret":             observabilityConfig.LogsSecret, // pragma: allowlist secret
-	}
-	return &k8sCoreV1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: metav1.SchemeGroupVersion.Version,
-			Kind:       "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      observatoriumSSOSecretName,
-			Namespace: observabilityNamespace,
-		},
-		Type:       k8sCoreV1.SecretTypeOpaque,
-		StringData: stringDataMap,
-	}
-}
-func (c *ClusterManager) buildObservabilityCatalogSourceResource() *v1alpha1.CatalogSource {
-	return &v1alpha1.CatalogSource{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1alpha1.SchemeGroupVersion.String(),
-			Kind:       "CatalogSource",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      observabilityCatalogSourceName,
-			Namespace: observabilityNamespace,
-		},
-		Spec: v1alpha1.CatalogSourceSpec{
-			SourceType: v1alpha1.SourceTypeGrpc,
-			Image:      observabilityCatalogSourceImage,
-		},
-	}
-}
-
-func (c *ClusterManager) buildObservabilityOperatorGroupResource() *v1alpha2.OperatorGroup {
-	return &v1alpha2.OperatorGroup{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1alpha2.SchemeGroupVersion.String(),
-			Kind:       "OperatorGroup",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      observabilityOperatorGroupName,
-			Namespace: observabilityNamespace,
-		},
-		Spec: v1alpha2.OperatorGroupSpec{
-			TargetNamespaces: []string{observabilityNamespace},
-		},
-	}
-}
-
-func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subscription {
-	return &v1alpha1.Subscription{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1alpha1.SchemeGroupVersion.String(),
-			Kind:       "Subscription",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      observabilitySubscriptionName,
-			Namespace: observabilityNamespace,
-		},
-		Spec: &v1alpha1.SubscriptionSpec{
-			CatalogSource:          observabilityCatalogSourceName,
-			Channel:                "alpha",
-			CatalogSourceNamespace: observabilityNamespace,
-			StartingCSV:            "observability-operator.v3.0.8",
-			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
-			Package:                observabilitySubscriptionName,
-		},
-	}
 }
 
 // buildReadOnlyGroupResource creates a group to which read-only cluster users are added.

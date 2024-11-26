@@ -34,12 +34,6 @@ const (
 	// CentralOperationDeprovision = Central cluster deprovision operations
 	CentralOperationDeprovision CentralOperation = "deprovision"
 
-	// ObservabilityCanaryPodLabelKey that will be used by the observability operator to scrap metrics
-	ObservabilityCanaryPodLabelKey = "managed-central-canary"
-
-	// ObservabilityCanaryPodLabelValue the value for ObservabilityCanaryPodLabelKey
-	ObservabilityCanaryPodLabelValue = "true"
-
 	// CentralMaxDurationWithProvisioningErrs the maximum duration a Central request
 	// might be in provisioning state while receiving 5XX errors
 	CentralMaxDurationWithProvisioningErrs = 5 * time.Minute
@@ -58,12 +52,6 @@ var ordinals = map[string]int{
 	CentralRequestStatusDeprovision.String():  40,
 	CentralRequestStatusDeleting.String():     50,
 	CentralRequestStatusFailed.String():       500,
-}
-
-// NamespaceLabels contains labels that indicates if a namespace is a managed application services namespace.
-// A namespace with these labels will be scrapped by the Observability operator to retrieve metrics
-var NamespaceLabels = map[string]string{
-	"mas-managed": "true",
 }
 
 // String ...

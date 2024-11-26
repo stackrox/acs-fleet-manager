@@ -24,16 +24,6 @@ func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRe
 }
 
 // PresentDataPlaneClusterConfig ...
-func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private.DataplaneClusterAgentConfig {
-	res := private.DataplaneClusterAgentConfig{
-		Spec: private.DataplaneClusterAgentConfigSpec{
-			Observability: private.DataplaneClusterAgentConfigSpecObservability{
-				AccessToken: &config.Observability.AccessToken,
-				Channel:     config.Observability.Channel,
-				Repository:  config.Observability.Repository,
-				Tag:         config.Observability.Tag,
-			},
-		},
-	}
-	return res
+func PresentDataPlaneClusterConfig(_ *dbapi.DataPlaneClusterConfig) private.DataplaneClusterAgentConfig {
+	return private.DataplaneClusterAgentConfig{}
 }
