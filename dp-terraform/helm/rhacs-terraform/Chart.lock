@@ -2,9 +2,6 @@ dependencies:
 - name: cloudwatch
   repository: ""
   version: 0.1.0
-- name: observability
-  repository: ""
-  version: 0.1.0
 - name: logging
   repository: ""
   version: 0.1.0
@@ -20,5 +17,5 @@ dependencies:
 - name: vertical-pod-autoscaler
   repository: ""
   version: 0.1.0
-digest: sha256:a2d739c44fe933f665230d61bff674e591cb6c5c927c155a398a1580ef641a71
-generated: "2024-06-25T17:18:10.582029+02:00"
+digest: sha256:0be6aed6c8e38f2703f02e1e70979987839ab27ac7b4b44689025c0283ba67ab
+generated: "2024-11-26T16:20:45.541627+01:00"

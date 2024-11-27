@@ -108,25 +108,6 @@ cloudwatch:
   nodeSelector:
     node-role.kubernetes.io/acscs-infra: ""
 
-# See available parameters in charts/observability/values.yaml
-# - enabled flag is used to completely enable/disable observability sub-chart
-observability:
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: node-role.kubernetes.io/acscs-infra
-                operator: Exists
-  tolerations:
-    - key: node-role.kubernetes.io/acscs-infra
-      operator: Exists
-      effect: NoSchedule
-  enabled: true
-  clusterName: ""
-  observatorium:
-    gateway: ""
-
 # See available parameters in charts/logging/values.yaml
 # - enabled flag is used to completely enable/disable logging sub-chart
 logging:

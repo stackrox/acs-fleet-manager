@@ -6,12 +6,9 @@ import (
 
 	"github.com/gruntwork-io/terratest/modules/helm"
 	"github.com/gruntwork-io/terratest/modules/k8s"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestHelmTemplate_FleetshardSyncDeployment_ServiceAccountTokenAuthType(t *testing.T) {
@@ -196,141 +193,6 @@ func TestHelmTemplate_FleetshardSyncDeployment_Image(t *testing.T) {
 			container := deployment.Spec.Template.Spec.Containers[0]
 			require.Equal(t, "fleetshard-sync", container.Name)
 			require.Equal(t, tt.wantImage, container.Image)
-		})
-	}
-}
-
-func TestHelmTemplate_ObservabilityCR_blackboxExporterEnabled(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name         string
-		enabled      string
-		wantDisabled bool
-		wantErr      bool
-	}{
-		{
-			name:         "should disable blackbox exporter by default",
-			wantDisabled: true,
-		},
-		{
-			name:         "should not disable blackbox exporter when the enabled flag is true",
-			enabled:      "true",
-			wantDisabled: false,
-		},
-		{
-			name:         "should disable blackbox exporter when the enabled flag is false",
-			enabled:      "false",
-			wantDisabled: true,
-		},
-		{
-			name:    "should fail when the enabled flag is invalid string",
-			enabled: "wrong",
-			wantErr: true,
-		},
-	}
-
-	// Types are taken from
-	// https://github.com/redhat-developer/observability-operator/blob/main/api/v1/observability_types.go
-	type SelfContained struct {
-		DisableBlackboxExporter *bool `json:"disableBlackboxExporter,omitempty"`
-	}
-	type ObservabilitySpec struct {
-		SelfContained *SelfContained `json:"selfContained,omitempty"`
-	}
-	type Observability struct {
-		metav1.TypeMeta   `json:",inline"`
-		metav1.ObjectMeta `json:"metadata,omitempty"`
-
-		Spec ObservabilitySpec `json:"spec,omitempty"`
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			values := map[string]string{
-				"secured-cluster.enabled":          "false",
-				"fleetshardSync.managedDB.enabled": "false",
-			}
-			if tt.enabled != "" {
-				values["observability.blackboxExporterEnabled"] = tt.enabled
-			}
-
-			releaseName := "rhacs-terraform"
-			namespaceName := "rhacs"
-			helmChartPath, err := filepath.Abs("../helm/rhacs-terraform")
-			require.NoError(t, err)
-
-			options := &helm.Options{
-				SetValues:      values,
-				KubectlOptions: k8s.NewKubectlOptions("", "", namespaceName),
-			}
-
-			output, err := helm.RenderTemplateE(t, options, helmChartPath, releaseName, []string{"charts/observability/templates/01-operator-06-cr.yaml"})
-			if tt.wantErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				var observability Observability
-				helm.UnmarshalK8SYaml(t, output, &observability)
-
-				disablBlackboxExporter := *observability.Spec.SelfContained.DisableBlackboxExporter
-				require.Equal(t, tt.wantDisabled, disablBlackboxExporter)
-			}
-		})
-	}
-}
-
-func TestHelmTemplate_ObservabilityCR_enabled(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		enabled string
-		wantErr string
-	}{
-		{
-			name:    "should enable CR by default",
-			enabled: "true",
-		},
-		{
-			name:    "should not install CR when the value is disabled",
-			enabled: "false",
-			wantErr: "could not find template",
-		},
-		{
-			name:    "should install CR when the value is enabled",
-			enabled: "true",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			values := map[string]string{
-				"secured-cluster.enabled":          "false",
-				"fleetshardSync.managedDB.enabled": "false",
-			}
-			if tt.enabled != "" {
-				values["observability.customResourceEnabled"] = tt.enabled
-			}
-
-			releaseName := "rhacs-terraform"
-			namespaceName := "rhacs"
-			helmChartPath, err := filepath.Abs("../helm/rhacs-terraform")
-			require.NoError(t, err)
-
-			options := &helm.Options{
-				SetValues:      values,
-				KubectlOptions: k8s.NewKubectlOptions("", "", namespaceName),
-			}
-
-			output, err := helm.RenderTemplateE(t, options, helmChartPath, releaseName, []string{"charts/observability/templates/01-operator-06-cr.yaml"})
-			if tt.wantErr != "" {
-				assert.ErrorContainsf(t, err, tt.wantErr, "error = %v, wantErr = %q", err, tt.wantErr)
-			} else {
-				require.NoError(t, err)
-				var observability unstructured.Unstructured
-				helm.UnmarshalK8SYaml(t, output, &observability) // also asserts that there's no error
-			}
 		})
 	}
 }
