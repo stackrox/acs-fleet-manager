@@ -30,9 +30,10 @@ ACS fleet-manager repository for the ACS managed service.
 #### Prerequisites
 
 * [Golang 1.21+](https://golang.org/dl/)
-* [Docker](https://docs.docker.com/get-docker/) - to create database
+* [Docker](https://docs.docker.com/get-docker/) or [Podman](https://podman.io/docs/installation) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 * [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+* [Java](https://openjdk.org/) - for openAPI generation
 * IDE with [EditorConfig](https://editorconfig.org/) support enabled:
   - there is a [plugin for GoLand](https://www.jetbrains.com/help/go/configuring-code-style.html#editorconfig)
   - there is an [extension for VSCode](https://marketplace.visualstudio.com/items?itemName=EditorConfig.EditorConfig)
@@ -40,6 +41,17 @@ ACS fleet-manager repository for the ACS managed service.
 
   Guide: [setup-test-environment.md](./docs/development/setup-test-environment.md#prepare-the-environment)
 * Setting up configurations described [here](./docs/development/populating-configuration.md#interacting-with-the-fleet-manager-api)
+
+#### Setup pre-commit
+```shell
+$ make setup/git/hooks
+```
+
+### Test local setup
+```shell
+# build binaries and generate openAPI
+$ make all
+```
 
 #### Supported cluster types:
 
@@ -77,9 +89,6 @@ $ make deploy/dev-fast
 #### Common make targets
 
 ```shell
-# Install git-hooks, for more information see git-hooks.md [1]
-$ make setup/git/hooks
-
 # To generate code and compile binaries run
 $ make all
 
