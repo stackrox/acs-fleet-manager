@@ -57,11 +57,6 @@ const (
 
 	LeaderWorker = "leader_worker"
 
-	// ObservatoriumRequestCount - metric name for the number of observatorium requests sent
-	ObservatoriumRequestCount = "observatorium_request_count"
-	// ObservatoriumRequestDuration - metric name for observatorium request duration in seconds
-	ObservatoriumRequestDuration = "observatorium_request_duration"
-
 	// DatabaseQueryCount - metric name for the number of database query sent
 	DatabaseQueryCount = "database_query_count"
 	// DatabaseQueryDuration - metric name for database query duration in milliseconds
@@ -153,12 +148,6 @@ var ClusterStatusCountMetricsLabels = []string{
 // ReconcilerMetricsLabels ...
 var ReconcilerMetricsLabels = []string{
 	labelWorkerType,
-}
-
-var observatoriumRequestMetricsLabels = []string{
-	LabelStatusCode,
-	LabelMethod,
-	LabelPath,
 }
 
 // DatabaseMetricsLabels ...

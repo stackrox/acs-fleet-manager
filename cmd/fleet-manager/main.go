@@ -49,7 +49,6 @@ func main() {
 	// Unsupported CLI commands. Eventually some of them can be removed.
 	// rootCmd.AddCommand(cluster.NewClusterCommand(env))
 	// rootCmd.AddCommand(cloudprovider.NewCloudProviderCommand(env))
-	// rootCmd.AddCommand(observatorium.NewRunObservatoriumCommand(env))
 	// rootCmd.AddCommand(errors.NewErrorsCommand(env))
 
 	if err := rootCmd.Execute(); err != nil {
