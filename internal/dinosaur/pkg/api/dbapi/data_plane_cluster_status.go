@@ -14,15 +14,6 @@ type DataPlaneClusterStatus struct {
 	Addons []AddonInstallation
 }
 
-// DataPlaneClusterConfigObservability ...
-type DataPlaneClusterConfigObservability struct {
-	AccessToken string
-	Channel     string
-	Repository  string
-	Tag         string
-}
-
 // DataPlaneClusterConfig ...
 type DataPlaneClusterConfig struct {
-	Observability DataPlaneClusterConfigObservability
 }

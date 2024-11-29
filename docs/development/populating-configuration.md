@@ -115,14 +115,6 @@ In the Data Plane cluster, the Central Operator and the FleetShard Deployments
 might reference container images that are located in authenticated container
 image registries.
 
-## Setup the Observability stack secrets
-See [Obsevability](./observability/README.md) to learn more about Observatorium and the observability stack.
-The following command is used to setup the various secrets needed by the Observability stack.
-
-```
-make observatorium/setup
-```
-
 ## Setup a custom TLS certificate for Central Host URLs
 
 When Fleet Manager creates Central instances, it can be configured to

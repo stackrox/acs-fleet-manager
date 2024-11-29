@@ -13,7 +13,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
   - [Central](#central)
   - [IAM](#iam)
   - [Metrics Server](#metrics-server)
-  - [Observability](#observability)
   - [OpenShift Cluster Manager](#openshift-cluster-manager)
   - [Dataplane Cluster Management](#dataplane-cluster-management)
   - [Sentry](#sentry)
@@ -75,28 +74,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **enable-metrics-https**: Enables HTTPS for the metrics server.
     - `https-cert-file` [Required]: The path to the file containing the TLS certificate.
     - `https-key-file` [Required]: The path to the file containing the TLS private key.
-
-## Observability
-- **enable-observatorium-mock**: Enables use of a mock Observatorium client.
-    - `observatorium-timeout` [Optional]: Timeout to be used for Observatorium requests (default: `240s`).
-- **observatorium-debug**: Enables Observatorium debug logging.
-- **observatorium-ignore-ssl**: Disables Observatorium TLS verification.
-
-### Red Hat SSO Authentication
-- The '[Required]' in the following denotes that these flags are required to use Red Hat SSO Authentication with the service.
-    - `observability-red-hat-sso-auth-server-url`[Required]: Red Hat SSO authentication server URL (default: `https://sso.redhat.com/auth`).
-    - `observability-red-hat-sso-realm`[Required]: Red Hat SSO realm (default: `redhat-external`).
-    - `observability-red-hat-sso-token-refresher-url`[Required]: Red Hat SSO token refresher URL (default: `www.test.com`).
-    - `observability-red-hat-sso-observatorium-gateway`[Required]: Red Hat SSO observatorium gateway (default: `https://observatorium-mst.api.stage.openshift.com`).
-    - `observability-red-hat-sso-tenant`[Required]: Red Hat SSO tenant (default: `managedCentral`).
-    - `observability-red-hat-sso-logs-client-id-file`[Required]: The path to the file containing the client
-    ID for the logs service account for use with Red Hat SSO.
-    - `observability-red-hat-sso-logs-secret-file`[Required]: The path to the file containing the client
-    secret for the logs service account for use with Red Hat SSO.
-    - `observability-red-hat-sso-metrics-client-id-file`[Required]: The path to the file containing the client
-    ID for the metrics service account for use with Red Hat SSO.
-    - `observability-red-hat-sso-metrics-secret-file`[Required]: The path to the file containing the client
-    secret for the metrics service account for use with Red Hat SSO.
 
 ## OpenShift Cluster Manager
 - **enable-ocm-mock**: Enables use of a mock OCM client.

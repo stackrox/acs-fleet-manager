@@ -3,7 +3,6 @@ package environments
 import (
 	"os"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
@@ -53,12 +52,10 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 func (b IntegrationEnvLoader) ModifyConfiguration(env *environments.Env) error {
 	// Support a one-off env to allow enabling db debug in testing
 	var databaseConfig *db.DatabaseConfig
-	var observabilityConfiguration *observatorium.ObservabilityConfiguration
-	env.MustResolveAll(&databaseConfig, &observabilityConfiguration)
+	env.MustResolveAll(&databaseConfig)
 
 	if os.Getenv("DB_DEBUG") == "true" {
 		databaseConfig.Debug = true
 	}
-	observabilityConfiguration.EnableMock = true
 	return nil
 }

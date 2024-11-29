@@ -8,8 +8,6 @@ import (
 	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
-
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
@@ -26,7 +24,6 @@ type dataPlaneClusterService struct {
 	di.Inject
 	ClusterService         ClusterService
 	CentralConfig          *config.CentralConfig
-	ObservabilityConfig    *observatorium.ObservabilityConfiguration
 	DataplaneClusterConfig *config.DataplaneClusterConfig
 }
 
@@ -46,14 +43,7 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 		return nil, errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
 	}
 
-	return &dbapi.DataPlaneClusterConfig{
-		Observability: dbapi.DataPlaneClusterConfigObservability{
-			AccessToken: d.ObservabilityConfig.ObservabilityConfigAccessToken,
-			Channel:     d.ObservabilityConfig.ObservabilityConfigChannel,
-			Repository:  d.ObservabilityConfig.ObservabilityConfigRepo,
-			Tag:         d.ObservabilityConfig.ObservabilityConfigTag,
-		},
-	}, nil
+	return &dbapi.DataPlaneClusterConfig{}, nil
 }
 
 // UpdateDataPlaneClusterStatus ...
