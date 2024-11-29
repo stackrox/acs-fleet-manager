@@ -198,6 +198,67 @@ func TestHelmTemplate_FleetshardSyncDeployment_Image(t *testing.T) {
 	}
 }
 
+func TestHelmTemplate_FleetshardSync_ImagePullSecret(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name             string
+		pullSecret       string
+		createPullSecret string
+		wantPullSecret   bool
+	}{
+		{
+			name:             "should not create secret when pull secret is not set and createPullSecret is false",
+			pullSecret:       "",
+			createPullSecret: "false",
+			wantPullSecret:   false,
+		},
+		{
+			name:             "should not create secret when pull secret is set and createPullSecret is false",
+			pullSecret:       "quay-image-pull-secret",
+			createPullSecret: "false",
+			wantPullSecret:   false,
+		},
+		{
+			name:             "should not create secret when pull secret is not set and createPullSecret is true",
+			pullSecret:       "",
+			createPullSecret: "true",
+			wantPullSecret:   false,
+		},
+		{
+			name:             "should create secret when pull secret is set and createPullSecret is true",
+			pullSecret:       "quay-image-pull-secret",
+			createPullSecret: "true",
+			wantPullSecret:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			values := map[string]string{
+				"secured-cluster.enabled":                     "false",
+				"fleetshardSync.managedDB.enabled":            "false",
+				"fleetshardSync.tenantImagePullSecret.create": tt.createPullSecret,
+			}
+			if tt.pullSecret != "" {
+				values["fleetshardSync.tenantImagePullSecret.name"] = tt.pullSecret // pragma: allowlist secret
+			}
+
+			output := renderTemplate(t, values, "templates/fleetshard-sync-secret.yaml")
+			allRange := strings.Split(output, "---")
+			for _, rawOutput := range allRange[1:] {
+				var secret corev1.Secret
+				helm.UnmarshalK8SYaml(t, rawOutput, &secret)
+				if secret.Name == tt.pullSecret {
+					require.True(t, tt.wantPullSecret)
+					return
+				}
+			}
+			require.False(t, tt.wantPullSecret)
+		})
+	}
+}
+
 func TestHelmTemplate_SecuredCluster_ImagePullSecret(t *testing.T) {
 	t.Parallel()
 
