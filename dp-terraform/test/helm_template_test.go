@@ -2,6 +2,7 @@ package test
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gruntwork-io/terratest/modules/helm"
@@ -193,6 +194,68 @@ func TestHelmTemplate_FleetshardSyncDeployment_Image(t *testing.T) {
 			container := deployment.Spec.Template.Spec.Containers[0]
 			require.Equal(t, "fleetshard-sync", container.Name)
 			require.Equal(t, tt.wantImage, container.Image)
+		})
+	}
+}
+
+func TestHelmTemplate_SecuredCluster_ImagePullSecret(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name             string
+		pullSecret       string
+		createPullSecret string
+		wantPullSecret   bool
+	}{
+		{
+			name:             "should not create secret when pull secret is not set and createPullSecret is false",
+			pullSecret:       "",
+			createPullSecret: "false",
+			wantPullSecret:   false,
+		},
+		{
+			name:             "should not create secret when pull secret is set and createPullSecret is false",
+			pullSecret:       "quay-image-pull-secret",
+			createPullSecret: "false",
+			wantPullSecret:   false,
+		},
+		{
+			name:             "should not create secret when pull secret is not set and createPullSecret is true",
+			pullSecret:       "",
+			createPullSecret: "true",
+			wantPullSecret:   false,
+		},
+		{
+			name:             "should create secret when pull secret is set and createPullSecret is true",
+			pullSecret:       "quay-image-pull-secret",
+			createPullSecret: "true",
+			wantPullSecret:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			values := map[string]string{
+				"secured-cluster.clusterName":      "test-cluster",
+				"secured-cluster.centralEndpoint":  "https://localhost:8443",
+				"secured-cluster.createPullSecret": tt.createPullSecret,
+				"fleetshardSync.managedDB.enabled": "false",
+			}
+			if tt.pullSecret != "" {
+				values["secured-cluster.pullSecret"] = tt.pullSecret // pragma: allowlist secret
+			}
+
+			output := renderTemplate(t, values, "charts/secured-cluster/templates/secured-cluster-secrets.yaml")
+			allRange := strings.Split(output, "---")
+			for _, rawOutput := range allRange[1:] {
+				var secret corev1.Secret
+				helm.UnmarshalK8SYaml(t, rawOutput, &secret)
+				if secret.Name == tt.pullSecret {
+					require.True(t, tt.wantPullSecret)
+					return
+				}
+			}
+			require.False(t, tt.wantPullSecret)
 		})
 	}
 }
