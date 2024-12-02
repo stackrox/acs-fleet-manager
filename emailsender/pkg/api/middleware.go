@@ -21,18 +21,18 @@ func EnsureJSONContentType(next http.Handler) http.Handler {
 		contentType := r.Header.Get("Content-Type")
 
 		if contentType == "" {
-			http.Error(w, "Empty Content-Type", http.StatusBadRequest)
+			shared.HandleError(r, w, errors.BadRequest("empty Content-Type"))
 			return
 		}
 		if contentType != "" {
 			mt, _, err := mime.ParseMediaType(contentType)
 			if err != nil {
-				http.Error(w, "Malformed Content-Type header", http.StatusBadRequest)
+				shared.HandleError(r, w, errors.MalformedRequest("malformed Content-Type header"))
 				return
 			}
 
 			if mt != "application/json" {
-				http.Error(w, "Content-Type header must be application/json", http.StatusUnsupportedMediaType)
+				shared.HandleError(r, w, errors.BadRequest("Content-Type header must be application/json"))
 				return
 			}
 		}

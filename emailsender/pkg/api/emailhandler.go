@@ -37,7 +37,7 @@ func (eh *EmailHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 	jsonDecoder.DisallowUnknownFields()
 
 	if err := jsonDecoder.Decode(&request); err != nil {
-		eh.errorResponse(w, "Cannot decode send email request payload", http.StatusBadRequest)
+		shared.HandleError(r, w, errors.MalformedRequest("failed to decode send email request payload"))
 		return
 	}
 
@@ -54,7 +54,7 @@ func (eh *EmailHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := eh.emailSender.Send(r.Context(), request.To, request.RawMessage, tenantID); err != nil {
-		eh.errorResponse(w, "Cannot send email", http.StatusInternalServerError)
+		shared.HandleError(r, w, errors.GeneralError("cannot send email"))
 		return
 	}
 
@@ -82,15 +82,4 @@ func (eh *EmailHandler) jsonResponse(w http.ResponseWriter, envelop Envelope, st
 	}
 
 	return nil
-}
-
-func (eh *EmailHandler) errorResponse(w http.ResponseWriter, message string, statusCode int) {
-	envelope := Envelope{
-		"error": message,
-	}
-
-	if err := eh.jsonResponse(w, envelope, statusCode); err != nil {
-		glog.Errorf("Failed creating error json response: %v", err)
-		http.Error(w, "Can not create error json response", http.StatusInternalServerError)
-	}
 }
