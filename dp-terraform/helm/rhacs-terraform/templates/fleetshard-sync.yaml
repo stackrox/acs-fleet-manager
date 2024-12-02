@@ -144,7 +144,7 @@ spec:
         - name: TENANT_DEFAULT_ARGOCD_APP_SOURCE_TARGET_REVISION
           value: {{ .Values.fleetshardSync.gitops.tenantDefaultAppSourceTargetRevision | quote }}
         {{- end }}
-        {{- if (.Values.fleetshardSync.gitops).tenantDefaultArgoCdAppSourcePath }}
+        {{- if (.Values.fleetshardSync.gitops).tenantDefaultAppSourcePath }}
         - name: TENANT_DEFAULT_ARGOCD_APP_SOURCE_PATH
           value: {{ .Values.fleetshardSync.gitops.tenantDefaultAppSourcePath | quote }}
         {{- end }}
