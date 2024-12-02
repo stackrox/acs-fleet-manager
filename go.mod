@@ -38,7 +38,6 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.439
 	github.com/openshift/addon-operator/apis v0.0.0-20231110045543-dd01f2f5c184
 	github.com/openshift/api v0.0.0-20231117201702-2ea16bbab164
-	github.com/operator-framework/api v0.22.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2

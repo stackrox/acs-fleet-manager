@@ -64,6 +64,7 @@ fleetshardSync:
   tenantImagePullSecret:
     name: ""
     key: .dockerconfigjson
+    create: false
   printCentralUpdateDiff: false
   argoCdNamespace: openshift-gitops
 

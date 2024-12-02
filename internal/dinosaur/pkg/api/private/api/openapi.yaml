@@ -573,15 +573,11 @@ components:
     DataplaneClusterAgentConfig:
       description: Configuration for the data plane cluster agent
       example:
-        spec:
-          observability:
-            channel: channel
-            tag: tag
-            accessToken: accessToken
-            repository: repository
+        spec: '{}'
       properties:
         spec:
-          $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec'
+          description: Data plane cluster agent spec
+          type: object
       type: object
     Error:
       allOf:
@@ -790,34 +786,6 @@ components:
           type: string
         router:
           type: string
-    DataplaneClusterAgentConfig_spec_observability:
-      description: Observability configurations
-      example:
-        channel: channel
-        tag: tag
-        accessToken: accessToken
-        repository: repository
-      properties:
-        accessToken:
-          nullable: true
-          type: string
-        channel:
-          type: string
-        repository:
-          type: string
-        tag:
-          type: string
-    DataplaneClusterAgentConfig_spec:
-      description: Data plane cluster agent spec
-      example:
-        observability:
-          channel: channel
-          tag: tag
-          accessToken: accessToken
-          repository: repository
-      properties:
-        observability:
-          $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec_observability'
     Error_allOf:
       properties:
         code:

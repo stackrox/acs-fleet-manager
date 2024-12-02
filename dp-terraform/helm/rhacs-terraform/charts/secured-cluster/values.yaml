@@ -1,6 +1,7 @@
 # Optional name of a secret that should be used by the SecuredCluster
 # deployments to pull images
 pullSecret: ""
+createPullSecret: false
 
 clusterName: ""
 centralEndpoint: ""

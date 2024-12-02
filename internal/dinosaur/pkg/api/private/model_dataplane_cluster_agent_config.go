@@ -12,5 +12,6 @@ package private
 
 // DataplaneClusterAgentConfig Configuration for the data plane cluster agent
 type DataplaneClusterAgentConfig struct {
-	Spec DataplaneClusterAgentConfigSpec `json:"spec,omitempty"`
+	// Data plane cluster agent spec
+	Spec map[string]interface{} `json:"spec,omitempty"`
 }

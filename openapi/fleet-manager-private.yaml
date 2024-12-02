@@ -661,20 +661,6 @@ components:
         spec:
           description: "Data plane cluster agent spec"
           type: object
-          properties:
-            observability:
-              description: "Observability configurations"
-              type: object
-              properties:
-                accessToken:
-                  type: string
-                  nullable: true
-                channel:
-                  type: string
-                repository:
-                  type: string
-                tag:
-                  type: string
 
   securitySchemes:
     Bearer:
