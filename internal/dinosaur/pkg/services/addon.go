@@ -96,7 +96,7 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, dataplaneClusterConfig
 	for _, installedAddon := range installedAddons {
 		// addon is installed on the cluster but not present in gitops config - uninstall it
 		errs = append(errs, p.uninstallAddon(cluster.ClusterID, installedAddon.ID))
-		p.updateAddonStatusMetric(installedAddon.ID, dataplaneClusterConfig.ClusterName, metrics.AddonHealthy)
+		p.updateAddonStatus(installedAddon.ID, dataplaneClusterConfig.ClusterName, metrics.AddonHealthy)
 	}
 
 	return errors.Join(errs...)
@@ -113,7 +113,7 @@ func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlan
 		if provisionError != nil {
 			status = metrics.AddonUnhealthy
 		}
-		p.updateAddonStatusMetric(expectedConfig.ID, dataplaneClusterConfig.ClusterName, status)
+		p.updateAddonStatus(expectedConfig.ID, dataplaneClusterConfig.ClusterName, status)
 	}()
 
 	if addonErr != nil {
@@ -251,7 +251,7 @@ func (p *AddonProvisioner) updateAddon(clusterID string, config gitops.AddonConf
 }
 
 func (p *AddonProvisioner) backoffUpgradeRequest() bool {
-	return p.lastStatus == metrics.AddonUpgrade && time.Since(p.lastUpgradeRequestTime) < addonUpgradeBackoff
+	return p.lastStatus != metrics.AddonHealthy && time.Since(p.lastUpgradeRequestTime) < addonUpgradeBackoff
 }
 
 func (p *AddonProvisioner) uninstallAddon(clusterID string, addonID string) error {
@@ -262,10 +262,11 @@ func (p *AddonProvisioner) uninstallAddon(clusterID string, addonID string) erro
 	return nil
 }
 
-func (p *AddonProvisioner) updateAddonStatusMetric(addonID string, clusterName string, status metrics.AddonStatus) {
+func (p *AddonProvisioner) updateAddonStatus(addonID string, clusterName string, status metrics.AddonStatus) {
 	if p.updateAddonStatusMetricFunc != nil {
 		p.updateAddonStatusMetricFunc(addonID, clusterName, status)
 	}
+	p.lastStatus = status
 }
 
 func isFinalState(state clustersmgmtv1.AddOnInstallationState) bool {
