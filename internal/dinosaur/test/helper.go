@@ -19,7 +19,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/workers"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
@@ -44,7 +43,6 @@ type Services struct {
 	OCMClient             ocm.ClusterManagementClient
 	OCMConfig             *ocm.OCMConfig
 	DinosaurService       services.DinosaurService
-	ObservatoriumClient   *observatorium.Client
 	ClusterManager        *workers.ClusterManager
 	ServerConfig          *server.ServerConfig
 }
@@ -85,9 +83,8 @@ func NewAdminHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 
 func newCentralHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, func()) {
 	return test.NewHelperWithHooks(t, server, configurationHook, dinosaur.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, dinosaurConfig *config.CentralConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, fleetshardConfig *config.FleetshardConfig, ocmConfig *ocm.OCMConfig) {
+		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, dinosaurConfig *config.CentralConfig, fleetshardConfig *config.FleetshardConfig, ocmConfig *ocm.OCMConfig) {
 			dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral = true
-			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 			// Integration tests require a valid OCM client. This requires OCM service account credentials to be set.
 			ocmConfig.EnableMock = false

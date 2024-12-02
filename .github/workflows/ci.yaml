@@ -105,7 +105,7 @@ jobs:
           git diff --exit-code
       - name: Setup tests secrets
         run: |
-          make ocm/setup aws/setup redhatsso/setup centralcert/setup observatorium/setup secrets/touch
+          make ocm/setup aws/setup redhatsso/setup centralcert/setup secrets/touch
       - name: Run Migration Script
         run: make db/migrate
       - name: Verify & Test

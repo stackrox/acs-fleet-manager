@@ -45,7 +45,6 @@ type options struct {
 	Central                 services.DinosaurService
 	ClusterService          services.ClusterService
 	CloudProviders          services.CloudProvidersService
-	Observatorium           services.ObservatoriumService
 	DataPlaneCluster        services.DataPlaneClusterService
 	DataPlaneCentralService services.DataPlaneCentralService
 	AccountService          account.AccountService
@@ -88,7 +87,6 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		s.CentralRequestConfig)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
-	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
 	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Central, s.AccessControlListConfig)
 	cloudAccountsHandler := handlers.NewCloudAccountsHandler(s.AMSClient)
 
@@ -141,27 +139,6 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1CentralsCreateRouter := apiV1CentralsRouter.NewRoute().Subrouter()
 	apiV1CentralsCreateRouter.HandleFunc("", centralHandler.Create).Methods(http.MethodPost)
 	apiV1CentralsCreateRouter.Use(requireTermsAcceptance)
-
-	//  /centrals/{id}/metrics
-	apiV1MetricsRouter := apiV1CentralsRouter.PathPrefix("/{id}/metrics").Subrouter()
-	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).
-		Name(logger.NewLogEvent("get-metrics", "list metrics by range").ToString()).
-		Methods(http.MethodGet)
-	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).
-		Name(logger.NewLogEvent("get-metrics-instant", "get metrics by instant").ToString()).
-		Methods(http.MethodGet)
-
-	// /centrals/{id}/metrics/federate
-	// federate endpoint separated from the rest of the /centrals endpoints as it needs to support auth from both sso.redhat.com and mas-sso
-	// NOTE: this is only a temporary solution. MAS SSO auth support should be removed once we migrate to sso.redhat.com (TODO: to be done as part of MGDSTRM-6159)
-	apiV1MetricsFederateRouter := apiV1Router.PathPrefix("/centrals/{id}/metrics/federate").Subrouter()
-	apiV1MetricsFederateRouter.HandleFunc("", metricsHandler.FederateMetrics).
-		Name(logger.NewLogEvent("get-federate-metrics", "get federate metrics by id").ToString()).
-		Methods(http.MethodGet)
-	apiV1MetricsFederateRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
-		append(s.IAMConfig.AdditionalSSOIssuers.GetURIs(), s.IAMConfig.RedhatSSORealm.ValidIssuerURI), errors.ErrorUnauthenticated))
-	apiV1MetricsFederateRouter.Use(requireOrgID)
-	apiV1MetricsFederateRouter.Use(authorizeMiddleware)
 
 	//  /cloud_providers
 	v1Collections = append(v1Collections, api.CollectionMetadata{

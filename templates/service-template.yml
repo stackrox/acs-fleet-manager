@@ -187,44 +187,6 @@ parameters:
   description: Enable the Central TLS certificate
   value: "true"
 
-- name: OBSERVATORIUM_RHSSO_GATEWAY
-  displayName: Observatorium Red Hat SSO gateway
-  description: A URL to an Observatorium instance where observability metrics will sent to.
-  value: ""
-
-- name: OBSERVATORIUM_RHSSO_REALM
-  displayName: Observatorium Red Hat SSO realm
-  description: Observatorium Red Hat SSO realm for observability stack.
-  value: ""
-
-- name: OBSERVATORIUM_RHSSO_TENANT
-  displayName: Observatorium Red Hat SSO tenant
-  description: Observatorium Red Hat SSO tenant for observability stack.
-  value: ""
-
-- name: OBSERVATORIUM_RHSSO_AUTH_SERVER_URL
-  displayName: Observatorium Red Hat SSO auth server URL
-  description: Observatorium Red Hat SSO auth server URL for observability stack.
-  value: ""
-
-- name: OBSERVATORIUM_TOKEN_REFRESHER_URL
-  displayName: Observatorium Red Hat SSO token refresher URL
-  description: Observatorium Red Hat SSO token refresher URL for observability stack.
-  value: ""
-
-- name: ENABLE_OBSERVATORIUM_DEBUG
-  displayName: Enable Observatorium Debug Logging
-  value: "false"
-
-- name: OBSERVATORIUM_TIMEOUT
-  displayName: observatorium Request Timeout (seconds)
-  description: Timeout duration for all requests made to Observatorium
-  value: "120s"
-
-- name: OBSERVATORIUM_INSECURE
-  displayName: Observatorium ssl mode (disable)
-  value: "true"
-
 - name: ENABLE_TERMS_ACCEPTANCE
   displayName: Enable terms acceptance
   description: If enabled, centrals can't be created unless required terms are accepted
@@ -294,21 +256,6 @@ parameters:
   displayName: fleetshard-operator resync interval
   description: Interval defining how often the synchronizer reports back status changes to the control plane
   value: "60s"
-
-- name: OBSERVABILITY_CONFIG_REPO
-  displayName: Observability configuration repo URL
-  description: URL of the observability configuration repo
-  value: "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents"
-
-- name: OBSERVABILITY_CONFIG_CHANNEL
-  displayName: Observability configuration channel
-  description: Channel of the observability configuration
-  value: "resources"
-
-- name: OBSERVABILITY_CONFIG_TAG
-  displayName: Observability configuration tag
-  description: Tag or branch to use inside the configuration repo
-  value: "main"
 
 - name: SERVICE_PUBLIC_HOST_URL
   displayName: The public HTTP host URL of the service
@@ -716,16 +663,6 @@ objects:
       redhatsso-service.clientSecret: badger
       aws.route53accesskey: badger
       aws.route53secretaccesskey: badger
-      observability-config-access.token: badger
-  - apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: fake-fleet-manager-observatorium-secret
-    data:
-      logs.clientId: badger
-      logs.clientSecret: badger
-      metrics.clientId: badger
-      metrics.clientSecret: badger
   - apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -834,9 +771,6 @@ objects:
           - name: envoy-unix-sockets
             emptyDir:
               medium: Memory
-          - name: fleet-manager-observatorium-configuration-red-hat-sso
-            configMap:
-              name: fake-fleet-manager-observatorium-secret
           - name: fleet-manager-dataplane-cluster-configuration-staging
             configMap:
               name: fleet-manager-dataplane-cluster-configuration-staging
@@ -897,8 +831,6 @@ objects:
               mountPath: /secrets/service
             - name: dataplane-certificate
               mountPath: /secrets/dataplane-certificate
-            - name: fleet-manager-observatorium-configuration-red-hat-sso
-              mountPath: /secrets/observatorium
             - name: rds
               mountPath: /secrets/rds
             - name: fleet-manager-providers-config
@@ -979,18 +911,6 @@ objects:
             - --aws-route53-secret-access-key-file=/secrets/fleet-manager-credentials/aws.route53secretaccesskey
             - --central-idp-client-secret-file=/secrets/fleet-manager-credentials/central.idp-client-secret
             - --central-idp-client-id=${CENTRAL_IDP_CLIENT_ID}
-            - --observatorium-debug=${ENABLE_OBSERVATORIUM_DEBUG}
-            - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}
-            - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}
-            - --observability-red-hat-sso-logs-client-id-file=/secrets/observatorium/logs.clientId
-            - --observability-red-hat-sso-logs-secret-file=/secrets/observatorium/logs.clientSecret
-            - --observability-red-hat-sso-metrics-client-id-file=/secrets/observatorium/metrics.clientId
-            - --observability-red-hat-sso-metrics-secret-file=/secrets/observatorium/metrics.clientSecret
-            - --observability-red-hat-sso-auth-server-url=${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}
-            - --observability-red-hat-sso-realm=${OBSERVATORIUM_RHSSO_REALM}
-            - --observability-red-hat-sso-token-refresher-url=${OBSERVATORIUM_TOKEN_REFRESHER_URL}
-            - --observability-red-hat-sso-observatorium-gateway=${OBSERVATORIUM_RHSSO_GATEWAY}
-            - --observability-red-hat-sso-tenant=${OBSERVATORIUM_RHSSO_TENANT}
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
             - --db-user-file=/secrets/rds/db.user
@@ -1043,10 +963,6 @@ objects:
             - --fleetshard-resync-interval=${FLEETSHARD_RESYNC_INTERVAL}
             - --allow-evaluator-instance=${ALLOW_EVALUATOR_INSTANCE}
             - --quota-type=${QUOTA_TYPE}
-            - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
-            - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}
-            - --observability-config-access-token-file=/secrets/service/observability-config-access.token
-            - --observability-config-tag=${OBSERVABILITY_CONFIG_TAG}
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --central-domain-name=${CENTRAL_DOMAIN_NAME}

@@ -22,12 +22,11 @@ const provisioningCentralWorkerType = "provisioning_dinosaur"
 type ProvisioningDinosaurManager struct {
 	workers.BaseWorker
 	dinosaurService       services.DinosaurService
-	observatoriumService  services.ObservatoriumService
 	centralRequestTimeout time.Duration
 }
 
 // NewProvisioningDinosaurManager creates a new dinosaur manager
-func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, observatoriumService services.ObservatoriumService, centralRequestConfig *config.CentralRequestConfig) *ProvisioningDinosaurManager {
+func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, centralRequestConfig *config.CentralRequestConfig) *ProvisioningDinosaurManager {
 	metrics.InitReconcilerMetricsForType(provisioningCentralWorkerType)
 	return &ProvisioningDinosaurManager{
 		BaseWorker: workers.BaseWorker{
@@ -36,7 +35,6 @@ func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, ob
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService:       dinosaurService,
-		observatoriumService:  observatoriumService,
 		centralRequestTimeout: centralRequestConfig.ExpirationTimeout,
 	}
 }

@@ -215,8 +215,6 @@ help:
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make secrets/touch               touch all required secret files"
 	@echo "make centralcert/setup           setup the central TLS certificate used for Managed Central Service"
-	@echo "make observatorium/setup         setup observatorium secrets used by CI"
-	@echo "make observatorium/token-refresher/setup" setup a local observatorium token refresher
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
 	@echo "make image/push/internal         push image to an openshift cluster image registry."
 	@echo "make deploy/project              deploy the service via templates to an openshift cluster"
@@ -643,7 +641,6 @@ secrets/touch:
           secrets/central-tls.crt \
           secrets/central-tls.key \
           secrets/central.idp-client-secret \
-          secrets/observability-config-access.token \
           secrets/ocm-service.clientId \
           secrets/ocm-service.clientSecret \
           secrets/ocm-service.token \
@@ -683,31 +680,6 @@ centralcert/setup:
 	@echo -n "$(CENTRAL_TLS_CERT)" > secrets/central-tls.crt
 	@echo -n "$(CENTRAL_TLS_KEY)" > secrets/central-tls.key
 .PHONY:centralcert/setup
-
-observatorium/setup:
-	@echo -n "$(OBSERVATORIUM_CONFIG_ACCESS_TOKEN)" > secrets/observability-config-access.token;
-	@echo -n "$(RHSSO_LOGS_CLIENT_ID)" > secrets/rhsso-logs.clientId;
-	@echo -n "$(RHSSO_LOGS_CLIENT_SECRET)" > secrets/rhsso-logs.clientSecret;
-	@echo -n "$(RHSSO_METRICS_CLIENT_ID)" > secrets/rhsso-metrics.clientId;
-	@echo -n "$(RHSSO_METRICS_CLIENT_SECRET)" > secrets/rhsso-metrics.clientSecret;
-.PHONY:observatorium/setup
-
-observatorium/token-refresher/setup: PORT ?= 8085
-observatorium/token-refresher/setup: IMAGE_TAG ?= latest
-observatorium/token-refresher/setup: ISSUER_URL ?= https://sso.redhat.com/auth/realms/redhat-external
-observatorium/token-refresher/setup: OBSERVATORIUM_URL ?= https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/manageddinosaur
-observatorium/token-refresher/setup:
-	@$(DOCKER) run -d -p ${PORT}:${PORT} \
-		--restart always \
-		--name observatorium-token-refresher quay.io/rhoas/mk-token-refresher:${IMAGE_TAG} \
-		/bin/token-refresher \
-		--oidc.issuer-url="${ISSUER_URL}" \
-		--url="${OBSERVATORIUM_URL}" \
-		--oidc.client-id="${CLIENT_ID}" \
-		--oidc.client-secret="${CLIENT_SECRET}" \
-		--web.listen=":${PORT}"
-	@echo The Observatorium token refresher is now running on 'http://localhost:${PORT}'
-.PHONY: observatorium/token-refresher/setup
 
 # Setup dummy OCM_OFFLINE_TOKEN for integration testing
 ocm/setup: OCM_OFFLINE_TOKEN ?= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c" # pragma: allowlist secret
@@ -752,13 +724,6 @@ deploy/secrets:
 		-p CENTRAL_IDP_CLIENT_SECRET="$(shell ([ -s './secrets/central.idp-client-secret' ] && [ -z '${CENTRAL_IDP_CLIENT_SECRET}' ]) && cat ./secrets/central.idp-client-secret || echo '${CENTRAL_IDP_CLIENT_SECRET}')" \
 		-p CENTRAL_TLS_CERT="$(shell ([ -s './secrets/central-tls.crt' ] && [ -z '${CENTRAL_TLS_CERT}' ]) && cat ./secrets/central-tls.crt || echo '${CENTRAL_TLS_CERT}')" \
 		-p CENTRAL_TLS_KEY="$(shell ([ -s './secrets/central-tls.key' ] && [ -z '${CENTRAL_TLS_KEY}' ]) && cat ./secrets/central-tls.key || echo '${CENTRAL_TLS_KEY}')" \
-		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
-		-p OBSERVABILITY_RHSSO_LOGS_CLIENT_ID="$(shell ([ -s './secrets/rhsso-logs.clientId' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}' ]) && cat ./secrets/rhsso-logs.clientId || echo '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}')" \
-		-p OBSERVABILITY_RHSSO_LOGS_SECRET="$(shell ([ -s './secrets/rhsso-logs.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_SECRET}' ]) && cat ./secrets/rhsso-logs.clientSecret || echo '${OBSERVABILITY_RHSSO_LOGS_SECRET}')" \
-		-p OBSERVABILITY_RHSSO_METRICS_CLIENT_ID="$(shell ([ -s './secrets/rhsso-metrics.clientId' ] && [ -z '${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}' ]) && cat ./secrets/rhsso-metrics.clientId || echo '${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}')" \
-		-p OBSERVABILITY_RHSSO_METRICS_SECRET="$(shell ([ -s './secrets/rhsso-metrics.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_METRICS_SECRET}' ]) && cat ./secrets/rhsso-metrics.clientSecret || echo '${OBSERVABILITY_RHSSO_METRICS_SECRET}')" \
-		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID}" \
-		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET}" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/secrets
 
@@ -803,9 +768,6 @@ deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
 deploy/service: ENABLE_DENY_LIST ?= "false"
 deploy/service: ALLOW_EVALUATOR_INSTANCE ?= "true"
 deploy/service: QUOTA_TYPE ?= "quota-management-list"
-deploy/service: OBSERVABILITY_CONFIG_REPO ?= "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents"
-deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
-deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
 deploy/service: CENTRAL_IDP_ISSUER ?= "https://sso.stage.redhat.com/auth/realms/redhat-external"
 deploy/service: CENTRAL_IDP_CLIENT_ID ?= "rhacs-ms-dev"
@@ -839,13 +801,6 @@ endif
 		-p OCM_ADDON_SERVICE_URL="$(OCM_ADDON_SERVICE_URL)" \
 		-p AMS_URL="${AMS_URL}" \
 		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
-		-p OBSERVATORIUM_RHSSO_GATEWAY="${OBSERVATORIUM_RHSSO_GATEWAY}" \
-		-p OBSERVATORIUM_RHSSO_REALM="${OBSERVATORIUM_RHSSO_REALM}" \
-		-p OBSERVATORIUM_RHSSO_TENANT="${OBSERVATORIUM_RHSSO_TENANT}" \
-		-p OBSERVATORIUM_RHSSO_AUTH_SERVER_URL="${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}" \
-		-p OBSERVATORIUM_TOKEN_REFRESHER_URL="http://token-refresher.$(NAMESPACE).svc.cluster.local" \
-		-p OBSERVABILITY_CONFIG_REPO="${OBSERVABILITY_CONFIG_REPO}" \
-		-p OBSERVABILITY_CONFIG_TAG="${OBSERVABILITY_CONFIG_TAG}" \
 		-p ENABLE_TERMS_ACCEPTANCE="${ENABLE_TERMS_ACCEPTANCE}" \
 		-p ALLOW_EVALUATOR_INSTANCE="${ALLOW_EVALUATOR_INSTANCE}" \
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
@@ -870,7 +825,6 @@ endif
 # remove service deployments from an OpenShift cluster
 undeploy: FLEET_MANAGER_IMAGE ?= $(SHORT_IMAGE_REF)
 undeploy:
-	@-oc process -f ./templates/observatorium-token-refresher.yml --local | oc delete -f - -n $(NAMESPACE)
 	@-oc process -f ./templates/db-template.yml --local | oc delete -f - -n $(NAMESPACE)
 	@-oc process -f ./templates/secrets-template.yml --local | oc delete -f - -n $(NAMESPACE)
 	@-oc process -f ./templates/route-template.yml --local | oc delete -f - -n $(NAMESPACE)
@@ -879,20 +833,6 @@ undeploy:
 		-p REPO_DIGEST="$(FLEET_MANAGER_IMAGE)" \
 		| oc delete -f - -n $(NAMESPACE)
 .PHONY: undeploy
-
-# Deploys an Observatorium token refresher on an OpenShift cluster
-deploy/token-refresher: ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
-deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE ?= "quay.io/rhoas/mk-token-refresher"
-deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG ?= "latest"
-deploy/token-refresher: OBSERVATORIUM_URL ?= "https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/manageddinosaur"
-deploy/token-refresher:
-	@-oc process -f ./templates/observatorium-token-refresher.yml \
-		-p ISSUER_URL=${ISSUER_URL} \
-		-p OBSERVATORIUM_URL=${OBSERVATORIUM_URL} \
-		-p OBSERVATORIUM_TOKEN_REFRESHER_IMAGE=${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE} \
-		-p OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG=${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG} \
-		 | oc apply -f - -n $(NAMESPACE)
-.PHONY: deploy/token-refresher
 
 # Deploys OpenShift ingress router on a k8s cluster
 deploy/openshift-router:
