@@ -666,6 +666,7 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 			if tt.fields.ocmClient != nil {
 				if len(tt.fields.ocmClient.UpdateAddonInstallationCalls()) > 0 {
 					Expect(p.lastUpgradeRequestTime).NotTo(Equal(time.Time{}))
+					Expect(p.lastStatusPerInstall).NotTo(BeEmpty())
 				}
 			}
 
@@ -933,9 +934,11 @@ func TestAddonProvisioner_Provision_UpgradeBackoff(t *testing.T) {
 		InheritFleetshardSyncImageTag: true,
 	}
 	p := &AddonProvisioner{
-		ocmClient:              ocmMock,
-		customizations:         initCustomizations(addonConfig),
-		lastStatus:             metrics.AddonUpgrade,
+		ocmClient:      ocmMock,
+		customizations: initCustomizations(addonConfig),
+		lastStatusPerInstall: map[string]metrics.AddonStatus{
+			"cluster-id:acs-fleetshard": metrics.AddonUpgrade,
+		},
 		lastUpgradeRequestTime: time.Now(),
 	}
 	err := p.Provision(api.Cluster{
@@ -950,6 +953,7 @@ func TestAddonProvisioner_Provision_UpgradeBackoff(t *testing.T) {
 		}),
 	},
 		gitops.DataPlaneClusterConfig{
+			ClusterID: "cluster-id",
 			Addons: []gitops.AddonConfig{
 				{
 					ID:      "acs-fleetshard",
