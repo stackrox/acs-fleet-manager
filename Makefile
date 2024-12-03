@@ -594,11 +594,6 @@ image/build/fleetshard-operator:
 	$(DOCKER) buildx build -t $(IMAGE_REF) --build-arg IMAGE_TAG=$(image_tag) --load ${PROJECT_PATH}/dp-terraform/helm
 .PHONY: image/build/fleetshard-operator
 
-image/push/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
-image/push/fleetshard-operator: image/build/fleetshard-operator
-	$(DOCKER) push $(IMAGE_REF)
-.PHONY: image/push/fleetshard-operator
-
 # push the image to the OpenShift internal registry
 image/push/fleetshard-operator/internal: IMAGE_TAG ?= $(image_tag)
 image/push/fleetshard-operator/internal: docker/login/internal
