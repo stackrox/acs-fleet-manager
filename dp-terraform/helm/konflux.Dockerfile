@@ -13,7 +13,7 @@ RUN helm repo add external-secrets "https://charts.external-secrets.io/" && \
 
 RUN microdnf install gzip tar && \
     curl -L --retry 10 --silent --show-error --fail -o /tmp/yq_linux_amd64.tar.gz \
-        "https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_amd64.tar.gz" && \
+        "https://github.com/mikefarah/yq/releases/download/v4.44.5/yq_linux_amd64.tar.gz" && \
         tar -xzf /tmp/yq_linux_amd64.tar.gz ./yq_linux_amd64 && \
         mv yq_linux_amd64 /usr/local/bin/yq && \
         chmod +x /usr/local/bin/yq && \
@@ -30,7 +30,7 @@ ARG IMAGE_TAG=latest
 RUN yq -i ".global.image.tag = strenv(IMAGE_TAG)" rhacs-terraform/values.yaml
 
 # RH catalog see: https://catalog.redhat.com/software/containers/openshift4/ose-helm-operator
-FROM registry.redhat.io/openshift4/ose-helm-operator:v4.14.0-202409240108.p0.g0f0d1b2.assembly.stream.el8
+FROM registry.redhat.io/openshift4/ose-helm-operator:v4.15.0-202411130135.p0.g52fc4b9.assembly.stream.el8
 
 ENV HOME=/opt/helm
 ENV ADDON_NAME=acs-fleetshard
