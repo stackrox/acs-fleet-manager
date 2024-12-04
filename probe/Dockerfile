@@ -13,7 +13,7 @@ RUN make probe
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10 as standard
 
-RUN microdnf install shadow-utils ca-certificates
+RUN microdnf update && microdnf install shadow-utils ca-certificates
 
 RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
