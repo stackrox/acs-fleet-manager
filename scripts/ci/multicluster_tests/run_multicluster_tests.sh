@@ -45,11 +45,7 @@ kubectl delete pod -n rhacs -l app=fleet-manager
 
 export KUBECONFIG="$CLUSTER_2_KUBECONFIG"
 make deploy/bootstrap
-make deploy/dev
-
-# TODO: make a knob that allows for only deploying FS
-# remove control plane deployment from 2nd cluster
-kubectl delete deploy fleet-manager fleet-manager-db -n rhacs
+DATAPLANE_ONLY="true" make deploy/dev
 
 # Get a static token from cluster1 which will be used for FS -> FM communication
 # for the FS running on cluster2
