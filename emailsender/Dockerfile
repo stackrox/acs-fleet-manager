@@ -12,7 +12,7 @@ RUN make emailsender
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10 as standard
 
-RUN microdnf install shadow-utils
+RUN microdnf install shadow-utils ca-certificates
 
 RUN useradd -u 1001 unprivilegeduser
 ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /rds_ca/aws-rds-ca-global-bundle.pem

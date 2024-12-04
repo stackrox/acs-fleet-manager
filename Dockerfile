@@ -28,7 +28,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10 AS standard
 
-RUN microdnf install shadow-utils
+RUN microdnf install shadow-utils ca-certificates
 
 RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
