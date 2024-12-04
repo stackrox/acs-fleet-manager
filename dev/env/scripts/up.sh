@@ -58,10 +58,12 @@ if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     make -C "$GITROOT" deploy/redhat-pull-secret
 fi
 
-log "Deploying fleet-manager"
-make -C "$GITROOT" deploy/service
+if [ -z "${DATAPLANE_ONLY}" ] || [ "${DATAPLANE_ONLY}" = "false" ]; then
+    log "Deploying fleet-manager"
+    make -C "$GITROOT" deploy/service
+    wait_for_container_to_appear "$ACSCS_NAMESPACE" "app=fleet-manager" "service"
+fi
 
-wait_for_container_to_appear "$ACSCS_NAMESPACE" "app=fleet-manager" "service"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
     $KUBECTL -n "$ACSCS_NAMESPACE" logs -l app=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
 fi
