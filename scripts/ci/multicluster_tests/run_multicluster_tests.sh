@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -e
 # This script assumes that there were two clusters created before execution.
 # It expects that those clusters are accessible through kubeconfig files at the path
 # value stored in following environment variables:
@@ -25,7 +25,7 @@ make deploy/dev
 # signed certificate before starting fleet-manager. We don't want that which is why we're seeting
 # termination to edge for this route
 kubectl patch -n rhacs route fleet-manager -p '{"spec":{"tls":{"termination":"edge"}}}'
-FM_URL="https://$(k get routes -n rhacs fleet-manager -o yaml | yq .spec.host)"
+FM_URL="https://$(kubectl get routes -n rhacs fleet-manager -o yaml | yq .spec.host)"
 export FM_URL
 
 kubectl get cm -n rhacs fleet-manager-dataplane-cluster-scaling-config -o yaml > fm-dataplane-config.yaml
