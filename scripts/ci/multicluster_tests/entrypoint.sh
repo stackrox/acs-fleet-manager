@@ -9,7 +9,7 @@ source "$ROOT_DIR/scripts/ci/lib.sh"
 source "$ROOT_DIR/scripts/lib/log.sh"
 source "$ROOT_DIR/dev/env/scripts/lib.sh"
 
-bash "$SOURCE_DIR/run_multicluster_tests.sh"
+bash "$SOURCE_DIR/deploy.sh"
 EXIT_CODE="$?"
 if [ "$EXIT_CODE" -ne "0" ]; then
   echo "TODO(ROX-27073): add additional logging required here, once tests are actually executed"
