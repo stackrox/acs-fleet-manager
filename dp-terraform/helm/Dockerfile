@@ -13,16 +13,24 @@ RUN helm repo add external-secrets "https://charts.external-secrets.io/" && \
 
 RUN microdnf install gzip tar && \
     curl -L --retry 10 --silent --show-error --fail -o /tmp/yq_linux_amd64.tar.gz \
-        "https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_amd64.tar.gz" && \
+        "https://github.com/mikefarah/yq/releases/download/v4.44.5/yq_linux_amd64.tar.gz" && \
         tar -xzf /tmp/yq_linux_amd64.tar.gz ./yq_linux_amd64 && \
         mv yq_linux_amd64 /usr/local/bin/yq && \
         chmod +x /usr/local/bin/yq && \
         rm /tmp/yq_linux_amd64.tar.gz
 
+# Fix ignored securityContext.runAsUser set to null in values.yaml file.
+# Manually dropping  securityContext.runAsUser value from the external secret subchart.
+# This could be fixed with ose-helm-operator version bump.
+# See: https://github.com/operator-framework/operator-sdk/issues/6635
+RUN cd rhacs-terraform/charts && for filename in *.tgz; do tar -xf "$filename" && rm -f "$filename"; done && \
+        yq -i 'del(.securityContext.runAsUser) | del(.webhook.securityContext.runAsUser) | del(.certController.securityContext.runAsUser)' external-secrets/values.yaml
+
 ARG IMAGE_TAG=latest
 RUN yq -i ".global.image.tag = strenv(IMAGE_TAG)" rhacs-terraform/values.yaml
 
-FROM quay.io/operator-framework/helm-operator:v1.38.0
+# RH catalog see: https://catalog.redhat.com/software/containers/openshift4/ose-helm-operator
+FROM registry.redhat.io/openshift4/ose-helm-operator:v4.15.0-202411130135.p0.g52fc4b9.assembly.stream.el8
 
 ENV HOME=/opt/helm
 ENV ADDON_NAME=acs-fleetshard
