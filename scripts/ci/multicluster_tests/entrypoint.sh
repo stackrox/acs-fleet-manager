@@ -12,7 +12,7 @@ source "$ROOT_DIR/dev/env/scripts/lib.sh"
 bash "$SOURCE_DIR/run_multicluster_tests.sh"
 EXIT_CODE="$?"
 if [ "$EXIT_CODE" -ne "0" ]; then
-  log_failure
+  echo "TODO(ROX-27073): add additional logging required here, once tests are actually executed"
 fi
 
 stat /tmp/pids-port-forward > /dev/null 2>&1 && xargs kill < /tmp/pids-port-forward
