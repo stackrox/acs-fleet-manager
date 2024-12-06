@@ -42,3 +42,8 @@ pkg/client/redhatsso/api/docs/**.md
 pkg/client/redhatsso/api/**all_of.go
 pkg/client/redhatsso/api/go.mod
 pkg/client/redhatsso/api/go.sum
+emailsender/pkg/client/openapi/README.md
+emailsender/pkg/client/openapi/docs/**.md
+emailsender/pkg/client/openapi/**all_of.go
+emailsender/pkg/client/openapi/go.mod
+emailsender/pkg/client/openapi/go.sum

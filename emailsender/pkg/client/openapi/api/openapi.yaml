@@ -1,0 +1,291 @@
+openapi: 3.0.1
+info:
+  description: Red Hat Advanced Cluster Security (RHACS) Email Sender service allows
+    sending email notification from ACS Central tenants without bringing an own SMTP
+    service.
+  title: Red Hat Advanced Cluster Security Service Email Sender
+  version: 1.0.0
+servers:
+- description: localhost
+  url: http://localhost:8080
+- description: current domain
+  url: /
+paths:
+  /api/v1/acscsemail/errors/{id}:
+    get:
+      operationId: getErrorById
+      parameters:
+      - description: The ID of record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Get error by Id
+      summary: Returns the error by id
+      tags:
+      - errors
+  /api/v1/acscsemail/errors:
+    get:
+      operationId: getErrors
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorList'
+          description: List of possible errors
+      summary: Returns the list of possible API errors
+      tags:
+      - errors
+  /api/v1/acscsemail:
+    post:
+      description: Send email for provided tenant
+      operationId: sendEmail
+      requestBody:
+        content:
+          application/json:
+            examples:
+              SendEmailExample:
+                $ref: '#/components/examples/SendEmailExample'
+            schema:
+              $ref: '#/components/schemas/SendEmailPayload'
+        description: Send email data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                SendEmailPostResponseExample:
+                  $ref: '#/components/examples/SendEmailResponseExample'
+              schema:
+                $ref: '#/components/schemas/SendEmailResponse'
+          description: successfully sent an email
+        "400":
+          content:
+            application/json:
+              examples:
+                "400CreationExample":
+                  $ref: '#/components/examples/400MalformedRequest'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Validation errors occurred
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+                "401NoAuthorizationProvided":
+                  $ref: '#/components/examples/401NoAuthorizationProvided'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  $ref: '#/components/examples/403Example'
+                "403TUnauthorizedExample":
+                  $ref: '#/components/examples/403TUnauthorizedExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User forbidden either because the user is not authorized to
+            access the service
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Cannot send email
+      security:
+      - Bearer: []
+      summary: Sends an email for tenant
+components:
+  examples:
+    SendEmailResponseExample:
+      value:
+        status: sent
+    SendEmailExample:
+      value:
+        to:
+        - to@example.com
+        - to2@example.com
+        rawMessage: dGVzdCBtZXNzYWdlIGNvbnRlbnQ=
+    "400MalformedRequest":
+      value:
+        id: "23"
+        kind: Error
+        href: /api/v1/acscsemail/errors/23
+        code: ACSCS-EMAIL-23
+        reason: failed to decode send email request payload
+        operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
+    "401Example":
+      value:
+        id: "11"
+        kind: Error
+        href: /api/v1/acscsemail/errors/11
+        code: ACSCS-EMAIL-11
+        reason: 'Unable to verify JWT token: Required authorization token not found'
+        operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+    "401NoAuthorizationProvided":
+      value:
+        id: "15"
+        kind: Error
+        href: /api/v1/acscsemail/errors/15
+        code: ACSCS-EMAIL-15
+        reason: Request doesn't contain the 'Authorization' header or the 'cs_jwt'
+          cookie
+        operation_id: 1lY3UiEkxnXBpVPeI2oNejd3XB
+    "403Example":
+      value:
+        id: "4"
+        kind: Error
+        href: /api/v1/acscsemail/errors/4
+        code: ACSCS-EMAIL-4
+        reason: User 'foo-bar' is not authorized to access the service
+        operation_id: 1lY3UiEhznXBpWPfI2lNejpd4YC
+    "403TUnauthorizedExample":
+      value:
+        id: "11"
+        kind: Error
+        href: /api/v1/acscsemail/errors/11
+        code: ACSCS-EMAIL-11
+        reason: Account is unauthorized to perform this action
+        operation_id: kXCzWPeI2oXBpVPeI2LvF9jMQY
+    "500Example":
+      value:
+        id: "9"
+        kind: Error
+        href: /api/v1/acscsemail/errors/9
+        code: ACSCS-EMAIL-9
+        reason: Unspecified error
+        operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
+  parameters:
+    id:
+      description: The ID of record
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
+    page:
+      description: Page index
+      examples:
+        page:
+          value: "1"
+      explode: true
+      in: query
+      name: page
+      required: false
+      schema:
+        type: string
+      style: form
+    size:
+      description: Number of items in each page
+      examples:
+        size:
+          value: "100"
+      explode: true
+      in: query
+      name: size
+      required: false
+      schema:
+        type: string
+      style: form
+  schemas:
+    ObjectReference:
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+      type: object
+    List:
+      properties:
+        kind:
+          type: string
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+      required:
+      - items
+      - kind
+      - page
+      - size
+      - total
+      type: object
+    Error:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/Error_allOf'
+    ErrorList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ErrorList_allOf'
+    SendEmailResponse:
+      example:
+        $ref: '#/components/examples/SendEmailResponseExample'
+      properties:
+        status:
+          type: string
+      type: object
+    SendEmailPayload:
+      description: Schema for the request body sent to /acscsemail POST
+      example:
+        to:
+        - to
+        - to
+        rawMessage: rawMessage
+      properties:
+        to:
+          description: a list of recipients to recieve an email
+          items:
+            type: string
+          type: array
+        rawMessage:
+          description: base64 encoded email content
+          type: string
+      required:
+      - rawMessage
+      - to
+      type: object
+    Error_allOf:
+      properties:
+        code:
+          type: string
+        reason:
+          type: string
+        operation_id:
+          type: string
+    ErrorList_allOf:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Error'
+          type: array
+  securitySchemes:
+    Bearer:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
