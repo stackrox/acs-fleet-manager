@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/stackrox/acs-fleet-manager/emailsender/config"
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/client"
 	acscsAPI "github.com/stackrox/acs-fleet-manager/pkg/api"
 	acscsErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	acscsHandlers "github.com/stackrox/acs-fleet-manager/pkg/handlers"
@@ -33,6 +34,7 @@ func SetupRoutes(authConfig config.AuthConfig, emailHandler *EmailHandler) (http
 func setupRoutes(authnHandlerFunc authnHandlerBuilder, authConfig config.AuthConfig, emailHandler *EmailHandler) (http.Handler, error) {
 	router := mux.NewRouter()
 	errorsHandler := acscsHandlers.NewErrorsHandler()
+	openAPIHandler := NewOpenAPIHandler(client.OpenAPIDefinition)
 
 	router.NotFoundHandler = http.HandlerFunc(acscsAPI.SendNotFound)
 	router.MethodNotAllowedHandler = http.HandlerFunc(acscsAPI.SendMethodNotAllowed)
@@ -54,6 +56,9 @@ func setupRoutes(authnHandlerFunc authnHandlerBuilder, authConfig config.AuthCon
 
 	// health endpoint
 	router.HandleFunc("/health", HealthCheckHandler).Methods("GET")
+
+	// openAPI definiton endpoint
+	router.HandleFunc("/openapi", openAPIHandler.Get).Methods("GET")
 
 	// errors endpoint
 	router.HandleFunc("/api/v1/acscsemail/errors/{id}", errorsHandler.Get).Methods(http.MethodGet)
@@ -86,6 +91,7 @@ func buildAuthnHandler(router http.Handler, cfg config.AuthConfig) (http.Handler
 		Service(emailsenderPrefix).
 		Next(router).
 		Public("/health").
+		Public("/openapi").
 		Public("/api/v1/acscsemail/errors/?[0-9]*")
 
 	for _, keyURL := range cfg.JwksURLs {
