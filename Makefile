@@ -46,7 +46,7 @@ emailsender_image_repository:=$(EMAILSENDER_IMAGE)
 external_image_registry:=quay.io/rhacs-eng
 internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 
-DOCKER ?= podman
+DOCKER ?= docker
 DOCKER_CONFIG ?= "${HOME}/.docker"
 
 # Default Variables
