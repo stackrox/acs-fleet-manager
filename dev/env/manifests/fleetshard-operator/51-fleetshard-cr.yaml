@@ -29,8 +29,7 @@ spec:
     secretEncryption:
       type: "local"
     tenantImagePullSecret:
-      name: "fleetshard-sync"
-      key: "tenant-image-pull-secret"
+      name: $TENANT_IMAGE_PULL_SECRET
     nodeSelector: null
     tolerations: null
     addonAutoUpgradeEnabled: false

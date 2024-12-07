@@ -69,7 +69,7 @@ fi
 log "Deploying fleetshard-sync"
 TENANT_IMAGE_PULL_SECRET=""
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then # pragma: allowlist secret
-    TENANT_IMAGE_PULL_SECRET=$($KUBECTL -n "$ACSCS_NAMESPACE" get secret quay-ips -o jsonpath="{.data['\.dockerconfigjson']}" | base64 -d)
+    TENANT_IMAGE_PULL_SECRET="rhacs-registry" # pragma: allowlist secret
 fi
 export TENANT_IMAGE_PULL_SECRET
 

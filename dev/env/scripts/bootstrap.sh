@@ -38,7 +38,6 @@ wait_for_default_service_account "$ACSCS_NAMESPACE"
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
     create-imagepullsecrets
     inject_ips "$ACSCS_NAMESPACE" "default" "quay-ips"
-    inject_ips "$STACKROX_OPERATOR_NAMESPACE" "default" "quay-ips"
 else
     log "Skipping creation of ImagePullSecrets because INHERIT_IMAGEPULLSECRETS is not true"
 fi
