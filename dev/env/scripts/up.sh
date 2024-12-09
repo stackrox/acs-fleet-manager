@@ -53,7 +53,7 @@ if ! is_openshift_cluster "$CLUSTER_TYPE"; then
 fi
 
 DATAPLANE_ONLY=${DATAPLANE_ONLY:-}
-if [[ "${DATAPLANE_ONLY}" == "" ]]; then
+if [[ -z "${DATAPLANE_ONLY}" ]]; then
     # Deploy database.
     log "Deploying database"
     make -C "$GITROOT" deploy/db
@@ -94,7 +94,7 @@ fi
 # Sanity check.
 wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "app=fleetshard-sync" "fleetshard-sync" 500
 
-if [[ "${DATAPLANE_ONLY}" == "" ]]; then
+if [[ -z "${DATAPLANE_ONLY}" ]]; then
     # Prerequisite for port-forwarding are pods in ready state.
     wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "app=fleet-manager" "service"
 
