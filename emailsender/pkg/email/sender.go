@@ -11,13 +11,14 @@ import (
 	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/metrics"
 )
 
-const fromTemplate = "From: RHACS Cloud Service <%s>\r\n"
-
 const (
 	// EmailProviderAWSSES is the type name for the AWSEmailSender implementation of the Sender interface
 	EmailProviderAWSSES = "AWS_SES"
 	// EmailProviderLog is the type name for the LogEmailSender implementation of the Sender interface
 	EmailProviderLog = "LOG"
+
+	toFormat   = "To: %s\r\n"
+	fromFormat = "From: %s <%s>\r\n"
 )
 
 // Sender defines the interface to send emails
@@ -32,7 +33,7 @@ func NewEmailSender(ctx context.Context, cfg *config.Config, rateLimiter RateLim
 		return &LogEmailSender{
 			from: cfg.SenderAddress,
 		}, nil
-	default:
+	case EmailProviderAWSSES:
 		// EmailProviderAWSSES is the default
 		ses, err := NewSES(ctx, cfg.SesMaxBackoffDelay, cfg.SesMaxAttempts)
 		if err != nil {
@@ -40,11 +41,12 @@ func NewEmailSender(ctx context.Context, cfg *config.Config, rateLimiter RateLim
 		}
 		return &AWSMailSender{
 			from:        cfg.SenderAddress,
+			fromAlias:   cfg.SenderAlias,
 			ses:         ses,
 			rateLimiter: rateLimiter,
 		}, nil
-
 	}
+	panic("Unknown email provider: " + cfg.EmailProvider)
 }
 
 // LogEmailSender is a Sender implementation that logs email messages to glog
@@ -61,6 +63,7 @@ func (l *LogEmailSender) Send(ctx context.Context, to []string, rawMessage []byt
 // AWSMailSender is the default implementation for the Sender interface
 type AWSMailSender struct {
 	from        string
+	fromAlias   string
 	ses         *SES
 	rateLimiter RateLimiter
 }
@@ -73,8 +76,8 @@ func (s *AWSMailSender) Send(ctx context.Context, to []string, rawMessage []byte
 		metrics.DefaultInstance().IncThrottledSendEmail(tenantID)
 		return fmt.Errorf("rate limit exceeded for tenant: %s", tenantID)
 	}
-	fromBytes := []byte(fmt.Sprintf(fromTemplate, s.from))
-	toBytes := []byte(fmt.Sprintf("To: %s\r\n", strings.Join(to, ",")))
+	fromBytes := []byte(fmt.Sprintf(fromFormat, s.fromAlias, s.from))
+	toBytes := []byte(fmt.Sprintf(toFormat, strings.Join(to, ",")))
 
 	raw := bytes.Join([][]byte{fromBytes, toBytes, rawMessage}, nil)
 	metrics.DefaultInstance().IncSendEmail(tenantID)
