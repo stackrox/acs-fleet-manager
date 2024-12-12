@@ -4,6 +4,25 @@ metadata:
   name: base-acscs-pipeline
 spec:
   finally:
+  - name: slack-notification
+    params:
+    - name: message
+      value: 'Failed task: `$(context.task.name)` of `{{event_type}}` to `{{target_branch}}`\nPipeline: <https://console.redhat.com/application-pipeline/workspaces/acscs-rhacs/applications/acscs-main/pipelineruns/$(context.pipelineRun.name)|$(context.pipelineRun.name)>\nImage: `$(params.output-image-repo)`\nCommit: <$(params.git-url)/commit/$(params.revision)|$(params.revision)>\n:old-man-yells-at-konflux:'
+    - name: key-name
+      value: 'acscs-konflux-notifications'
+    when:
+    - input: $(tasks.status)
+      operator: in
+      values: ["Failed"]
+    taskRef:
+      params:
+      - name: name
+        value: slack-webhook-notification
+      - name: bundle
+        value: quay.io/konflux-ci/tekton-catalog/task-slack-webhook-notification:0.1@sha256:dc17b70633363d78414b8c06dc1660d25742935f106a6116995638e1210c2730
+      - name: kind
+        value: task
+      resolver: bundles
   - name: show-sbom
     params:
     - name: IMAGE_URL
