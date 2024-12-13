@@ -1,10 +1,10 @@
 rhacsOperators:
   crdUrls:
-    - https://raw.githubusercontent.com/stackrox/stackrox/4.5.4/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml
-    - https://raw.githubusercontent.com/stackrox/stackrox/4.5.4/operator/bundle/manifests/platform.stackrox.io_centrals.yaml
+    - https://raw.githubusercontent.com/stackrox/stackrox/4.6.1/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml
+    - https://raw.githubusercontent.com/stackrox/stackrox/4.6.1/operator/bundle/manifests/platform.stackrox.io_centrals.yaml
   operators:
     - deploymentName: "rhacs-operator-dev"
-      image: "quay.io/rhacs-eng/stackrox-operator:4.5.4"
+      image: "quay.io/rhacs-eng/stackrox-operator:4.6.1"
       centralLabelSelector: "rhacs.redhat.com/version-selector=dev"
       securedClusterReconcilerEnabled: false
 verticalPodAutoscaling:
@@ -40,15 +40,6 @@ tenantResources:
       requests:
         cpu: 100m
         memory: 100Mi
-
-    labels:
-      app.kubernetes.io/managed-by: rhacs-fleetshard
-      app.kubernetes.io/instance: "{{ .Name }}"
-      rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
-      rhacs.redhat.com/tenant: "{{ .ID }}"
-      rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
-    annotations:
-      rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
 
     centralRdsCidrBlock: "10.1.0.0/16"
 

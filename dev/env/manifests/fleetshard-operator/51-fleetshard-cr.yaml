@@ -23,6 +23,7 @@ spec:
       region: "$AWS_REGION"
     gitops:
       enabled: true
+      tenantDefaultAppSourceTargetRevision: "$ARGOCD_TENANT_APP_TARGET_REVISION"
     targetedOperatorUpgrades:
       enabled: true
     secretEncryption:
@@ -47,7 +48,10 @@ spec:
   secured-cluster:
     enabled: false
   external-secrets:
-    enabled: false
+    enabled: $ENABLE_EXTERNAL_SECRETS
+  secretStore:
+    aws:
+      enableTokenAuth: false
   scc:
     enabled: false
   verticalPodAutoscaler:
