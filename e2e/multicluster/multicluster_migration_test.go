@@ -26,8 +26,14 @@ const (
 	dpCloudProvider = "standalone"
 	dpRegion        = "standalone"
 	// the cluster ids configured for given clusters in fleet-manager's cluster config
-	cluster1ID = "cluster-1-id"
-	cluster2ID = "cluster-2-id"
+
+	// This assumes the ID used for cluster configuration
+	// REPO/dev/config/dataplane-cluster-configuration.yaml
+	cluster1ID = "1234567890abcdef1234567890abcdef" // pragma: allowlist secret
+
+	// This assumes the ID set for cluster 2 in deploy script
+	// $REPO/scripts/ci/multicluster_tests/deploy.sh
+	cluster2ID = "1234567890abcdef1234567890abcdeg" // pragma: allowlist secret
 )
 
 var (
@@ -86,7 +92,7 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 		}
 	})
 
-	Describe("CentralRequest pre migration", Ordered, func() {
+	Describe("CentralRequest pre migration", func() {
 		It("should be assigned to cluster1", func() {
 			assertClusterAssignment(cluster1ID, centralRequest.Id, fleetmanagerAdminClient)
 		})
@@ -137,7 +143,7 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	Describe("CentralRequest post migration", Ordered, func() {
+	Describe("CentralRequest post migration", func() {
 		It("should be assigned to cluster2", func() {
 			assertClusterAssignment(cluster1ID, centralRequest.Id, fleetmanagerAdminClient)
 		})

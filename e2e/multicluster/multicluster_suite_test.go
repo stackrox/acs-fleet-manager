@@ -76,5 +76,4 @@ var _ = BeforeSuite(func() {
 
 		route53Client = route53.New(sess)
 	}
-
 })
