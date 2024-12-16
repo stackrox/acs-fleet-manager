@@ -16,6 +16,7 @@ import (
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/e2e/dns"
+	"github.com/stackrox/acs-fleet-manager/e2e/testutil"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
@@ -47,7 +48,6 @@ func newCentralName() string {
 const (
 	defaultPolling = 1 * time.Second
 	skipRouteMsg   = "route resource is not known to test cluster"
-	skipDNSMsg     = "external DNS is not enabled for this test run"
 )
 
 var (
@@ -67,7 +67,7 @@ var _ = Describe("Central", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		SkipIf(!runCentralTests, "Skipping Central tests")
+		testutil.SkipIf(!runCentralTests, "Skipping Central tests")
 
 		option := fmImpl.OptionFromEnv()
 		auth, err := fmImpl.NewStaticAuth(context.Background(), fmImpl.StaticOption{StaticToken: option.Static.StaticToken})
@@ -125,7 +125,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should transition central request state to provisioning", func() {
-			Eventually(assertCentralRequestProvisioning(ctx, client, centralRequestID)).
+			Eventually(testutil.AssertCentralRequestProvisioning(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -157,7 +157,7 @@ var _ = Describe("Central", Ordered, func() {
 
 		// TODO: possible flake. Maybe this test will be executed after the routes are created
 		It("should not expose URLs until the routes are created", func() {
-			SkipIf(!routesEnabled, skipRouteMsg)
+			testutil.SkipIf(!routesEnabled, skipRouteMsg)
 			var centralRequest public.CentralRequest
 			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
 				To(Succeed())
@@ -166,14 +166,14 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should transition central request state to ready", func() {
-			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
+			Eventually(testutil.AssertCentralRequestReady(ctx, client, centralRequestID)).
 				WithTimeout(extendedWaitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
 
 		It("should have created central routes", func() {
-			SkipIf(!routesEnabled, skipRouteMsg)
+			testutil.SkipIf(!routesEnabled, skipRouteMsg)
 
 			var centralRequest public.CentralRequest
 			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
@@ -205,14 +205,14 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should have created AWS Route53 records", func() {
-			SkipIf(!dnsEnabled, skipDNSMsg)
+			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
 
 			var centralRequest public.CentralRequest
 			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
 				To(Succeed())
 
 			var reencryptIngress openshiftRouteV1.RouteIngress
-			Eventually(assertReencryptIngressRouteExist(ctx, namespaceName, &reencryptIngress)).
+			Eventually(testutil.AssertReencryptIngressRouteExist(context.Background(), routeService, namespaceName, &reencryptIngress)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -225,13 +225,7 @@ var _ = Describe("Central", Ordered, func() {
 				Should(HaveLen(len(dnsRecordsLoader.CentralDomainNames)), "Started at %s", time.Now())
 
 			recordSets := dnsRecordsLoader.LastResult
-			for idx, domain := range dnsRecordsLoader.CentralDomainNames {
-				recordSet := recordSets[idx]
-				Expect(len(recordSet.ResourceRecords)).To(Equal(1))
-				record := recordSet.ResourceRecords[0]
-				Expect(*recordSet.Name).To(Equal(domain))
-				Expect(*record.Value).To(Equal(reencryptIngress.RouterCanonicalHostname)) // TODO use route specific ingress instead of comparing with reencryptIngress for all cases
-			}
+			testutil.AssertDNSMatchesRouter(dnsRecordsLoader.CentralDomainNames, recordSets, &reencryptIngress)
 		})
 
 		It("should backup important secrets in FM database", func() {
@@ -342,7 +336,7 @@ var _ = Describe("Central", Ordered, func() {
 		It("should transition central to deprovisioning state", func() {
 			Expect(deleteCentralByID(ctx, client, centralRequestID)).
 				To(Succeed())
-			Eventually(assertCentralRequestDeprovisioning(ctx, client, centralRequestID)).
+			Eventually(testutil.AssertCentralRequestDeprovisioning(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -363,7 +357,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should delete external DNS entries", func() {
-			SkipIf(!dnsEnabled, skipDNSMsg)
+			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
 			var centralRequest public.CentralRequest
 			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
 				To(Succeed())
@@ -413,7 +407,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should transition central's state to ready", func() {
-			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
+			Eventually(testutil.AssertCentralRequestReady(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -422,7 +416,7 @@ var _ = Describe("Central", Ordered, func() {
 		It("should transition central to deprovisioning state when deleting", func() {
 			Expect(deleteCentralByID(ctx, client, centralRequestID)).
 				To(Succeed())
-			Eventually(assertCentralRequestDeprovisioning(ctx, client, centralRequestID)).
+			Eventually(testutil.AssertCentralRequestDeprovisioning(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -443,7 +437,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should delete external DNS entries", func() {
-			SkipIf(!dnsEnabled, skipDNSMsg)
+			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
 			var centralRequest public.CentralRequest
 			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
 				To(Succeed())
@@ -485,7 +479,7 @@ var _ = Describe("Central", Ordered, func() {
 		var readyCentralRequest public.CentralRequest
 
 		It("should transition central's state to ready", func() {
-			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
+			Eventually(testutil.AssertCentralRequestReady(ctx, client, centralRequestID)).
 				WithTimeout(extendedWaitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -524,7 +518,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should delete external DNS entries", func() {
-			SkipIf(!dnsEnabled, skipDNSMsg)
+			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, readyCentralRequest)
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
 				WithTimeout(waitTimeout).

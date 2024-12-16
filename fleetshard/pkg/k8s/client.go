@@ -13,6 +13,7 @@ import (
 	verticalpodautoscalingv1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -35,8 +36,21 @@ func must(err error) {
 	}
 }
 
-// CreateClientOrDie creates a new kubernetes client or dies
+// CreateClientOrDie creates a new kubernetes client with default config loader or dies
 func CreateClientOrDie() ctrlClient.Client {
+	config, err := ctrl.GetConfig()
+	if err != nil {
+		glog.Fatal("failed to get k8s client config", err)
+	}
+	return buildClientOrDie(config)
+}
+
+// CreateClientWithConfigOrDie create a new kubernetes client with given config
+func CreateClientWithConfigOrDie(config *rest.Config) ctrlClient.Client {
+	return buildClientOrDie(config)
+}
+
+func buildClientOrDie(config *rest.Config) ctrlClient.Client {
 	scheme := runtime.NewScheme()
 	must(clientgoscheme.AddToScheme(scheme))
 	must(v1alpha1.AddToScheme(scheme))
@@ -45,11 +59,6 @@ func CreateClientOrDie() ctrlClient.Client {
 	must(addons.AddToScheme(scheme))
 	must(verticalpodautoscalingv1.AddToScheme(scheme))
 	must(argoCd.AddToScheme(scheme))
-
-	config, err := ctrl.GetConfig()
-	if err != nil {
-		glog.Fatal("failed to get k8s client config", err)
-	}
 
 	k8sClient, err := ctrlClient.New(config, ctrlClient.Options{
 		Scheme: scheme,

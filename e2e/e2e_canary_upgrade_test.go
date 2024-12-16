@@ -8,6 +8,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stackrox/acs-fleet-manager/e2e/testutil"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -61,7 +62,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		SkipIf(!features.TargetedOperatorUpgrades.Enabled() || !runCanaryUpgradeTests, "Skipping canary upgrade test")
+		testutil.SkipIf(!features.TargetedOperatorUpgrades.Enabled() || !runCanaryUpgradeTests, "Skipping canary upgrade test")
 		option := fmImpl.OptionFromEnv()
 		auth, err := fmImpl.NewStaticAuth(ctx, fmImpl.StaticOption{StaticToken: option.Static.StaticToken})
 		Expect(err).ToNot(HaveOccurred())
@@ -250,7 +251,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 		It("delete central", func() {
 			Expect(deleteCentralByID(ctx, client, createdCentral.Id)).
 				To(Succeed())
-			Eventually(assertCentralRequestDeprovisioning(ctx, client, createdCentral.Id)).
+			Eventually(testutil.AssertCentralRequestDeprovisioning(ctx, client, createdCentral.Id)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
