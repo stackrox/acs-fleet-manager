@@ -491,6 +491,9 @@ var _ fleetmanager.AdminAPI = &AdminAPIMock{}
 //
 //		// make and configure a mocked fleetmanager.AdminAPI
 //		mockedAdminAPI := &AdminAPIMock{
+//			AssignCentralClusterFunc: func(ctx context.Context, id string, centralAssignClusterRequest admin.CentralAssignClusterRequest) (*http.Response, error) {
+//				panic("mock out the AssignCentralCluster method")
+//			},
 //			CentralRotateSecretsFunc: func(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error) {
 //				panic("mock out the CentralRotateSecrets method")
 //			},
@@ -513,6 +516,9 @@ var _ fleetmanager.AdminAPI = &AdminAPIMock{}
 //
 //	}
 type AdminAPIMock struct {
+	// AssignCentralClusterFunc mocks the AssignCentralCluster method.
+	AssignCentralClusterFunc func(ctx context.Context, id string, centralAssignClusterRequest admin.CentralAssignClusterRequest) (*http.Response, error)
+
 	// CentralRotateSecretsFunc mocks the CentralRotateSecrets method.
 	CentralRotateSecretsFunc func(ctx context.Context, id string, centralRotateSecretsRequest admin.CentralRotateSecretsRequest) (*http.Response, error)
 
@@ -530,6 +536,15 @@ type AdminAPIMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// AssignCentralCluster holds details about calls to the AssignCentralCluster method.
+		AssignCentralCluster []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+			// CentralAssignClusterRequest is the centralAssignClusterRequest argument value.
+			CentralAssignClusterRequest admin.CentralAssignClusterRequest
+		}
 		// CentralRotateSecrets holds details about calls to the CentralRotateSecrets method.
 		CentralRotateSecrets []struct {
 			// Ctx is the ctx argument value.
@@ -572,11 +587,52 @@ type AdminAPIMock struct {
 			CentralUpdateNameRequest admin.CentralUpdateNameRequest
 		}
 	}
+	lockAssignCentralCluster  sync.RWMutex
 	lockCentralRotateSecrets  sync.RWMutex
 	lockCreateCentral         sync.RWMutex
 	lockDeleteDbCentralById   sync.RWMutex
 	lockGetCentrals           sync.RWMutex
 	lockUpdateCentralNameById sync.RWMutex
+}
+
+// AssignCentralCluster calls AssignCentralClusterFunc.
+func (mock *AdminAPIMock) AssignCentralCluster(ctx context.Context, id string, centralAssignClusterRequest admin.CentralAssignClusterRequest) (*http.Response, error) {
+	if mock.AssignCentralClusterFunc == nil {
+		panic("AdminAPIMock.AssignCentralClusterFunc: method is nil but AdminAPI.AssignCentralCluster was just called")
+	}
+	callInfo := struct {
+		Ctx                         context.Context
+		ID                          string
+		CentralAssignClusterRequest admin.CentralAssignClusterRequest
+	}{
+		Ctx:                         ctx,
+		ID:                          id,
+		CentralAssignClusterRequest: centralAssignClusterRequest,
+	}
+	mock.lockAssignCentralCluster.Lock()
+	mock.calls.AssignCentralCluster = append(mock.calls.AssignCentralCluster, callInfo)
+	mock.lockAssignCentralCluster.Unlock()
+	return mock.AssignCentralClusterFunc(ctx, id, centralAssignClusterRequest)
+}
+
+// AssignCentralClusterCalls gets all the calls that were made to AssignCentralCluster.
+// Check the length with:
+//
+//	len(mockedAdminAPI.AssignCentralClusterCalls())
+func (mock *AdminAPIMock) AssignCentralClusterCalls() []struct {
+	Ctx                         context.Context
+	ID                          string
+	CentralAssignClusterRequest admin.CentralAssignClusterRequest
+} {
+	var calls []struct {
+		Ctx                         context.Context
+		ID                          string
+		CentralAssignClusterRequest admin.CentralAssignClusterRequest
+	}
+	mock.lockAssignCentralCluster.RLock()
+	calls = mock.calls.AssignCentralCluster
+	mock.lockAssignCentralCluster.RUnlock()
+	return calls
 }
 
 // CentralRotateSecrets calls CentralRotateSecretsFunc.
