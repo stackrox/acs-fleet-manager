@@ -6,11 +6,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"net"
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
