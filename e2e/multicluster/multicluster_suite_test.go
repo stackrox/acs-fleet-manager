@@ -33,6 +33,10 @@ var (
 )
 
 func TestMulticlusterE2E(t *testing.T) {
+	if os.Getenv("RUN_MULTICLUSTER_E2E") != "true" {
+		t.Skip("Skip multicluster e2e tests. Set RUN_MULTICLUSTER_E2E=true env variable to enable e2e tests.")
+	}
+
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "ACSCS Multicluster Suite")
 }
