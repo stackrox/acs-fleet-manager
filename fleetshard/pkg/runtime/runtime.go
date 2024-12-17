@@ -132,9 +132,9 @@ func (r *Runtime) Start() error {
 	routesAvailable := r.routesAvailable()
 
 	argoReconcilerOpts := centralReconciler.ArgoReconcilerOptions{
-		DefaultTenantArgoCdAppSourceTargetRevision: r.config.DefaultTenantArgoCdAppSourceTargetRevision,
-		DefaultTenantArgoCdAppSourcePath:           r.config.DefaultTenantArgoCdAppSourcePath,
-		DefaultTenantArgoCdAppSourceRepoURL:        r.config.DefaultTenantArgoCdAppSourceRepoURL,
+		TenantDefaultArgoCdAppSourceTargetRevision: r.config.TenantDefaultArgoCdAppSourceTargetRevision,
+		TenantDefaultArgoCdAppSourcePath:           r.config.TenantDefaultArgoCdAppSourcePath,
+		TenantDefaultArgoCdAppSourceRepoURL:        r.config.TenantDefaultArgoCdAppSourceRepoURL,
 		ArgoCdNamespace:                            r.config.ArgoCdNamespace,
 		ManagedDBEnabled:                           r.config.ManagedDB.Enabled,
 		ClusterName:                                r.config.ClusterName,
