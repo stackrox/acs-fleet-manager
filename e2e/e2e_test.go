@@ -159,7 +159,7 @@ var _ = Describe("Central", Ordered, func() {
 		It("should not expose URLs until the routes are created", func() {
 			testutil.SkipIf(!routesEnabled, skipRouteMsg)
 			var centralRequest public.CentralRequest
-			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+			Expect(testutil.ObtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
 				To(Succeed())
 			Expect(centralRequest.CentralUIURL).To(BeEmpty())
 			Expect(centralRequest.CentralDataURL).To(BeEmpty())
@@ -176,7 +176,7 @@ var _ = Describe("Central", Ordered, func() {
 			testutil.SkipIf(!routesEnabled, skipRouteMsg)
 
 			var centralRequest public.CentralRequest
-			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+			Expect(testutil.ObtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
 				To(Succeed())
 
 			var reencryptRoute openshiftRouteV1.Route
@@ -208,7 +208,7 @@ var _ = Describe("Central", Ordered, func() {
 			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
 
 			var centralRequest public.CentralRequest
-			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+			Expect(testutil.ObtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
 				To(Succeed())
 
 			var reencryptIngress openshiftRouteV1.RouteIngress
@@ -359,7 +359,7 @@ var _ = Describe("Central", Ordered, func() {
 		It("should delete external DNS entries", func() {
 			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
 			var centralRequest public.CentralRequest
-			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+			Expect(testutil.ObtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
 				To(Succeed())
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
@@ -439,7 +439,7 @@ var _ = Describe("Central", Ordered, func() {
 		It("should delete external DNS entries", func() {
 			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
 			var centralRequest public.CentralRequest
-			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+			Expect(testutil.ObtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
 				To(Succeed())
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
@@ -483,7 +483,7 @@ var _ = Describe("Central", Ordered, func() {
 				WithTimeout(extendedWaitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
-			Expect(obtainCentralRequest(ctx, client, centralRequestID, &readyCentralRequest)).
+			Expect(testutil.ObtainCentralRequest(ctx, client, centralRequestID, &readyCentralRequest)).
 				To(Succeed())
 		})
 

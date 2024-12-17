@@ -17,7 +17,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/e2e/testutil"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -111,15 +110,6 @@ func enableTestsGroup(testName string, envName string, defaultValue string) bool
 		GinkgoWriter.Printf("Skipping %s tests. Set %s=true to run these tests", testName, envName)
 	}
 	return false
-}
-
-func obtainCentralRequest(ctx context.Context, client *fleetmanager.Client, id string, request *public.CentralRequest) error {
-	centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
-	if err != nil {
-		return err
-	}
-	*request = centralRequest
-	return nil
 }
 
 func assertStoredSecrets(ctx context.Context, privateAPI fleetmanager.PrivateAPI, centralRequestID string, expected []string) func() error {

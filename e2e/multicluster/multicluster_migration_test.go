@@ -106,6 +106,8 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 
 		It("should have DNS CNAME records for cluster1 routes", func() {
 			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
+			testutil.ObtainCentralRequest(context.Background(), fleetmanagerClient, centralRequest.Id, &centralRequest)
+
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
 			routeService := k8s.NewRouteService(cluster1KubeClient, routeConfig)
 
@@ -145,7 +147,7 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 
 	Describe("CentralRequest post migration", func() {
 		It("should be assigned to cluster2", func() {
-			assertClusterAssignment(cluster1ID, centralRequest.Id, fleetmanagerAdminClient)
+			assertClusterAssignment(cluster2ID, centralRequest.Id, fleetmanagerAdminClient)
 		})
 		It("should reach the ready state", func() {
 			Eventually(testutil.AssertCentralRequestReady(context.Background(), fleetmanagerClient, centralRequest.Id)).
@@ -155,6 +157,8 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 		})
 		It("should have DNS CNAME records for cluster2 routes", func() {
 			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
+			testutil.ObtainCentralRequest(context.Background(), fleetmanagerClient, centralRequest.Id, &centralRequest)
+
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
 			routeService := k8s.NewRouteService(cluster2KubeClient, routeConfig)
 
@@ -207,6 +211,9 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 		Eventually(func() (int, error) {
 			_, res, err := fleetmanagerClient.PublicAPI().GetCentralById(context.Background(), centralRequest.Id)
 			if res != nil {
+				if res.StatusCode == 404 {
+					return res.StatusCode, nil
+				}
 				return res.StatusCode, err
 			}
 
@@ -265,10 +272,10 @@ func getClusterAssignment(centralID string, adminAPI fleetmanager.AdminAPI) (str
 }
 
 func getNamespace(name string, kubeClient ctrlClient.Client) (*corev1.Namespace, error) {
-	var namespace *corev1.Namespace
-	if err := kubeClient.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace); err != nil {
+	var namespace corev1.Namespace
+	if err := kubeClient.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, &namespace); err != nil {
 		return nil, fmt.Errorf("getting namespace %q: %w", name, err)
 	}
 
-	return namespace, nil
+	return &namespace, nil
 }

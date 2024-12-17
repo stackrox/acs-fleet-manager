@@ -2,11 +2,14 @@
 package testutil
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
 const defaultTimeout = 5 * time.Minute
@@ -47,4 +50,14 @@ func SkipIf(condition bool, message string) {
 	if condition {
 		Skip(message, 1)
 	}
+}
+
+// ObtainCentralRequest queries fleet-manager public API for the CentralRequest with id and stores in in the given pointer
+func ObtainCentralRequest(ctx context.Context, client *fleetmanager.Client, id string, request *public.CentralRequest) error {
+	centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to obtain CentralRequest: %w", err)
+	}
+	*request = centralRequest
+	return nil
 }
