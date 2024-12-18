@@ -18,7 +18,6 @@ import (
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cipher"
@@ -34,7 +33,6 @@ import (
 	"github.com/stackrox/rox/pkg/random"
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
-	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,8 +49,6 @@ const (
 	BlockedStatus
 
 	PauseReconcileAnnotation = "stackrox.io/pause-reconcile"
-
-	helmReleaseName = "tenant-resources"
 
 	argoCdManagedBy          = "argocd.argoproj.io/managed-by"
 	openshiftGitopsNamespace = "openshift-gitops"
@@ -141,7 +137,6 @@ type CentralReconciler struct {
 	useRoutes              bool
 	Resources              bool
 	namespaceReconciler    *namespaceReconciler
-	tenantChartReconciler  *tenantChartReconciler
 	centralCrReconciler    *centralCrReconciler
 	argoReconciler         *argoReconciler
 	tenantCleanup          *TenantCleanup
@@ -157,8 +152,6 @@ type CentralReconciler struct {
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
-
-	resourcesChart *chart.Chart
 
 	wantsAuthProvider      bool
 	hasAuthProvider        bool
@@ -268,10 +261,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			if !ok {
 				return nil, errors.New("ArgoCD application not yet deleted")
 			}
-		}
-
-		if err := r.tenantChartReconciler.ensureResourcesExist(ctx, remoteCentral); err != nil {
-			return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
 		}
 	}
 
@@ -1562,8 +1551,6 @@ func (r *CentralReconciler) needsReconcile(changed bool, central *v1alpha1.Centr
 	return ok && forceReconcile == "true"
 }
 
-var resourcesChart = charts.MustGetChart("tenant-resources", nil)
-
 func (r *CentralReconciler) checkSecretExists(
 	ctx context.Context,
 	remoteCentralNamespace string,
@@ -1700,7 +1687,6 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
 	nsReconciler := newNamespaceReconciler(k8sClient)
-	chartReconciler := newTenantChartReconciler(k8sClient, opts.SecureTenantNetwork)
 	crReconciler := newCentralCrReconciler(k8sClient)
 	argoReconciler := newArgoReconciler(k8sClient, opts.ArgoReconcilerOptions)
 	r := &CentralReconciler{
@@ -1711,7 +1697,6 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		useRoutes:              opts.UseRoutes,
 		wantsAuthProvider:      opts.WantsAuthProvider,
 		namespaceReconciler:    nsReconciler,
-		tenantChartReconciler:  chartReconciler,
 		centralCrReconciler:    crReconciler,
 		argoReconciler:         argoReconciler,
 		tenantCleanup:          NewTenantCleanup(k8sClient, TenantCleanupOptions{SecureTenantNetwork: opts.SecureTenantNetwork, ArgoReconcilerOptions: opts.ArgoReconcilerOptions}),
@@ -1731,8 +1716,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		verifyAuthProviderFunc: hasAuthProvider,
 		tenantImagePullSecret:  []byte(opts.TenantImagePullSecret),
 
-		resourcesChart: resourcesChart,
-		clock:          realClock{},
+		clock: realClock{},
 	}
 	r.needsReconcileFunc = r.needsReconcile
 
