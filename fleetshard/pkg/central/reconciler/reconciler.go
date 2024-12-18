@@ -50,10 +50,8 @@ const (
 
 	PauseReconcileAnnotation = "stackrox.io/pause-reconcile"
 
-	argoCdManagedBy          = "argocd.argoproj.io/managed-by"
-	openshiftGitopsNamespace = "openshift-gitops"
-
-	centralPVCAnnotationKey   = "platform.stackrox.io/obsolete-central-pvc"
+	argoCdManagedBy = "argocd.argoproj.io/managed-by"
+	
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 	envAnnotationKey          = "rhacs.redhat.com/environment"
 	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
