@@ -587,7 +587,8 @@ labels:
 annotations:
   rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
 secureTenantNetwork: false
-centralRdsCidrBlock: "10.1.0.0/16"`
+centralRdsCidrBlock: "10.1.0.0/16"
+centralVpaEnabled: false`
 }
 
 func tenantResourcesWithCentralVpaEnabled() string {
@@ -602,9 +603,7 @@ annotations:
   rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
 secureTenantNetwork: false
 centralRdsCidrBlock: "10.1.0.0/16"
-verticalPodAutoscalers:
-  central:
-    enabled: true
+centralVpaEnabled: true
 `
 }
 
