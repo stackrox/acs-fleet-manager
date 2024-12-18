@@ -65,8 +65,7 @@ var (
 		},
 	}
 
-	useRoutesReconcilerOptions           = CentralReconcilerOptions{UseRoutes: true}
-	secureTenantNetworkReconcilerOptions = CentralReconcilerOptions{SecureTenantNetwork: true}
+	useRoutesReconcilerOptions = CentralReconcilerOptions{UseRoutes: true}
 
 	defaultAuditLogConfig = config.AuditLogging{
 		Enabled:            true,
