@@ -95,9 +95,6 @@ const (
 	additionalAuthProviderConfigKey  = "additional-auth-provider"
 
 	tenantImagePullSecretName = "stackrox" // pragma: allowlist secret
-
-	helmChartLabelKey  = "helm.sh/chart"
-	helmChartNameLabel = "helm.sh/chart-name"
 )
 
 type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error)
