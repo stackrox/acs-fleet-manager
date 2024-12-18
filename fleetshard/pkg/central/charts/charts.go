@@ -25,7 +25,7 @@ var (
 	// The templates/* entry is necessary because files starting with an underscore are only embedded when matched
 	// via *, not when recursively traversing a directory. Once we switch to go1.18, we can change the embed spec
 	// to all:data.
-	//go:embed data data/tenant-resources/templates/*
+	//go:embed data/*
 	data embed.FS
 )
 
@@ -118,15 +118,6 @@ func GetChart(name string, urls []string) (*chart.Chart, error) {
 		return nil, fmt.Errorf("failed loading chart %q: %w", name, err)
 	}
 	return loadedChart, nil
-}
-
-// MustGetChart loads a chart from the data directory. Unlike GetChart, it panics if an error is encountered.
-func MustGetChart(name string, urls []string) *chart.Chart {
-	chrt, err := GetChart(name, urls)
-	if err != nil {
-		panic(err)
-	}
-	return chrt
 }
 
 // InstallOrUpdateChart installs a new object from helm chart or update an existing object with the same Name, Namespace and Kind

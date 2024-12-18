@@ -33,12 +33,6 @@ var dummyDeployment = &appsv1.Deployment{
 	},
 }
 
-func TestTenantResourcesChart(t *testing.T) {
-	c, err := GetChart("tenant-resources", nil)
-	require.NoError(t, err)
-	assert.NotNil(t, c)
-}
-
 func TestInstallOrUpdateChartCreateNew(t *testing.T) {
 	chart := mustGetChart(t, "test-chart")
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
