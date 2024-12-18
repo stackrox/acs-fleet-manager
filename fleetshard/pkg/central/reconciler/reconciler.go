@@ -1518,14 +1518,6 @@ func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
 	return namespaceAnnotations
 }
 
-func stringMapToMapInterface(m map[string]string) map[string]interface{} {
-	result := make(map[string]interface{}, len(m))
-	for k, v := range m {
-		result[k] = v
-	}
-	return result
-}
-
 func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
 	return r.wantsAuthProvider == r.hasAuthProvider &&
 		isRemoteCentralReady(&remoteCentral)
