@@ -3,7 +3,6 @@ package reconciler
 import (
 	"bytes"
 	"context"
-	"embed"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -129,9 +128,6 @@ metadata:
 `,
 	},
 }
-
-//go:embed testdata
-var testdata embed.FS
 
 func createBase64Cipher(t *testing.T) cipher.Cipher {
 	b64Cipher, err := cipher.NewLocalBase64Cipher()
