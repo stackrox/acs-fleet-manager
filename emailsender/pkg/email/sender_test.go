@@ -33,6 +33,7 @@ func (m *MockedRateLimiter) PersistEmailSendEvent(tenantID string) error {
 
 func TestSend_Success(t *testing.T) {
 	from := "sender@example.com"
+	fromAlias := "RHACS Cloud Service"
 	to := []string{"to1@example.com", "to2@example.com"}
 	subject := "Test subject"
 	textBody := "text body"
@@ -62,6 +63,7 @@ func TestSend_Success(t *testing.T) {
 	mockedSES := &SES{sesClient: mockClient}
 	mockedSender := AWSMailSender{
 		from,
+		fromAlias,
 		mockedSES,
 		mockedRateLimiter,
 	}
@@ -87,6 +89,7 @@ func TestSend_LimitExceeded(t *testing.T) {
 	mockedSES := &SES{sesClient: mockClient}
 	mockedSender := AWSMailSender{
 		"from@example.com",
+		"from-alias",
 		mockedSES,
 		mockedRateLimiter,
 	}
@@ -100,6 +103,7 @@ func TestSend_LimitExceeded(t *testing.T) {
 
 func TestSendAppendsFromAndTo(t *testing.T) {
 	from := "sender@example.com"
+	fromAlias := "RHACS Cloud Service"
 	to := []string{"to1@example.com", "to2@example.com"}
 	textBody := "text body"
 	tenantID := "test-tenant-id"
@@ -126,6 +130,7 @@ func TestSendAppendsFromAndTo(t *testing.T) {
 	mockedSES := &SES{sesClient: mockClient}
 	sender := AWSMailSender{
 		from,
+		fromAlias,
 		mockedSES,
 		mockedRateLimiter,
 	}

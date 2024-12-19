@@ -40,6 +40,7 @@ type Config struct {
 	KubernetesSvcURL          string        `env:"KUBERNETES_SVC_URL" envDefault:"https://kubernetes.default.svc"`
 	KubernetesJWKSPath        string        `env:"KUBERNETES_JWKS_PATH" envDefault:"openid/v1/jwks"`
 	SenderAddress             string        `env:"SENDER_ADDRESS" envDefault:"noreply@mail.rhacs-dev.com"`
+	SenderAlias               string        `env:"SENDER_ALIAS" envDefault:"RHACS Cloud Service"`
 	LimitEmailPerTenant       int           `env:"LIMIT_EMAIL_PER_TENANT" envDefault:"250"`
 	SesMaxBackoffDelay        time.Duration `env:"SES_MAX_BACKOFF_DELAY" envDefault:"5s"`
 	SesMaxAttempts            int           `env:"SES_MAX_ATTEMPTS" envDefault:"3"`
