@@ -106,7 +106,7 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 
 		It("should have DNS CNAME records for cluster1 routes", func() {
 			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
-			testutil.ObtainCentralRequest(context.Background(), fleetmanagerClient, centralRequest.Id, &centralRequest)
+			testutil.GetCentralRequest(context.Background(), fleetmanagerClient, centralRequest.Id, &centralRequest)
 
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
 			routeService := k8s.NewRouteService(cluster1KubeClient, routeConfig)
@@ -157,7 +157,7 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 		})
 		It("should have DNS CNAME records for cluster2 routes", func() {
 			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
-			testutil.ObtainCentralRequest(context.Background(), fleetmanagerClient, centralRequest.Id, &centralRequest)
+			testutil.GetCentralRequest(context.Background(), fleetmanagerClient, centralRequest.Id, &centralRequest)
 
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
 			routeService := k8s.NewRouteService(cluster2KubeClient, routeConfig)
@@ -229,8 +229,9 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 func assertClusterAssignment(expectedClusterID string, centralID string, adminAPI fleetmanager.AdminAPI) {
 	var clusterAssignment string
 	Eventually(func() (err error) {
-		// assert the cluster ID outside the Eventually, since once we have a non-empty
-		// clusterAssignment it will not change so there is no need to keep polling
+		// Assert the cluster ID outside the Eventually. Once we have a non-empty
+		// return value for clusterAssignment, the value will never change. Because of that
+		// there is no need to keep polling for a new clusterAssignment if it does not match.
 		clusterAssignment, err = getClusterAssignment(centralID, adminAPI)
 		return err
 	}).
@@ -257,6 +258,7 @@ func getClusterAssignment(centralID string, adminAPI fleetmanager.AdminAPI) (str
 		if central.Id == centralID {
 			tenantExists = true
 			clusterID = central.ClusterId
+			break
 		}
 	}
 

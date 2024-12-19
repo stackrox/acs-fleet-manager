@@ -52,8 +52,8 @@ func SkipIf(condition bool, message string) {
 	}
 }
 
-// ObtainCentralRequest queries fleet-manager public API for the CentralRequest with id and stores in in the given pointer
-func ObtainCentralRequest(ctx context.Context, client *fleetmanager.Client, id string, request *public.CentralRequest) error {
+// GetCentralRequest queries fleet-manager public API for the CentralRequest with id and stores in in the given pointer
+func GetCentralRequest(ctx context.Context, client *fleetmanager.Client, id string, request *public.CentralRequest) error {
 	centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to obtain CentralRequest: %w", err)
