@@ -240,23 +240,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		centralDBConnectionString = *central.Spec.Central.GetDB().ConnectionStringOverride
 	}
 
-	if isArgoCdEnabledForTenant(remoteCentral) {
-		if err := r.argoReconciler.ensureApplicationExists(ctx, remoteCentral, centralDBConnectionString); err != nil {
-			return nil, errors.Wrapf(err, "unable to install ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
-		}
-	} else {
-
-		{
-			// This part handles the case where we enable, then disable ArgoCD for a tenant
-			// to make sure the ArgoCD application is cleaned up.
-			ok, err := r.argoReconciler.ensureApplicationDeleted(ctx, remoteCentralNamespace)
-			if err != nil {
-				return nil, errors.Wrapf(err, "unable to delete ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
-			}
-			if !ok {
-				return nil, errors.New("ArgoCD application not yet deleted")
-			}
-		}
+	if err := r.argoReconciler.ensureApplicationExists(ctx, remoteCentral, centralDBConnectionString); err != nil {
+		return nil, errors.Wrapf(err, "unable to install ArgoCD application for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
@@ -321,34 +306,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	return status, nil
 }
 
-func isArgoCdEnabledForTenant(remoteCentral private.ManagedCentral) bool {
-	tenantResourceValues := remoteCentral.Spec.TenantResourcesValues
-	if tenantResourceValues == nil {
-		return false
-	}
-	argoCdIntf, ok := tenantResourceValues["argoCd"]
-	if !ok {
-		return false
-	}
-	argoCd, ok := argoCdIntf.(map[string]interface{})
-	if !ok {
-		return false
-	}
-	enabled, ok := argoCd["enabled"]
-	if !ok {
-		return false
-	}
-	enabledBool, ok := enabled.(bool)
-	if !ok {
-		return false
-	}
-	return enabledBool
-}
-
 func isArgoCdCentralEnabledForTenant(remoteCentral private.ManagedCentral) bool {
-	if !isArgoCdEnabledForTenant(remoteCentral) {
-		return false
-	}
 	tenantResourceValues := remoteCentral.Spec.TenantResourcesValues
 	if tenantResourceValues == nil {
 		return false
