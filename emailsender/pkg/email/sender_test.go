@@ -139,7 +139,7 @@ func TestSendAppendsFromAndTo(t *testing.T) {
 	require.NotEmpty(t, msg)
 
 	stringMsg := string(msg)
-	require.Contains(t, stringMsg, "From: RHACS Cloud Service <sender@example.com>\r\n")
+	require.Contains(t, stringMsg, "From: RHACS Cloud Service test-tenant-id <sender@example.com>\r\n")
 	require.Contains(t, stringMsg, "To: to1@example.com,to2@example.com\r\n")
 
 }
