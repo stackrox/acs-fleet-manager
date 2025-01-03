@@ -2627,14 +2627,14 @@ func TestEncyrptionSHASumSameObject(t *testing.T) {
 
 	amount := 1000
 	sums := make([]string, 1000)
-	for i := 0; i < amount; i++ {
+	for i := range amount {
 		enc, err := reconciler.encryptSecrets(testSecrets)
 		require.NoError(t, err)
 		sums[i] = enc.sha256Sum
 	}
 
-	for i := 1; i < amount; i++ {
-		require.Equal(t, sums[i-1], sums[i], "hash of the same object should always be equal but was not")
+	for i := range amount {
+		require.Equal(t, sums[i], sums[i+1], "hash of the same object should always be equal but was not")
 	}
 }
 
