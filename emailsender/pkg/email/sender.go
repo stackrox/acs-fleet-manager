@@ -11,13 +11,14 @@ import (
 	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/metrics"
 )
 
-const fromTemplate = "From: RHACS Cloud Service <%s>\r\n"
-
 const (
 	// EmailProviderAWSSES is the type name for the AWSEmailSender implementation of the Sender interface
 	EmailProviderAWSSES = "AWS_SES"
 	// EmailProviderLog is the type name for the LogEmailSender implementation of the Sender interface
 	EmailProviderLog = "LOG"
+
+	toFormat   = "To: %s\r\n"
+	fromFormat = "From: RHACS Cloud Service %s <%s>\r\n"
 )
 
 // Sender defines the interface to send emails
@@ -73,8 +74,8 @@ func (s *AWSMailSender) Send(ctx context.Context, to []string, rawMessage []byte
 		metrics.DefaultInstance().IncThrottledSendEmail(tenantID)
 		return fmt.Errorf("rate limit exceeded for tenant: %s", tenantID)
 	}
-	fromBytes := []byte(fmt.Sprintf(fromTemplate, s.from))
-	toBytes := []byte(fmt.Sprintf("To: %s\r\n", strings.Join(to, ",")))
+	fromBytes := []byte(fmt.Sprintf(fromFormat, tenantID, s.from))
+	toBytes := []byte(fmt.Sprintf(toFormat, strings.Join(to, ",")))
 
 	raw := bytes.Join([][]byte{fromBytes, toBytes, rawMessage}, nil)
 	metrics.DefaultInstance().IncSendEmail(tenantID)
