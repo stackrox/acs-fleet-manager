@@ -18,11 +18,10 @@ const crNameLabelKey = "app.kubernetes.io/instance"
 // TenantCleanup defines methods to cleanup Kubernetes resources and namespaces for tenants
 // that are no longer in the list of tenants fleetshard-sync schould run on a cluster
 type TenantCleanup struct {
-	k8sClient       ctrlClient.Client
-	chartReconciler *tenantChartReconciler
-	nsReconciler    *namespaceReconciler
-	crReconciler    *centralCrReconciler
-	argoReconciler  *argoReconciler
+	k8sClient      ctrlClient.Client
+	nsReconciler   *namespaceReconciler
+	crReconciler   *centralCrReconciler
+	argoReconciler *argoReconciler
 }
 
 // TenantCleanupOptions defines configuration options for the TenantCleanup logic
@@ -35,11 +34,10 @@ type TenantCleanupOptions struct {
 // NewTenantCleanup returns a new TenantCleanup using given arguments
 func NewTenantCleanup(k8sClient ctrlClient.Client, opts TenantCleanupOptions) *TenantCleanup {
 	return &TenantCleanup{
-		k8sClient:       k8sClient,
-		nsReconciler:    newNamespaceReconciler(k8sClient),
-		crReconciler:    newCentralCrReconciler(k8sClient),
-		chartReconciler: newTenantChartReconciler(k8sClient, opts.SecureTenantNetwork),
-		argoReconciler:  newArgoReconciler(k8sClient, opts.ArgoReconcilerOptions),
+		k8sClient:      k8sClient,
+		nsReconciler:   newNamespaceReconciler(k8sClient),
+		crReconciler:   newCentralCrReconciler(k8sClient),
+		argoReconciler: newArgoReconciler(k8sClient, opts.ArgoReconcilerOptions),
 	}
 }
 
@@ -89,12 +87,6 @@ func (t *TenantCleanup) DeleteK8sResources(ctx context.Context, namespace string
 	// If any resources wouldn't be deleted by namespace deletion add them here.
 	globalDeleted := true
 
-	deleted, err := t.chartReconciler.ensureResourcesDeleted(ctx, namespace)
-	if err != nil {
-		return false, fmt.Errorf("Failed to delete chart resources in namespace %q: %w", namespace, err)
-	}
-	globalDeleted = globalDeleted && deleted
-
 	// TODO(ROX-26277): This has to go into the tenantCleanup implementation
 	// it is here for now for merge conflict resolution, and need additional impl before mergin ROX-26277 PR.
 	argoCdAppDeleted, err := t.argoReconciler.ensureApplicationDeleted(ctx, namespace)
@@ -103,7 +95,7 @@ func (t *TenantCleanup) DeleteK8sResources(ctx context.Context, namespace string
 	}
 	globalDeleted = globalDeleted && argoCdAppDeleted
 
-	deleted, err = t.crReconciler.ensureDeleted(ctx, namespace, tenantName)
+	deleted, err := t.crReconciler.ensureDeleted(ctx, namespace, tenantName)
 	if err != nil {
 		return false, fmt.Errorf("Failed to delete central CR in namespace %q: %w", namespace, err)
 	}

@@ -586,8 +586,11 @@ labels:
   rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
 annotations:
   rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
+argoCd:
+  enabled: true
 secureTenantNetwork: false
-centralRdsCidrBlock: "10.1.0.0/16"`
+centralRdsCidrBlock: "10.1.0.0/16"
+centralVpaEnabled: false`
 }
 
 func tenantResourcesWithCentralVpaEnabled() string {
@@ -598,13 +601,13 @@ labels:
   rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
   rhacs.redhat.com/tenant: "{{ .ID }}"
   rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
+argoCd:
+  enabled: true
 annotations:
   rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
 secureTenantNetwork: false
 centralRdsCidrBlock: "10.1.0.0/16"
-verticalPodAutoscalers:
-  central:
-    enabled: true
+centralVpaEnabled: true
 `
 }
 
