@@ -871,7 +871,7 @@ func (r *CentralReconciler) areSecretsStored(secretsStored []string) bool {
 	copy(secretsStoredCopy, secretsStored)
 	sort.Strings(secretsStoredCopy)
 
-	for i := 0; i < secretsStoredSize; i++ {
+	for i := range secretsStoredSize {
 		if secretsStoredCopy[i] != expectedSecrets[i] {
 			return false
 		}

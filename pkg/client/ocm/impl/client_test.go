@@ -9,13 +9,7 @@ import (
 func TestFetchPages(t *testing.T) {
 	testPager := NewMoqPager(make([]testDataType, 21))
 	n := 0
-	// TODO: go 1.21 can infer the generic parameters from testPager.
-	testFetcher := fetchPages[
-		*paginatedRequestMoqImpl,
-		*paginatedResponseMoqImpl,
-		*paginatedResponseMoqImpl,
-		testDataType]
-	err := testFetcher(testPager, 5, 30, func(_ testDataType) bool {
+	err := fetchPages(testPager, 5, 30, func(_ testDataType) bool {
 		n++
 		return true
 	})
@@ -23,7 +17,7 @@ func TestFetchPages(t *testing.T) {
 	assert.Equal(t, 21, n, "Should fetch data from all pages")
 
 	n = 0
-	err = testFetcher(testPager, 5, 30, func(_ testDataType) bool {
+	err = fetchPages(testPager, 5, 30, func(_ testDataType) bool {
 		n++
 		return n < 11
 	})
@@ -31,7 +25,7 @@ func TestFetchPages(t *testing.T) {
 	assert.Equal(t, 11, n, "Should stop if the functor returns false")
 
 	n = 0
-	err = testFetcher(testPager, 5, 2, func(_ testDataType) bool {
+	err = fetchPages(testPager, 5, 2, func(_ testDataType) bool {
 		n++
 		return true
 	})
@@ -39,7 +33,7 @@ func TestFetchPages(t *testing.T) {
 	assert.Equal(t, 5*2, n, "Should iterate over all pages until error")
 
 	n = 0
-	err = testFetcher(testPager, 5, 5, func(_ testDataType) bool {
+	err = fetchPages(testPager, 5, 5, func(_ testDataType) bool {
 		n++
 		return true
 	})

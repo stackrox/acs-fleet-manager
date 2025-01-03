@@ -15,7 +15,7 @@ func IsStructWithoutPointers(s any) bool {
 		return false
 	}
 
-	for i := 0; i < typ.NumField(); i++ {
+	for i := range typ.NumField() {
 		if typ.Field(i).Type.Kind() == reflect.Ptr {
 			return false
 		}

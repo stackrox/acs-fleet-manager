@@ -41,7 +41,7 @@ func Test_SSOClient_GetServiceAccounts(t *testing.T) {
 	api := getServiceAccountsAPI(server.BaseURL(), clientID, clientSecret)
 
 	// create 20 service accounts
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		_, _, err := api.CreateServiceAccount(emptyCtx).
 			ServiceAccountCreateRequestData(createRequestData(fmt.Sprintf("test_%d", i), fmt.Sprintf("test account %d", i))).
 			Execute()
@@ -68,7 +68,7 @@ func Test_SSOClient_GetServiceAccount(t *testing.T) {
 
 	var serviceAccountList []serviceaccountsclient.ServiceAccountData
 	// create 20 service accounts
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		serviceAccount, _, err := api.CreateServiceAccount(emptyCtx).
 			ServiceAccountCreateRequestData(createRequestData(fmt.Sprintf("test_%d", i), fmt.Sprintf("test account %d", i))).
 			Execute()
@@ -142,7 +142,7 @@ func Test_SSOClient_DeleteServiceAccount(t *testing.T) {
 	api := getServiceAccountsAPI(server.BaseURL(), clientID, clientSecret)
 
 	// create 20 service accounts
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		_, _, err := api.CreateServiceAccount(emptyCtx).
 			ServiceAccountCreateRequestData(createRequestData(fmt.Sprintf("test_%d", i), fmt.Sprintf("test account %d", i))).
 			Execute()
@@ -176,7 +176,7 @@ func Test_SSOClient_UpdateServiceAccount(t *testing.T) {
 	client := getServiceAccountsAPI(server.BaseURL(), clientID, clientSecret)
 
 	// create 20 service accounts
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		_, _, err := client.CreateServiceAccount(emptyCtx).
 			ServiceAccountCreateRequestData(createRequestData(fmt.Sprintf("test_%d", i), fmt.Sprintf("test account %d", i))).
 			Execute()

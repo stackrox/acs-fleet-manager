@@ -484,14 +484,7 @@ func (c *client) GetQuotaCostsForProduct(organizationID, resourceName, product s
 
 	req := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true)
 
-	// TODO: go 1.21 can infer the following generic arguments from req
-	//       automatically, so this indirection becomes unnecessary.
-	fetchQuotaCosts := fetchPages[*amsv1.QuotaCostListRequest,
-		*amsv1.QuotaCostListResponse,
-		*amsv1.QuotaCostList,
-		*amsv1.QuotaCost,
-	]
-	err := fetchQuotaCosts(req, 100, 1000, func(qc *amsv1.QuotaCost) bool {
+	err := fetchPages(req, 100, 1000, func(qc *amsv1.QuotaCost) bool {
 		relatedResourcesList := qc.RelatedResources()
 		for _, relatedResource := range relatedResourcesList {
 			if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {

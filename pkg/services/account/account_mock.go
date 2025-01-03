@@ -37,7 +37,7 @@ func (a mock) GetOrganization(filter string) (*Organization, error) {
 func buildMockOrganizationList(count int) *OrganizationList {
 	var mockOrgs []*Organization
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		mockOrgs = append(mockOrgs,
 			&Organization{
 				ID:            fmt.Sprintf(mockOrgIDTemplate, i),

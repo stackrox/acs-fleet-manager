@@ -1,6 +1,6 @@
 module github.com/stackrox/acs-fleet-manager/tools
 
-go 1.21
+go 1.22
 
 require (
 	github.com/go-bindata/go-bindata/v3 v3.1.4-0.20210427095211-26949cc13d95
