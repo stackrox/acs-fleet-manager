@@ -2633,7 +2633,7 @@ func TestEncyrptionSHASumSameObject(t *testing.T) {
 		sums[i] = enc.sha256Sum
 	}
 
-	for i := range amount {
+	for i := range amount - 1 {
 		require.Equal(t, sums[i], sums[i+1], "hash of the same object should always be equal but was not")
 	}
 }
