@@ -136,6 +136,18 @@ spec:
           value: {{ .Values.fleetshardSync.printCentralUpdateDiff | quote }}
         - name: ARGOCD_NAMESPACE
           value: {{ .Values.fleetshardSync.argoCdNamespace | quote }}
+        {{- if .Values.fleetshardSync.gitops.tenantDefaultAppSourceRepoUrl }}
+        - name: TENANT_DEFAULT_ARGOCD_APP_SOURCE_REPO_URL
+          value: {{ .Values.fleetshardSync.gitops.tenantDefaultAppSourceRepoUrl | quote }}
+        {{- end }}
+        {{- if .Values.fleetshardSync.gitops.tenantDefaultAppSourceTargetRevision }}
+        - name: TENANT_DEFAULT_ARGOCD_APP_SOURCE_TARGET_REVISION
+          value: {{ .Values.fleetshardSync.gitops.tenantDefaultAppSourceTargetRevision | quote }}
+        {{- end }}
+        {{- if .Values.fleetshardSync.gitops.tenantDefaultAppSourcePath }}
+        - name: TENANT_DEFAULT_ARGOCD_APP_SOURCE_PATH
+          value: {{ .Values.fleetshardSync.gitops.tenantDefaultAppSourcePath | quote }}
+        {{- end }}
         volumeMounts:
           - mountPath: /var/run/secrets/tokens
             name: tokens

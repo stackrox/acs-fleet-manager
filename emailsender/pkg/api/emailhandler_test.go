@@ -56,11 +56,12 @@ func TestEmailHandler_SendEmail(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		emailSender email.Sender
-		req         *http.Request
-		wantCode    int
-		wantBody    string
+		name            string
+		emailSender     email.Sender
+		req             *http.Request
+		wantCode        int
+		wantBody        string
+		wantErrorReason string
 	}{
 		{
 			name:        "should return JSON response with StatusOK to a valid email request",
@@ -70,11 +71,11 @@ func TestEmailHandler_SendEmail(t *testing.T) {
 			wantBody:    `{"status":"sent"}`,
 		},
 		{
-			name:        "should return JSON error with StatusBadRequest when cannot decode request",
-			emailSender: simpleEmailSender,
-			req:         httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(invalidJsonReq)),
-			wantCode:    http.StatusBadRequest,
-			wantBody:    `{"error":"Cannot decode send email request payload"}`,
+			name:            "should return JSON error with StatusBadRequest when cannot decode request",
+			emailSender:     simpleEmailSender,
+			req:             httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(invalidJsonReq)),
+			wantCode:        http.StatusBadRequest,
+			wantErrorReason: "failed to decode send email request payload",
 		},
 		{
 			name: "should return JSON error with StatusInternalServerError when cannot send email",
@@ -83,9 +84,9 @@ func TestEmailHandler_SendEmail(t *testing.T) {
 					return errors.New("failed to send email")
 				},
 			},
-			req:      httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonReq)),
-			wantCode: http.StatusInternalServerError,
-			wantBody: `{"error":"Cannot send email"}`,
+			req:             httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonReq)),
+			wantCode:        http.StatusInternalServerError,
+			wantErrorReason: "cannot send email",
 		},
 	}
 	for _, tt := range tests {
@@ -103,7 +104,21 @@ func TestEmailHandler_SendEmail(t *testing.T) {
 				t.Errorf("expected status code %d, got %d", tt.wantCode, resp.Result().StatusCode)
 			}
 
-			if resp.Body.String() != tt.wantBody {
+			if tt.wantErrorReason != "" {
+				var respDecoded map[string]string
+				if err := json.NewDecoder(resp.Body).Decode(&respDecoded); err != nil {
+					t.Errorf("failed to decoded response body")
+				}
+				errorReason, ok := respDecoded["reason"]
+				if !ok {
+					t.Errorf("response error body does not have reason key")
+				}
+				if errorReason != tt.wantErrorReason {
+					t.Errorf("expected error reason %s, got %s", tt.wantBody, resp.Body.String())
+				}
+			}
+
+			if tt.wantBody != "" && resp.Body.String() != tt.wantBody {
 				t.Errorf("expected body %s, got %s", tt.wantBody, resp.Body.String())
 			}
 		})

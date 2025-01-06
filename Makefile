@@ -395,10 +395,11 @@ openapi/validate: openapi-generator
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private-admin.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/emailsender.yaml
 .PHONY: openapi/validate
 
 # generate the openapi schema and generated package
-openapi/generate: openapi/generate/public openapi/generate/private openapi/generate/admin openapi/generate/rhsso
+openapi/generate: openapi/generate/public openapi/generate/private openapi/generate/admin openapi/generate/rhsso openapi/generate/emailsender
 .PHONY: openapi/generate
 
 openapi/generate/public: $(GOBINDATA_BIN) openapi-generator
@@ -435,6 +436,13 @@ openapi/generate/rhsso: $(GOBINDATA_BIN) openapi-generator
 	$(GOFMT) -w pkg/client/redhatsso/api
 .PHONY: openapi/generate/rhsso
 
+openapi/generate/emailsender: $(GOBINDATA_BIN) openapi-generator
+	rm -rf emailsender/pkg/client/openapi
+	$(OPENAPI_GENERATOR) validate -i openapi/emailsender.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/emailsender.yaml -g go -o emailsender/pkg/client/openapi --package-name openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w emailsender/pkg/client/openapi
+.PHONY: openapi/generate/emailsender
+
 # fail if formatting is required
 code/check:
 	@if ! [ -z "$$(find . -path './vendor' -prune -o -type f -name '*.go' -print0 | xargs -0 $(GOFMT) -l)" ]; then \
@@ -459,7 +467,8 @@ run/docs:
 	$(DOCKER) run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 8082:8080 -e URLS="[ \
 		{ url: \"./openapi/fleet-manager.yaml\", name: \"Public API\" },\
 		{ url: \"./openapi/fleet-manager-private.yaml\", name: \"Private API\"},\
-		{ url: \"./openapi/fleet-manager-private-admin.yaml\", name: \"Private Admin API\"}]"\
+		{ url: \"./openapi/fleet-manager-private-admin.yaml\", name: \"Private Admin API\"},\
+		{ url: \"./openapi/emailsender.yaml\", name: \"Emailsender API\"}]"\
 		  -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
 	@echo "Please open http://localhost:8082/"
 .PHONY: run/docs
@@ -593,11 +602,6 @@ image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshar
 image/build/fleetshard-operator:
 	$(DOCKER) buildx build -t $(IMAGE_REF) --build-arg IMAGE_TAG=$(image_tag) --load ${PROJECT_PATH}/dp-terraform/helm
 .PHONY: image/build/fleetshard-operator
-
-image/push/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
-image/push/fleetshard-operator: image/build/fleetshard-operator
-	$(DOCKER) push $(IMAGE_REF)
-.PHONY: image/push/fleetshard-operator
 
 # push the image to the OpenShift internal registry
 image/push/fleetshard-operator/internal: IMAGE_TAG ?= $(image_tag)

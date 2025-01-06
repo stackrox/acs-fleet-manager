@@ -50,6 +50,9 @@ fleetshardSync:
       memory: "512Mi"
   gitops:
     enabled: false
+    tenantDefaultAppSourceRepoUrl: ""
+    tenantDefaultAppSourceTargetRevision: ""
+    tenantDefaultAppSourcePath: ""
   targetedOperatorUpgrades:
     enabled: false
   affinity: {}

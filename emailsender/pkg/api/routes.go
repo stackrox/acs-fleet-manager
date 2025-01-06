@@ -12,7 +12,10 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/stackrox/acs-fleet-manager/emailsender/config"
+	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/client"
+	acscsAPI "github.com/stackrox/acs-fleet-manager/pkg/api"
 	acscsErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
+	acscsHandlers "github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	loggingMiddleware "github.com/stackrox/acs-fleet-manager/pkg/server/logging"
 )
 
@@ -30,13 +33,19 @@ func SetupRoutes(authConfig config.AuthConfig, emailHandler *EmailHandler) (http
 
 func setupRoutes(authnHandlerFunc authnHandlerBuilder, authConfig config.AuthConfig, emailHandler *EmailHandler) (http.Handler, error) {
 	router := mux.NewRouter()
+	errorsHandler := acscsHandlers.NewErrorsHandler()
+	openAPIHandler := NewOpenAPIHandler(client.OpenAPIDefinition)
+
+	router.NotFoundHandler = http.HandlerFunc(acscsAPI.SendNotFound)
+	router.MethodNotAllowedHandler = http.HandlerFunc(acscsAPI.SendMethodNotAllowed)
 
 	// using a path prefix here to seperate endpoints that should use
 	// middleware vs. endpoints that shouldn't for instance /health
 	apiRouter := router.PathPrefix("/api").Subrouter()
+	apiV1Router := apiRouter.PathPrefix("/v1").Subrouter()
 
 	// add middlewares
-	apiRouter.Use(
+	apiV1Router.Use(
 		loggingMiddleware.RequestLoggingMiddleware,
 		EnsureJSONContentType,
 		// this middleware is supposed to validate if the client is authorized to do the desired request
@@ -45,8 +54,18 @@ func setupRoutes(authnHandlerFunc authnHandlerBuilder, authConfig config.AuthCon
 		emailsenderAuthorizationMiddleware(authConfig),
 	)
 
+	// health endpoint
 	router.HandleFunc("/health", HealthCheckHandler).Methods("GET")
-	apiRouter.HandleFunc("/v1/acscsemail", emailHandler.SendEmail).Methods("POST")
+
+	// openAPI definiton endpoint
+	router.HandleFunc("/openapi", openAPIHandler.Get).Methods("GET")
+
+	// errors endpoint
+	router.HandleFunc("/api/v1/acscsemail/errors/{id}", errorsHandler.Get).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/acscsemail/errors", errorsHandler.List).Methods(http.MethodGet)
+
+	// send email endpoint
+	apiV1Router.HandleFunc("/acscsemail", emailHandler.SendEmail).Methods("POST")
 
 	// this settings are to make sure the middlewares shared with acs-fleet-manager
 	// print a prefix and href matching to the emailsender application
@@ -71,7 +90,9 @@ func buildAuthnHandler(router http.Handler, cfg config.AuthConfig) (http.Handler
 		Error(fmt.Sprint(acscsErrors.ErrorUnauthenticated)).
 		Service(emailsenderPrefix).
 		Next(router).
-		Public("/health")
+		Public("/health").
+		Public("/openapi").
+		Public("/api/v1/acscsemail/errors/?[0-9]*")
 
 	for _, keyURL := range cfg.JwksURLs {
 		authnHandlerBuilder.KeysURL(keyURL)

@@ -34,8 +34,10 @@ type AddonProvisioner struct {
 	ocmClient                   ocm.Client
 	customizations              []addonCustomization
 	updateAddonStatusMetricFunc updateAddonStatusMetricFunc
-	lastStatus                  metrics.AddonStatus
-	lastUpgradeRequestTime      time.Time
+	// lastStatusPerInstall holds the status for a specific addons installation on a cluster
+	// the id is clusterid:addonid, it maps to the last status of that install operation
+	lastStatusPerInstall   map[string]metrics.AddonStatus
+	lastUpgradeRequestTime time.Time
 }
 
 // NewAddonProvisioner creates a new instance of AddonProvisioner
@@ -55,6 +57,7 @@ func NewAddonProvisioner(addonConfig *ocmImpl.AddonConfig, baseConfig *ocmImpl.O
 		ocmClient:                   ocmImpl.NewClient(conn),
 		customizations:              initCustomizations(*addonConfig),
 		updateAddonStatusMetricFunc: metrics.UpdateClusterAddonStatusMetric,
+		lastStatusPerInstall:        map[string]metrics.AddonStatus{},
 	}, nil
 }
 
@@ -96,7 +99,7 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, dataplaneClusterConfig
 	for _, installedAddon := range installedAddons {
 		// addon is installed on the cluster but not present in gitops config - uninstall it
 		errs = append(errs, p.uninstallAddon(cluster.ClusterID, installedAddon.ID))
-		p.updateAddonStatusMetric(installedAddon.ID, dataplaneClusterConfig.ClusterName, metrics.AddonHealthy)
+		p.updateAddonStatus(installedAddon.ID, dataplaneClusterConfig.ClusterName, cluster.ClusterID, metrics.AddonHealthy)
 	}
 
 	return errors.Join(errs...)
@@ -113,7 +116,7 @@ func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlan
 		if provisionError != nil {
 			status = metrics.AddonUnhealthy
 		}
-		p.updateAddonStatusMetric(expectedConfig.ID, dataplaneClusterConfig.ClusterName, status)
+		p.updateAddonStatus(expectedConfig.ID, dataplaneClusterConfig.ClusterName, clusterID, status)
 	}()
 
 	if addonErr != nil {
@@ -233,7 +236,7 @@ func (p *AddonProvisioner) newInstallation(config gitops.AddonConfig) (*clusters
 }
 
 func (p *AddonProvisioner) updateAddon(clusterID string, config gitops.AddonConfig) error {
-	if p.backoffUpgradeRequest() {
+	if p.backoffUpgradeRequest(config.ID, clusterID) {
 		glog.V(5).Infof("update addon request backoff for cluster: %s", clusterID)
 		return nil
 	}
@@ -250,8 +253,9 @@ func (p *AddonProvisioner) updateAddon(clusterID string, config gitops.AddonConf
 	return nil
 }
 
-func (p *AddonProvisioner) backoffUpgradeRequest() bool {
-	return p.lastStatus == metrics.AddonUpgrade && time.Since(p.lastUpgradeRequestTime) < addonUpgradeBackoff
+func (p *AddonProvisioner) backoffUpgradeRequest(addonID string, clusterID string) bool {
+	id := installID(addonID, clusterID)
+	return p.lastStatusPerInstall[id] != metrics.AddonHealthy && time.Since(p.lastUpgradeRequestTime) < addonUpgradeBackoff
 }
 
 func (p *AddonProvisioner) uninstallAddon(clusterID string, addonID string) error {
@@ -262,10 +266,20 @@ func (p *AddonProvisioner) uninstallAddon(clusterID string, addonID string) erro
 	return nil
 }
 
-func (p *AddonProvisioner) updateAddonStatusMetric(addonID string, clusterName string, status metrics.AddonStatus) {
+func (p *AddonProvisioner) updateAddonStatus(addonID string, clusterName string, clusterID string, status metrics.AddonStatus) {
 	if p.updateAddonStatusMetricFunc != nil {
 		p.updateAddonStatusMetricFunc(addonID, clusterName, status)
 	}
+
+	if p.lastStatusPerInstall == nil {
+		p.lastStatusPerInstall = map[string]metrics.AddonStatus{}
+	}
+
+	p.lastStatusPerInstall[installID(addonID, clusterID)] = status
+}
+
+func installID(addonID string, clusterID string) string {
+	return fmt.Sprintf("%s:%s", clusterID, addonID)
 }
 
 func isFinalState(state clustersmgmtv1.AddOnInstallationState) bool {

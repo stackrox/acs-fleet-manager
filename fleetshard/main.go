@@ -4,13 +4,14 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/signal"
+	"time"
+
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/internal/certmonitor"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
-	"os"
-	"os/signal"
-	"time"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -18,6 +19,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/acs-fleet-manager/pkg/server/profiler"
 	"golang.org/x/sys/unix"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -149,6 +151,10 @@ func main() {
 			glog.Errorf("serving metrics server: %v", err)
 		}
 	}()
+
+	pprofServer := profiler.SingletonPprofServer()
+	pprofServer.Start()
+	defer pprofServer.Stop()
 
 	sigs := make(chan os.Signal, 1)
 	notifySignals := []os.Signal{os.Interrupt, unix.SIGTERM}

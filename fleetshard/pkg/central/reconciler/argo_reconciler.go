@@ -26,9 +26,9 @@ type argoReconciler struct {
 
 // ArgoReconcilerOptions defines configuration options for the Argo application reconiliation
 type ArgoReconcilerOptions struct {
-	DefaultTenantArgoCdAppSourceRepoURL        string
-	DefaultTenantArgoCdAppSourceTargetRevision string
-	DefaultTenantArgoCdAppSourcePath           string
+	TenantDefaultArgoCdAppSourceRepoURL        string
+	TenantDefaultArgoCdAppSourceTargetRevision string
+	TenantDefaultArgoCdAppSourcePath           string
 	ArgoCdNamespace                            string
 	ManagedDBEnabled                           bool
 	ClusterName                                string
@@ -158,9 +158,9 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 				},
 			},
 			Source: &argocd.ApplicationSource{
-				RepoURL:        r.argoOpts.DefaultTenantArgoCdAppSourceRepoURL,
-				TargetRevision: r.argoOpts.DefaultTenantArgoCdAppSourceTargetRevision,
-				Path:           r.argoOpts.DefaultTenantArgoCdAppSourcePath,
+				RepoURL:        r.argoOpts.TenantDefaultArgoCdAppSourceRepoURL,
+				TargetRevision: r.argoOpts.TenantDefaultArgoCdAppSourceTargetRevision,
+				Path:           r.argoOpts.TenantDefaultArgoCdAppSourcePath,
 				Helm: &argocd.ApplicationSourceHelm{
 					ValuesObject: &runtime.RawExtension{
 						Raw: valuesBytes,
