@@ -213,7 +213,7 @@ func findResourceGVK(resource string) (schema.GroupVersionKind, bool, error) {
 	lines := strings.Split(resource, "\n")
 	apiVersion := ""
 	kind := ""
-	for i := 0; i < len(lines); i++ {
+	for i := range len(lines) {
 		if strings.HasPrefix(lines[i], apiVersionPrefix) {
 			apiVersion = strings.TrimSpace(strings.TrimPrefix(lines[i], apiVersionPrefix))
 			continue
