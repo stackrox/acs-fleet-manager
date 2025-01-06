@@ -237,7 +237,7 @@ setup/git/hooks:
 		pre-commit install; \
 	else \
 		echo "Please install pre-commit: See https://pre-commit.com/index.html for installation instructions."; \
-		echo "Re-run `make setup/git/hooks` setup step after pre-commit has been installed."; \
+		echo "Re-run 'make setup/git/hooks' setup step after pre-commit has been installed."; \
 	fi
 
 # Checks if a GOPATH is set, or emits an error message
