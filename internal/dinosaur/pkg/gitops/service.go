@@ -2,12 +2,13 @@ package gitops
 
 import (
 	"encoding/json"
-	"helm.sh/helm/v3/pkg/chartutil"
 	"strings"
 	"text/template"
 
+	"helm.sh/helm/v3/pkg/chartutil"
+
 	"github.com/pkg/errors"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"sigs.k8s.io/yaml"
 )

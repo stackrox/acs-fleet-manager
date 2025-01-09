@@ -11,7 +11,7 @@ import (
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
-	platform "github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	platform "github.com/stackrox/rox/operator/api/v1alpha1"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"

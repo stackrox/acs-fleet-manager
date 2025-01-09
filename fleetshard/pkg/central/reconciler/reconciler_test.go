@@ -29,7 +29,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/mocks"
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/utils"
 	"github.com/stretchr/testify/assert"
