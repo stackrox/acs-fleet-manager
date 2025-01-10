@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"

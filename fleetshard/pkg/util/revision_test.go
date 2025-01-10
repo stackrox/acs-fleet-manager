@@ -3,7 +3,7 @@ package util
 import (
 	"testing"
 
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

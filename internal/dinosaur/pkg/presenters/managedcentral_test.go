@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 )
 

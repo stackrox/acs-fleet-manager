@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"

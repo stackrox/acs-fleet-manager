@@ -14,7 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"golang.org/x/sync/errgroup"
 	"sigs.k8s.io/yaml"
 )

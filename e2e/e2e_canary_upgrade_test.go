@@ -16,7 +16,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"

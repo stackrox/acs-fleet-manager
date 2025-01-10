@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
 )
 
 const (

@@ -7,7 +7,7 @@ import (
 	"github.com/openshift/addon-operator/apis/addons"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	verticalpodautoscalingv1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"

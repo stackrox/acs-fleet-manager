@@ -3,7 +3,7 @@ package gitops
 import (
 	"testing"
 
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"github.com/stackrox/rox/pkg/pointers"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
