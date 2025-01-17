@@ -33,13 +33,14 @@ type ArgoReconcilerOptions struct {
 	ManagedDBEnabled                           bool
 	ClusterName                                string
 	Environment                                string
-	Telemetry                                  config.Telemetry
 	WantsAuthProvider                          bool
+	Telemetry                                  config.Telemetry
 }
 
 func newArgoReconciler(
 	client ctrlClient.Client,
-	argoReconcilerOptions ArgoReconcilerOptions) *argoReconciler {
+	argoReconcilerOptions ArgoReconcilerOptions,
+) *argoReconciler {
 	return &argoReconciler{
 		client:   client,
 		argoOpts: argoReconcilerOptions,
@@ -115,8 +116,6 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 	} else {
 		values["telemetryStorageKey"] = "DISABLED"
 	}
-
-	values["centralEnabled"] = isArgoCdCentralEnabledForTenant(remoteCentral)
 
 	if r.argoOpts.ManagedDBEnabled {
 		values["centralDbSecretName"] = centralDbSecretName // pragma: allowlist secret
