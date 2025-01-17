@@ -57,8 +57,6 @@ const (
 )
 
 var (
-	defaultCentralConfig = private.ManagedCentral{}
-
 	defaultReconcilerOptions = CentralReconcilerOptions{
 		ArgoReconcilerOptions: ArgoReconcilerOptions{
 			ArgoCdNamespace: "openshift-gitops",
