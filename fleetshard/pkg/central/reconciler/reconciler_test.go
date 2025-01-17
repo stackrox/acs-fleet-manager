@@ -136,7 +136,6 @@ func createBase64Cipher(t *testing.T) cipher.Cipher {
 
 func getClientTrackerAndReconciler(
 	t *testing.T,
-	centralConfig private.ManagedCentral,
 	managedDBClient cloudprovider.DBClient,
 	reconcilerOptions CentralReconcilerOptions,
 	k8sObjects ...client.Object,
@@ -145,7 +144,6 @@ func getClientTrackerAndReconciler(
 	reconciler := NewCentralReconciler(
 		fakeClient,
 		fmMocks.NewClientMock().Client(),
-		centralConfig,
 		managedDBClient,
 		centralDBInitFunc,
 		createBase64Cipher(t),
@@ -205,7 +203,6 @@ func TestReconcileCreate(t *testing.T) {
 	}
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
-		defaultCentralConfig,
 		nil,
 		reconcilerOptions,
 	)
@@ -250,9 +247,7 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 		ManagedDBEnabled: true,
 	}
 	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		managedDBProvisioningClient,
+		t, managedDBProvisioningClient,
 		reconcilerOptions,
 	)
 
@@ -301,9 +296,7 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 		ManagedDBEnabled: true,
 	}
 	_, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		managedDBProvisioningClient,
+		t, managedDBProvisioningClient,
 		reconcilerOptions,
 	)
 
@@ -314,20 +307,13 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-		&v1alpha1.Central{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        centralName,
-				Namespace:   centralNamespace,
-				Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
-			},
+	fakeClient, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        centralName,
+			Namespace:   centralNamespace,
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
 		},
-		centralDeploymentObject(),
-	)
+	}, centralDeploymentObject())
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -357,7 +343,6 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	r := CentralReconciler{
 		status:                 pointer.Int32(0),
 		client:                 fakeClient,
-		central:                private.ManagedCentral{},
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
 		namespaceReconciler:    nsReconciler,
@@ -377,23 +362,13 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 }
 
 func TestReconcileLastHashSetOnSuccess(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-		&v1alpha1.Central{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        centralName,
-				Namespace:   centralNamespace,
-				Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
-			},
+	fakeClient, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        centralName,
+			Namespace:   centralNamespace,
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
 		},
-		centralDeploymentObject(),
-		centralTLSSecretObject(),
-		centralDBPasswordSecretObject(),
-		centralEncryptionKeySecretObject(),
-	)
+	}, centralDeploymentObject(), centralTLSSecretObject(), centralDBPasswordSecretObject(), centralEncryptionKeySecretObject())
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
@@ -417,22 +392,13 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 }
 
 func TestReconcileLastHashSecretsOrderIndependent(t *testing.T) {
-	_, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-		&v1alpha1.Central{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        centralName,
-				Namespace:   centralNamespace,
-				Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
-			},
+	_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        centralName,
+			Namespace:   centralNamespace,
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
 		},
-		centralDeploymentObject(),
-		centralTLSSecretObject(),
-		centralDBPasswordSecretObject(),
-	)
+	}, centralDeploymentObject(), centralTLSSecretObject(), centralDBPasswordSecretObject())
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
@@ -447,20 +413,13 @@ func TestReconcileLastHashSecretsOrderIndependent(t *testing.T) {
 }
 
 func TestIgnoreCacheForCentralNotReady(t *testing.T) {
-	_, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-		&v1alpha1.Central{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        centralName,
-				Namespace:   centralNamespace,
-				Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
-			},
+	_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        centralName,
+			Namespace:   centralNamespace,
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
 		},
-		centralDeploymentObject(),
-	)
+	}, centralDeploymentObject())
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusProvisioning.String()
@@ -477,22 +436,13 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 }
 
 func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
-	_, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-		&v1alpha1.Central{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        centralName,
-				Namespace:   centralNamespace,
-				Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
-			},
+	_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        centralName,
+			Namespace:   centralNamespace,
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
 		},
-		centralDeploymentObject(),
-		centralTLSSecretObject(),
-		centralDBPasswordSecretObject(),
-	)
+	}, centralDeploymentObject(), centralTLSSecretObject(), centralDBPasswordSecretObject())
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
@@ -518,7 +468,6 @@ metadata:
 func TestReconcileDelete(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
-		defaultCentralConfig,
 		nil,
 		useRoutesReconcilerOptions,
 	)
@@ -577,9 +526,7 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 		ManagedDBEnabled: true,
 	}
 	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		managedDBProvisioningClient,
+		t, managedDBProvisioningClient,
 		reconcilerOptions,
 	)
 
@@ -647,9 +594,7 @@ func TestReconcileDeleteWithManagedDBOverride(t *testing.T) {
 		ManagedDBEnabled: true,
 	}
 	_, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		managedDBProvisioningClient,
+		t, managedDBProvisioningClient,
 		reconcilerOptions,
 	)
 
@@ -736,13 +681,7 @@ func TestCentralChanged(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, _, reconciler := getClientTrackerAndReconciler(
-				t,
-				test.currentCentral,
-				nil,
-				defaultReconcilerOptions,
-				centralDeploymentObject(),
-			)
+			_, _, reconciler := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, centralDeploymentObject())
 
 			if test.lastCentral != nil {
 				centralHash, err := reconciler.computeCentralHash(*test.lastCentral)
@@ -760,9 +699,7 @@ func TestCentralChanged(t *testing.T) {
 
 func TestNamespaceLabelsAreSet(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
+		t, nil,
 		useRoutesReconcilerOptions,
 	)
 
@@ -778,9 +715,7 @@ func TestNamespaceLabelsAreSet(t *testing.T) {
 
 func TestNamespaceAnnotationsAreSet(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
+		t, nil,
 		useRoutesReconcilerOptions,
 	)
 
@@ -795,9 +730,7 @@ func TestNamespaceAnnotationsAreSet(t *testing.T) {
 
 func TestReportRoutesStatuses(t *testing.T) {
 	_, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
+		t, nil,
 		useRoutesReconcilerOptions,
 	)
 
@@ -820,9 +753,7 @@ func TestReportRoutesStatuses(t *testing.T) {
 
 func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
+		t, nil,
 		defaultReconcilerOptions,
 	)
 
@@ -849,9 +780,7 @@ func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
 
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
 	_, tracker, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
+		t, nil,
 		useRoutesReconcilerOptions,
 	)
 	tracker.AddRouteError(centralReencryptRouteName, errors.New("fake error"))
@@ -861,9 +790,7 @@ func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
 
 func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
 	_, tracker, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
+		t, nil,
 		useRoutesReconcilerOptions,
 	)
 	tracker.SetRouteAdmitted(centralReencryptRouteName, false)
@@ -873,9 +800,7 @@ func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
 
 func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
 	_, tracker, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
+		t, nil,
 		useRoutesReconcilerOptions,
 	)
 	tracker.SetSkipRoute(centralReencryptRouteName, true)
@@ -913,9 +838,7 @@ func TestTelemetryOptionsAreSetInCR(t *testing.T) {
 		t.Run(tc.testName, func(t *testing.T) {
 			reconcilerOptions := CentralReconcilerOptions{Telemetry: tc.telemetry}
 			fakeClient, _, r := getClientTrackerAndReconciler(
-				t,
-				defaultCentralConfig,
-				nil,
+				t, nil,
 				reconcilerOptions,
 			)
 
@@ -981,9 +904,7 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
 			fakeClient, _, r := getClientTrackerAndReconciler(
-				t,
-				defaultCentralConfig,
-				nil,
+				t, nil,
 				useRoutesReconcilerOptions,
 			)
 			r.routeService = k8s.NewRouteService(fakeClient, &defaultRouteConfig)
@@ -1424,7 +1345,6 @@ func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
 	}
 	_, _, r := getClientTrackerAndReconciler(
 		t,
-		simpleManagedCentral,
 		nil,
 		reconcilerOptions,
 	)
@@ -1608,7 +1528,6 @@ func TestReconcileDeclarativeConfigurationData(t *testing.T) {
 			}
 			fakeClient, _, r := getClientTrackerAndReconciler(
 				t,
-				simpleManagedCentral,
 				nil,
 				reconcilerOptions,
 			)
@@ -1732,7 +1651,7 @@ func TestRestoreCentralSecrets(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, nil, defaultReconcilerOptions, tc.mockObjects...)
+			fakeClient, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, tc.mockObjects...)
 			managedCentral := tc.buildCentral()
 
 			if tc.buildFMClient != nil {
@@ -2144,7 +2063,7 @@ func TestReconciler_reconcileNamespace(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, nil, defaultReconcilerOptions)
+			fakeClient, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions)
 			if tt.existingNamespace != nil {
 				require.NoError(t, fakeClient.Create(context.Background(), tt.existingNamespace))
 			}
@@ -2247,7 +2166,7 @@ func TestReconciler_needsReconcile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, nil, defaultReconcilerOptions)
+			_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions)
 			r.areSecretsStoredFunc = tt.secretsStoredFunc //pragma: allowlist secret
 			r.clock = fakeClock{
 				NowTime: time.Now(),
@@ -2270,7 +2189,7 @@ func TestReconcilerRaceCondition(t *testing.T) {
 	var central1 = withCpuLimit(t, managedCentral, "100m")
 	var central2 = withCpuLimit(t, managedCentral, "200m")
 
-	cli, _, r := getClientTrackerAndReconciler(t, central1, nil, defaultReconcilerOptions)
+	cli, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions)
 	ctx := context.Background()
 	namespace := central1.Metadata.Namespace
 	name := central1.Metadata.Name
