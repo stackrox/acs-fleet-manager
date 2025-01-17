@@ -11,9 +11,7 @@ import (
 
 func TestDisablePauseAnnotation(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
+		t, nil,
 		useRoutesReconcilerOptions,
 	)
 

@@ -124,7 +124,6 @@ type CentralReconcilerOptions struct {
 type CentralReconciler struct {
 	client                 ctrlClient.Client
 	fleetmanagerClient     *fleetmanager.Client
-	central                private.ManagedCentral
 	status                 *int32
 	lastCentralHash        [16]byte
 	lastCentralHashTime    time.Time
@@ -428,7 +427,7 @@ func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCen
 		return nil
 	}
 
-	glog.Info(fmt.Sprintf("Restore secret for tenant: %s/%s", remoteCentral.Id, r.central.Metadata.Namespace), restoreSecrets)
+	glog.Info(fmt.Sprintf("Restore secret for tenant: %s/%s", remoteCentral.Id, remoteCentral.Metadata.Namespace), restoreSecrets)
 	central, _, err := r.fleetmanagerClient.PrivateAPI().GetCentral(ctx, remoteCentral.Id)
 	if err != nil {
 		return fmt.Errorf("loading secrets for central %s: %w", remoteCentral.Id, err)
@@ -1367,7 +1366,7 @@ func findAdditionalAuthProvider(central private.ManagedCentral) *declarativeconf
 }
 
 // NewCentralReconciler ...
-func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleetmanager.Client, central private.ManagedCentral,
+func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleetmanager.Client,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
 	secretCipher cipher.Cipher, encryptionKeyGenerator cipher.KeyGenerator,
 	opts CentralReconcilerOptions,
@@ -1379,7 +1378,6 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 	r := &CentralReconciler{
 		client:                 k8sClient,
 		fleetmanagerClient:     fleetmanagerClient,
-		central:                central,
 		status:                 pointer.Int32(FreeStatus),
 		useRoutes:              opts.UseRoutes,
 		wantsAuthProvider:      opts.WantsAuthProvider,
@@ -1405,7 +1403,6 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		clock: realClock{},
 	}
 	r.needsReconcileFunc = r.needsReconcile
-
 	r.restoreCentralSecretsFunc = r.restoreCentralSecrets //pragma: allowlist secret
 	r.areSecretsStoredFunc = r.areSecretsStored           //pragma: allowlist secret
 	return r
