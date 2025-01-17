@@ -14,7 +14,6 @@ spec:
     clusterName: "acs-dev-dp-01"
     environment: "dev"
     fleetManagerEndpoint: "http://fleet-manager:8000"
-    secureTenantNetwork: $SECURE_TENANT_NETWORK
     argoCdNamespace: $ARGOCD_NAMESPACE
     managedDB:
       enabled: $MANAGED_DB_ENABLED

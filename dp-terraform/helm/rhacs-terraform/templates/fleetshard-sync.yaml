@@ -64,8 +64,6 @@ spec:
         - name: STATIC_TOKEN
           value: {{ .Values.fleetshardSync.staticToken }}
         {{- end }}
-        - name: SECURE_TENANT_NETWORK
-          value: {{ .Values.fleetshardSync.secureTenantNetwork | quote }}
         - name: AUDIT_LOG_ENABLED
           value: {{ .Values.fleetshardSync.auditLogs.enabled | quote }}
         - name: AUDIT_LOG_SKIP_TLS_VERIFY

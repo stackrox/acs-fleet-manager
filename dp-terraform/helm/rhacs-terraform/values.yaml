@@ -23,7 +23,6 @@ fleetshardSync:
   # Static token can be issued by the kubernetes issuer with the following command:
   # $ kubectl create token -n rhacs fleetshard-sync --audience acs-fleet-manager-private-api
   staticToken: ""
-  secureTenantNetwork: false
   auditLogs:
     enabled: true
     skipTLSVerify: true

@@ -116,7 +116,6 @@ type CentralReconcilerOptions struct {
 	AuditLogging          config.AuditLogging
 	TenantImagePullSecret string
 	RouteParameters       config.RouteConfig
-	SecureTenantNetwork   bool
 	ArgoReconcilerOptions ArgoReconcilerOptions
 }
 
@@ -1387,7 +1386,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		namespaceReconciler:    nsReconciler,
 		centralCrReconciler:    crReconciler,
 		argoReconciler:         argoReconciler,
-		tenantCleanup:          NewTenantCleanup(k8sClient, TenantCleanupOptions{SecureTenantNetwork: opts.SecureTenantNetwork, ArgoReconcilerOptions: opts.ArgoReconcilerOptions}),
+		tenantCleanup:          NewTenantCleanup(k8sClient, TenantCleanupOptions{ArgoReconcilerOptions: opts.ArgoReconcilerOptions}),
 		routeService:           k8s.NewRouteService(k8sClient, &opts.RouteParameters),
 		secretBackup:           k8s.NewSecretBackup(k8sClient, opts.ManagedDBEnabled),
 		secretCipher:           secretCipher, // pragma: allowlist secret

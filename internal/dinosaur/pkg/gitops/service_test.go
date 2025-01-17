@@ -270,7 +270,6 @@ labels:
   rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
 annotations:
   rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
-secureTenantNetwork: true
 centralRdsCidrBlock: "10.1.0.0/16"
 `,
 					Overrides: []TenantResourceOverride{
