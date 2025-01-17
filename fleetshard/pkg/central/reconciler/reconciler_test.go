@@ -247,7 +247,8 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 		ManagedDBEnabled: true,
 	}
 	fakeClient, _, r := getClientTrackerAndReconciler(
-		t, managedDBProvisioningClient,
+		t,
+		managedDBProvisioningClient,
 		reconcilerOptions,
 	)
 
@@ -296,7 +297,8 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 		ManagedDBEnabled: true,
 	}
 	_, _, r := getClientTrackerAndReconciler(
-		t, managedDBProvisioningClient,
+		t,
+		managedDBProvisioningClient,
 		reconcilerOptions,
 	)
 
@@ -526,7 +528,8 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 		ManagedDBEnabled: true,
 	}
 	fakeClient, _, r := getClientTrackerAndReconciler(
-		t, managedDBProvisioningClient,
+		t,
+		managedDBProvisioningClient,
 		reconcilerOptions,
 	)
 
@@ -594,7 +597,8 @@ func TestReconcileDeleteWithManagedDBOverride(t *testing.T) {
 		ManagedDBEnabled: true,
 	}
 	_, _, r := getClientTrackerAndReconciler(
-		t, managedDBProvisioningClient,
+		t,
+		managedDBProvisioningClient,
 		reconcilerOptions,
 	)
 
