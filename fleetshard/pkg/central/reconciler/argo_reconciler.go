@@ -158,9 +158,9 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 				},
 			},
 			Source: &argocd.ApplicationSource{
-				RepoURL:        r.argoOpts.TenantDefaultArgoCdAppSourceRepoURL,
-				TargetRevision: r.argoOpts.TenantDefaultArgoCdAppSourceTargetRevision,
-				Path:           r.argoOpts.TenantDefaultArgoCdAppSourcePath,
+				RepoURL:        r.getSourceRepoURL(remoteCentral),
+				TargetRevision: r.getSourceTargetRevision(remoteCentral),
+				Path:           r.getSourcePath(remoteCentral),
 				Helm: &argocd.ApplicationSourceHelm{
 					ValuesObject: &runtime.RawExtension{
 						Raw: valuesBytes,
@@ -173,6 +173,40 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 			},
 		},
 	}, nil
+}
+
+func (r *argoReconciler) getSourceTargetRevision(m private.ManagedCentral) string {
+	return r.getArgoCdTargetParam(m, "sourceTargetRevision", r.argoOpts.TenantDefaultArgoCdAppSourceTargetRevision)
+}
+
+func (r *argoReconciler) getSourcePath(m private.ManagedCentral) string {
+	return r.getArgoCdTargetParam(m, "sourcePath", r.argoOpts.TenantDefaultArgoCdAppSourcePath)
+}
+
+func (r *argoReconciler) getSourceRepoURL(m private.ManagedCentral) string {
+	return r.getArgoCdTargetParam(m, "sourceRepoUrl", r.argoOpts.TenantDefaultArgoCdAppSourceRepoURL)
+}
+
+func (r *argoReconciler) getArgoCdTargetParam(m private.ManagedCentral, key, defaultValue string) string {
+	if m.Spec.TenantResourcesValues == nil {
+		return defaultValue
+	}
+
+	argoCd, ok := m.Spec.TenantResourcesValues["argoCd"].(map[string]interface{})
+	if !ok {
+		return defaultValue
+	}
+
+	revision, ok := argoCd[key].(string)
+	if !ok {
+		return defaultValue
+	}
+
+	if len(revision) == 0 {
+		return defaultValue
+	}
+
+	return revision
 }
 
 func (r *argoReconciler) ensureApplicationDeleted(ctx context.Context, tenantNamespace string) (bool, error) {
