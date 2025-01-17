@@ -1338,12 +1338,7 @@ func compareSecret(t *testing.T, expectedSecret *v1.Secret, secret *v1.Secret, c
 }
 
 func TestEnsureSecretExists(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-	)
+	fakeClient, _ := testutils.NewFakeClientWithTracker(t)
 	secretModifyFunc := func(secret *v1.Secret) error {
 		if secret.Data == nil {
 			secret.Data = make(map[string][]byte)
@@ -1404,7 +1399,7 @@ func TestEnsureSecretExists(t *testing.T) {
 			fetchedSecret := &v1.Secret{}
 			initialSecret := getSecret(tc.secretName, centralNamespace, tc.initialData)
 			assert.NoError(t, fakeClient.Create(ctx, initialSecret))
-			assert.NoError(t, r.ensureSecretExists(ctx, centralNamespace, tc.secretName, secretModifyFunc))
+			assert.NoError(t, ensureSecretExists(ctx, fakeClient, centralNamespace, tc.secretName, secretModifyFunc))
 			assert.NoError(t, fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: tc.secretName}, fetchedSecret))
 			compareSecret(t, getSecret(tc.secretName, centralNamespace, tc.expectedData), fetchedSecret, false)
 		})
@@ -1417,7 +1412,7 @@ func TestEnsureSecretExists(t *testing.T) {
 		}
 		ctx := context.TODO()
 		fetchedSecret := &v1.Secret{}
-		assert.NoError(t, r.ensureSecretExists(ctx, centralNamespace, secretName, secretModifyFunc))
+		assert.NoError(t, ensureSecretExists(ctx, fakeClient, centralNamespace, secretName, secretModifyFunc))
 		assert.NoError(t, fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: secretName}, fetchedSecret))
 		compareSecret(t, getSecret(secretName, centralNamespace, expectedData), fetchedSecret, true)
 	})
