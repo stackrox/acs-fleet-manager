@@ -3,20 +3,17 @@ package reconciler
 import (
 	"bytes"
 	"context"
-	"embed"
 	"encoding/base64"
 	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
-	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
@@ -35,10 +32,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
-	"helm.sh/helm/v3/pkg/chart/loader"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -70,8 +65,7 @@ var (
 		},
 	}
 
-	useRoutesReconcilerOptions           = CentralReconcilerOptions{UseRoutes: true}
-	secureTenantNetworkReconcilerOptions = CentralReconcilerOptions{SecureTenantNetwork: true}
+	useRoutesReconcilerOptions = CentralReconcilerOptions{UseRoutes: true}
 
 	defaultAuditLogConfig = config.AuditLogging{
 		Enabled:            true,
@@ -133,9 +127,6 @@ metadata:
 `,
 	},
 }
-
-//go:embed testdata
-var testdata embed.FS
 
 func createBase64Cipher(t *testing.T) cipher.Cipher {
 	b64Cipher, err := cipher.NewLocalBase64Cipher()
@@ -360,7 +351,6 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	}, centralDeploymentObject()).Build()
 
 	nsReconciler := newNamespaceReconciler(fakeClient)
-	chartReconciler := newTenantChartReconciler(fakeClient, true)
 	crReconciler := newCentralCrReconciler(fakeClient)
 	argoReconciler := newArgoReconciler(fakeClient, ArgoReconcilerOptions{ArgoCdNamespace: "openshift-gitops"})
 
@@ -368,11 +358,9 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		status:                 pointer.Int32(0),
 		client:                 fakeClient,
 		central:                private.ManagedCentral{},
-		resourcesChart:         resourcesChart,
 		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 		secretBackup:           k8s.NewSecretBackup(fakeClient, false),
 		namespaceReconciler:    nsReconciler,
-		tenantChartReconciler:  chartReconciler,
 		centralCrReconciler:    crReconciler,
 		argoReconciler:         argoReconciler,
 		tenantCleanup:          NewTenantCleanup(fakeClient, TenantCleanupOptions{}),
@@ -830,44 +818,6 @@ func TestReportRoutesStatuses(t *testing.T) {
 	assert.ElementsMatch(t, expected, actual)
 }
 
-func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
-	chartFiles, err := charts.TraverseChart(testdata, "testdata/tenant-resources")
-	require.NoError(t, err)
-	chart, err := loader.LoadFiles(chartFiles)
-	require.NoError(t, err)
-
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-	)
-	r.tenantChartReconciler = newTenantChartReconciler(fakeClient, true).withChart(chart)
-	r.tenantCleanup = NewTenantCleanup(fakeClient, TenantCleanupOptions{})
-	r.tenantCleanup.chartReconciler = newTenantChartReconciler(fakeClient, true).withChart(chart)
-	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	var dummyObj networkingv1.NetworkPolicy
-	dummyObjKey := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: "dummy"}
-	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
-	assert.NoError(t, err)
-
-	assert.Equal(t, k8s.ManagedByFleetshardValue, dummyObj.GetLabels()[k8s.ManagedByLabelKey])
-
-	deletedCentral := simpleManagedCentral
-	deletedCentral.Metadata.DeletionTimestamp = time.Now().Format(time.RFC3339)
-
-	_, err = r.Reconcile(context.TODO(), deletedCentral)
-	for i := 0; i < 3 && errors.Is(err, ErrDeletionInProgress); i++ {
-		_, err = r.Reconcile(context.TODO(), deletedCentral)
-	}
-	require.NoError(t, err)
-
-	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
-	assert.True(t, k8sErrors.IsNotFound(err))
-}
-
 func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
@@ -895,111 +845,6 @@ func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
 	require.NoError(t, err)
 	expectedKeyLen := 32 // 256 bits key
 	require.Equal(t, expectedKeyLen, len(encKey))
-}
-
-func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
-	chartFiles, err := charts.TraverseChart(testdata, "testdata/tenant-resources")
-	require.NoError(t, err)
-	chart, err := loader.LoadFiles(chartFiles)
-	require.NoError(t, err)
-
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		defaultReconcilerOptions,
-	)
-	r.tenantChartReconciler = newTenantChartReconciler(fakeClient, true).withChart(chart)
-
-	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	var dummyObj networkingv1.NetworkPolicy
-	dummyObjKey := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: "dummy"}
-	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
-	assert.NoError(t, err)
-
-	dummyObj.SetAnnotations(map[string]string{"dummy-annotation": "test"})
-	err = fakeClient.Update(context.TODO(), &dummyObj)
-	assert.NoError(t, err)
-
-	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
-	assert.NoError(t, err)
-	assert.Equal(t, "test", dummyObj.GetAnnotations()["dummy-annotation"])
-
-	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-	err = fakeClient.Get(context.TODO(), dummyObjKey, &dummyObj)
-	assert.NoError(t, err)
-
-	// verify that the chart resource was updated, by checking that the manually added annotation
-	// is no longer present
-	assert.Equal(t, "", dummyObj.GetAnnotations()["dummy-annotation"])
-}
-
-func TestTenantNetworkIsSecured(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		secureTenantNetworkReconcilerOptions,
-	)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	expectedObjs := []client.Object{
-		&networkingv1.NetworkPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "default-deny-all-except-dns",
-			},
-		},
-		&networkingv1.NetworkPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "tenant-central",
-			},
-		},
-		&networkingv1.NetworkPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "tenant-scanner",
-			},
-		},
-		&networkingv1.NetworkPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "tenant-scanner-db",
-			},
-		},
-		&networkingv1.NetworkPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "tenant-scanner-v4-db",
-			},
-		},
-		&networkingv1.NetworkPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "tenant-scanner-v4-indexer",
-			},
-		},
-		&networkingv1.NetworkPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "tenant-scanner-v4-matcher",
-			},
-		},
-	}
-
-	for _, expectedObj := range expectedObjs {
-		actualObj := expectedObj.DeepCopyObject().(client.Object)
-		if !assert.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKeyFromObject(expectedObj), actualObj)) {
-			continue
-		}
-		assert.Equal(t, k8s.ManagedByFleetshardValue, actualObj.GetLabels()[k8s.ManagedByLabelKey])
-	}
 }
 
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
@@ -2636,83 +2481,4 @@ func TestEncyrptionSHASumSameObject(t *testing.T) {
 	for i := range amount - 1 {
 		require.Equal(t, sums[i], sums[i+1], "hash of the same object should always be equal but was not")
 	}
-}
-
-func TestArgoCDApplication_CanBeToggleOnAndOff(t *testing.T) {
-	ctx := context.Background()
-	chartFiles, err := charts.TraverseChart(testdata, "testdata/tenant-resources")
-	require.NoError(t, err)
-	chart, err := loader.LoadFiles(chartFiles)
-	require.NoError(t, err)
-	managedCentral := simpleManagedCentral
-
-	cli, _, r := getClientTrackerAndReconciler(
-		t,
-		managedCentral,
-		nil,
-		defaultReconcilerOptions,
-	)
-	r.resourcesChart = chart
-	r.tenantChartReconciler.chart = chart
-	r.tenantCleanup.chartReconciler.chart = chart
-
-	assertLegacyChartPresent := func(t *testing.T, present bool) {
-		var netPol networkingv1.NetworkPolicy
-		err := cli.Get(ctx, client.ObjectKey{Name: "dummy", Namespace: managedCentral.Metadata.Namespace}, &netPol)
-		if present {
-			require.NoError(t, err)
-		} else {
-			require.True(t, k8sErrors.IsNotFound(err))
-		}
-	}
-
-	assertArgoCdAppPresent := func(t *testing.T, present bool) {
-		var app argocd.Application
-		objectKey := r.argoReconciler.getArgoCdAppObjectKey(managedCentral.Metadata.Namespace)
-		err := cli.Get(ctx, objectKey, &app)
-		if present {
-			require.NoError(t, err)
-		} else {
-			require.True(t, k8sErrors.IsNotFound(err))
-		}
-	}
-
-	{
-		// Ensure argocd application is created
-		managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
-			"argoCd": map[string]interface{}{
-				"enabled": true,
-			},
-		}
-		_, err := r.Reconcile(ctx, managedCentral)
-		require.NoError(t, err)
-
-		assertArgoCdAppPresent(t, true)
-		assertLegacyChartPresent(t, false)
-	}
-
-	{
-		// Ensure argocd application is deleted
-		managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
-			"argoCd": map[string]interface{}{
-				"enabled": false,
-			},
-		}
-		_, err := r.Reconcile(ctx, managedCentral)
-		require.NoError(t, err)
-
-		assertArgoCdAppPresent(t, false)
-		assertLegacyChartPresent(t, true)
-	}
-
-	{
-		// Ensure argocd and charts application are deleted
-		managedCentral.Metadata.DeletionTimestamp = time.Now().Format(time.RFC3339)
-		_, err = r.Reconcile(ctx, managedCentral)
-		require.ErrorIs(t, err, ErrDeletionInProgress)
-
-		assertArgoCdAppPresent(t, false)
-		assertLegacyChartPresent(t, false)
-	}
-
 }
