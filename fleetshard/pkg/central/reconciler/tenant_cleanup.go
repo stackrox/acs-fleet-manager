@@ -26,7 +26,6 @@ type TenantCleanup struct {
 
 // TenantCleanupOptions defines configuration options for the TenantCleanup logic
 type TenantCleanupOptions struct {
-	SecureTenantNetwork   bool
 	Chart                 *chart.Chart
 	ArgoReconcilerOptions ArgoReconcilerOptions
 }

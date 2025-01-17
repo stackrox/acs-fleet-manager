@@ -588,7 +588,6 @@ annotations:
   rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
 argoCd:
   enabled: true
-secureTenantNetwork: false
 centralRdsCidrBlock: "10.1.0.0/16"
 centralVpaEnabled: false`
 }
@@ -605,7 +604,6 @@ argoCd:
   enabled: true
 annotations:
   rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
-secureTenantNetwork: false
 centralRdsCidrBlock: "10.1.0.0/16"
 centralVpaEnabled: true
 `

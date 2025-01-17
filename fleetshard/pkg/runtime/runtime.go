@@ -153,12 +153,10 @@ func (r *Runtime) Start() error {
 		AuditLogging:          r.config.AuditLogging,
 		TenantImagePullSecret: r.config.TenantImagePullSecret, // pragma: allowlist secret
 		RouteParameters:       r.config.RouteParameters,
-		SecureTenantNetwork:   r.config.SecureTenantNetwork,
 		ArgoReconcilerOptions: argoReconcilerOpts,
 	}
 
 	tenantCleanupOpts := centralReconciler.TenantCleanupOptions{
-		SecureTenantNetwork:   r.config.SecureTenantNetwork,
 		ArgoReconcilerOptions: argoReconcilerOpts,
 	}
 
