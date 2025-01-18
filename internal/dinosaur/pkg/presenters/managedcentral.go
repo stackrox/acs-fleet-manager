@@ -14,9 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
-	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"golang.org/x/sync/errgroup"
-	"sigs.k8s.io/yaml"
 )
 
 // ManagedCentralPresenter helper service which converts Central DB representation to the private API representation
@@ -148,7 +146,6 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 			DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
 				Host: from.GetDataHost(),
 			},
-			CentralCRYAML:         renderedCentral.CentralCRYaml,
 			TenantResourcesValues: renderedCentral.Values,
 			InstanceType:          from.InstanceType,
 		},
@@ -269,28 +266,24 @@ func centralParamsFromRequest(centralRequest *dbapi.CentralRequest) gitops.Centr
 	}
 }
 
-type renderCentralFn func(gitops.CentralParams, gitops.Config) (v1alpha1.Central, error)
 type renderValuesFn func(gitops.CentralParams, gitops.Config) (map[string]interface{}, error)
 
 type cachedCentralRenderer struct {
-	renderCentralFn renderCentralFn
-	renderValuesFn  renderValuesFn
-	locks           *keyedMutex
-	cache           *centralYamlCache
+	renderValuesFn renderValuesFn
+	locks          *keyedMutex
+	cache          *renderCache
 }
 
 func newCachedCentralRenderer() *cachedCentralRenderer {
 	return &cachedCentralRenderer{
-		renderCentralFn: gitops.RenderCentral,
-		renderValuesFn:  gitops.RenderTenantResourceValues,
-		locks:           newKeyedMutex(),
-		cache:           newCentralYamlCache(),
+		renderValuesFn: gitops.RenderTenantResourceValues,
+		locks:          newKeyedMutex(),
+		cache:          newRenderCache(),
 	}
 }
 
 type RenderedCentral struct {
-	CentralCRYaml string
-	Values        map[string]interface{}
+	Values map[string]interface{}
 }
 
 func (r *cachedCentralRenderer) render(gitopsConfig gitops.Config, centralParams gitops.CentralParams) (RenderedCentral, error) {
@@ -309,7 +302,6 @@ func (r *cachedCentralRenderer) render(gitopsConfig gitops.Config, centralParams
 		return RenderedCentral{}, errors.Wrap(err, "failed to get hash for Central")
 	}
 
-	var centralYaml []byte
 	var values map[string]interface{}
 	var shouldRender = true
 
@@ -321,22 +313,13 @@ func (r *cachedCentralRenderer) render(gitopsConfig gitops.Config, centralParams
 	if ok {
 		if entry.hashes.equals(hashes) {
 			// The hash matches, we can use the cached central yaml
-			centralYaml = entry.centralYaml
 			values = entry.values
 			shouldRender = false
 		}
 	}
 
 	if shouldRender {
-		// There was no matching cache entry, we need to render the central yaml.
-		centralCR, err := r.renderCentralFn(centralParams, gitopsConfig)
-		if err != nil {
-			return RenderedCentral{}, errors.Wrap(err, "failed to apply GitOps overrides to Central")
-		}
-		centralYaml, err = yaml.Marshal(centralCR)
-		if err != nil {
-			return RenderedCentral{}, errors.Wrap(err, "failed to marshal Central CR")
-		}
+		// There was no matching cache entry, we need to render
 		values, err = r.renderValuesFn(centralParams, gitopsConfig)
 		if err != nil {
 			return RenderedCentral{}, errors.Wrap(err, "failed to render tenant resource values")
@@ -345,16 +328,14 @@ func (r *cachedCentralRenderer) render(gitopsConfig gitops.Config, centralParams
 		r.cache.Lock()
 		defer r.cache.Unlock()
 		r.cache.entries[centralID] = cacheEntry{
-			id:          centralID,
-			hashes:      hashes,
-			centralYaml: centralYaml,
-			values:      values,
+			id:     centralID,
+			hashes: hashes,
+			values: values,
 		}
 	}
 
 	return RenderedCentral{
-		CentralCRYaml: string(centralYaml),
-		Values:        values,
+		Values: values,
 	}, nil
 }
 
@@ -431,17 +412,16 @@ func (k *keyedMutex) isLocked(key string) bool {
 
 // cacheEntry stores the central yaml and the hashes of the gitops config and the central params
 type cacheEntry struct {
-	id          string
-	hashes      centralHashes
-	centralYaml []byte
-	values      map[string]interface{}
+	id     string
+	hashes centralHashes
+	values map[string]interface{}
 }
 
-type centralYamlCache struct {
+type renderCache struct {
 	sync.RWMutex
 	entries map[string]cacheEntry
 }
 
-func newCentralYamlCache() *centralYamlCache {
-	return &centralYamlCache{entries: make(map[string]cacheEntry)}
+func newRenderCache() *renderCache {
+	return &renderCache{entries: make(map[string]cacheEntry)}
 }

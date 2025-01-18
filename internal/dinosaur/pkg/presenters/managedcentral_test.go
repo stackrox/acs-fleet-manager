@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
-	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,9 +12,9 @@ func TestShouldNotRenderTwiceForSameParams(t *testing.T) {
 	var params = gitops.CentralParams{}
 	var renderCount = 0
 	r := newCachedCentralRenderer()
-	r.renderCentralFn = func(params gitops.CentralParams, config gitops.Config) (v1alpha1.Central, error) {
+	r.renderValuesFn = func(params gitops.CentralParams, config gitops.Config) (map[string]interface{}, error) {
 		renderCount++
-		return v1alpha1.Central{}, nil
+		return map[string]interface{}{}, nil
 	}
 
 	assert.Equal(t, 0, renderCount)
@@ -38,7 +37,7 @@ func TestShouldNotRenderTwiceForSameParams(t *testing.T) {
 	assert.Equal(t, 2, renderCount)
 
 	// fifth call with different params should render again
-	gitopsConfig = gitops.Config{Centrals: gitops.CentralsConfig{Overrides: []gitops.CentralOverride{{InstanceIDs: []string{"foo"}}}}}
+	gitopsConfig = gitops.Config{TenantResources: gitops.TenantResourceConfig{Overrides: []gitops.TenantResourceOverride{{InstanceIDs: []string{"foo"}}}}}
 	r.render(gitopsConfig, params)
 	assert.Equal(t, 3, renderCount)
 
@@ -54,12 +53,12 @@ func TestShouldNotCacheOnError(t *testing.T) {
 	var shouldThrow = false
 
 	r := newCachedCentralRenderer()
-	r.renderCentralFn = func(params gitops.CentralParams, config gitops.Config) (v1alpha1.Central, error) {
+	r.renderValuesFn = func(params gitops.CentralParams, config gitops.Config) (map[string]interface{}, error) {
 		renderCount++
 		if shouldThrow {
-			return v1alpha1.Central{}, assert.AnError
+			return map[string]interface{}{}, assert.AnError
 		}
-		return v1alpha1.Central{}, nil
+		return map[string]interface{}{}, nil
 	}
 
 	assert.Equal(t, 0, renderCount)

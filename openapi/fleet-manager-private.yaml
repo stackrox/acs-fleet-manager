@@ -283,8 +283,6 @@ components:
                   enum: [ eval, standard ]
                 tenantResourcesValues:
                   type: object
-                centralCRYAML:
-                  type: string
                 owners:
                   type: array
                   items:

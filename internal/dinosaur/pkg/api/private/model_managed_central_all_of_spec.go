@@ -14,7 +14,6 @@ package private
 type ManagedCentralAllOfSpec struct {
 	InstanceType           string                                        `json:"instanceType,omitempty"`
 	TenantResourcesValues  map[string]interface{}                        `json:"tenantResourcesValues,omitempty"`
-	CentralCRYAML          string                                        `json:"centralCRYAML,omitempty"`
 	Owners                 []string                                      `json:"owners,omitempty"`
 	Auth                   ManagedCentralAllOfSpecAuth                   `json:"auth,omitempty"`
 	AdditionalAuthProvider ManagedCentralAllOfSpecAdditionalAuthProvider `json:"additionalAuthProvider,omitempty"`

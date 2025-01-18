@@ -67,19 +67,7 @@ type AuthProviderOIDCConfig struct {
 
 // CentralsConfig represents the declarative configuration for Central instances defaults and overrides.
 type CentralsConfig struct {
-	// Overrides are the overrides for Central instances.
-	Overrides               []CentralOverride      `json:"overrides"`
 	AdditionalAuthProviders []AuthProviderAddition `json:"additionalAuthProviders"`
-}
-
-// CentralOverride represents the configuration for a Central instance override. The override
-// will be applied on top of the default central instance configuration.
-// See https://github.com/stackrox/stackrox/blob/master/operator/apis/platform/v1alpha1/overlay_types.go
-type CentralOverride struct {
-	// InstanceIDs are the Central instance IDs for the override.
-	InstanceIDs []string `json:"instanceIds"`
-	// Patch is the patch for the override, which will be applied as a strategic merge patch.
-	Patch string `json:"patch"`
 }
 
 // DataPlaneClusterConfig represents the configuration to be applied for a data plane cluster.
@@ -122,7 +110,6 @@ func ValidateConfig(config Config) field.ErrorList {
 
 func validateCentralsConfig(path *field.Path, config CentralsConfig) field.ErrorList {
 	var errs field.ErrorList
-	errs = append(errs, validateCentralOverrides(path.Child("overrides"), config.Overrides)...)
 	errs = append(errs, validateAdditionalAuthProviders(path.Child("additionalAuthProviders"), config.AdditionalAuthProviders)...)
 	return errs
 }
@@ -283,53 +270,6 @@ func validateAuthProviderGroup(path *field.Path, group AuthProviderGroup) field.
 		errs = append(errs, field.Required(path.Child("value"), "value is required"))
 	}
 	return errs
-}
-
-func validateCentralOverrides(path *field.Path, config []CentralOverride) field.ErrorList {
-	var errs field.ErrorList
-	for i, override := range config {
-		errs = append(errs, validateCentralOverride(path.Index(i), override)...)
-	}
-	return errs
-}
-
-func validateCentralOverride(path *field.Path, config CentralOverride) field.ErrorList {
-	var errs field.ErrorList
-	errs = append(errs, validateInstanceIDs(path.Child("instanceIds"), config.InstanceIDs)...)
-	errs = append(errs, validatePatch(path.Child("patch"), config.Patch)...)
-	return errs
-}
-
-func validatePatch(path *field.Path, patch string) field.ErrorList {
-	var errs field.ErrorList
-	if len(patch) == 0 {
-		errs = append(errs, field.Required(path, "patch is required"))
-		return errs
-	}
-	if err := renderDummyCentralWithPatchForValidation(patch); err != nil {
-		errs = append(errs, field.Invalid(path, patch, "invalid patch: "+err.Error()))
-	}
-	return errs
-}
-
-// renderDummyCentralWithPatchForValidation renders a dummy Central instance with the given patch.
-// useful to test that a Central patch is valid.
-func renderDummyCentralWithPatchForValidation(patch string) error {
-	var dummyParams = getDummyCentralParams()
-	dummyConfig := Config{
-		Centrals: CentralsConfig{
-			Overrides: []CentralOverride{
-				{
-					Patch:       patch,
-					InstanceIDs: []string{"*"},
-				},
-			},
-		},
-	}
-	if _, err := RenderCentral(dummyParams, dummyConfig); err != nil {
-		return err
-	}
-	return nil
 }
 
 // renderDummyValuesWithPatchForValidation renders a dummy tenant resource values with the given patch.

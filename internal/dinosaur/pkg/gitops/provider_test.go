@@ -133,11 +133,7 @@ func TestProviderGet_ValidationNotCalledTwiceForSameConfig(t *testing.T) {
 	tmpFile := filepath.Join(tmpDir, "config.yaml")
 	err := os.WriteFile(tmpFile, []byte(`
 rhacsOperators:
-  crdUrls: []
-  operators: []
-centrals:
-  overrides:
-    - instanceIds: ["*"]
+  crdUrls: [foo]
 `), 0644)
 	if err != nil {
 		t.Fatal(err)
@@ -161,10 +157,7 @@ centrals:
 
 	err = os.WriteFile(tmpFile, []byte(`
 rhacsOperators:
-  crdUrls: []
-  operators: []
-centrals:
-  overrides: []
+  crdUrls: [bar]
 `), 0644)
 	require.NoError(t, err)
 

@@ -1,26 +1,14 @@
 package gitops
 
 import (
-	"encoding/json"
 	"strings"
 	"text/template"
 
 	"helm.sh/helm/v3/pkg/chartutil"
 
 	"github.com/pkg/errors"
-	"github.com/stackrox/rox/operator/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"sigs.k8s.io/yaml"
 )
-
-// RenderCentral renders a Central instance for the given GitOps configuration and parameters.
-func RenderCentral(params CentralParams, config Config) (v1alpha1.Central, error) {
-	central, err := renderDefaultCentral(params)
-	if err != nil {
-		return v1alpha1.Central{}, errors.Wrap(err, "failed to get default Central instance")
-	}
-	return applyConfigToCentral(config, central, params)
-}
 
 // RenderTenantResourceValues renders the values for tenant resources helm chart for the given GitOps configuration and parameters.
 func RenderTenantResourceValues(params CentralParams, config Config) (map[string]interface{}, error) {
@@ -50,18 +38,6 @@ func RenderTenantResourceValues(params CentralParams, config Config) (map[string
 		values = chartutil.CoalesceTables(patchValues, values)
 	}
 	return values, nil
-}
-
-func renderDefaultCentral(params CentralParams) (v1alpha1.Central, error) {
-	wr := new(strings.Builder)
-	if err := defaultTemplate.Execute(wr, params); err != nil {
-		return v1alpha1.Central{}, errors.Wrap(err, "failed to render default template")
-	}
-	var central v1alpha1.Central
-	if err := yaml.Unmarshal([]byte(wr.String()), &central); err != nil {
-		return v1alpha1.Central{}, errors.Wrap(err, "failed to unmarshal default central")
-	}
-	return central, nil
 }
 
 // CentralParams represents the parameters for a Central instance.
@@ -100,44 +76,6 @@ type CentralParams struct {
 	IsInternal bool
 }
 
-// applyConfigToCentral will apply the given GitOps configuration to the given Central instance.
-func applyConfigToCentral(config Config, central v1alpha1.Central, ctx CentralParams) (v1alpha1.Central, error) {
-	var overrides []CentralOverride
-	for _, override := range config.Centrals.Overrides {
-		if !shouldApplyOverride(override.InstanceIDs, ctx) {
-			continue
-		}
-		overrides = append(overrides, override)
-	}
-	if len(overrides) == 0 {
-		return central, nil
-	}
-	// render override path templates
-	for i, override := range overrides {
-		var err error
-		overrides[i].Patch, err = renderPatchTemplate(override.Patch, ctx)
-		if err != nil {
-			return v1alpha1.Central{}, err
-		}
-	}
-	centralBytes, err := json.Marshal(central)
-	if err != nil {
-		return v1alpha1.Central{}, errors.Wrap(err, "failed to marshal Central instance")
-	}
-	for _, override := range overrides {
-		patchBytes := []byte(override.Patch)
-		centralBytes, err = applyPatchToCentral(centralBytes, patchBytes)
-		if err != nil {
-			return v1alpha1.Central{}, err
-		}
-	}
-	var result v1alpha1.Central
-	if err := json.Unmarshal(centralBytes, &result); err != nil {
-		return v1alpha1.Central{}, errors.Wrap(err, "failed to unmarshal Central instance")
-	}
-	return result, nil
-}
-
 // shouldApplyOverride returns true if the given Central override should be applied to the given Central instance.
 func shouldApplyOverride(instanceIDs []string, ctx CentralParams) bool {
 	for _, d := range instanceIDs {
@@ -151,21 +89,6 @@ func shouldApplyOverride(instanceIDs []string, ctx CentralParams) bool {
 	return false
 }
 
-// applyPatchToCentral will apply the given patch to the given Central instance.
-func applyPatchToCentral(centralBytes, patch []byte) ([]byte, error) {
-	// convert patch from yaml to json
-	patchJson, err := yaml.YAMLToJSON(patch)
-	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to convert override patch from yaml to json")
-	}
-	// apply patch
-	patchedBytes, err := strategicpatch.StrategicMergePatch(centralBytes, patchJson, v1alpha1.Central{})
-	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to apply override to Central instance")
-	}
-	return patchedBytes, nil
-}
-
 func renderPatchTemplate(patchTemplate string, ctx CentralParams) (string, error) {
 	tpl, err := template.New("patch").Parse(patchTemplate)
 	if err != nil {
@@ -177,6 +100,3 @@ func renderPatchTemplate(patchTemplate string, ctx CentralParams) (string, error
 	}
 	return writer.String(), nil
 }
-
-// defaultTemplate is the default template for Central instances.
-var defaultTemplate = template.Must(template.New("default").Parse(string(defaultCentralTemplate)))

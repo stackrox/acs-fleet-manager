@@ -119,11 +119,6 @@ var simpleManagedCentral = private.ManagedCentral{
 			Host: fmt.Sprintf("acs-data-%s.acs.rhcloud.test", centralID),
 		},
 		InstanceType: "standard",
-		CentralCRYAML: `
-metadata:
-  name: ` + centralName + `
-  namespace: ` + centralNamespace + `
-`,
 	},
 }
 
