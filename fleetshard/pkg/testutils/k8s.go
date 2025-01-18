@@ -2,6 +2,7 @@
 package testutils
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -25,6 +26,11 @@ import (
 )
 
 var (
+	argoAppGVR = schema.GroupVersionResource{
+		Group:    "argoproj.io",
+		Version:  "v1alpha1",
+		Resource: "applications",
+	}
 	centralsGVR = schema.GroupVersionResource{
 		Group:    "platform.stackrox.io",
 		Version:  "v1alpha1",
@@ -146,18 +152,50 @@ func (t *ReconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.O
 	if err := t.ObjectTracker.Create(gvr, obj, ns); err != nil {
 		return fmt.Errorf("adding GVR %q to reconcile tracker: %w", gvr, err)
 	}
-	if gvr == centralsGVR {
-		var multiErr *multierror.Error
-		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(secretsGVR, newCentralTLSSecret(ns), ns))
-		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralRoute(ns)))
-		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralMtlsRoute(ns)))
-		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(deploymentGVR, NewCentralDeployment(ns), ns))
-		err := multiErr.ErrorOrNil()
+	if gvr == argoAppGVR {
+		app := obj.(*argoCd.Application)
+		destinationNamespace := extractDestinationNamespaceFromArgoCDApp(app)
+
+		centralCR, err := centralCrFromArgoCdApp(app)
 		if err != nil {
+			return fmt.Errorf("creating central CR from ArgoCD application: %w", err)
+		}
+
+		var multiErr *multierror.Error
+		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(centralsGVR, centralCR, destinationNamespace))
+		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(secretsGVR, newCentralTLSSecret(destinationNamespace), destinationNamespace))
+		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralRoute(destinationNamespace)))
+		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralMtlsRoute(destinationNamespace)))
+		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(deploymentGVR, NewCentralDeployment(destinationNamespace), destinationNamespace))
+		if err := multiErr.ErrorOrNil(); err != nil {
 			return fmt.Errorf("creating group version resource: %w", err)
 		}
 	}
 	return nil
+}
+
+func extractDestinationNamespaceFromArgoCDApp(app *argoCd.Application) string {
+	return app.Spec.Destination.Namespace
+}
+
+func centralCrFromArgoCdApp(app *argoCd.Application) (*platform.Central, error) {
+
+	helmValues := map[string]interface{}{}
+	if err := json.Unmarshal(app.Spec.Source.Helm.ValuesObject.Raw, &helmValues); err != nil {
+		return nil, errors.Wrap(err, "unmarshalling helm values")
+	}
+
+	instanceName, ok := helmValues["instanceName"].(string)
+	if !ok {
+		return nil, errors.New("instanceName not found in helm values")
+	}
+
+	return &platform.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instanceName,
+			Namespace: extractDestinationNamespaceFromArgoCDApp(app),
+		},
+	}, nil
 }
 
 func newCentralTLSSecret(ns string) *coreV1.Secret {

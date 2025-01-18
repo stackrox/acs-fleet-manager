@@ -72,7 +72,7 @@ func (r *managedDbReconciler) getDatabaseID(ctx context.Context, remoteCentralNa
 	return centralID, nil
 }
 
-func (r *managedDbReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral *private.ManagedCentral) (string, error) {
+func (r *managedDbReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral private.ManagedCentral) (string, error) {
 	centralDBUserExists, err := r.centralDBUserExists(ctx, remoteCentral.Metadata.Namespace)
 	if err != nil {
 		return "", err
@@ -134,7 +134,7 @@ func (r *managedDbReconciler) centralDBUserExists(ctx context.Context, remoteCen
 	return dbUserType == dbUserTypeCentral, nil
 }
 
-func (r *managedDbReconciler) ensureManagedCentralDBInitialized(ctx context.Context, remoteCentral *private.ManagedCentral) error {
+func (r *managedDbReconciler) ensureManagedCentralDBInitialized(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	centralDBSecretExists, err := r.centralDBSecretExists(ctx, remoteCentralNamespace)

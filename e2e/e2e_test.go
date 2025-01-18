@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"net"
 	"net/url"
 	"os"
@@ -243,7 +244,10 @@ var _ = Describe("Central", Ordered, func() {
 
 		It("should set ForceReconcile through gitops", func() {
 			cfg := defaultGitopsConfig()
-			cfg.Centrals.Overrides = append(cfg.Centrals.Overrides, overrideCentralWithPatch(centralRequestID, forceReconcilePatch()))
+			cfg.TenantResources.Overrides = append(cfg.TenantResources.Overrides, gitops.TenantResourceOverride{
+				InstanceIDs: []string{centralRequestID},
+				Values:      `forceReconcile: true`,
+			})
 			Expect(putGitopsConfig(ctx, cfg)).To(Succeed())
 		})
 

@@ -3,7 +3,6 @@ package reconciler
 import (
 	"context"
 	"fmt"
-
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -20,7 +19,6 @@ const crNameLabelKey = "app.kubernetes.io/instance"
 type TenantCleanup struct {
 	k8sClient      ctrlClient.Client
 	nsReconciler   *namespaceReconciler
-	crReconciler   *centralCrReconciler
 	argoReconciler *argoReconciler
 }
 
@@ -35,7 +33,6 @@ func NewTenantCleanup(k8sClient ctrlClient.Client, opts TenantCleanupOptions) *T
 	return &TenantCleanup{
 		k8sClient:      k8sClient,
 		nsReconciler:   newNamespaceReconciler(k8sClient),
-		crReconciler:   newCentralCrReconciler(k8sClient),
 		argoReconciler: newArgoReconciler(k8sClient, opts.ArgoReconcilerOptions),
 	}
 }
@@ -94,17 +91,11 @@ func (t *TenantCleanup) DeleteK8sResources(ctx context.Context, namespace string
 	}
 	globalDeleted = globalDeleted && argoCdAppDeleted
 
-	deleted, err := t.crReconciler.ensureDeleted(ctx, namespace, tenantName)
-	if err != nil {
-		return false, fmt.Errorf("Failed to delete central CR in namespace %q: %w", namespace, err)
-	}
-	globalDeleted = globalDeleted && deleted
-
-	deleted, err = t.nsReconciler.ensureDeleted(ctx, namespace)
+	namespaceDeleted, err := t.nsReconciler.ensureDeleted(ctx, namespace)
 	if err != nil {
 		return false, fmt.Errorf("Failed to delete namespace for tenant in namespace %q: %w", namespace, err)
 	}
-	globalDeleted = globalDeleted && deleted
+	globalDeleted = globalDeleted && namespaceDeleted
 
 	return globalDeleted, nil
 }

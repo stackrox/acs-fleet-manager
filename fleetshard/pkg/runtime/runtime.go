@@ -139,15 +139,14 @@ func (r *Runtime) Start() error {
 		ManagedDBEnabled:                           r.config.ManagedDB.Enabled,
 		ClusterName:                                r.config.ClusterName,
 		Environment:                                r.config.Environment,
-		Telemetry:                                  r.config.Telemetry,
 		WantsAuthProvider:                          r.config.CreateAuthProvider,
+		Telemetry:                                  r.config.Telemetry,
 	}
 
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
 		UseRoutes:             routesAvailable,
 		WantsAuthProvider:     r.config.CreateAuthProvider,
 		ManagedDBEnabled:      r.config.ManagedDB.Enabled,
-		Telemetry:             r.config.Telemetry,
 		ClusterName:           r.config.ClusterName,
 		Environment:           r.config.Environment,
 		AuditLogging:          r.config.AuditLogging,
