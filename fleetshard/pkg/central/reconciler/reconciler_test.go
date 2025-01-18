@@ -2114,7 +2114,7 @@ func TestReconciler_needsReconcile(t *testing.T) {
 		// central (hash) has changed
 		changed bool
 		// the central to reconcile
-		central *v1alpha1.Central
+		central private.ManagedCentral
 		// mocking the areSecretsStoredFunc
 		secretsStoredFunc areSecretsStoredFunc
 		// how long since the last hash was stored
@@ -2125,38 +2125,38 @@ func TestReconciler_needsReconcile(t *testing.T) {
 		{
 			name:              "no change",
 			changed:           false,
-			central:           &v1alpha1.Central{},
+			central:           private.ManagedCentral{},
 			secretsStoredFunc: func([]string) bool { return true },
 			timePassed:        0,
 			want:              false,
 		}, {
 			name:              "central changed",
 			changed:           true,
-			central:           &v1alpha1.Central{},
+			central:           private.ManagedCentral{},
 			secretsStoredFunc: func([]string) bool { return true },
 			timePassed:        0,
 			want:              true,
 		}, {
 			name:              "secrets not stored",
 			changed:           false,
-			central:           &v1alpha1.Central{},
+			central:           private.ManagedCentral{},
 			secretsStoredFunc: func([]string) bool { return false },
 			timePassed:        0,
 			want:              true,
 		}, {
 			name:              "time passed",
 			changed:           false,
-			central:           &v1alpha1.Central{},
+			central:           private.ManagedCentral{},
 			secretsStoredFunc: func([]string) bool { return true },
 			timePassed:        1 * time.Hour,
 			want:              true,
 		}, {
 			name:    "force reconcile",
 			changed: false,
-			central: &v1alpha1.Central{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"rhacs.redhat.com/force-reconcile": "true",
+			central: private.ManagedCentral{
+				Spec: private.ManagedCentralAllOfSpec{
+					TenantResourcesValues: map[string]interface{}{
+						"forceReconcile": true,
 					},
 				},
 			},
@@ -2197,7 +2197,7 @@ func TestReconcilerRaceCondition(t *testing.T) {
 	name := central1.Metadata.Name
 
 	// we mock the "needsReconcileFunc" to only return true when the hash changes
-	r.needsReconcileFunc = func(changed bool, central *v1alpha1.Central, storedSecrets []string) bool {
+	r.needsReconcileFunc = func(changed bool, central private.ManagedCentral, storedSecrets []string) bool {
 		return changed
 	}
 	// we mock the "restoreCentralSecrets" to always succeed

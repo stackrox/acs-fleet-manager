@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"reflect"
 	"sort"
 	"sync/atomic"
@@ -96,7 +97,7 @@ const (
 )
 
 type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error)
-type needsReconcileFunc func(changed bool, central *v1alpha1.Central, storedSecrets []string) bool
+type needsReconcileFunc func(changed bool, central private.ManagedCentral, storedSecrets []string) bool
 type restoreCentralSecretsFunc func(ctx context.Context, remoteCentral private.ManagedCentral) error
 type areSecretsStoredFunc func(secretsStored []string) bool
 
@@ -189,7 +190,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	changed := r.centralChanged(centralHash)
 
-	needsReconcile := r.needsReconcileFunc(changed, central, remoteCentral.Metadata.SecretsStored)
+	needsReconcile := r.needsReconcileFunc(changed, remoteCentral, remoteCentral.Metadata.SecretsStored)
 
 	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
 		shouldUpdateCentralHash = true
@@ -201,7 +202,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
-		status, err := r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
+		status, err := r.reconcileInstanceDeletion(ctx, remoteCentral)
 		shouldUpdateCentralHash = err == nil
 		return status, err
 	}
@@ -268,7 +269,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if err = r.ensureSecretHasOwnerReference(ctx, k8s.CentralTLSSecretName, &remoteCentral, central); err != nil {
+	if err = r.ensureSecretHasOwnerReference(ctx, k8s.CentralTLSSecretName, remoteCentral); err != nil {
 		return nil, err
 	}
 
@@ -480,11 +481,11 @@ func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remote
 	return false, nil
 }
 
-func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (*private.DataPlaneCentralStatus, error) {
+func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
-	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral, central)
+	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral)
 	if err != nil {
 		return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
 	}
@@ -920,8 +921,9 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (e
 // ensureSecretHasOwnerReference is used to make sure the central-tls secret has it's
 // owner reference properly set after a restore operation so that the automatic cert rotation
 // in the operator is working
-func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, secretName string, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
-	secret, err := r.getSecret(remoteCentral.Metadata.Namespace, secretName)
+func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, secretName string, remoteCentral private.ManagedCentral) error {
+	namespace := remoteCentral.Metadata.Namespace
+	secret, err := r.getSecret(namespace, secretName)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			// no need to ensure correct owner reference if the secret doesn't exist
@@ -934,13 +936,16 @@ func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, s
 		return nil
 	}
 
-	centralCR := &v1alpha1.Central{}
-	if err := r.client.Get(ctx, ctrlClient.ObjectKeyFromObject(central), centralCR); err != nil {
+	centralCR := &unstructured.Unstructured{}
+	centralCR.SetGroupVersionKind(k8s.CentralGVK)
+
+	objectKey := ctrlClient.ObjectKey{Namespace: namespace, Name: remoteCentral.Metadata.Name}
+	if err := r.client.Get(ctx, objectKey, centralCR); err != nil {
 		return fmt.Errorf("getting current central CR from k8s: %w", err)
 	}
 
 	secret.OwnerReferences = []metav1.OwnerReference{
-		*metav1.NewControllerRef(centralCR, v1alpha1.CentralGVK),
+		*metav1.NewControllerRef(centralCR, k8s.CentralGVK),
 	}
 
 	if err := r.client.Update(ctx, secret); err != nil {
@@ -980,7 +985,7 @@ func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCen
 	}
 }
 
-func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (bool, error) {
+func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
 	globalDeleted := true
 
 	k8sResourcesDeleted, err := r.tenantCleanup.DeleteK8sResources(ctx, remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
@@ -989,14 +994,14 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && k8sResourcesDeleted
 
-	podsTerminated, err := r.ensureInstancePodsTerminated(ctx, central)
+	podsTerminated, err := r.ensureInstancePodsTerminated(ctx, remoteCentral)
 	if err != nil {
 		return false, err
 	}
 	globalDeleted = globalDeleted && podsTerminated
 
 	if r.managedDBEnabled {
-		dbDeleted, err := r.managedDbReconciler.ensureDeleted(ctx, *remoteCentral)
+		dbDeleted, err := r.managedDbReconciler.ensureDeleted(ctx, remoteCentral)
 		if err != nil {
 			return false, err
 		}
@@ -1135,14 +1140,16 @@ func generateDBPassword() (string, error) {
 	return password, nil
 }
 
-func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
+	namespace := remoteCentral.Metadata.Namespace
+	name := remoteCentral.Metadata.Name
 	err := wait.PollUntilContextCancel(ctx, centralDeletePollInterval, true, func(ctx context.Context) (bool, error) {
 		pods := &corev1.PodList{}
 		labelKey := "app.kubernetes.io/part-of"
 		labelValue := "stackrox-central-services"
 		labels := map[string]string{labelKey: labelValue}
 		err := r.client.List(ctx, pods,
-			ctrlClient.InNamespace(central.GetNamespace()),
+			ctrlClient.InNamespace(namespace),
 			ctrlClient.MatchingLabels(labels),
 		)
 
@@ -1153,7 +1160,7 @@ func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, ce
 		// Make sure that the returned pods are central service pods in the correct namespace
 		var filteredPods []corev1.Pod
 		for _, pod := range pods.Items {
-			if pod.Namespace != central.GetNamespace() {
+			if pod.Namespace != namespace {
 				continue
 			}
 			if val, exists := pod.Labels[labelKey]; !exists || val != labelValue {
@@ -1178,7 +1185,7 @@ func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, ce
 	if err != nil {
 		return false, fmt.Errorf("waiting for pods to terminate: %w", err)
 	}
-	glog.Infof("All pods terminated for tenant %s in namespace %s.", central.GetName(), central.GetNamespace())
+	glog.Infof("All pods terminated for tenant %s in namespace %s.", name, namespace)
 	return true, nil
 }
 
@@ -1283,7 +1290,7 @@ func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.Managed
 		isRemoteCentralReady(&remoteCentral)
 }
 
-func (r *CentralReconciler) needsReconcile(changed bool, central *v1alpha1.Central, storedSecrets []string) bool {
+func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.ManagedCentral, storedSecrets []string) bool {
 	if !r.areSecretsStoredFunc(storedSecrets) {
 		return true
 	}
@@ -1296,8 +1303,11 @@ func (r *CentralReconciler) needsReconcile(changed bool, central *v1alpha1.Centr
 		return true
 	}
 
-	forceReconcile, ok := central.Labels["rhacs.redhat.com/force-reconcile"]
-	return ok && forceReconcile == "true"
+	if force, ok := remoteCentral.Spec.TenantResourcesValues["forceReconcile"].(bool); ok && force {
+		return true
+	}
+
+	return false
 }
 
 func (r *CentralReconciler) configureAdditionalAuthProvider(secret *corev1.Secret, central private.ManagedCentral) error {
