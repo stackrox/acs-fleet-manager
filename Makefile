@@ -371,6 +371,22 @@ test/e2e: $(GINKGO_BIN)
 		 ./e2e/...
 .PHONY: test/e2e
 
+test/e2e/multicluster: $(GINKGO_BIN)
+	CLUSTER_ID=1234567890abcdef1234567890abcdef \
+	ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=$(ENABLE_CENTRAL_EXTERNAL_CERTIFICATE) \
+	GITOPS_CONFIG_PATH=$(GITOPS_CONFIG_FILE) \
+	RUN_MULTICLUSTER_E2E=true
+	$(GINKGO_BIN) -r $(GINKGO_FLAGS) \
+		--randomize-suites \
+		--fail-on-pending --keep-going \
+		--cover --coverprofile=cover.profile \
+		--race --trace \
+		--json-report=e2e-report.json \
+		--timeout=$(TEST_TIMEOUT) \
+		--poll-progress-after=5m \
+		 ./e2e/multicluster
+.PHONY: test/e2e/multicluster
+
 # Deploys the necessary applications to the selected cluster and runs e2e tests inside the container
 # Useful for debugging Openshift CI runs locally
 test/deploy/e2e-dockerized:

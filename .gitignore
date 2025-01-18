@@ -15,6 +15,10 @@
 emailsender-manifests.yaml
 central-chart/
 pids-port-forward
+# temp files created by multicluster e2e tests
+cluster-list.json
+cluster-list2.json
+fm-dataplane-config.yaml
 # Ignore uploaded files in development
 /storage/*
 
