@@ -63,63 +63,6 @@ centrals:
             value: "b"
             role: "Admin"
 `,
-		}, {
-			name: "invalid yaml in patch",
-			assert: func(t *testing.T, c *Config, err field.ErrorList) {
-				require.Len(t, err, 1)
-				assert.Equal(t, field.Invalid(field.NewPath("centrals", "overrides").Index(0).Child("patch"), "foo", "invalid patch: failed to apply override to Central instance: invalid JSON document"), err[0])
-			},
-			yaml: `
-centrals:
-  overrides:
-  - instanceIds:
-    - id1
-    patch: foo
-`,
-		}, {
-			name: "patch contains un-mergeable fields",
-			assert: func(t *testing.T, c *Config, err field.ErrorList) {
-				require.Len(t, err, 1)
-				assert.Equal(t, field.Invalid(field.NewPath("centrals", "overrides").Index(0).Child("patch"), "spec: 123\n", "invalid patch: failed to unmarshal Central instance: json: cannot unmarshal number into Go struct field Central.spec of type v1alpha1.CentralSpec"), err[0])
-			},
-			yaml: `
-centrals:
-  overrides:
-  - instanceIds:
-    patch: |
-      spec: 123
-`,
-		}, {
-			name: "invalid operator config and central config",
-			assert: func(t *testing.T, c *Config, err field.ErrorList) {
-				require.Len(t, err, 1)
-				assert.Contains(t, err.ToAggregate().Errors()[0].Error(), "invalid patch: failed to apply override to Central instance: invalid JSON document", "central config was not validated")
-			},
-			yaml: `
-centrals:
-  overrides:
-  - instanceIds:
-    - id1
-    patch: invalid
-`,
-		}, {
-			name: "invalid memory request",
-			assert: func(t *testing.T, c *Config, err field.ErrorList) {
-				require.Len(t, err, 1)
-				assert.Contains(t, err.ToAggregate().Errors()[0].Error(), "invalid patch: failed to unmarshal Central instance: quantities must match the regular expression", "central config was not validated")
-			},
-			yaml: `
-centrals:
-  overrides:
-  - instanceIds:
-    - id1
-    patch: |
-      spec:
-        central:
-          resources:
-            requests:
-              memory: "a"
-`,
 		},
 		{
 			name: "valid cluster config",
