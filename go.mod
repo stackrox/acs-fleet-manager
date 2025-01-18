@@ -69,7 +69,7 @@ require (
 	k8s.io/autoscaler/vertical-pod-autoscaler v1.2.0
 	k8s.io/client-go v11.0.1-0.20190816222228-6d55c1b1f1ca+incompatible
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
-	sigs.k8s.io/controller-runtime v0.18.5
+	sigs.k8s.io/controller-runtime v0.19.4
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -105,7 +105,7 @@ require (
 	github.com/bombsimon/logrusr/v2 v2.0.1 // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/bradleyfalzon/ghinstallation/v2 v2.6.0 // indirect
-	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/cloudflare/cfssl v1.6.5 // indirect
