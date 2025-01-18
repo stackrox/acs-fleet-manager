@@ -128,7 +128,7 @@ logging:
 # - enabled flag is used to completely enable/disable logging sub-chart
 audit-logs:
   enabled: true
-  image: 'registry.redhat.io/openshift-logging/vector-rhel8:v0.21'
+  image: 'registry.redhat.io/openshift-logging/vector-rhel8:v0.28'
   annotations: {}
   replicas: 3
   tolerations:
