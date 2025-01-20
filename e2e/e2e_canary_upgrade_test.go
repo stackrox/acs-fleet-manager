@@ -157,7 +157,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
 				config = defaultGitopsConfig()
 				config.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
-				config.Centrals.Overrides = []gitops.CentralOverride{
+				config.TenantResources.Overrides = []gitops.TenantResourceOverride{
 					overrideAllCentralsToBeReconciledByOperator(operatorConfig1),
 					overrideAllCentralsToUseMinimalResources(),
 				}
@@ -195,7 +195,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
 				config = defaultGitopsConfig()
 				config.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1, operatorConfig2}
-				config.Centrals.Overrides = []gitops.CentralOverride{
+				config.TenantResources.Overrides = []gitops.TenantResourceOverride{
 					overrideAllCentralsToBeReconciledByOperator(operatorConfig2),
 					overrideAllCentralsToUseMinimalResources(),
 				}
@@ -213,7 +213,8 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			Expect(err).To(HaveOccurred())
 			Expect(k8sErrors.IsNotFound(err)).To(BeTrue(), "central-vpa VerticalPodAutoscaler should not exist: %v", err)
 			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
-				config.TenantResources.Default = tenantResourcesWithCentralVpaEnabled()
+				config = defaultGitopsConfig()
+				config.TenantResources.Overrides = append(config.TenantResources.Overrides, overrideCentralWithPatch(createdCentral.Id, tenantResourcesWithCentralVpaEnabled()))
 				return config
 			})).To(Succeed())
 			debugGitopsConfig(ctx)
@@ -230,7 +231,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			_, err := getVPA(ctx, centralNamespace, "central-vpa")
 			Expect(err).ToNot(HaveOccurred(), "central-vpa VerticalPodAutoscaler should exist: %v", err)
 			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
-				config.TenantResources.Default = defaultTenantResourceValues()
+				config = defaultGitopsConfig()
 				return config
 			})).To(Succeed())
 			debugGitopsConfig(ctx)
@@ -488,38 +489,38 @@ func getLabelAndVersionFromOperatorConfig(operatorConfig operator.OperatorConfig
 	return versionLabelKey, versionLabelValue, nil
 }
 
-func overrideAllCentralsToBeReconciledByOperator(operatorConfig operator.OperatorConfig) gitops.CentralOverride {
+func overrideAllCentralsToBeReconciledByOperator(operatorConfig operator.OperatorConfig) gitops.TenantResourceOverride {
 	return overrideAllCentralsWithPatch(reconciledByOperatorPatch(operatorConfig))
 }
 
-func overrideAllCentralsToUseMinimalResources() gitops.CentralOverride {
+func overrideAllCentralsToUseMinimalResources() gitops.TenantResourceOverride {
 	return overrideAllCentralsWithPatch(minimalCentralResourcesPatch())
 }
 
-func overrideAllCentralsWithPatch(patch string) gitops.CentralOverride {
-	return gitops.CentralOverride{
+func overrideAllCentralsWithPatch(patch string) gitops.TenantResourceOverride {
+	return gitops.TenantResourceOverride{
 		InstanceIDs: []string{"*"},
-		Patch:       patch,
+		Values:      patch,
 	}
 }
 
-func overrideCentralWithPatch(centralID, patch string) gitops.CentralOverride {
-	return gitops.CentralOverride{
+func overrideCentralWithPatch(centralID, patch string) gitops.TenantResourceOverride {
+	return gitops.TenantResourceOverride{
 		InstanceIDs: []string{centralID},
-		Patch:       patch,
+		Values:      patch,
 	}
 }
 
 func reconciledByOperatorPatch(operatorConfig operator.OperatorConfig) string {
-	key, value, err := getLabelAndVersionFromOperatorConfig(operatorConfig)
+	_, value, err := getLabelAndVersionFromOperatorConfig(operatorConfig)
 	if err != nil {
 		panic(err)
 	}
-	return centralLabelPatch(key, value)
+	return `rolloutGroup: ` + value
 }
 
 func forceReconcilePatch() string {
-	return centralLabelPatch("rhacs.redhat.com/force-reconcile", "true")
+	return `forceReconcile: true`
 }
 
 func minimalCentralResourcesPatch() string {
@@ -569,13 +570,6 @@ spec:
 `
 }
 
-func centralLabelPatch(key, value string) string {
-	return fmt.Sprintf(`
-metadata:
-  labels:
-    ` + key + `: "` + value + `"`)
-}
-
 func defaultTenantResourceValues() string {
 	return `
 labels:
@@ -586,27 +580,42 @@ labels:
   rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
 annotations:
   rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
-argoCd:
-  enabled: true
 centralRdsCidrBlock: "10.1.0.0/16"
-centralVpaEnabled: false`
+centralVpaEnabled: false
+rolloutGroup: dev
+centralResources:
+  limits:
+    cpu: null
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 100Mi
+centralDbResources:
+  limits:
+    cpu: null
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 100Mi
+scannerResources:
+  limits:
+    cpu: null
+    memory: 2Gi
+  requests:
+    cpu: 100m
+    memory: 100Mi
+scannerDbResources:
+  limits:
+    cpu: null
+    memory: 3Gi
+  requests:
+    cpu: 100m
+    memory: 100Mi
+`
 }
 
 func tenantResourcesWithCentralVpaEnabled() string {
-	return `
-labels:
-  app.kubernetes.io/managed-by: "rhacs-fleetshard"
-  app.kubernetes.io/instance: "{{ .Name }}"
-  rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
-  rhacs.redhat.com/tenant: "{{ .ID }}"
-  rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
-argoCd:
-  enabled: true
-annotations:
-  rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
-centralRdsCidrBlock: "10.1.0.0/16"
-centralVpaEnabled: true
-`
+	return `centralVpaEnabled: true`
 }
 
 func defaultGitopsConfig() gitops.Config {
@@ -622,63 +631,6 @@ func defaultGitopsConfig() gitops.Config {
 					"image":                           "quay.io/rhacs-eng/stackrox-operator:4.5.4",
 					"centralLabelSelector":            "rhacs.redhat.com/version-selector=dev",
 					"securedClusterReconcilerEnabled": false,
-				},
-			},
-		},
-		Centrals: gitops.CentralsConfig{
-			Overrides: []gitops.CentralOverride{
-				{
-					InstanceIDs: []string{"*"},
-					Patch: `
-metadata:
-  labels:
-    rhacs.redhat.com/version-selector: "dev"`,
-				}, {
-					InstanceIDs: []string{"*"},
-					Patch: `
-spec:
-  monitoring:
-    openshift:
-      enabled: false
-  network:
-    policies: Disabled
-  central:
-    db:
-      resources:
-        limits:
-          cpu: null
-          memory: 1Gi
-        requests:
-          cpu: 100m
-          memory: 100Mi
-    resources:
-      limits:
-        cpu: null
-        memory: 1Gi
-      requests:
-        cpu: 100m
-        memory: 100Mi
-  scanner:
-    analyzer:
-      resources:
-        limits:
-          cpu: null
-          memory: 2Gi
-        requests:
-          cpu: 100m
-          memory: 100Mi
-      scaling:
-        autoScaling: "Disabled"
-        replicas: 1
-    db:
-      resources:
-        limits:
-          cpu: null
-          memory: 3Gi
-        requests:
-          cpu: 100m
-          memory: 100Mi
-`,
 				},
 			},
 		},

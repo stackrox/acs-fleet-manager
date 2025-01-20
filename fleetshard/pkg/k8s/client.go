@@ -23,6 +23,12 @@ var routesGVK = schema.GroupVersionResource{
 	Resource: "routes",
 }
 
+var CentralGVK = schema.GroupVersionKind{
+	Kind:    "Central",
+	Group:   "platform.stackrox.io",
+	Version: "v1alpha1",
+}
+
 func must(err error) {
 	if err != nil {
 		glog.Fatal(err)
