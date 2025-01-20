@@ -583,8 +583,6 @@ annotations:
 centralRdsCidrBlock: "10.1.0.0/16"
 centralVpaEnabled: false
 rolloutGroup: dev
-argoCd:
-  centralEnabled: true
 centralResources:
   limits:
     cpu: null
