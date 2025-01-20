@@ -130,8 +130,6 @@ spec:
               name: {{ .Values.fleetshardSync.tenantImagePullSecret.name | quote }}
               key: {{ .Values.fleetshardSync.tenantImagePullSecret.key | quote }}
         {{- end }}
-        - name: RHACS_PRINT_CENTRAL_UPDATE_DIFF
-          value: {{ .Values.fleetshardSync.printCentralUpdateDiff | quote }}
         - name: ARGOCD_NAMESPACE
           value: {{ .Values.fleetshardSync.argoCdNamespace | quote }}
         {{- if .Values.fleetshardSync.gitops.tenantDefaultAppSourceRepoUrl }}
