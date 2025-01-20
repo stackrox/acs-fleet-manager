@@ -718,8 +718,6 @@ components:
           type: string
         tenantResourcesValues:
           type: object
-        centralCRYAML:
-          type: string
         owners:
           items:
             type: string

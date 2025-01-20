@@ -124,25 +124,3 @@ func assertCentralEquality(t *testing.T, wantCentral *v1alpha1.Central, gotCentr
 
 	assert.YAMLEq(t, string(wantBytes), string(gotBytes))
 }
-
-func TestDefaultCentral(t *testing.T) {
-	p := getDummyCentralParams()
-	gotCentral, err := renderDefaultCentral(p)
-	assert.NoError(t, err)
-
-	wantCentral := wantCentralForDummyParams(&p)
-
-	assertCentralEquality(t, wantCentral, &gotCentral)
-}
-
-func TestInternalCentral(t *testing.T) {
-	p := getDummyCentralParams()
-	p.IsInternal = true
-	gotCentral, err := renderDefaultCentral(p)
-	assert.NoError(t, err)
-
-	wantCentral := wantCentralForDummyParams(&p)
-	wantCentral.Spec.Monitoring.OpenShiftMonitoring.Enabled = false
-
-	assertCentralEquality(t, wantCentral, &gotCentral)
-}
