@@ -570,13 +570,6 @@ spec:
 `
 }
 
-func centralLabelPatch(key, value string) string {
-	return fmt.Sprintf(`
-metadata:
-  labels:
-    ` + key + `: "` + value + `"`)
-}
-
 func defaultTenantResourceValues() string {
 	return `
 labels:
@@ -590,6 +583,8 @@ annotations:
 centralRdsCidrBlock: "10.1.0.0/16"
 centralVpaEnabled: false
 rolloutGroup: dev
+argoCd:
+  centralEnabled: true
 centralResources:
   limits:
     cpu: null
@@ -622,20 +617,7 @@ scannerDbResources:
 }
 
 func tenantResourcesWithCentralVpaEnabled() string {
-	return `
-labels:
-  app.kubernetes.io/managed-by: "rhacs-fleetshard"
-  app.kubernetes.io/instance: "{{ .Name }}"
-  rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
-  rhacs.redhat.com/tenant: "{{ .ID }}"
-  rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
-argoCd:
-  enabled: true
-annotations:
-  rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
-centralRdsCidrBlock: "10.1.0.0/16"
-centralVpaEnabled: true
-`
+	return `centralVpaEnabled: true`
 }
 
 func defaultGitopsConfig() gitops.Config {
