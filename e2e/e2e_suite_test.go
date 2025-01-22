@@ -14,10 +14,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
+	"github.com/stackrox/acs-fleet-manager/e2e/testutil"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -32,8 +31,8 @@ var (
 	dnsEnabled            bool
 	routesEnabled         bool
 	route53Client         *route53.Route53
-	waitTimeout           = getWaitTimeout()
-	extendedWaitTimeout   = getWaitTimeout() * 3
+	waitTimeout           = testutil.GetWaitTimeout()
+	extendedWaitTimeout   = testutil.GetWaitTimeout() * 3
 	dpCloudProvider       = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
 	dpRegion              = getEnvDefault("DP_REGION", "standalone")
 	fleetManagerEndpoint  = "http://localhost:8000"
@@ -51,18 +50,6 @@ var (
 		RateTCP:       16,
 	}
 )
-
-func getWaitTimeout() time.Duration {
-	timeoutStr, ok := os.LookupEnv("WAIT_TIMEOUT")
-	if ok {
-		timeout, err := time.ParseDuration(timeoutStr)
-		if err == nil {
-			return timeout
-		}
-		fmt.Printf("Error parsing timeout, using default timeout %v: %s\n", defaultTimeout, err)
-	}
-	return defaultTimeout
-}
 
 func getEnvDefault(key, defaultValue string) string {
 	value, ok := os.LookupEnv(key)
@@ -89,7 +76,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	var accessKey, secretKey string
-	dnsEnabled, accessKey, secretKey = isDNSEnabled(routesEnabled)
+	dnsEnabled, accessKey, secretKey = testutil.DNSConfiguration(routesEnabled)
 
 	if dnsEnabled {
 		creds := credentials.NewStaticCredentials(
@@ -123,58 +110,6 @@ func enableTestsGroup(testName string, envName string, defaultValue string) bool
 		GinkgoWriter.Printf("Skipping %s tests. Set %s=true to run these tests", testName, envName)
 	}
 	return false
-}
-
-func isDNSEnabled(routesEnabled bool) (bool, string, string) {
-	accessKey := os.Getenv("ROUTE53_ACCESS_KEY")
-	secretKey := os.Getenv("ROUTE53_SECRET_ACCESS_KEY")
-	enableExternal := os.Getenv("ENABLE_CENTRAL_EXTERNAL_CERTIFICATE")
-	dnsEnabled := accessKey != "" &&
-		secretKey != "" &&
-		enableExternal != "" && routesEnabled
-	return dnsEnabled, accessKey, secretKey
-}
-
-func assertCentralRequestStatus(ctx context.Context, client *fleetmanager.Client, id string, status string) func() error {
-	return func() error {
-		centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
-		if err != nil {
-			return err
-		}
-		if centralRequest.Status != status {
-			return fmt.Errorf("expected centralRequest status %s, got %s", status, centralRequest.Status)
-		}
-		return nil
-	}
-}
-
-func assertCentralRequestReady(ctx context.Context, client *fleetmanager.Client, id string) func() error {
-	return assertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusReady.String())
-}
-
-func assertCentralRequestProvisioning(ctx context.Context, client *fleetmanager.Client, id string) func() error {
-	return assertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusProvisioning.String())
-}
-
-func assertCentralRequestDeprovisioning(ctx context.Context, client *fleetmanager.Client, id string) func() error {
-	return assertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusDeprovision.String())
-}
-
-func assertCentralRequestDeleting(ctx context.Context, client *fleetmanager.Client, id string) func() error {
-	return assertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusDeleting.String())
-}
-
-func assertCentralRequestAccepted(ctx context.Context, client *fleetmanager.Client, id string) func() error {
-	return assertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusAccepted.String())
-}
-
-func obtainCentralRequest(ctx context.Context, client *fleetmanager.Client, id string, request *public.CentralRequest) error {
-	centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
-	if err != nil {
-		return err
-	}
-	*request = centralRequest
-	return nil
 }
 
 func assertStoredSecrets(ctx context.Context, privateAPI fleetmanager.PrivateAPI, centralRequestID string, expected []string) func() error {
@@ -266,20 +201,6 @@ func assertDeploymentHealthyReplicas(ctx context.Context, namespace, name string
 	}
 }
 
-func assertReencryptIngressRouteExist(ctx context.Context, namespace string, route *openshiftRouteV1.RouteIngress) func() error {
-	return func() error {
-		reencryptIngress, err := routeService.FindReencryptIngress(ctx, namespace)
-		if err != nil {
-			return fmt.Errorf("failed finding reencrypt ingress in namespace %s: %v", namespace, err)
-		}
-		if reencryptIngress == nil {
-			return fmt.Errorf("reencrypt ingress in namespace %s not found", namespace)
-		}
-		*route = *reencryptIngress
-		return nil
-	}
-}
-
 func assertReencryptRouteExist(ctx context.Context, namespace string, route *openshiftRouteV1.Route) func() error {
 	return func() error {
 		reencryptRoute, err := routeService.FindReencryptRoute(ctx, namespace)
@@ -305,11 +226,5 @@ func assertPassthroughRouteExist(ctx context.Context, namespace string, route *o
 		}
 		*route = *passthroughRoute
 		return nil
-	}
-}
-
-func SkipIf(condition bool, message string) {
-	if condition {
-		Skip(message, 1)
 	}
 }
