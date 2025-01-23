@@ -14,3 +14,29 @@ data:
   vector.yaml: |
 {{ tpl (toYaml .Values.customConfig) . | indent 4 }}
   {{- end }}
+  json-aggregator.lua: |
+    -- Copied from https://github.com/vectordotdev/vector/issues/4952 --
+    -- This lua function will aggregate valid multiline JSON events
+    function process(event, emit)
+      if merged_event == nil then -- a global variable containing the merged event
+        merged_event = event -- if it is empty, set it to the current event
+      else -- otherwise, concatenate the line in the stored merged event with the next line
+        merged_event.log.message = merged_event.log.message .. event.log.message
+      end
+
+      -- Count brackets to handle top level JSON arrays
+      local _, b1 = merged_event.log.message:gsub("%[","")
+      local _, b2 = merged_event.log.message:gsub("%]","")
+      if b1 > b2 then
+        return -- continue to merge events until JSON document is complete
+      end
+      -- Count curly braces to handle JSON document
+      local _, c1 = merged_event.log.message:gsub("{","")
+      local _, c2 = merged_event.log.message:gsub("}","")
+      if c1 > c2 then
+        return -- continue to merge events until JSON document is complete
+      end
+
+      emit(merged_event) -- emit the resulting event
+      merged_event = nil -- clear the merged event
+    end

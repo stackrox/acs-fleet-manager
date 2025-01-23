@@ -56,9 +56,16 @@ customConfig:
       encoding:
         codec: "json"
   transforms:
+    aggregator:
+      type: "lua"
+      version: "2"
+      inputs: [ "http_server" ]
+      hooks:
+        process: "process"
+      source: "require('json-aggregator')"
     conversion:
       type: "remap"
-      inputs: ["http_server"]
+      inputs: ["aggregator"]
       source: ". = parse_json!(string!(.message))"
 
 # Secrets used to set environment variables for Vector pod.
