@@ -15,13 +15,17 @@ data:
 {{ tpl (toYaml .Values.customConfig) . | indent 4 }}
   {{- end }}
   json-aggregator.lua: |
-    -- Copied from https://github.com/vectordotdev/vector/issues/4952 --
+    -- Copied from https://github.com/vectordotdev/vector/issues/4952
     -- This lua function will aggregate valid multiline JSON events
+    -- see: https://vector.dev/guides/advanced/merge-multiline-logs-with-lua/
     function process(event, emit)
       if merged_event == nil then -- a global variable containing the merged event
         merged_event = event -- if it is empty, set it to the current event
       else -- otherwise, concatenate the line in the stored merged event with the next line
-        merged_event.log.message = merged_event.log.message .. event.log.message
+        merged_event = safe_merge(merged_event, event)
+        if not merged_event then
+          return
+        end
       end
 
       -- Count brackets to handle top level JSON arrays
@@ -39,4 +43,13 @@ data:
 
       emit(merged_event) -- emit the resulting event
       merged_event = nil -- clear the merged event
+    end
+
+    function safe_merge(merged_event, event)
+      if #merged_event.log.message + #event.log.message > 10240 then
+        return nil
+      else
+        merged_event.log.message = merged_event.log.message .. event.log.message
+        return merged_event
+      end
     end
