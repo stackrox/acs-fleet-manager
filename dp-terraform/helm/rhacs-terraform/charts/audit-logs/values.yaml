@@ -26,7 +26,7 @@ customConfig:
       type: "http"
       address: "0.0.0.0:8888"
       decoding:
-        codec: "json"
+        codec: "bytes"
       tls:
         enabled: true
         ca_file: "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
@@ -39,7 +39,7 @@ customConfig:
       group_name: ""
       create_missing_group: false
       create_missing_stream: true
-      inputs: ["http_server"]
+      inputs: ["conversion"]
       stream_name: '{{ "{{" }} .tenant_id {{ "}}" }}'
       compression: none
       healthcheck:
@@ -55,6 +55,11 @@ customConfig:
         when_full: block
       encoding:
         codec: "json"
+  transforms:
+    conversion:
+      type: "remap"
+      inputs: ["http_server"]
+      source: ". = parse_json!(string!(.message))"
 
 # Secrets used to set environment variables for Vector pod.
 secrets:
