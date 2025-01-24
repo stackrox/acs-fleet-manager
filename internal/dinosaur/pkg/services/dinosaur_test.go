@@ -238,7 +238,7 @@ func Test_dinosaurService_RestoreExpiredDinosaurs(t *testing.T) {
 		func(s string, nv []driver.NamedValue) {
 			expiredAt, _ := (nv[11].Value).(*time.Time)
 			assert.Nil(t, expiredAt)
-			assert.Equal(t, "test-id", nv[12].Value)
+			assert.Equal(t, "test-id", nv[13].Value)
 			expiredChecked = true
 		})
 	svcErr := centralService.Restore(context.Background(), "test-id")
