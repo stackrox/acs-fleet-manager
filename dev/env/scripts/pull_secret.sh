@@ -16,7 +16,7 @@ name="$1"
 registry="$2"
 [[ -n "$registry" ]] || die "No registry specified"
 
-registry_auth="$("${DIR}/docker-auth.sh" -m k8s "$registry")"
+registry_auth="$("${DIR}/docker_auth.sh" -m k8s "$registry")"
 [[ -n "$registry_auth" ]] || die "Unable to get registry auth info."
 
 cat <<EOF

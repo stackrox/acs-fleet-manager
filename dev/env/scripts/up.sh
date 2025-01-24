@@ -70,12 +70,6 @@ if [[ -z "${DATAPLANE_ONLY}" ]]; then
 fi
 
 log "Deploying fleetshard-sync"
-TENANT_IMAGE_PULL_SECRET=""
-if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then # pragma: allowlist secret
-    TENANT_IMAGE_PULL_SECRET="rhacs-registry" # pragma: allowlist secret
-fi
-export TENANT_IMAGE_PULL_SECRET
-
 exec_fleetshard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
 apply "${MANIFESTS_DIR}/fleetshard-operator"
 

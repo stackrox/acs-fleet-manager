@@ -29,7 +29,7 @@ spec:
     secretEncryption:
       type: "local"
     tenantImagePullSecret:
-      name: $TENANT_IMAGE_PULL_SECRET
+      name: "rhacs-registry"
     nodeSelector: null
     tolerations: null
     addonAutoUpgradeEnabled: false

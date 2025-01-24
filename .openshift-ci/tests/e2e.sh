@@ -39,7 +39,6 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export GINKGO_FLAGS="--no-color -v"
     # When running in OpenShift CI, ensure we also run the auth E2E tests.
     RUN_AUTH_E2E_DEFAULT="true"
-    export INHERIT_IMAGEPULLSECRETS="true" # pragma: allowlist secret
 else
     log "Executing in local context"
 fi
@@ -75,17 +74,14 @@ fi
 
 log
 
-if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then # pragma: allowlist secret
-    log "INHERIT_IMAGEPULLSECRETS is true, verifying that QUAY_USER and QUAY_TOKEN are set"
-    if [[ -z "${QUAY_USER:-}" ]]; then
-        die "QUAY_USER needs to be set"
-    fi
-    if [[ -z "${QUAY_TOKEN:-}" ]]; then
-        die "QUAY_TOKEN needs to be set"
-    fi
-    export REGISTRY_USERNAME="${QUAY_USER}"
-    export REGISTRY_PASSWORD="${QUAY_TOKEN}"
+if [[ -z "${QUAY_USER:-}" ]]; then
+    die "QUAY_USER needs to be set"
 fi
+if [[ -z "${QUAY_TOKEN:-}" ]]; then
+    die "QUAY_TOKEN needs to be set"
+fi
+export REGISTRY_USERNAME="${QUAY_USER}"
+export REGISTRY_PASSWORD="${QUAY_TOKEN}"
 
 # Configuration specific to this e2e test suite:
 export ENABLE_DB_PORT_FORWARDING="false"
