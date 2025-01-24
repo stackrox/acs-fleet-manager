@@ -37,7 +37,6 @@ The scripts can be configured using environment variables, the most important op
 * `FLEET_MANAGER_IMAGE`: Reference for an `acs-fleet-manager` image. If unset, build a fresh image from the current source and deploy that.
 * `STATIC_TOKEN`: Needs to contain a valid test user token (can be found in BitWarden)
 * `STATIC_TOKEN_ADMIN`: Needs to contain a valid admin token (can be found in BitWarden)
-* `QUAY_USER` & `QUAY_TOKEN`: Mandatory setting in case images need to be pulled from Quay.
 
 ## Prepare the environment
 1. Install the [necessary tools](#Required tools)
@@ -47,8 +46,6 @@ The scripts can be configured using environment variables, the most important op
     kubectl use-context <cluster>
     ```  
 1. Set the required environment variables:
-   * `QUAY_USER`
-   * `QUAY_TOKEN`
    * `STATIC_TOKEN`
    * `STATIC_TOKEN_ADMIN`
 

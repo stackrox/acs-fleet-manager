@@ -80,22 +80,9 @@ fi
 
 apply "${MANIFESTS_DIR}/addons"
 
-if is_local_cluster "$CLUSTER_TYPE"; then
-    if [[  "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
-        if docker_logged_in "quay.io"; then
-            log "Looks like we are already logged into Quay"
-        else
-            log "Logging into Quay image registry"
-            $DOCKER login quay.io -u "$QUAY_USER" --password-stdin <<EOF
-$QUAY_TOKEN
-EOF
-        fi
-    fi
-
-    if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
-        log "Ensuring operator images exist from dev GitOps config"
-        ensure_operator_image_exists.sh
-    fi
+if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
+    log "Ensuring operator images exist from dev GitOps config"
+    ensure_operator_image_exists.sh
 fi
 
 log

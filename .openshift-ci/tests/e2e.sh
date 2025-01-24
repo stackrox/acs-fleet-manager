@@ -83,6 +83,8 @@ if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then # pragma: allowlist secret
     if [[ -z "${QUAY_TOKEN:-}" ]]; then
         die "QUAY_TOKEN needs to be set"
     fi
+    export REGISTRY_USERNAME="${QUAY_USER}"
+    export REGISTRY_PASSWORD="${QUAY_TOKEN}"
 fi
 
 # Configuration specific to this e2e test suite:
