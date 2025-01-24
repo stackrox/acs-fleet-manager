@@ -859,6 +859,7 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 		// of the expiration manager. If there is still no quota, the grace
 		// period will start over.
 		"ExpiredAt",
+		"EnteredProvisioningAt",
 	}
 
 	// use a new central request, so that unset field for columnsToReset will automatically be set to the zero value
@@ -866,7 +867,9 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 	resetRequest := &dbapi.CentralRequest{}
 	resetRequest.ID = centralRequest.ID
 	resetRequest.Status = dinosaurConstants.CentralRequestStatusPreparing.String()
-	resetRequest.CreatedAt = time.Now()
+	now := time.Now()
+	resetRequest.CreatedAt = now
+	resetRequest.EnteredProvisioningAt = dbapi.TimePtrToNullTime(&now)
 
 	logStateChange("restore", resetRequest.ID, resetRequest)
 
