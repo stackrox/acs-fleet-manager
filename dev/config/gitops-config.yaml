@@ -4,7 +4,8 @@ rhacsOperators:
     - https://raw.githubusercontent.com/stackrox/stackrox/4.6.1/operator/bundle/manifests/platform.stackrox.io_centrals.yaml
   operators:
     - deploymentName: "rhacs-operator-dev"
-      image: "quay.io/rhacs-eng/stackrox-operator:4.6.1"
+      # Use the fast stream tag, since it has multi-arch support (arm64 for Apple silicon).
+      image: "quay.io/rhacs-eng/stackrox-operator:4.6.1-6-g82318a0372-fast"
       centralLabelSelector: "rhacs.redhat.com/version-selector=dev"
       securedClusterReconcilerEnabled: false
 verticalPodAutoscaling:
