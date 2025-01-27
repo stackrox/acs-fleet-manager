@@ -1129,6 +1129,7 @@ func (k *dinosaurService) ChangeBillingParameters(ctx context.Context, centralID
 		return svcErr
 	}
 	updated.subscriptionID = newSubscriptionID
+	centralRequest.SubscriptionID = newSubscriptionID
 
 	if !reflect.DeepEqual(original, updated) {
 		if svcErr = k.UpdateIgnoreNils(centralRequest); svcErr != nil {
