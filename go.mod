@@ -13,7 +13,7 @@ require (
 	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/containers/image/v5 v5.32.2
-	github.com/coreos/go-oidc/v3 v3.11.0
+	github.com/coreos/go-oidc/v3 v3.12.0
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.31.1
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
