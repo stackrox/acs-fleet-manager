@@ -41,7 +41,7 @@ func DNSConfiguration(routesEnabled bool) (dnsEnabled bool, accessKey string, se
 	enableExternal := os.Getenv("ENABLE_CENTRAL_EXTERNAL_CERTIFICATE")
 	dnsEnabled = accessKey != "" &&
 		secretKey != "" &&
-		enableExternal != "" && routesEnabled
+		enableExternal == "true" && routesEnabled
 	return dnsEnabled, accessKey, secretKey
 }
 
