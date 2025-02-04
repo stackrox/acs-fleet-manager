@@ -1,11 +1,10 @@
 rhacsOperators:
   crdUrls:
-    - https://raw.githubusercontent.com/stackrox/stackrox/4.6.1/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml
-    - https://raw.githubusercontent.com/stackrox/stackrox/4.6.1/operator/bundle/manifests/platform.stackrox.io_centrals.yaml
+    - https://raw.githubusercontent.com/stackrox/stackrox/4.6.2/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml
+    - https://raw.githubusercontent.com/stackrox/stackrox/4.6.2/operator/bundle/manifests/platform.stackrox.io_centrals.yaml
   operators:
     - deploymentName: "rhacs-operator-dev"
-      # Use the fast stream tag, since it has multi-arch support (arm64 for Apple silicon).
-      image: "quay.io/rhacs-eng/stackrox-operator:4.6.1-6-g82318a0372-fast"
+      image: "registry.redhat.io/advanced-cluster-security/rhacs-rhel8-operator@sha256:a96572d0df791da60763dec4b4f0f52124772c3649303170968806dcc3de8269" # 4.6.2
       centralLabelSelector: "rhacs.redhat.com/version-selector=dev"
       securedClusterReconcilerEnabled: false
 verticalPodAutoscaling:
