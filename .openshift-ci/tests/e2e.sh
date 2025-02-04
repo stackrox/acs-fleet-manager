@@ -80,8 +80,6 @@ fi
 if [[ -z "${QUAY_TOKEN:-}" ]]; then
     die "QUAY_TOKEN needs to be set"
 fi
-export REGISTRY_USERNAME="${QUAY_USER}"
-export REGISTRY_PASSWORD="${QUAY_TOKEN}"
 
 # Configuration specific to this e2e test suite:
 export ENABLE_DB_PORT_FORWARDING="false"
