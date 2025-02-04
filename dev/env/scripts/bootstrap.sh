@@ -35,7 +35,6 @@ apply "${MANIFESTS_DIR}/shared"
 wait_for_default_service_account "$ACSCS_NAMESPACE"
 
 create-imagepullsecrets
-inject_ips "$ACSCS_NAMESPACE" "default" "quay-ips"
 
 if [[ "$INSTALL_OPENSHIFT_ROUTER" == "true" ]]; then
     log "Installing OpenShift Router"
