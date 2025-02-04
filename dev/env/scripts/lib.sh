@@ -311,15 +311,6 @@ wait_for_resource_to_appear() {
     return 1
 }
 
-wait_for_default_service_account() {
-    local namespace="$1"
-    if wait_for_resource_to_appear "$namespace" "serviceaccount" "default"; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 assemble_kubeconfig() {
     kubeconf=$($KUBECTL config view --minify=true --raw=true 2>/dev/null)
     CONTEXT_NAME=$(echo "$kubeconf" | yq e .current-context -)

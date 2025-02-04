@@ -32,8 +32,6 @@ fi
 
 # Create Namespaces.
 apply "${MANIFESTS_DIR}/shared"
-wait_for_default_service_account "$ACSCS_NAMESPACE"
-
 create-imagepullsecrets
 
 if [[ "$INSTALL_OPENSHIFT_ROUTER" == "true" ]]; then
