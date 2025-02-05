@@ -47,7 +47,6 @@ external_image_registry:=quay.io/rhacs-eng
 internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 
 DOCKER ?= docker
-DOCKER_CONFIG ?= "${HOME}/.docker"
 
 # Default Variables
 ENABLE_OCM_MOCK ?= true
@@ -524,20 +523,6 @@ db/generate/insert/cluster:
 	echo -e "Run this command in your database:\n\nINSERT INTO clusters (id, created_at, updated_at, cloud_provider, cluster_id, external_id, multi_az, region, status, provider_type) VALUES ('"$$id"', current_timestamp, current_timestamp, '"$$provider"', '"$$id"', '"$$external_id"', "$$multi_az", '"$$region"', 'cluster_provisioned', 'ocm');";
 .PHONY: db/generate/insert/cluster
 
-# Login to docker
-docker/login: docker/login/fleet-manager
-.PHONY: docker/login
-
-docker/login/fleet-manager:
-	@docker logout quay.io
-	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
-.PHONY: docker/login/fleet-manager
-
-docker/login/probe:
-	@docker logout quay.io
-	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_PROBE_USER}" --password-stdin <<< "${QUAY_PROBE_TOKEN}" quay.io
-.PHONY: docker/login/probe
-
 # Login to the OpenShift internal registry
 docker/login/internal:
 	$(DOCKER) login -u kubeadmin --password-stdin <<< $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
@@ -545,7 +530,7 @@ docker/login/internal:
 
 # Build the image
 image/build:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(SHORT_IMAGE_REF) . --load
+	$(DOCKER) buildx build -t $(SHORT_IMAGE_REF) . --load
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 ifeq ("$(CLUSTER_TYPE)","kind")
@@ -557,20 +542,20 @@ endif
 image/build/probe: GOOS=linux
 image/build/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
 image/build/probe:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f probe/Dockerfile .
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(PROBE_SHORT_IMAGE_REF)
+	$(DOCKER) build -t $(IMAGE_REF) -f probe/Dockerfile .
+	$(DOCKER) tag $(IMAGE_REF) $(PROBE_SHORT_IMAGE_REF)
 .PHONY: image/build/probe
 
 image/build/fleet-manager-tools: GOOS=linux
 image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
 image/build/fleet-manager-tools: fleet-manager fleetshard-sync acsfleetctl
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.tools .
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) fleet-manager-tools:$(image_tag)
+	$(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.tools .
+	$(DOCKER) tag $(IMAGE_REF) fleet-manager-tools:$(image_tag)
 .PHONY: image/build/multi-target/fleet-manager-tools
 
 image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
 image/push/fleet-manager-tools: image/build/fleet-manager-tools
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
+	$(DOCKER) push $(IMAGE_REF)
 	@echo
 	@echo "Image fleet-manager-tools was pushed as $(IMAGE_REF)."
 .PHONY: image/push/fleet-manager-tools
@@ -578,13 +563,13 @@ image/push/fleet-manager-tools: image/build/fleet-manager-tools
 image/build/emailsender: GOOS=linux
 image/build/emailsender: IMAGE_REF="$(external_image_registry)/$(emailsender_image_repository):$(image_tag)"
 image/build/emailsender:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f emailsender/Dockerfile .
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(EMAILSENDER_SHORT_IMAGE_REF)
+	$(DOCKER) build -t $(IMAGE_REF) -f emailsender/Dockerfile .
+	$(DOCKER) tag $(IMAGE_REF) $(EMAILSENDER_SHORT_IMAGE_REF)
 .PHONY: image/build/emailsender
 
 image/push/emailsender: IMAGE_REF="$(external_image_registry)/$(emailsender_image_repository):$(image_tag)"
 image/push/emailsender: image/build/emailsender
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
+	$(DOCKER) push $(IMAGE_REF)
 	@echo
 	@echo "emailsender image was pushed as $(IMAGE_REF)."
 .PHONY: image/push/emailsender
@@ -595,7 +580,7 @@ image/push: image/push/fleet-manager image/push/probe
 
 image/push/fleet-manager: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/push/fleet-manager:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) buildx build -t $(IMAGE_REF) --platform $(IMAGE_PLATFORM) --push .
+	$(DOCKER) buildx build -t $(IMAGE_REF) --platform $(IMAGE_PLATFORM) --push .
 	@echo
 	@echo "Image was pushed as $(IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(IMAGE_REF)"
@@ -603,7 +588,7 @@ image/push/fleet-manager:
 
 image/push/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
 image/push/probe: image/build/probe
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
+	$(DOCKER) push $(IMAGE_REF)
 	@echo
 	@echo "Image was pushed as $(IMAGE_REF)."
 .PHONY: image/push/probe
@@ -745,10 +730,6 @@ deploy/envoy:
 deploy/route:
 	@oc process -f ./templates/route-template.yml --local | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/route
-
-# This will create the redhat-pull-secret secret in the rhacs-vertical-pod-autoscaler namespace if it does not exist
-deploy/redhat-pull-secret:
-	./scripts/redhat-pull-secret.sh rhacs-vertical-pod-autoscaler
 
 # When making changes to the gitops configuration for development purposes
 # situated here dev/env/manifests/fleet-manager/04-gitops-config.yaml, this

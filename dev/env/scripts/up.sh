@@ -48,8 +48,6 @@ if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-tls 2> /dev/null || true
     $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-envoy-tls 2> /dev/null || true
     $KUBECTL -n "$ACSCS_NAMESPACE" create secret generic fleet-manager-active-tls 2> /dev/null || true
-    # Create the redhat-pull-secret in the rhacs-vertical-pod-autoscaler namespace
-    make -C "$GITROOT" deploy/redhat-pull-secret
 fi
 
 DATAPLANE_ONLY=${DATAPLANE_ONLY:-}
@@ -70,12 +68,6 @@ if [[ -z "${DATAPLANE_ONLY}" ]]; then
 fi
 
 log "Deploying fleetshard-sync"
-TENANT_IMAGE_PULL_SECRET=""
-if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then # pragma: allowlist secret
-    TENANT_IMAGE_PULL_SECRET="rhacs-registry" # pragma: allowlist secret
-fi
-export TENANT_IMAGE_PULL_SECRET
-
 exec_fleetshard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
 apply "${MANIFESTS_DIR}/fleetshard-operator"
 

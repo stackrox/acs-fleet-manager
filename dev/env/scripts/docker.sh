@@ -32,19 +32,6 @@ docker_pull() {
     fi
 }
 
-docker_logged_in() {
-    local registry="${1:-}"
-    if [[ -z "$registry" ]]; then
-        log "docker_logged_in() called with empty registry argument"
-        return 1
-    fi
-    if jq -ec ".auths[\"${registry}\"]" <"$DOCKER_CONFIG/config.json" >/dev/null 2>&1; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 ensure_fleet_manager_image_exists() {
     if should_skip_image_build;  then
         return

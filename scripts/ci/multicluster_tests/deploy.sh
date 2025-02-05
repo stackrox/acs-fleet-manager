@@ -10,7 +10,6 @@ export CLUSTER_2_KUBECONFIG=${CLUSTER_2_KUBECONFIG:-"$HOME/.kube/cluster2"}
 
 # Bootstrap C1
 export KUBECONFIG="$CLUSTER_1_KUBECONFIG"
-export INHERIT_IMAGEPULLSECRETS="true" # pragma: allowlist secret
 
 # TODO: Double check how setup is done in OSCI so that we
 # Get the propper certificates to allow enabling creation of routes and DNS entries
