@@ -108,7 +108,6 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, dataplaneClusterConfig
 func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlaneClusterConfig, expectedConfig gitops.AddonConfig, installedOnCluster dbapi.AddonInstallation, existOnCluster bool) (provisionError error) {
 	var errs []error
 	clusterID := dataplaneClusterConfig.ClusterID
-	installedInOCM, addonErr := p.ocmClient.GetAddonInstallation(clusterID, expectedConfig.ID)
 	status := metrics.AddonHealthy
 
 	defer func() {
@@ -118,6 +117,12 @@ func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlan
 		}
 		p.updateAddonStatus(expectedConfig.ID, dataplaneClusterConfig.ClusterName, clusterID, status)
 	}()
+
+	if err := p.augmentGitopsWithOCMDefaultValues(&expectedConfig); err != nil {
+		errs = append(errs, fmt.Errorf("augment addon %s with default values from OCM: %w", expectedConfig.ID, err))
+		return
+	}
+	installedInOCM, addonErr := p.ocmClient.GetAddonInstallation(clusterID, expectedConfig.ID)
 
 	if addonErr != nil {
 		if addonErr.Is404() {
@@ -133,14 +138,6 @@ func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlan
 		glog.V(10).Infof("Addon %s is not in a final state: %s, skip until the next worker iteration", installedInOCM.ID(), installedInOCM.State())
 		status = metrics.AddonUpgrade
 		return
-	}
-	if expectedConfig.Version == "" {
-		addon, err := p.ocmClient.GetAddon(expectedConfig.ID)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("get addon %s with the latest version: %w", expectedConfig.ID, err))
-			return
-		}
-		expectedConfig.Version = addon.Version().ID()
 	}
 	if gitOpsConfigDifferent(expectedConfig, installedInOCM) {
 		errs = append(errs, p.updateAddon(clusterID, expectedConfig))
@@ -166,6 +163,39 @@ func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlan
 		errs = append(errs, validateUpToDateAddon(installedInOCM, installedOnCluster))
 	}
 	return
+}
+
+func (p *AddonProvisioner) augmentGitopsWithOCMDefaultValues(expectedConfig *gitops.AddonConfig) error {
+	if expectedConfig.Version == "" {
+		addon, err := p.ocmClient.GetAddon(expectedConfig.ID)
+		if err != nil {
+			return fmt.Errorf("get addon %s with the latest version: %w", expectedConfig.ID, err)
+		}
+		expectedConfig.Version = addon.Version().ID()
+		addDefaultParameters(expectedConfig, addon.Parameters())
+	} else {
+		addonInstallation, err := p.ocmClient.GetAddonVersion(expectedConfig.ID, expectedConfig.Version)
+		if err != nil {
+			return fmt.Errorf("get addon %s with the latest version: %w", expectedConfig.ID, err)
+		}
+		addDefaultParameters(expectedConfig, addonInstallation.Parameters())
+	}
+	return nil
+}
+
+func addDefaultParameters(config *gitops.AddonConfig, parameters *clustersmgmtv1.AddOnParameterList) {
+	if parameters == nil {
+		return
+	}
+	if config.Parameters == nil {
+		config.Parameters = make(map[string]string)
+	}
+	parameters.Each(func(parameter *clustersmgmtv1.AddOnParameter) bool {
+		if _, exists := config.Parameters[parameter.ID()]; !exists {
+			config.Parameters[parameter.ID()] = parameter.DefaultValue()
+		}
+		return true
+	})
 }
 
 func validateUpToDateAddon(ocmInstallation *clustersmgmtv1.AddOnInstallation, dataPlaneInstallation dbapi.AddonInstallation) error {
@@ -217,16 +247,12 @@ func (p *AddonProvisioner) installAddon(clusterID string, config gitops.AddonCon
 }
 
 func (p *AddonProvisioner) newInstallation(config gitops.AddonConfig) (*clustersmgmtv1.AddOnInstallation, error) {
-	builder := clustersmgmtv1.NewAddOnInstallation().
+	installation, err := clustersmgmtv1.NewAddOnInstallation().
 		ID(config.ID).
 		Addon(clustersmgmtv1.NewAddOn().ID(config.ID)).
-		Parameters(convertParametersToOCMAPI(config.Parameters))
-
-	if config.Version != "" {
-		builder = builder.AddonVersion(clustersmgmtv1.NewAddOnVersion().ID(config.Version))
-	}
-
-	installation, err := builder.Build()
+		Parameters(convertParametersToOCMAPI(config.Parameters)).
+		AddonVersion(clustersmgmtv1.NewAddOnVersion().ID(config.Version)).
+		Build()
 
 	if err != nil {
 		return nil, fmt.Errorf("build new addon installation %s: %w", config.ID, err)

@@ -53,6 +53,12 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 					CreateAddonInstallationFunc: func(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error {
 						return nil
 					},
+					GetAddonFunc: func(addonID string) (*clustersmgmtv1.AddOn, error) {
+						return clustersmgmtv1.NewAddOn().
+							ID(addonID).
+							Version(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+							Build()
+					},
 				},
 			},
 			args: args{
@@ -79,6 +85,12 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				ocmClient: &ocm.ClientMock{
 					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
 						return nil, errors.GeneralError("test")
+					},
+					GetAddonFunc: func(addonID string) (*clustersmgmtv1.AddOn, error) {
+						return clustersmgmtv1.NewAddOn().
+							ID(addonID).
+							Version(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+							Build()
 					},
 				},
 			},
@@ -107,6 +119,12 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 					},
 					CreateAddonInstallationFunc: func(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error {
 						return errors.GeneralError("test")
+					},
+					GetAddonFunc: func(addonID string) (*clustersmgmtv1.AddOn, error) {
+						return clustersmgmtv1.NewAddOn().
+							ID(addonID).
+							Version(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+							Build()
 					},
 				},
 			},
@@ -138,6 +156,12 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 					},
 					CreateAddonInstallationFunc: func(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error {
 						return nil
+					},
+					GetAddonFunc: func(addonID string) (*clustersmgmtv1.AddOn, error) {
+						return clustersmgmtv1.NewAddOn().
+							ID(addonID).
+							Version(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+							Build()
 					},
 				},
 			},
@@ -177,6 +201,12 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 						}
 						return nil
 					},
+					GetAddonFunc: func(addonID string) (*clustersmgmtv1.AddOn, error) {
+						return clustersmgmtv1.NewAddOn().
+							ID(addonID).
+							Version(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+							Build()
+					},
 				},
 			},
 			args: args{
@@ -214,6 +244,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 							Build()
 						Expect(err).To(Not(HaveOccurred()))
 						return object, nil
+					},
+					GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+						return clustersmgmtv1.NewAddOnVersion().ID("0.2.0").Build()
 					},
 				},
 			},
@@ -640,6 +673,273 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 				{clusterName: "acs-dev-dp-01", addonID: "acs-fleetshard", status: metrics.AddonHealthy},
 			},
 		},
+		{
+			name: "should install addon with default parameter",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
+						return nil, errors.NotFound("")
+					},
+					CreateAddonInstallationFunc: func(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error {
+						return nil
+					},
+					GetAddonFunc: func(addonID string) (*clustersmgmtv1.AddOn, error) {
+						return clustersmgmtv1.NewAddOn().
+							ID(addonID).
+							Version(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+							Parameters(clustersmgmtv1.NewAddOnParameterList().Items(clustersmgmtv1.NewAddOnParameter().ID("defaultParam").DefaultValue("123"))).
+							Build()
+
+					},
+				},
+			},
+			args: args{
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID: "acs-fleetshard",
+							Parameters: map[string]string{
+								"customParam": "abc",
+							},
+						},
+					},
+				},
+			},
+			want: func(mock *ocm.ClientMock) {
+				Expect(mock.CreateAddonInstallationCalls()).To(HaveLen(1))
+				Expect(mock.CreateAddonInstallationCalls()[0].Addon.Parameters().Len()).To(Equal(2))
+			},
+		},
+		{
+			name: "should parameter defined in gitops take precedence on install ",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
+						return nil, errors.NotFound("")
+					},
+					CreateAddonInstallationFunc: func(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error {
+						return nil
+					},
+					GetAddonFunc: func(addonID string) (*clustersmgmtv1.AddOn, error) {
+						return clustersmgmtv1.NewAddOn().
+							ID(addonID).
+							Version(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+							Parameters(clustersmgmtv1.NewAddOnParameterList().Items(clustersmgmtv1.NewAddOnParameter().ID("param").DefaultValue("default"))).
+							Build()
+
+					},
+				},
+			},
+			args: args{
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID: "acs-fleetshard",
+							Parameters: map[string]string{
+								"param": "custom",
+							},
+						},
+					},
+				},
+			},
+			want: func(mock *ocm.ClientMock) {
+				Expect(mock.CreateAddonInstallationCalls()).To(HaveLen(1))
+				Expect(mock.CreateAddonInstallationCalls()[0].Addon.Parameters().Len()).To(Equal(1))
+				Expect(mock.CreateAddonInstallationCalls()[0].Addon.Parameters().Get(0).ID()).To(Equal("param"))
+				Expect(mock.CreateAddonInstallationCalls()[0].Addon.Parameters().Get(0).Value()).To(Equal("custom"))
+			},
+		},
+		{
+			name: "should upgrade with default parameter",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
+						object, err := clustersmgmtv1.NewAddOnInstallation().
+							ID(addonID).
+							Addon(clustersmgmtv1.NewAddOn().ID(addonID)).
+							AddonVersion(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+							State(clustersmgmtv1.AddOnInstallationStateReady).
+							Parameters(clustersmgmtv1.NewAddOnInstallationParameterList().Items(clustersmgmtv1.NewAddOnInstallationParameter().ID("acscsEnvironment").Value("test"))).
+							Build()
+						Expect(err).To(Not(HaveOccurred()))
+						return object, nil
+					},
+					GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+						return clustersmgmtv1.NewAddOnVersion().
+							ID("0.2.0").
+							SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
+							PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
+							Parameters(clustersmgmtv1.NewAddOnParameterList().Items(
+								clustersmgmtv1.NewAddOnParameter().ID("defaultParam").DefaultValue("abc"))).
+							Build()
+					},
+					UpdateAddonInstallationFunc: func(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				cluster: api.Cluster{
+					Addons: addonsJSON([]dbapi.AddonInstallation{
+						{
+							ID:                  "acs-fleetshard",
+							Version:             "0.2.0",
+							SourceImage:         "quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac",
+							PackageImage:        "quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c",
+							ParametersSHA256Sum: "2b44291c69be83a96af144cc390b7919aebf6421d3d9a976543198032f257a48", // pragma: allowlist secret
+						},
+					}),
+				},
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID:      "acs-fleetshard",
+							Version: "0.2.0",
+						},
+					},
+				},
+			},
+			want: func(mock *ocm.ClientMock) {
+				Expect(mock.UpdateAddonInstallationCalls()).To(HaveLen(1))
+				Expect(mock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Len()).To(Equal(1))
+				Expect(mock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).ID()).To(Equal("defaultParam"))
+				Expect(mock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).Value()).To(Equal("abc"))
+			},
+		},
+		{
+			name: "should parameter defined in gitops take precedence on update",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
+						object, err := clustersmgmtv1.NewAddOnInstallation().
+							ID(addonID).
+							Addon(clustersmgmtv1.NewAddOn().ID(addonID)).
+							AddonVersion(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+							State(clustersmgmtv1.AddOnInstallationStateReady).
+							Parameters(clustersmgmtv1.NewAddOnInstallationParameterList().Items(clustersmgmtv1.NewAddOnInstallationParameter().ID("acscsEnvironment").Value("test"))).
+							Build()
+						Expect(err).To(Not(HaveOccurred()))
+						return object, nil
+					},
+					GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+						return clustersmgmtv1.NewAddOnVersion().
+							ID("0.2.0").
+							SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
+							PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
+							Parameters(clustersmgmtv1.NewAddOnParameterList().Items(
+								clustersmgmtv1.NewAddOnParameter().ID("param").DefaultValue("default"))).
+							Build()
+					},
+					UpdateAddonInstallationFunc: func(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				cluster: api.Cluster{
+					Addons: addonsJSON([]dbapi.AddonInstallation{
+						{
+							ID:                  "acs-fleetshard",
+							Version:             "0.2.0",
+							SourceImage:         "quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac",
+							PackageImage:        "quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c",
+							ParametersSHA256Sum: "2b44291c69be83a96af144cc390b7919aebf6421d3d9a976543198032f257a48", // pragma: allowlist secret
+						},
+					}),
+				},
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID:      "acs-fleetshard",
+							Version: "0.2.0",
+							Parameters: map[string]string{
+								"param": "custom",
+							},
+						},
+					},
+				},
+			},
+			want: func(mock *ocm.ClientMock) {
+				Expect(mock.UpdateAddonInstallationCalls()).To(HaveLen(1))
+				Expect(mock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Len()).To(Equal(1))
+				Expect(mock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).ID()).To(Equal("param"))
+				Expect(mock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Get(0).Value()).To(Equal("custom"))
+			},
+		},
+		{
+			name: "should default parameters be taken from the actual gitops version",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetAddonInstallationFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, *errors.ServiceError) {
+						object, err := clustersmgmtv1.NewAddOnInstallation().
+							ID(addonID).
+							Addon(clustersmgmtv1.NewAddOn().ID(addonID)).
+							AddonVersion(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+							State(clustersmgmtv1.AddOnInstallationStateReady).
+							Parameters(clustersmgmtv1.NewAddOnInstallationParameterList().Items(clustersmgmtv1.NewAddOnInstallationParameter().ID("acscsEnvironment").Value("test"))).
+							Build()
+						Expect(err).To(Not(HaveOccurred()))
+						return object, nil
+					},
+					GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+						if version == "0.2.0" {
+							return clustersmgmtv1.NewAddOnVersion().
+								ID("0.2.0").
+								SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
+								PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
+								Parameters(clustersmgmtv1.NewAddOnParameterList().Items(
+									clustersmgmtv1.NewAddOnParameter().ID("deprecatedParam").DefaultValue("value"))).
+								Build()
+						} else if version == "0.3.0" {
+							return clustersmgmtv1.NewAddOnVersion().
+								ID("0.3.0").
+								SourceImage("quay.io/osd-addons/acs-fleetshard-index@sha256:81eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac").
+								PackageImage("quay.io/osd-addons/acs-fleetshard-package@sha256:4e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c").
+								Build()
+						}
+						return nil, errors.NotFound("version not found")
+					},
+					UpdateAddonInstallationFunc: func(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				cluster: api.Cluster{
+					Addons: addonsJSON([]dbapi.AddonInstallation{
+						{
+							ID:                  "acs-fleetshard",
+							Version:             "0.2.0",
+							SourceImage:         "quay.io/osd-addons/acs-fleetshard-index@sha256:71eaaccb4d3962043eac953fb3c19a6cc6a88b18c472dd264efc5eb3da4960ac",
+							PackageImage:        "quay.io/osd-addons/acs-fleetshard-package@sha256:3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c",
+							ParametersSHA256Sum: "3e4fc039662b876c83dd4b48a9608d6867a12ab4932c5b7297bfbe50ba8ee61c", // pragma: allowlist secret
+						},
+					}),
+				},
+				clusterConfig: gitops.DataPlaneClusterConfig{
+					ClusterID:   "123456789abcdef",
+					ClusterName: "acs-dev-dp-01",
+					Addons: []gitops.AddonConfig{
+						{
+							ID:      "acs-fleetshard",
+							Version: "0.3.0",
+						},
+					},
+				},
+			},
+			want: func(mock *ocm.ClientMock) {
+				Expect(mock.UpdateAddonInstallationCalls()).To(HaveLen(1))
+				Expect(mock.UpdateAddonInstallationCalls()[0].Addon.Parameters().Len()).To(Equal(0))
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -669,8 +969,9 @@ func TestAddonProvisioner_Provision(t *testing.T) {
 					Expect(p.lastStatusPerInstall).NotTo(BeEmpty())
 				}
 			}
-
-			Expect(updates).To(Equal(tt.wantStatuses))
+			if tt.wantStatuses != nil {
+				Expect(updates).To(Equal(tt.wantStatuses))
+			}
 		})
 	}
 }
@@ -711,6 +1012,9 @@ func TestAddonProvisioner_Provision_NonFinalState(t *testing.T) {
 					object, err := builder.Build()
 					Expect(err).To(Not(HaveOccurred()))
 					return object, nil
+				},
+				GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+					return clustersmgmtv1.NewAddOnVersion().ID("0.2.0").Build()
 				},
 			}
 			p := &AddonProvisioner{
@@ -756,6 +1060,9 @@ func TestAddonProvisioner_Provision_AutoUpgradeDisabled(t *testing.T) {
 				Expect(err).To(Not(HaveOccurred()))
 				return object, nil
 			},
+			GetAddonVersionFunc: func(addonID string, version string) (*clustersmgmtv1.AddOnVersion, error) {
+				return clustersmgmtv1.NewAddOnVersion().ID("0.2.0").Build()
+			},
 		}
 		p := &AddonProvisioner{
 			ocmClient: &mock,
@@ -782,6 +1089,12 @@ func TestAddonProvisioner_Provision_InheritFleetshardImageTag_Install(t *testing
 		},
 		CreateAddonInstallationFunc: func(clusterID string, addon *clustersmgmtv1.AddOnInstallation) error {
 			return nil
+		},
+		GetAddonFunc: func(addonID string) (*clustersmgmtv1.AddOn, error) {
+			return clustersmgmtv1.NewAddOn().
+				ID(addonID).
+				Version(clustersmgmtv1.NewAddOnVersion().ID("0.2.0")).
+				Build()
 		},
 	}
 	addonConfig := ocmImpl.AddonConfig{
