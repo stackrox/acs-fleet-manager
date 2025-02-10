@@ -1046,7 +1046,8 @@ func (r *CentralReconciler) ensureCentralCASecretExists(ctx context.Context, cen
 	return centralTLSSecretFound, ensureSecretExists(ctx, r.client, centralNamespace, centralCaTLSSecretName, func(secret *corev1.Secret) error {
 		secret.Type = corev1.SecretTypeTLS
 		secret.Data = map[string][]byte{
-			corev1.TLSCertKey: centralTLSSecret.Data["ca.pem"],
+			corev1.TLSPrivateKeyKey: {},
+			corev1.TLSCertKey:       centralTLSSecret.Data["ca.pem"],
 		}
 		return nil
 	})
