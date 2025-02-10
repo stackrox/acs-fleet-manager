@@ -79,6 +79,9 @@ const (
 	centralDbOverrideConfigMap = "central-db-override"
 	centralDeletePollInterval  = 5 * time.Second
 
+	centralCaTLSSecretName        = "managed-central-ca"        // pragma: allowlist secret
+	centralReencryptTLSSecretName = "managed-central-reencrypt" // pragma: allowlist secret
+
 	centralEncryptionKeySecretName = "central-encryption-key-chain" // pragma: allowlist secret
 
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
@@ -240,12 +243,17 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			if err := r.ensureRoutesDeleted(ctx, remoteCentral); err != nil {
 				return nil, err
 			}
-		}
-		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
-			if k8s.IsCentralTLSNotFound(err) {
-				centralTLSSecretFound = false // pragma: allowlist secret
-			} else {
-				return nil, errors.Wrap(err, "updating routes")
+			centralTLSSecretFound, err = r.reconcileIngressSecrets(ctx, remoteCentral)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
+				if k8s.IsCentralTLSNotFound(err) {
+					centralTLSSecretFound = false // pragma: allowlist secret
+				} else {
+					return nil, errors.Wrap(err, "updating routes")
+				}
 			}
 		}
 	}
@@ -288,6 +296,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	glog.Infof("Returning central status %+v", logStatus)
 
 	return status, nil
+}
+
+func (r *CentralReconciler) reconcileIngressSecrets(ctx context.Context, remoteCentral private.ManagedCentral) (centralTLSSecretFound bool, err error) {
+	centralTLSSecretFound, err = r.ensureCentralCASecretExists(ctx, remoteCentral.Metadata.Namespace)
+	if err != nil {
+		return centralTLSSecretFound, err
+	}
+	return centralTLSSecretFound, r.ensureReencryptSecretExists(ctx, remoteCentral)
 }
 
 func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
@@ -1016,6 +1032,35 @@ func (r *CentralReconciler) ensureRoutesDeleted(ctx context.Context, remoteCentr
 		return fmt.Errorf("deleting passthrough route for namespace %q: %w", namespace, passthroughErr)
 	}
 	return nil
+}
+
+func (r *CentralReconciler) ensureCentralCASecretExists(ctx context.Context, centralNamespace string) (centralTLSSecretFound bool, err error) {
+	centralTLSSecretFound = true // pragma: allowlist secret
+	centralTLSSecret, err := r.getSecret(centralNamespace, k8s.CentralTLSSecretName)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			centralTLSSecretFound = false // pragma: allowlist secret
+		}
+		return centralTLSSecretFound, err
+	}
+	return centralTLSSecretFound, ensureSecretExists(ctx, r.client, centralNamespace, centralCaTLSSecretName, func(secret *corev1.Secret) error {
+		secret.Type = corev1.SecretTypeTLS
+		secret.Data = map[string][]byte{
+			corev1.TLSCertKey: centralTLSSecret.Data["ca.pem"],
+		}
+		return nil
+	})
+}
+
+func (r *CentralReconciler) ensureReencryptSecretExists(ctx context.Context, central private.ManagedCentral) error {
+	return ensureSecretExists(ctx, r.client, central.Metadata.Namespace, centralReencryptTLSSecretName, func(secret *corev1.Secret) error {
+		secret.Type = corev1.SecretTypeTLS
+		secret.Data = map[string][]byte{
+			corev1.TLSPrivateKeyKey: []byte(central.Spec.UiEndpoint.Tls.Key),
+			corev1.TLSCertKey:       []byte(central.Spec.UiEndpoint.Tls.Cert),
+		}
+		return nil
+	})
 }
 
 func getTenantLabels(c private.ManagedCentral) map[string]string {
