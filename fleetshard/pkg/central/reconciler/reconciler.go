@@ -234,6 +234,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	centralTLSSecretFound := true // pragma: allowlist secret
 	if r.useRoutes {
+		centralIngressEnabled, ok := remoteCentral.Spec.TenantResourcesValues["centralIngressEnabled"].(bool)
+		if ok && centralIngressEnabled {
+			// Routes / Ingress resources are managed by ArgoCD
+			if err := r.ensureRoutesDeleted(ctx, remoteCentral); err != nil {
+				return nil, err
+			}
+		}
 		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
 			if k8s.IsCentralTLSNotFound(err) {
 				centralTLSSecretFound = false // pragma: allowlist secret
@@ -994,6 +1001,20 @@ func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, re
 		return fmt.Errorf("updating passthrough route for central %s: %w", remoteCentral.Id, err)
 	}
 
+	return nil
+}
+
+func (r *CentralReconciler) ensureRoutesDeleted(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	namespace := remoteCentral.Metadata.Namespace
+	reencryptErr := r.routeService.DeleteReencryptRoute(ctx, namespace)
+	passthroughErr := r.routeService.DeletePassthroughRoute(ctx, namespace)
+
+	if reencryptErr != nil && !apiErrors.IsNotFound(reencryptErr) { // ok if not found
+		return fmt.Errorf("deleting reencrypt route for namespace %q: %w", namespace, reencryptErr)
+	}
+	if passthroughErr != nil && !apiErrors.IsNotFound(passthroughErr) { // ok if not found
+		return fmt.Errorf("deleting passthrough route for namespace %q: %w", namespace, passthroughErr)
+	}
 	return nil
 }
 

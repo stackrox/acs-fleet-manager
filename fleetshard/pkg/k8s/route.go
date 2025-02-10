@@ -8,7 +8,6 @@ import (
 	"github.com/stackrox/rox/pkg/errox"
 
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -201,7 +200,7 @@ func (s *RouteService) UpdateReencryptRoute(ctx context.Context, route *openshif
 	}
 
 	if err := s.client.Update(ctx, updatedRoute); err != nil {
-		return errors.Wrapf(err, "updating reencrypt route")
+		return fmt.Errorf("updating reencrypt route: %w", err)
 	}
 
 	return nil
@@ -238,7 +237,7 @@ func (s *RouteService) UpdatePassthroughRoute(ctx context.Context, route *opensh
 	}
 
 	if err := s.client.Update(ctx, updatedRoute); err != nil {
-		return errors.Wrapf(err, "updating passthrough route")
+		return fmt.Errorf("updating passthrough route: %w", err)
 	}
 
 	return nil
@@ -283,6 +282,30 @@ func (s *RouteService) createCentralRoute(
 
 	if err := s.client.Create(ctx, configuredRoute); err != nil {
 		return fmt.Errorf("creating route %s/%s: %w", namespace, name, err)
+	}
+	return nil
+}
+
+// DeleteReencryptRoute deletes central reencrypt route for a given namespace
+func (s *RouteService) DeleteReencryptRoute(ctx context.Context, namespace string) error {
+	return s.deleteRoute(ctx, centralReencryptRouteName, namespace)
+}
+
+// DeletePassthroughRoute deletes central passthrough route for a given namespace
+func (s *RouteService) DeletePassthroughRoute(ctx context.Context, namespace string) error {
+	return s.deleteRoute(ctx, centralPassthroughRouteName, namespace)
+}
+
+func (s *RouteService) deleteRoute(ctx context.Context, name string, namespace string) error {
+	route := &openshiftRouteV1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+			Labels:    map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
+		},
+	}
+	if err := s.client.Delete(ctx, route); err != nil {
+		return fmt.Errorf("deleting route %s/%s: %w", namespace, name, err)
 	}
 	return nil
 }
