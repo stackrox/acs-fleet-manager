@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 # Vector image used for audit-logs aggregator.
-image: 'registry.redhat.io/openshift-logging/vector-rhel8:v0.21'
+image: 'registry.redhat.io/openshift-logging/vector-rhel8:v0.28'
 
 # General annotations for all deployed resources.
 annotations: {}
