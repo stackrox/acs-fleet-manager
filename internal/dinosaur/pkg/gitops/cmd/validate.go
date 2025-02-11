@@ -3,12 +3,9 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-
-	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
-	"k8s.io/apimachinery/pkg/util/validation/field"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 )
 
 // NewGitOpsCommand creates a new gitops command.
@@ -31,29 +28,24 @@ func newValidateCommand() *cobra.Command {
 		Use:   "validate",
 		Short: "Validate the gitops config.",
 		Long:  "Validate the gitops config.",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
-				glog.Errorf("gitops file path expected as first argument")
-				os.Exit(1)
+				return errors.New("gitops file path expected as first argument")
 			}
 
-			configs, err := operator.ReadConfigs(args[0])
+			gf := gitops.NewFileReader(args[0])
+			cfg, err := gf.Read()
 			if err != nil {
-				glog.Errorf("validation failed reading configs: %s", err)
-				os.Exit(1)
+				return errors.Wrap(err, "failed to read gitops config")
 			}
 
-			fieldPath := &field.Path{}
-			errors := operator.Validate(fieldPath, configs)
-			if len(errors) > 0 {
-				glog.Errorf("gitops validation failed")
-				for _, err := range errors {
-					glog.Error(err)
-				}
-				os.Exit(1)
+			errs := gitops.ValidateConfig(cfg)
+			if len(errs) > 0 {
+				return fmt.Errorf("validation failed: %v", errs.ToAggregate())
 			}
 
 			fmt.Println("validation successful")
+			return nil
 		},
 	}
 }

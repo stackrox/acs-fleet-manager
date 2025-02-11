@@ -2,13 +2,19 @@ kind: Namespace
 apiVersion: v1
 metadata:
   name: "$ACSCS_NAMESPACE"
+  labels:
+    argocd.argoproj.io/managed-by: "$ARGOCD_NAMESPACE"
 ---
 kind: Namespace
 apiVersion: v1
 metadata:
   name: $STACKROX_OPERATOR_NAMESPACE
+  labels:
+    argocd.argoproj.io/managed-by: "$ARGOCD_NAMESPACE"
 ---
 kind: Namespace
 apiVersion: v1
 metadata:
   name: rhacs-vertical-pod-autoscaler
+  labels:
+    argocd.argoproj.io/managed-by: "$ARGOCD_NAMESPACE"

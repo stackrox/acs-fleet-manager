@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 )
 
@@ -31,7 +32,6 @@ type Metrics struct {
 	centralDBSnapshotsUsed      prometheus.Gauge
 	centralDBSnapshotsMax       prometheus.Gauge
 	pauseReconcileInstances     *prometheus.GaugeVec
-	operatorsHealthStatus       *prometheus.GaugeVec
 	CertificatesExpiry          *prometheus.GaugeVec
 }
 
@@ -50,7 +50,6 @@ func (m *Metrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.centralDBSnapshotsUsed)
 	r.MustRegister(m.centralDBSnapshotsMax)
 	r.MustRegister(m.pauseReconcileInstances)
-	r.MustRegister(m.operatorsHealthStatus)
 	r.MustRegister(m.CertificatesExpiry)
 }
 
@@ -113,16 +112,6 @@ func (m *Metrics) SetPauseReconcileStatus(instance string, pauseReconcileEnabled
 	}
 
 	m.pauseReconcileInstances.With(prometheus.Labels{"instance": instance}).Set(pauseReconcileValue)
-}
-
-// SetOperatorHealthStatus sets the health status for specific operator image
-func (m *Metrics) SetOperatorHealthStatus(image string, healthy bool) {
-	var healthyVal float64
-	if healthy {
-		healthyVal = 1.0
-	}
-
-	m.operatorsHealthStatus.With(prometheus.Labels{"image": image}).Set(healthyVal)
 }
 
 func (m *Metrics) SetCertKeyExpiryMetric(namespace, name, key string, expiry float64) {
@@ -208,14 +197,6 @@ func newMetrics() *Metrics {
 			},
 			[]string{"instance"},
 		),
-		operatorsHealthStatus: prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Name: metricsPrefix + "operator_health_status_images",
-				Help: "The operator health status reports all operators images installed by fleetshard-sync",
-			},
-			[]string{"image"},
-		),
-
 		CertificatesExpiry: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: metricsPrefix + "certificate_expiration_timestamp",
 			Help: "Expiry of certificates",

@@ -1,14 +1,55 @@
-rhacsOperators:
-  crdUrls:
-    - https://raw.githubusercontent.com/stackrox/stackrox/4.6.2/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml
-    - https://raw.githubusercontent.com/stackrox/stackrox/4.6.2/operator/bundle/manifests/platform.stackrox.io_centrals.yaml
-  operators:
-    - deploymentName: "rhacs-operator-dev"
-      image: "registry.redhat.io/advanced-cluster-security/rhacs-rhel8-operator@sha256:a96572d0df791da60763dec4b4f0f52124772c3649303170968806dcc3de8269" # 4.6.2
-      centralLabelSelector: "rhacs.redhat.com/version-selector=dev"
-      securedClusterReconcilerEnabled: false
-verticalPodAutoscaling:
-  recommenders: []
+applications:
+
+  # Install the RHACS CRDs (Central and SecuredCluster)
+  - metadata:
+      name: rhacs-crds
+    spec:
+      destination:
+        namespace: my-app
+        server: https://kubernetes.default.svc
+      project: default
+      source:
+        directory:
+          include: '{platform.stackrox.io_centrals.yaml,platform.stackrox.io_securedclusters.yaml}'
+        path: operator/bundle/manifests
+        repoURL: https://github.com/stackrox/stackrox
+        targetRevision: 4.6.2
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - ServerSideApply=true
+
+  # Install the rhacs-operators
+  - metadata:
+      name: rhacs-operators
+    spec:
+      ignoreDifferences:
+        - kind: ServiceAccount
+          jsonPointers:
+            - /imagePullSecrets
+      destination:
+        namespace: rhacs
+        server: https://kubernetes.default.svc
+      project: default
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+      source:
+        path: rhacs-operator-legacy
+        repoURL: https://github.com/stackrox/acscs-manifests
+        targetRevision: HEAD
+        helm:
+          valuesObject:
+            operator:
+              images:
+                - deploymentName: "rhacs-operator-4.6.2"
+                  image: "registry.redhat.io/advanced-cluster-security/rhacs-rhel8-operator@sha256:a96572d0df791da60763dec4b4f0f52124772c3649303170968806dcc3de8269"
+                  centralLabelSelector: "rhacs.redhat.com/version-selector=4.6.2"
+                  securedClusterLabelSelector: "rhacs.redhat.com/selector=dogfooding"
+
 tenantResources:
   default: |
     rolloutGroup: "dev"

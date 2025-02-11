@@ -11,14 +11,12 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cipher"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cluster"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	fmAPI "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fleetmanager "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
@@ -38,8 +36,6 @@ type reconcilerRegistry map[string]*centralReconciler.CentralReconciler
 
 var reconciledCentralCountCache int32
 
-var lastOperatorHash [16]byte
-
 var backoff = wait.Backoff{
 	Duration: 1 * time.Second,
 	Factor:   1.5,
@@ -50,18 +46,18 @@ var backoff = wait.Backoff{
 
 // Runtime represents the runtime to reconcile all centrals associated with the given cluster.
 type Runtime struct {
-	config                 *config.Config
-	client                 *fmAPI.Client
-	clusterID              string
-	reconcilers            reconcilerRegistry
-	k8sClient              ctrlClient.Client
-	dbProvisionClient      cloudprovider.DBClient
-	statusResponseCh       chan private.DataPlaneCentralStatus
-	operatorManager        *operator.ACSOperatorManager
-	secretCipher           cipher.Cipher
-	encryptionKeyGenerator cipher.KeyGenerator
-	addonService           cluster.AddonService
-	vpaReconciler          *vpaReconciler
+	config                        *config.Config
+	client                        *fmAPI.Client
+	clusterID                     string
+	reconcilers                   reconcilerRegistry
+	k8sClient                     ctrlClient.Client
+	dbProvisionClient             cloudprovider.DBClient
+	statusResponseCh              chan private.DataPlaneCentralStatus
+	secretCipher                  cipher.Cipher
+	encryptionKeyGenerator        cipher.KeyGenerator
+	addonService                  cluster.AddonService
+	vpaReconciler                 *vpaReconciler
+	runtimeApplicationsReconciler *runtimeApplicationsReconciler
 }
 
 // NewRuntime creates a new runtime
@@ -92,7 +88,6 @@ func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient
 		}
 	}
 
-	operatorManager := operator.NewACSOperatorManager(k8sClient)
 	secretCipher, err := cipher.NewCipher(config)
 	if err != nil {
 		return nil, fmt.Errorf("creating secretCipher: %w", err)
@@ -106,17 +101,17 @@ func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient
 	addonService := cluster.NewAddonService(k8sClient)
 
 	return &Runtime{
-		config:                 config,
-		k8sClient:              k8sClient,
-		client:                 client,
-		clusterID:              config.ClusterID,
-		dbProvisionClient:      dbProvisionClient,
-		reconcilers:            make(reconcilerRegistry),
-		operatorManager:        operatorManager,
-		secretCipher:           secretCipher, // pragma: allowlist secret
-		encryptionKeyGenerator: encryptionKeyGen,
-		addonService:           addonService,
-		vpaReconciler:          newVPAReconciler(k8sClient, k8sClient.RESTMapper()),
+		config:                        config,
+		k8sClient:                     k8sClient,
+		client:                        client,
+		clusterID:                     config.ClusterID,
+		dbProvisionClient:             dbProvisionClient,
+		reconcilers:                   make(reconcilerRegistry),
+		secretCipher:                  secretCipher, // pragma: allowlist secret
+		encryptionKeyGenerator:        encryptionKeyGen,
+		addonService:                  addonService,
+		vpaReconciler:                 newVPAReconciler(k8sClient, k8sClient.RESTMapper()),
+		runtimeApplicationsReconciler: newRuntimeApplicationsReconciler(k8sClient, config.ArgoCdNamespace),
 	}, nil
 }
 
@@ -172,16 +167,12 @@ func (r *Runtime) Start() error {
 			return 0, err
 		}
 
-		if features.TargetedOperatorUpgrades.Enabled() {
-			if err := r.upgradeOperator(list); err != nil {
-				err = errors.Wrapf(err, "Upgrading operator")
-				glog.Error(err)
-				return 0, err
-			}
-		}
-
 		if err := r.vpaReconciler.reconcile(ctx, list.VerticalPodAutoscaling); err != nil {
 			glog.Errorf("failed to reconcile verticalPodAutoscaling: %v", err)
+		}
+
+		if err := r.runtimeApplicationsReconciler.reconcile(ctx, list); err != nil {
+			glog.Errorf("failed to reconcile runtime applications: %v", err)
 		}
 
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
@@ -222,20 +213,6 @@ func (r *Runtime) Start() error {
 				glog.Warningf("Error retrieving account quotas: %v", err)
 			} else {
 				fleetshardmetrics.MetricsInstance().SetDatabaseAccountQuotas(accountQuotas)
-			}
-		}
-
-		if features.TargetedOperatorUpgrades.Enabled() {
-			operatorWithReplicas, err := r.operatorManager.ListVersionsWithReplicas(ctx)
-			if err != nil {
-				glog.Warningf("Error retrieving operator versions with replicas: %v", err)
-			}
-			for image, replicas := range operatorWithReplicas {
-				healthy := true
-				if replicas == 0 {
-					healthy = false
-				}
-				fleetshardmetrics.MetricsInstance().SetOperatorHealthStatus(image, healthy)
 			}
 		}
 
@@ -300,33 +277,6 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 			delete(r.reconcilers, key)
 		}
 	}
-}
-
-func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
-	ctx := context.Background()
-	operators := operator.FromAPIResponse(list.RhacsOperators)
-
-	err := r.operatorManager.RemoveUnusedOperators(ctx, operators.Configs)
-	if err != nil {
-		glog.Warningf("Failed removing unused operators: %v", err)
-	}
-
-	operatorHash, err := util.MD5SumFromJSONStruct(operators)
-	if err != nil {
-		return fmt.Errorf("Creating MD5 operatorHash for operator. %w", err)
-	}
-	if lastOperatorHash == operatorHash {
-		return nil
-	}
-	lastOperatorHash = operatorHash
-
-	err = r.operatorManager.InstallOrUpgrade(ctx, operators)
-	if err != nil {
-		lastOperatorHash = [16]byte{}
-		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
-	}
-
-	return nil
 }
 
 func (r *Runtime) routesAvailable() bool {

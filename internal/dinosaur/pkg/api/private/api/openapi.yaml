@@ -510,16 +510,6 @@ components:
       required:
       - name
       type: object
-    RHACSOperatorConfigs:
-      properties:
-        CrdUrls:
-          items:
-            type: string
-          type: array
-        RHACSOperatorConfigs:
-          items:
-            type: object
-          type: array
     DataPlaneClusterUpdateStatusRequest:
       description: Schema for the request to update a data plane cluster's status
       example:
@@ -746,8 +736,10 @@ components:
             allOf:
             - $ref: '#/components/schemas/ManagedCentral'
           type: array
-        rhacs_operators:
-          $ref: '#/components/schemas/RHACSOperatorConfigs'
+        applications:
+          items:
+            type: object
+          type: array
         verticalPodAutoscaling:
           $ref: '#/components/schemas/VerticalPodAutoscaling'
     DataPlaneClusterUpdateStatusRequest_addons:
