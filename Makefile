@@ -374,7 +374,7 @@ test/e2e/multicluster: $(GINKGO_BIN)
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=$(ENABLE_CENTRAL_EXTERNAL_CERTIFICATE) \
 	GITOPS_CONFIG_PATH=$(GITOPS_CONFIG_FILE) \
-	RUN_MULTICLUSTER_E2E=true
+	RUN_MULTICLUSTER_E2E=true \
 	$(GINKGO_BIN) -r $(GINKGO_FLAGS) \
 		--randomize-suites \
 		--fail-on-pending --keep-going \
@@ -383,7 +383,7 @@ test/e2e/multicluster: $(GINKGO_BIN)
 		--json-report=e2e-report.json \
 		--timeout=$(TEST_TIMEOUT) \
 		--poll-progress-after=5m \
-		 ./e2e/multicluster
+		 ./e2e/multicluster/...
 .PHONY: test/e2e/multicluster
 
 # Deploys the necessary applications to the selected cluster and runs e2e tests inside the container
@@ -525,8 +525,13 @@ db/generate/insert/cluster:
 
 # Login to the OpenShift internal registry
 docker/login/internal:
-	$(DOCKER) login -u kubeadmin --password-stdin <<< $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
+	@$(DOCKER) login -u kubeadmin --password-stdin <<< $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
 .PHONY: docker/login/internal
+
+# Login to registry.redhat.io
+docker/login/rh-registry:
+	@$(DOCKER) login -u "${RH_REGISTRY_USER}" --password-stdin <<< "${RH_REGISTRY_PW}" registry.redhat.io
+.PHONY: docker/login/rh-registry
 
 # Build the image
 image/build:
@@ -798,7 +803,7 @@ endif
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
 		-p CENTRAL_REQUEST_EXPIRATION_TIMEOUT="${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}" \
-		-p CLUSTER_LIST='$(shell make cluster-list)' \
+		-p CLUSTER_LIST='$(shell make -s cluster-list)' \
 		-p ENABLE_HTTPS="$(ENABLE_HTTPS)" \
 		-p HEALTH_CHECK_SCHEME="$(HEALTH_CHECK_SCHEME)" \
 		-p CPU_REQUEST="$(CPU_REQUEST)" \

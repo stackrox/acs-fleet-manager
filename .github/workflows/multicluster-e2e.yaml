@@ -1,0 +1,117 @@
+name: Multicluster E2E tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'fleetshard/pkg/runtime/**'
+      - 'fleetshard/pkg/reconciler/**'
+      - '.github/workflows/multicluster-e2e.yaml'
+      - 'scripts/ci/**'
+      - 'scripts/lib/**'
+      - 'internal/pkg/handlers/admin_dinosaur.go'
+      - 'internal/dinosaur/pkg/services/dinosaur.go'
+
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'fleetshard/pkg/runtime/**'
+      - 'fleetshard/pkg/reconciler/**'
+      - '.github/workflows/multicluster-e2e.yaml'
+      - 'scripts/ci/**'
+      - 'scripts/lib/**'
+      - 'internal/pkg/handlers/admin_dinosaur.go'
+      - 'internal/dinosaur/pkg/services/dinosaur.go'
+
+jobs:
+  create-cluster:
+    name: "Create Test Infra Clusters"
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.head.repo.fork && !github.event.pull_request.draft }} # do not run for PRs from forks and drafts
+    environment: development
+    strategy:
+      matrix:
+       name: [acscs1, acscs2]
+    steps:
+      - name: Create cluster
+        uses: stackrox/actions/infra/create-cluster@v1
+        with:
+          token: ${{ secrets.INFRA_TOKEN }}
+          flavor: osd-on-aws
+          name: ${{ matrix.name }}-${{ github.run_id }}${{ github.run_attempt }}
+          lifespan: 3h
+          args: nodes=3,machine-type=m5.2xlarge
+          wait: true
+
+  e2e-test:
+    name: "Multicluster e2e tests"
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.head.repo.fork && !github.event.pull_request.draft }} # do not run for PRs from forks and drafts
+    needs: [create-cluster]
+    environment: development
+    env:
+      INFRA_TOKEN: ${{ secrets.INFRA_TOKEN }}
+      AWS_AUTH_HELPER: "none"
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Install infractl
+        uses: stackrox/actions/infra/install-infractl@v1
+      - name: Install oc
+        uses: redhat-actions/oc-installer@v1
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set cluster credentials
+        run: |
+          set -eo pipefail
+          mkdir kube
+          cluster1Conf="$(pwd)/kube/cluster1"
+          url=$(infractl artifacts "acscs1-${{ github.run_id }}${{ github.run_attempt }}" --json | jq '.Artifacts[] | select(.Name=="kubeconfig") | .URL' -r)
+          wget -O "$cluster1Conf" "$url"
+
+          cluster2Conf="$(pwd)/kube/cluster2"
+          url=$(infractl artifacts "acscs2-${{ github.run_id }}${{ github.run_attempt }}" --json | jq '.Artifacts[] | select(.Name=="kubeconfig") | .URL' -r)
+          wget -O "$cluster2Conf" "$url"
+
+          echo "CLUSTER_1_KUBECONFIG=$cluster1Conf" >> "$GITHUB_ENV"
+          echo "CLUSTER_2_KUBECONFIG=$cluster2Conf" >> "$GITHUB_ENV"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+      - name: Set registry.redhat.io credentials
+        run: |
+          set -eo pipefail
+
+          KUBECONFIG=$CLUSTER_1_KUBECONFIG oc get secret/pull-secret -n openshift-config --template='{{index .data ".dockerconfigjson" | base64decode}}' > dockercfg
+          creds=$(jq '.auths."registry.redhat.io".auth' -r < dockercfg | base64 -d)
+          user=$(echo "$creds" | cut -d':' -f1)
+          pw=$(echo "$creds" | cut -d':' -f2)
+          echo "RH_REGISTRY_USER=$user" >> "$GITHUB_ENV"
+          echo "RH_REGISTRY_PW=$pw" >> "$GITHUB_ENV"
+      - name: "Run"
+        env:
+          RUN_MULTICLUSTER_E2E: "true"
+          ENABLE_CENTRAL_EXTERNAL_CERTIFICATE: "true"
+        run: "scripts/ci/multicluster_tests/entrypoint.sh"
+
+  cleanup-clusters:
+    name: "Cleanup Test Infra Clusters"
+    runs-on: ubuntu-latest
+    needs: [create-cluster, e2e-test]
+    if: ${{ !github.event.pull_request.head.repo.fork && !github.event.pull_request.draft && always() }} # do not run for PRs from forks
+    environment: development
+    env:
+      INFRA_TOKEN: ${{ secrets.INFRA_TOKEN }}
+    steps:
+      - name: Install infractl
+        uses: stackrox/actions/infra/install-infractl@v1
+      - name: Delete test clusters
+        run: |
+          set -o pipefail
+          infractl delete "acscs1-${{ github.run_id }}${{ github.run_attempt }}"
+          infractl delete "acscs2-${{ github.run_id }}${{ github.run_attempt }}"
+          exit 0

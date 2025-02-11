@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -eo pipefail
 # This script assumes that there were two clusters created before execution.
 # It expects that those clusters are accessible through kubeconfig files at the path
 # value stored in following environment variables:
@@ -10,13 +10,9 @@ export CLUSTER_2_KUBECONFIG=${CLUSTER_2_KUBECONFIG:-"$HOME/.kube/cluster2"}
 
 # Bootstrap C1
 export KUBECONFIG="$CLUSTER_1_KUBECONFIG"
+export INHERIT_IMAGEPULLSECRETS="true" # pragma: allowlist secret
+export ENABLE_CENTRAL_EXTERNAL_CERTIFICATE="true"
 
-# TODO: Double check how setup is done in OSCI so that we
-# Get the propper certificates to allow enabling creation of routes and DNS entries
-# Get the propper secrets to allow communication of FM to Route 53
-# Get the quay configuration to pull images
-# Maybe we wanna rely on prebuild images instead of building them ourselves, which might
-# as well need additional / other commands
 make deploy/bootstrap
 make deploy/dev
 
@@ -30,7 +26,7 @@ export FM_URL
 kubectl get cm -n rhacs fleet-manager-dataplane-cluster-scaling-config -o yaml > fm-dataplane-config.yaml
 yq '.data."dataplane-cluster-configuration.yaml"' fm-dataplane-config.yaml | yq .clusters > cluster-list.json
 
-KUBECONFIG="$CLUSTER_2_KUBECONFIG" make cluster-list \
+KUBECONFIG="$CLUSTER_2_KUBECONFIG" make -s cluster-list \
   | jq '.[0] | .name="dev2" | .cluster_id="1234567890abcdef1234567890abcdeg"' \
   | jq --slurp . > cluster-list2.json
 

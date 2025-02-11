@@ -70,9 +70,12 @@ ensure_fleetshard_operator_image_exists() {
     fi
 
     if [[ -z "${FLEETSHARD_OPERATOR_IMAGE:-}" ]]; then
-        FLEETSHARD_OPERATOR_IMAGE="fleetshard-operator:$(make tag)"
+        FLEETSHARD_OPERATOR_IMAGE="fleetshard-operator:$(make -s tag)"
         export FLEETSHARD_OPERATOR_IMAGE
         if [[ "$CLUSTER_TYPE" == "infra-openshift" ]]; then
+            if [[ -n "$RH_REGISTRY_USER" && -n "$RH_REGISTRY_PW" ]]; then
+                make -C "${GITROOT}" docker/login/rh-registry
+            fi
             log "Building fleetshard operator image ${FLEETSHARD_OPERATOR_IMAGE} and pushing it to internal registry"
             make -C "${GITROOT}" image/push/fleetshard-operator/internal
         else
