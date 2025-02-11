@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
+    paths:
       - 'fleetshard/pkg/runtime/**'
       - 'fleetshard/pkg/reconciler/**'
       - '.github/workflows/multicluster-e2e.yaml'
@@ -69,12 +69,10 @@ jobs:
           mkdir kube
           cluster1Conf="$(pwd)/kube/cluster1"
           url=$(infractl artifacts "acscs1-${{ github.run_id }}${{ github.run_attempt }}" --json | jq '.Artifacts[] | select(.Name=="kubeconfig") | .URL' -r)
-          # url=$(infractl artifacts "acscs1-130458841281" --json | jq '.Artifacts[] | select(.Name=="kubeconfig") | .URL' -r)
           wget -O "$cluster1Conf" "$url"
 
           cluster2Conf="$(pwd)/kube/cluster2"
           url=$(infractl artifacts "acscs2-${{ github.run_id }}${{ github.run_attempt }}" --json | jq '.Artifacts[] | select(.Name=="kubeconfig") | .URL' -r)
-          # url=$(infractl artifacts "acscs1-130458841281" --json | jq '.Artifacts[] | select(.Name=="kubeconfig") | .URL' -r)
           wget -O "$cluster2Conf" "$url"
 
           echo "CLUSTER_1_KUBECONFIG=$cluster1Conf" >> "$GITHUB_ENV"
@@ -92,8 +90,8 @@ jobs:
           creds=$(jq '.auths."registry.redhat.io".auth' -r < dockercfg | base64 -d)
           user=$(echo "$creds" | cut -d':' -f1)
           pw=$(echo "$creds" | cut -d':' -f2)
-          echo "RH_REGISTRY_PW=$pw" >> "$GITHUB_ENV"
           echo "RH_REGISTRY_USER=$user" >> "$GITHUB_ENV"
+          echo "RH_REGISTRY_PW=$pw" >> "$GITHUB_ENV"
       - name: "Run"
         env:
           RUN_MULTICLUSTER_E2E: "true"
