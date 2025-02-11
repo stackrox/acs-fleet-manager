@@ -77,28 +77,44 @@ func (s *RouteService) FindPassthroughRoute(ctx context.Context, namespace strin
 	return s.findRoute(ctx, namespace, centralPassthroughRouteName)
 }
 
-// FindReencryptIngress returns central reencrypt route ingress or error if not found.
+// FindReencryptIngress returns central reencrypt route ingress or nil if not found.
+// The error is returned when failed to get the route.
 func (s *RouteService) FindReencryptIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
-	return s.findFirstAdmittedIngress(ctx, namespace, centralReencryptRouteName)
-}
-
-// FindPassthroughIngress returns central passthrough route ingress or error if not found.
-func (s *RouteService) FindPassthroughIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
-	return s.findFirstAdmittedIngress(ctx, namespace, centralPassthroughRouteName)
-}
-
-// findFirstAdmittedIngress returns first admitted ingress or error if not found
-func (s *RouteService) findFirstAdmittedIngress(ctx context.Context, namespace string, routeName string) (*openshiftRouteV1.RouteIngress, error) {
-	route, err := s.findRoute(ctx, namespace, routeName)
+	route, err := s.FindReencryptRoute(ctx, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("route not found")
+		return nil, err
 	}
-	for _, ingress := range route.Status.Ingress {
-		if isAdmitted(ingress) {
-			return &ingress, nil
+	return findFirstAdmittedIngress(*route), nil
+}
+
+// FindAdmittedCloudServiceIngresses returns the list of admitted ingresses for all the Cloud Service routes
+// for a given namespace or error if the list could not be retrieved
+func (s *RouteService) FindAdmittedCloudServiceIngresses(ctx context.Context, namespace string) ([]openshiftRouteV1.RouteIngress, error) {
+	routes := &openshiftRouteV1.RouteList{}
+	if err := s.client.List(ctx, routes, ctrlClient.InNamespace(namespace)); err != nil {
+		return nil, fmt.Errorf("find admitted ingresses for namespace %s: %w", namespace, err)
+	}
+	var ingresses []openshiftRouteV1.RouteIngress
+	for _, route := range routes.Items {
+		if !isCloudServiceRoute(route) {
+			continue
+		}
+		admittedIngress := findFirstAdmittedIngress(route)
+		if admittedIngress != nil {
+			ingresses = append(ingresses, *admittedIngress)
 		}
 	}
-	return nil, fmt.Errorf("unable to find admitted ingress. route: %s/%s", route.GetNamespace(), route.GetName())
+	return ingresses, nil
+}
+
+// findFirstAdmittedIngress returns first admitted ingress or nil if not found
+func findFirstAdmittedIngress(route openshiftRouteV1.Route) *openshiftRouteV1.RouteIngress {
+	for _, ingress := range route.Status.Ingress {
+		if isAdmitted(ingress) {
+			return &ingress
+		}
+	}
+	return nil
 }
 
 func isAdmitted(ingress openshiftRouteV1.RouteIngress) bool {
@@ -108,6 +124,11 @@ func isAdmitted(ingress openshiftRouteV1.RouteIngress) bool {
 		}
 	}
 	return false
+}
+
+func isCloudServiceRoute(route openshiftRouteV1.Route) bool {
+	labels := route.ObjectMeta.Labels
+	return labels[ManagedByLabelKey] == ManagedByFleetshardValue || labels["app.kubernetes.io/name"] == "tenant-resources"
 }
 
 type configureRouteFunc = func(context.Context, *openshiftRouteV1.Route, private.ManagedCentral) (*openshiftRouteV1.Route, error)

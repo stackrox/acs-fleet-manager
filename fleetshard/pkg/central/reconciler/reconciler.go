@@ -737,21 +737,18 @@ func isRemoteCentralReady(remoteCentral *private.ManagedCentral) bool {
 }
 
 func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
-	reencryptIngress, err := r.routeService.FindReencryptIngress(ctx, namespace)
+	ingresses, err := r.routeService.FindAdmittedCloudServiceIngresses(ctx, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("obtaining ingress for reencrypt route: %w", err)
+		return nil, fmt.Errorf("get routes statues: %w", err)
 	}
-	passthroughIngress, err := r.routeService.FindPassthroughIngress(ctx, namespace)
-	if err != nil {
-		return nil, fmt.Errorf("obtaining ingress for passthrough route: %w", err)
+	var routesStatuses []private.DataPlaneCentralStatusRoutes
+	for _, ingress := range ingresses {
+		routesStatuses = append(routesStatuses, getRouteStatus(ingress))
 	}
-	return []private.DataPlaneCentralStatusRoutes{
-		getRouteStatus(reencryptIngress),
-		getRouteStatus(passthroughIngress),
-	}, nil
+	return routesStatuses, nil
 }
 
-func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCentralStatusRoutes {
+func getRouteStatus(ingress openshiftRouteV1.RouteIngress) private.DataPlaneCentralStatusRoutes {
 	return private.DataPlaneCentralStatusRoutes{
 		Domain: ingress.Host,
 		Router: ingress.RouterCanonicalHostname,
