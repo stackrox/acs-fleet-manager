@@ -237,9 +237,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	centralTLSSecretFound := true // pragma: allowlist secret
 	if r.useRoutes {
-		centralIngressEnabled, ok := remoteCentral.Spec.TenantResourcesValues["centralIngressEnabled"].(bool)
-		if ok && centralIngressEnabled {
-			// Routes / Ingress resources are managed by ArgoCD
+		if routesManagedByArgoCD(remoteCentral) {
 			if err := r.ensureRoutesDeleted(ctx, remoteCentral); err != nil {
 				return nil, err
 			}
@@ -296,6 +294,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	glog.Infof("Returning central status %+v", logStatus)
 
 	return status, nil
+}
+
+func routesManagedByArgoCD(remoteCentral private.ManagedCentral) bool {
+	centralIngressEnabledValue, ok := remoteCentral.Spec.TenantResourcesValues["centralIngressEnabled"].(bool)
+	return ok && centralIngressEnabledValue
 }
 
 func (r *CentralReconciler) reconcileIngressSecrets(ctx context.Context, remoteCentral private.ManagedCentral) (centralTLSSecretFound bool, err error) {
