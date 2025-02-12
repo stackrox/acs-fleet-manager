@@ -5,7 +5,7 @@ kind: ClusterRole
 metadata:
   name: custom-acscs-openshift-gitops
 rules:
-  # Allow managing stackrox centrals and securedClusters
+  # Allow managing stackrox centrals
   - apiGroups: [ "platform.stackrox.io" ]
     resources: [ "centrals" ]
     verbs: [ "*" ]

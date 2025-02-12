@@ -47,8 +47,8 @@ applications:
               images:
                 - deploymentName: "rhacs-operator-4.6.2"
                   image: "registry.redhat.io/advanced-cluster-security/rhacs-rhel8-operator@sha256:a96572d0df791da60763dec4b4f0f52124772c3649303170968806dcc3de8269"
-                  centralLabelSelector: "rhacs.redhat.com/version-selector=4.6.2"
-                  securedClusterLabelSelector: "rhacs.redhat.com/selector=dogfooding"
+                  centralLabelSelector: "rhacs.redhat.com/version-selector=dev"
+                  securedClusterReconcilerEnabled: false
 
 tenantResources:
   default: |
