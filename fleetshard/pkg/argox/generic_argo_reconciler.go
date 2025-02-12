@@ -3,6 +3,7 @@ package argox
 import (
 	"context"
 	"fmt"
+
 	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -57,8 +58,6 @@ func ReconcileApplications(
 	if err != nil {
 		return err
 	}
-
-	//default-route-openshift-image-registry.apps.lc-02-07-placid-respect-appr.ocp.infra.rox.systems
 
 	existingApplicationsMap := map[string]argocd.Application{}
 	for i := range existingApplications.Items {
