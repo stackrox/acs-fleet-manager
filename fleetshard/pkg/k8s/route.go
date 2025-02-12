@@ -87,18 +87,14 @@ func (s *RouteService) FindReencryptIngress(ctx context.Context, namespace strin
 	return findFirstAdmittedIngress(*route), nil
 }
 
-// FindAdmittedCloudServiceIngresses returns the list of admitted ingresses for all the Cloud Service routes
-// for a given namespace or error if the list could not be retrieved
-func (s *RouteService) FindAdmittedCloudServiceIngresses(ctx context.Context, namespace string) ([]openshiftRouteV1.RouteIngress, error) {
+// FindAdmittedIngresses returns the list of admitted ingresses for a given namespace or error if the list could not be retrieved
+func (s *RouteService) FindAdmittedIngresses(ctx context.Context, namespace string) ([]openshiftRouteV1.RouteIngress, error) {
 	routes := &openshiftRouteV1.RouteList{}
 	if err := s.client.List(ctx, routes, ctrlClient.InNamespace(namespace)); err != nil {
 		return nil, fmt.Errorf("find admitted ingresses for namespace %s: %w", namespace, err)
 	}
 	var ingresses []openshiftRouteV1.RouteIngress
 	for _, route := range routes.Items {
-		if !isCloudServiceRoute(route) {
-			continue
-		}
 		admittedIngress := findFirstAdmittedIngress(route)
 		if admittedIngress != nil {
 			ingresses = append(ingresses, *admittedIngress)
@@ -124,11 +120,6 @@ func isAdmitted(ingress openshiftRouteV1.RouteIngress) bool {
 		}
 	}
 	return false
-}
-
-func isCloudServiceRoute(route openshiftRouteV1.Route) bool {
-	labels := route.ObjectMeta.Labels
-	return labels[ManagedByLabelKey] == ManagedByFleetshardValue || labels["app.kubernetes.io/name"] == "tenant-resources"
 }
 
 type configureRouteFunc = func(context.Context, *openshiftRouteV1.Route, private.ManagedCentral) (*openshiftRouteV1.Route, error)

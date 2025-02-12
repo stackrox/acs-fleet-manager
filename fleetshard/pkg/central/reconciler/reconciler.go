@@ -542,15 +542,13 @@ func stringMapNeedsUpdating(desired, actual map[string]string) bool {
 }
 
 func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
 	status := readyStatus()
 	// Do not report routes statuses if:
 	// 1. Routes are not used on the cluster
 	// 2. Central request is in status "Ready" - assuming that routes are already reported and saved
 	if r.useRoutes && !isRemoteCentralReady(remoteCentral) {
 		var err error
-		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentralNamespace)
+		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentral)
 		if err != nil {
 			return nil, err
 		}
@@ -736,14 +734,28 @@ func isRemoteCentralReady(remoteCentral *private.ManagedCentral) bool {
 	return remoteCentral.RequestStatus == centralConstants.CentralRequestStatusReady.String()
 }
 
-func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
-	ingresses, err := r.routeService.FindAdmittedCloudServiceIngresses(ctx, namespace)
+// getRoutesStatuses returns the list of the routes statuses required for Central to be ready.
+// Returns error if failed to find the routes ingresses or when AT LEAST ONE required route is unavailable.
+// This is because after Central is considered ready, fleet manager stores the route information.
+// Therefore, all required routes must be reported when Central is ready.
+func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, central *private.ManagedCentral) ([]private.DataPlaneCentralStatusRoutes, error) {
+	unprocessedHosts := make(map[string]struct{}, 2)
+	unprocessedHosts[central.Spec.UiEndpoint.Host] = struct{}{}
+	unprocessedHosts[central.Spec.DataEndpoint.Host] = struct{}{}
+
+	ingresses, err := r.routeService.FindAdmittedIngresses(ctx, central.Metadata.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("get routes statues: %w", err)
 	}
 	var routesStatuses []private.DataPlaneCentralStatusRoutes
 	for _, ingress := range ingresses {
-		routesStatuses = append(routesStatuses, getRouteStatus(ingress))
+		if _, exists := unprocessedHosts[ingress.Host]; exists {
+			delete(unprocessedHosts, ingress.Host)
+			routesStatuses = append(routesStatuses, getRouteStatus(ingress))
+		}
+	}
+	if len(unprocessedHosts) != 0 {
+		return nil, fmt.Errorf("unable to find admitted ingress")
 	}
 	return routesStatuses, nil
 }
