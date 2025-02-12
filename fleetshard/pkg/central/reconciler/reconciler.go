@@ -748,7 +748,7 @@ func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, central *priv
 
 	ingresses, err := r.routeService.FindAdmittedIngresses(ctx, central.Metadata.Namespace)
 	if err != nil {
-		return nil, fmt.Errorf("get routes statues: %w", err)
+		return nil, fmt.Errorf("obtaining ingresses for routes statuses: %w", err)
 	}
 	var routesStatuses []private.DataPlaneCentralStatusRoutes
 	for _, ingress := range ingresses {
