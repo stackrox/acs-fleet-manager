@@ -6,6 +6,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/rox/pkg/errox"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -313,10 +314,12 @@ func (s *RouteService) deleteRoute(ctx context.Context, name string, namespace s
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
-			Labels:    map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
 		},
 	}
 	if err := s.client.Delete(ctx, route); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return nil // ok if not found
+		}
 		return fmt.Errorf("deleting route %s/%s: %w", namespace, name, err)
 	}
 	return nil
