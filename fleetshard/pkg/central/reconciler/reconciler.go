@@ -235,7 +235,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	centralTLSSecretFound := true // pragma: allowlist secret
+	// central-tls secret provisioned by the ACS operator.
+	centralTLSSecretProvisioned := true // pragma: allowlist secret
 	if r.useRoutes {
 		if routesManagedByArgoCD(remoteCentral) {
 			if err := r.ensureRoutesDeleted(ctx, remoteCentral); err != nil {
@@ -247,7 +248,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 		if err != nil {
 			if k8s.IsCentralTLSNotFound(err) {
-				centralTLSSecretFound = false // pragma: allowlist secret
+				// Not considered as an error, waiting for the ACS operator to create it.
+				centralTLSSecretProvisioned = false // pragma: allowlist secret
 			} else {
 				return nil, errors.Wrap(err, "updating routes")
 			}
@@ -264,7 +266,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if !centralDeploymentReady || !centralTLSSecretFound {
+	if !centralDeploymentReady || !centralTLSSecretProvisioned {
 		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
 		}
