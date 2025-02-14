@@ -74,3 +74,17 @@ data:
               - SampleCount
             period: 60
             length: 300
+      - name: audit_log_incoming_events
+        namespace: AWS/Logs
+        regions:
+            - us-east-1
+        dimensions:
+          - name: "Log Group Metrics"
+            value: "{{ .Values.clusterName }}".acs_audit_logs
+        metrics:
+          - name: IncomingLogEvents
+            nilToZero: true
+            statistics:
+              - Average
+            period: 1d
+            length: 7d
