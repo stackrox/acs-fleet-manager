@@ -241,17 +241,15 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			if err := r.ensureRoutesDeleted(ctx, remoteCentral); err != nil {
 				return nil, err
 			}
-			centralTLSSecretFound, err = r.reconcileIngressSecrets(ctx, remoteCentral)
-			if err != nil {
-				return nil, err
-			}
+			err = r.reconcileIngressSecrets(ctx, remoteCentral)
 		} else {
-			if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
-				if k8s.IsCentralTLSNotFound(err) {
-					centralTLSSecretFound = false // pragma: allowlist secret
-				} else {
-					return nil, errors.Wrap(err, "updating routes")
-				}
+			err = r.ensureRoutesExist(ctx, remoteCentral)
+		}
+		if err != nil {
+			if k8s.IsCentralTLSNotFound(err) {
+				centralTLSSecretFound = false // pragma: allowlist secret
+			} else {
+				return nil, errors.Wrap(err, "updating routes")
 			}
 		}
 	}
@@ -301,11 +299,11 @@ func routesManagedByArgoCD(remoteCentral private.ManagedCentral) bool {
 	return ok && centralIngressEnabledValue
 }
 
-func (r *CentralReconciler) reconcileIngressSecrets(ctx context.Context, remoteCentral private.ManagedCentral) (centralTLSSecretFound bool, err error) {
-	if centralTLSSecretFound, err = r.ensureCentralCASecretExists(ctx, remoteCentral.Metadata.Namespace); err != nil {
-		return
+func (r *CentralReconciler) reconcileIngressSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	if err := r.ensureCentralCASecretExists(ctx, remoteCentral.Metadata.Namespace); err != nil {
+		return err
 	}
-	return true, r.ensureReencryptSecretExists(ctx, remoteCentral)
+	return r.ensureReencryptSecretExists(ctx, remoteCentral)
 }
 
 func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
@@ -1045,12 +1043,15 @@ func (r *CentralReconciler) ensureRoutesDeleted(ctx context.Context, remoteCentr
 	return nil
 }
 
-func (r *CentralReconciler) ensureCentralCASecretExists(ctx context.Context, centralNamespace string) (centralTLSSecretFound bool, err error) {
+func (r *CentralReconciler) ensureCentralCASecretExists(ctx context.Context, centralNamespace string) error {
 	centralTLSSecret, err := r.getSecret(centralNamespace, k8s.CentralTLSSecretName)
 	if err != nil {
-		return !apiErrors.IsNotFound(err), err
+		if apiErrors.IsNotFound(err) {
+			return &k8s.SecretNotFound{SecretName: k8s.CentralTLSSecretName}
+		}
+		return err
 	}
-	return true, ensureSecretExists(ctx, r.client, centralNamespace, centralCaTLSSecretName, func(secret *corev1.Secret) error {
+	return ensureSecretExists(ctx, r.client, centralNamespace, centralCaTLSSecretName, func(secret *corev1.Secret) error {
 		secret.Type = corev1.SecretTypeTLS
 		secret.Data = map[string][]byte{
 			corev1.TLSPrivateKeyKey: {},
