@@ -3,9 +3,10 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
 
 	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
 	"github.com/stackrox/rox/pkg/urlfmt"

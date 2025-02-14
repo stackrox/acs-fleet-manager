@@ -705,6 +705,8 @@ deploy/db:
 .PHONY: deploy/db
 
 # deploys the secrets required by the service to an OpenShift cluster
+# TLS cert and key are base64 encoded because make translates newlines in the shell command output into spaces which makes
+# pem certificates invalid
 deploy/secrets:
 	@oc process -f ./templates/secrets-template.yml --local \
 		-p DATABASE_HOST="fleet-manager-db" \
@@ -723,8 +725,8 @@ deploy/secrets:
 		-p SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${SSO_CLIENT_ID}')" \
 		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
 		-p CENTRAL_IDP_CLIENT_SECRET="$(shell ([ -s './secrets/central.idp-client-secret' ] && [ -z '${CENTRAL_IDP_CLIENT_SECRET}' ]) && cat ./secrets/central.idp-client-secret || echo '${CENTRAL_IDP_CLIENT_SECRET}')" \
-		-p CENTRAL_TLS_CERT="$(shell ([ -s './secrets/central-tls.crt' ] && [ -z '${CENTRAL_TLS_CERT}' ]) && cat ./secrets/central-tls.crt || echo '${CENTRAL_TLS_CERT}')" \
-		-p CENTRAL_TLS_KEY="$(shell ([ -s './secrets/central-tls.key' ] && [ -z '${CENTRAL_TLS_KEY}' ]) && cat ./secrets/central-tls.key || echo '${CENTRAL_TLS_KEY}')" \
+		-p CENTRAL_TLS_CERT="$(shell ([ -s './secrets/central-tls.crt' ] && [ -z '${CENTRAL_TLS_CERT}' ]) && (cat ./secrets/central-tls.crt || echo '${CENTRAL_TLS_CERT}') | base64)" \
+		-p CENTRAL_TLS_KEY="$(shell ([ -s './secrets/central-tls.key' ] && [ -z '${CENTRAL_TLS_KEY}' ]) && (cat ./secrets/central-tls.key || echo '${CENTRAL_TLS_KEY}') | base64)" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/secrets
 

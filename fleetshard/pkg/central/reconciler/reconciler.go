@@ -79,6 +79,9 @@ const (
 	centralDbOverrideConfigMap = "central-db-override"
 	centralDeletePollInterval  = 5 * time.Second
 
+	centralCaTLSSecretName        = "managed-central-ca"        // pragma: allowlist secret
+	centralReencryptTLSSecretName = "managed-central-reencrypt" // pragma: allowlist secret
+
 	centralEncryptionKeySecretName = "central-encryption-key-chain" // pragma: allowlist secret
 
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
@@ -232,11 +235,21 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	centralTLSSecretFound := true // pragma: allowlist secret
+	// central-tls secret provisioned by the ACS operator.
+	centralTLSSecretProvisioned := true // pragma: allowlist secret
 	if r.useRoutes {
-		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
+		if routesManagedByArgoCD(remoteCentral) {
+			if err := r.ensureRoutesDeleted(ctx, remoteCentral); err != nil {
+				return nil, err
+			}
+			err = r.reconcileIngressSecrets(ctx, remoteCentral)
+		} else {
+			err = r.ensureRoutesExist(ctx, remoteCentral)
+		}
+		if err != nil {
 			if k8s.IsCentralTLSNotFound(err) {
-				centralTLSSecretFound = false // pragma: allowlist secret
+				// Not considered as an error, waiting for the ACS operator to create it.
+				centralTLSSecretProvisioned = false // pragma: allowlist secret
 			} else {
 				return nil, errors.Wrap(err, "updating routes")
 			}
@@ -253,7 +266,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if !centralDeploymentReady || !centralTLSSecretFound {
+	if !centralDeploymentReady || !centralTLSSecretProvisioned {
 		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
 		}
@@ -281,6 +294,18 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	glog.Infof("Returning central status %+v", logStatus)
 
 	return status, nil
+}
+
+func routesManagedByArgoCD(remoteCentral private.ManagedCentral) bool {
+	centralIngressEnabledValue, ok := remoteCentral.Spec.TenantResourcesValues["centralIngressEnabled"].(bool)
+	return ok && centralIngressEnabledValue
+}
+
+func (r *CentralReconciler) reconcileIngressSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	if err := r.ensureCentralCASecretExists(ctx, remoteCentral.Metadata.Namespace); err != nil {
+		return err
+	}
+	return r.ensureReencryptSecretExists(ctx, remoteCentral)
 }
 
 func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
@@ -519,15 +544,13 @@ func stringMapNeedsUpdating(desired, actual map[string]string) bool {
 }
 
 func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
 	status := readyStatus()
 	// Do not report routes statuses if:
 	// 1. Routes are not used on the cluster
 	// 2. Central request is in status "Ready" - assuming that routes are already reported and saved
 	if r.useRoutes && !isRemoteCentralReady(remoteCentral) {
 		var err error
-		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentralNamespace)
+		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentral)
 		if err != nil {
 			return nil, err
 		}
@@ -713,22 +736,33 @@ func isRemoteCentralReady(remoteCentral *private.ManagedCentral) bool {
 	return remoteCentral.RequestStatus == centralConstants.CentralRequestStatusReady.String()
 }
 
-func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
-	reencryptIngress, err := r.routeService.FindReencryptIngress(ctx, namespace)
+// getRoutesStatuses returns the list of the routes statuses required for Central to be ready.
+// Returns error if failed to find the routes ingresses or when AT LEAST ONE required route is unavailable.
+// This is because after Central is considered ready, fleet manager stores the route information.
+// Therefore, all required routes must be reported when Central is ready.
+func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, central *private.ManagedCentral) ([]private.DataPlaneCentralStatusRoutes, error) {
+	unprocessedHosts := make(map[string]struct{}, 2)
+	unprocessedHosts[central.Spec.UiEndpoint.Host] = struct{}{}
+	unprocessedHosts[central.Spec.DataEndpoint.Host] = struct{}{}
+
+	ingresses, err := r.routeService.FindAdmittedIngresses(ctx, central.Metadata.Namespace)
 	if err != nil {
-		return nil, fmt.Errorf("obtaining ingress for reencrypt route: %w", err)
+		return nil, fmt.Errorf("obtaining ingresses for routes statuses: %w", err)
 	}
-	passthroughIngress, err := r.routeService.FindPassthroughIngress(ctx, namespace)
-	if err != nil {
-		return nil, fmt.Errorf("obtaining ingress for passthrough route: %w", err)
+	var routesStatuses []private.DataPlaneCentralStatusRoutes
+	for _, ingress := range ingresses {
+		if _, exists := unprocessedHosts[ingress.Host]; exists {
+			delete(unprocessedHosts, ingress.Host)
+			routesStatuses = append(routesStatuses, getRouteStatus(ingress))
+		}
 	}
-	return []private.DataPlaneCentralStatusRoutes{
-		getRouteStatus(reencryptIngress),
-		getRouteStatus(passthroughIngress),
-	}, nil
+	if len(unprocessedHosts) != 0 {
+		return nil, fmt.Errorf("unable to find admitted ingress")
+	}
+	return routesStatuses, nil
 }
 
-func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCentralStatusRoutes {
+func getRouteStatus(ingress openshiftRouteV1.RouteIngress) private.DataPlaneCentralStatusRoutes {
 	return private.DataPlaneCentralStatusRoutes{
 		Domain: ingress.Host,
 		Router: ingress.RouterCanonicalHostname,
@@ -995,6 +1029,49 @@ func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, re
 	}
 
 	return nil
+}
+
+func (r *CentralReconciler) ensureRoutesDeleted(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	namespace := remoteCentral.Metadata.Namespace
+	reencryptErr := r.routeService.DeleteReencryptRoute(ctx, namespace)
+	passthroughErr := r.routeService.DeletePassthroughRoute(ctx, namespace)
+
+	if reencryptErr != nil {
+		return fmt.Errorf("deleting reencrypt route for namespace %q: %w", namespace, reencryptErr)
+	}
+	if passthroughErr != nil {
+		return fmt.Errorf("deleting passthrough route for namespace %q: %w", namespace, passthroughErr)
+	}
+	return nil
+}
+
+func (r *CentralReconciler) ensureCentralCASecretExists(ctx context.Context, centralNamespace string) error {
+	centralTLSSecret, err := r.getSecret(centralNamespace, k8s.CentralTLSSecretName)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return &k8s.SecretNotFound{SecretName: k8s.CentralTLSSecretName}
+		}
+		return err
+	}
+	return ensureSecretExists(ctx, r.client, centralNamespace, centralCaTLSSecretName, func(secret *corev1.Secret) error {
+		secret.Type = corev1.SecretTypeTLS
+		secret.Data = map[string][]byte{
+			corev1.TLSPrivateKeyKey: {},
+			corev1.TLSCertKey:       centralTLSSecret.Data["ca.pem"],
+		}
+		return nil
+	})
+}
+
+func (r *CentralReconciler) ensureReencryptSecretExists(ctx context.Context, central private.ManagedCentral) error {
+	return ensureSecretExists(ctx, r.client, central.Metadata.Namespace, centralReencryptTLSSecretName, func(secret *corev1.Secret) error {
+		secret.Type = corev1.SecretTypeTLS
+		secret.Data = map[string][]byte{
+			corev1.TLSPrivateKeyKey: []byte(central.Spec.UiEndpoint.Tls.Key),
+			corev1.TLSCertKey:       []byte(central.Spec.UiEndpoint.Tls.Cert),
+		}
+		return nil
+	})
 }
 
 func getTenantLabels(c private.ManagedCentral) map[string]string {

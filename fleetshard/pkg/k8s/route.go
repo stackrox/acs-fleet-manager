@@ -6,9 +6,9 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/rox/pkg/errox"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,28 +78,40 @@ func (s *RouteService) FindPassthroughRoute(ctx context.Context, namespace strin
 	return s.findRoute(ctx, namespace, centralPassthroughRouteName)
 }
 
-// FindReencryptIngress returns central reencrypt route ingress or error if not found.
+// FindReencryptIngress returns central reencrypt route ingress or nil if not found.
+// The error is returned when failed to get the route.
 func (s *RouteService) FindReencryptIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
-	return s.findFirstAdmittedIngress(ctx, namespace, centralReencryptRouteName)
-}
-
-// FindPassthroughIngress returns central passthrough route ingress or error if not found.
-func (s *RouteService) FindPassthroughIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
-	return s.findFirstAdmittedIngress(ctx, namespace, centralPassthroughRouteName)
-}
-
-// findFirstAdmittedIngress returns first admitted ingress or error if not found
-func (s *RouteService) findFirstAdmittedIngress(ctx context.Context, namespace string, routeName string) (*openshiftRouteV1.RouteIngress, error) {
-	route, err := s.findRoute(ctx, namespace, routeName)
+	route, err := s.FindReencryptRoute(ctx, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("route not found")
+		return nil, err
 	}
-	for _, ingress := range route.Status.Ingress {
-		if isAdmitted(ingress) {
-			return &ingress, nil
+	return findFirstAdmittedIngress(*route), nil
+}
+
+// FindAdmittedIngresses returns the list of admitted ingresses for a given namespace or error if the list could not be retrieved
+func (s *RouteService) FindAdmittedIngresses(ctx context.Context, namespace string) ([]openshiftRouteV1.RouteIngress, error) {
+	routes := &openshiftRouteV1.RouteList{}
+	if err := s.client.List(ctx, routes, ctrlClient.InNamespace(namespace)); err != nil {
+		return nil, fmt.Errorf("find admitted ingresses for namespace %s: %w", namespace, err)
+	}
+	var ingresses []openshiftRouteV1.RouteIngress
+	for _, route := range routes.Items {
+		admittedIngress := findFirstAdmittedIngress(route)
+		if admittedIngress != nil {
+			ingresses = append(ingresses, *admittedIngress)
 		}
 	}
-	return nil, fmt.Errorf("unable to find admitted ingress. route: %s/%s", route.GetNamespace(), route.GetName())
+	return ingresses, nil
+}
+
+// findFirstAdmittedIngress returns first admitted ingress or nil if not found
+func findFirstAdmittedIngress(route openshiftRouteV1.Route) *openshiftRouteV1.RouteIngress {
+	for _, ingress := range route.Status.Ingress {
+		if isAdmitted(ingress) {
+			return &ingress
+		}
+	}
+	return nil
 }
 
 func isAdmitted(ingress openshiftRouteV1.RouteIngress) bool {
@@ -201,7 +213,7 @@ func (s *RouteService) UpdateReencryptRoute(ctx context.Context, route *openshif
 	}
 
 	if err := s.client.Update(ctx, updatedRoute); err != nil {
-		return errors.Wrapf(err, "updating reencrypt route")
+		return fmt.Errorf("updating reencrypt route: %w", err)
 	}
 
 	return nil
@@ -238,7 +250,7 @@ func (s *RouteService) UpdatePassthroughRoute(ctx context.Context, route *opensh
 	}
 
 	if err := s.client.Update(ctx, updatedRoute); err != nil {
-		return errors.Wrapf(err, "updating passthrough route")
+		return fmt.Errorf("updating passthrough route: %w", err)
 	}
 
 	return nil
@@ -283,6 +295,32 @@ func (s *RouteService) createCentralRoute(
 
 	if err := s.client.Create(ctx, configuredRoute); err != nil {
 		return fmt.Errorf("creating route %s/%s: %w", namespace, name, err)
+	}
+	return nil
+}
+
+// DeleteReencryptRoute deletes central reencrypt route for a given namespace
+func (s *RouteService) DeleteReencryptRoute(ctx context.Context, namespace string) error {
+	return s.deleteRoute(ctx, centralReencryptRouteName, namespace)
+}
+
+// DeletePassthroughRoute deletes central passthrough route for a given namespace
+func (s *RouteService) DeletePassthroughRoute(ctx context.Context, namespace string) error {
+	return s.deleteRoute(ctx, centralPassthroughRouteName, namespace)
+}
+
+func (s *RouteService) deleteRoute(ctx context.Context, name string, namespace string) error {
+	route := &openshiftRouteV1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+	}
+	if err := s.client.Delete(ctx, route); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return nil // ok if not found
+		}
+		return fmt.Errorf("deleting route %s/%s: %w", namespace, name, err)
 	}
 	return nil
 }

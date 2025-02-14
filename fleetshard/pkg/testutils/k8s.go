@@ -164,12 +164,24 @@ func (t *ReconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.O
 		var multiErr *multierror.Error
 		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(centralsGVR, centralCR, destinationNamespace))
 		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(secretsGVR, newCentralTLSSecret(destinationNamespace), destinationNamespace))
-		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralRoute(destinationNamespace)))
-		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralMtlsRoute(destinationNamespace)))
 		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(deploymentGVR, NewCentralDeployment(destinationNamespace), destinationNamespace))
 		if err := multiErr.ErrorOrNil(); err != nil {
 			return fmt.Errorf("creating group version resource: %w", err)
 		}
+	}
+	return nil
+
+}
+
+// Update updates an existing object in the tracker in the specified namespace.
+func (t *ReconcileTracker) Update(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
+	if gvr == routesGVR {
+		route := obj.(*openshiftRouteV1.Route)
+		route.Status = t.admittedStatus(route.Name, route.Spec.Host)
+		return t.updateRoute(route)
+	}
+	if err := t.ObjectTracker.Update(gvr, obj, ns); err != nil {
+		return fmt.Errorf("adding GVR %q to reconcile tracker: %w", gvr, err)
 	}
 	return nil
 }
@@ -222,36 +234,16 @@ func (t *ReconcileTracker) createRoute(route *openshiftRouteV1.Route) error {
 	return errors.Wrapf(err, "create route")
 }
 
-func (t *ReconcileTracker) newCentralRoute(ns string) *openshiftRouteV1.Route {
-	host := fmt.Sprintf("central-%s.%s", ns, clusterDomain)
-	name := "central"
-	return &openshiftRouteV1.Route{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: ns,
-			Labels:    centralLabels,
-		},
-		Spec: openshiftRouteV1.RouteSpec{
-			Host: host,
-		},
-		Status: t.admittedStatus(name, host),
+func (t *ReconcileTracker) updateRoute(route *openshiftRouteV1.Route) error {
+	name := route.GetName()
+	if err := t.routeErrors[name]; err != nil {
+		return err
 	}
-}
-
-func (t *ReconcileTracker) newCentralMtlsRoute(ns string) *openshiftRouteV1.Route {
-	host := fmt.Sprintf("central.%s", ns)
-	name := "central-mtls"
-	return &openshiftRouteV1.Route{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: ns,
-			Labels:    centralLabels,
-		},
-		Spec: openshiftRouteV1.RouteSpec{
-			Host: host,
-		},
-		Status: t.admittedStatus(name, host),
+	if t.skipRoute[name] {
+		return nil
 	}
+	err := t.ObjectTracker.Update(routesGVR, route, route.GetNamespace())
+	return errors.Wrapf(err, "update route")
 }
 
 func (t *ReconcileTracker) admittedStatus(routeName string, host string) openshiftRouteV1.RouteStatus {
