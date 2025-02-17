@@ -49,8 +49,9 @@ func TestTotalCentrals(t *testing.T) {
 	m := newMetrics()
 	metricName := metricsPrefix + "total_centrals"
 	expectedValue := 37.0
+	expectedStatus := "Ready"
 
-	m.SetTotalCentrals(expectedValue)
+	m.SetTotalCentrals(expectedValue, expectedStatus)
 	metrics := serveMetrics(t, m)
 
 	targetMetric := requireMetric(t, metrics, metricName)
