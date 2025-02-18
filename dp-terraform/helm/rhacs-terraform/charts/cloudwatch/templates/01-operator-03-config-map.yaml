@@ -80,7 +80,7 @@ data:
             - us-east-1
         dimensions:
           - name: "Log Group Metrics"
-            value: "{{ .Values.clusterName }}".acs_audit_logs
+            value: "{{ .Values.clusterName }}.acs_audit_logs"
         metrics:
           - name: IncomingLogEvents
             nilToZero: true
