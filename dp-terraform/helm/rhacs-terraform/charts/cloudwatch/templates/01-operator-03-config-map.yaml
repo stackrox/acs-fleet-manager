@@ -86,5 +86,5 @@ data:
             nilToZero: true
             statistics:
               - Average
-            period: 1d
-            length: 7d
+            period: 3600
+            length: 7200
