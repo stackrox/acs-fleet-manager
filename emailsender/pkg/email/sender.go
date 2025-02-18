@@ -66,20 +66,35 @@ type AWSMailSender struct {
 	rateLimiter RateLimiter
 }
 
+// RateLimitError is returned when a tenant has reached its email sending limit
+type RateLimitError struct {
+	TenantID string
+}
+
+func (e RateLimitError) Error() string {
+	return fmt.Sprintf("email rate limit exceeded for tenant: %s", e.TenantID)
+}
+
 // Send sends an email to the given AWS SES
 func (s *AWSMailSender) Send(ctx context.Context, to []string, rawMessage []byte, tenantID string) error {
+
+	allowed, err := s.rateLimiter.IsAllowed(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to determine rate limit: %w", err)
+	}
+
+	if !allowed {
+		metrics.DefaultInstance().IncThrottledSendEmail(tenantID)
+		return RateLimitError{TenantID: tenantID}
+	}
 	// Even though AWS adds the "from" handler we need to set it to the message to show
 	// an alias in email inboxes. It is more human friendly (noreply@rhacs-dev.com vs. RHACS Cloud Service)
-	if !s.rateLimiter.IsAllowed(tenantID) {
-		metrics.DefaultInstance().IncThrottledSendEmail(tenantID)
-		return fmt.Errorf("rate limit exceeded for tenant: %s", tenantID)
-	}
 	fromBytes := []byte(fmt.Sprintf(fromFormat, tenantID, s.from))
 	toBytes := []byte(fmt.Sprintf(toFormat, strings.Join(to, ",")))
 
 	raw := bytes.Join([][]byte{fromBytes, toBytes, rawMessage}, nil)
 	metrics.DefaultInstance().IncSendEmail(tenantID)
-	_, err := s.ses.SendRawEmail(ctx, s.from, to, raw)
+	_, err = s.ses.SendRawEmail(ctx, s.from, to, raw)
 	if err != nil {
 		metrics.DefaultInstance().IncFailedSendEmail(tenantID)
 		return fmt.Errorf("failed to send email: %v", err)

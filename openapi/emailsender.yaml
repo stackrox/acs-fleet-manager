@@ -92,9 +92,18 @@ paths:
               examples:
                 403Example:
                   $ref: "#/components/examples/403Example"
-                403TUnauthorizedExample:
-                  $ref: "#/components/examples/403TUnauthorizedExample"
+                403UnauthorizedExample:
+                  $ref: "#/components/examples/403UnauthorizedExample"
           description: User forbidden either because the user is not authorized to access the service
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                429Example:
+                  $ref: "#/components/examples/429Example"
+          description: Rate limit for the tenant exceeded
         "500":
           content:
             application/json:
@@ -252,7 +261,7 @@ components:
         code: "ACSCS-EMAIL-4"
         reason: "User 'foo-bar' is not authorized to access the service"
         operation_id: "1lY3UiEhznXBpWPfI2lNejpd4YC"
-    403TUnauthorizedExample:
+    403UnauthorizedExample:
       value:
         id: "11"
         kind: "Error"
@@ -260,6 +269,14 @@ components:
         code: "ACSCS-EMAIL-11"
         reason: "Account is unauthorized to perform this action"
         operation_id: "kXCzWPeI2oXBpVPeI2LvF9jMQY"
+    429Example:
+      value:
+        id: "429"
+        kind: "Error"
+        href: "/api/v1/acscsemail/errors/429"
+        code: "ACSCS-EMAIL-429"
+        reason: "rate limitted"
+        operation_id: "1ieELvF9jMQY6YghfM9gGRsHvEW"
     500Example:
       value:
         id: "9"
