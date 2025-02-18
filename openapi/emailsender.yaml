@@ -275,7 +275,7 @@ components:
         kind: "Error"
         href: "/api/v1/acscsemail/errors/429"
         code: "ACSCS-EMAIL-429"
-        reason: "rate limitted"
+        reason: "rate limited"
         operation_id: "1ieELvF9jMQY6YghfM9gGRsHvEW"
     500Example:
       value:

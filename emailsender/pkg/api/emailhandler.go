@@ -60,7 +60,7 @@ func (eh *EmailHandler) SendEmail(w http.ResponseWriter, r *http.Request) {
 	if err := eh.emailSender.Send(r.Context(), request.To, request.RawMessage, tenantID); err != nil {
 		var returnErr *apiErrors.ServiceError
 		if errors.As(err, &email.RateLimitError{}) {
-			returnErr = apiErrors.NewWithCause(apiErrors.ErrorTooManyRequests, err, "rate limitted")
+			returnErr = apiErrors.NewWithCause(apiErrors.ErrorTooManyRequests, err, "rate limited")
 		} else {
 			returnErr = apiErrors.GeneralError("cannot send email")
 		}

@@ -97,7 +97,7 @@ func TestEmailHandler_SendEmail(t *testing.T) {
 			},
 			req:             httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonReq)),
 			wantCode:        http.StatusTooManyRequests,
-			wantErrorReason: "rate limitted",
+			wantErrorReason: "rate limited",
 		},
 	}
 	for _, tt := range tests {
