@@ -11,8 +11,8 @@ import (
 )
 
 // NewMetricsServer returns the metrics server.
-func NewMetricsServer(config *config.Config) *http.Server {
-	registry := initPrometheus(MetricsInstance(), config)
+func NewMetricsServer(config config.Config) *http.Server {
+	registry := initPrometheus(MetricsInstance())
 	return newMetricsServer(config.MetricsAddress, registry)
 }
 
@@ -30,14 +30,13 @@ func CloseMetricsServer(server *http.Server) {
 	}
 }
 
-func initPrometheus(customMetrics *Metrics, config *config.Config) *prometheus.Registry {
+func initPrometheus(customMetrics *Metrics) *prometheus.Registry {
 	registry := prometheus.NewRegistry()
 	// Register default metrics to use a dedicated registry instead of prometheus.DefaultRegistry.
 	// This makes it easier to isolate metric state when unit testing this package.
 	registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
 	registry.MustRegister(prometheus.NewGoCollector())
 	customMetrics.Register(registry)
-	customMetrics.Init(config)
 	return registry
 }
 

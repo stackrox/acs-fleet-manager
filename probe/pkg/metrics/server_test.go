@@ -22,7 +22,7 @@ func TestMetricsServerCorrectAddress(t *testing.T) {
 }
 
 func TestMetricsServerServesDefaultMetrics(t *testing.T) {
-	registry := initPrometheus(newMetrics(), cfg)
+	registry := initPrometheus(newMetrics())
 	metrics := serveMetrics(t, registry)
 	assert.Contains(t, metrics, "go_memstats_alloc_bytes", "expected metrics to contain go default metrics but it did not")
 }
@@ -37,7 +37,7 @@ func TestMetricsServerServesCustomMetrics(t *testing.T) {
 	customMetrics.SetLastSuccessTimestamp(regionValue)
 	customMetrics.SetLastFailureTimestamp(regionValue)
 	customMetrics.ObserveTotalDuration(time.Minute, regionValue)
-	registry := initPrometheus(customMetrics, cfg)
+	registry := initPrometheus(customMetrics)
 	metrics := serveMetrics(t, registry)
 
 	expectedKeys := []string{

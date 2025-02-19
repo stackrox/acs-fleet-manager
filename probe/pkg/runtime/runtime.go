@@ -10,27 +10,28 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/central"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
 )
 
 // Runtime orchestrates probe runs against fleet manager.
 type Runtime struct {
-	Config *config.Config
-	probe  probe.Probe
+	config  config.Config
+	service central.Service
 }
 
 // New creates a new runtime.
-func New(config *config.Config, probe probe.Probe) (*Runtime, error) {
+func New(config config.Config, service central.Service) *Runtime {
 	return &Runtime{
-		Config: config,
-		probe:  probe,
-	}, nil
+		config:  config,
+		service: service,
+	}
 }
 
 // RunLoop a continuous loop of probe runs.
 func (r *Runtime) RunLoop(ctx context.Context) error {
-	ticker := time.NewTicker(r.Config.ProbeRunWaitPeriod)
+	ticker := time.NewTicker(r.config.ProbeRunWaitPeriod)
 	defer ticker.Stop()
 
 	for {
@@ -46,31 +47,20 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 }
 
 // RunSingle executes a single probe run.
-func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
-	defer func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), r.Config.ProbeCleanUpTimeout)
-		defer cancel()
-
-		if err := r.probe.CleanUp(cleanupCtx); err != nil {
-			// If clean up failed AND the original probe run failed, wrap the
-			// original error and return it in `SingleRun`.
-			// If ONLY the clean up failed, the context error is wrapped and
-			// returned in `SingleRun`.
-			if errReturn != nil {
-				errReturn = fmt.Errorf("cleanup failed: %w: %w", err, errReturn)
-			} else {
-				errReturn = fmt.Errorf("cleanup failed: %w", err)
-			}
-		}
-	}()
+func (r *Runtime) RunSingle(ctx context.Context) error {
+	probeRunCtx, cancel := context.WithTimeout(ctx, r.config.ProbeRunTimeout)
+	defer cancel()
+	specs, err := r.service.ListSpecs(ctx)
+	if err != nil {
+		return fmt.Errorf("listing specs: %w", err)
+	}
+	errCh := make(chan error, len(specs))
 	var wg sync.WaitGroup
-	errCh := make(chan error, len(r.Config.CentralSpecs))
-
-	for _, spec := range r.Config.CentralSpecs {
+	for _, spec := range specs {
 		wg.Add(1)
-		go func(spec config.CentralSpec) {
+		go func(spec central.Spec) {
 			defer wg.Done()
-			errCh <- r.runWithSpec(ctx, spec)
+			errCh <- r.runWithSpec(probeRunCtx, spec)
 		}(spec)
 	}
 
@@ -84,14 +74,12 @@ func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 	return result
 }
 
-func (r *Runtime) runWithSpec(ctx context.Context, spec config.CentralSpec) error {
+func (r *Runtime) runWithSpec(ctx context.Context, spec central.Spec) error {
 	metrics.MetricsInstance().IncStartedRuns(spec.Region)
 	metrics.MetricsInstance().SetLastStartedTimestamp(spec.Region)
 
-	probeRunCtx, cancel := context.WithTimeout(ctx, r.Config.ProbeRunTimeout)
-	defer cancel()
-
-	if err := r.probe.Execute(probeRunCtx, spec); err != nil {
+	probeInstance := probe.New(r.config, r.service, spec)
+	if err := probeInstance.Execute(ctx); err != nil {
 		metrics.MetricsInstance().IncFailedRuns(spec.Region)
 		metrics.MetricsInstance().SetLastFailureTimestamp(spec.Region)
 		glog.Error("probe run failed: ", err)
