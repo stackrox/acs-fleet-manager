@@ -3,7 +3,6 @@ package cli
 
 import (
 	"context"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,8 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
-	"github.com/stackrox/acs-fleet-manager/probe/pkg/fleetmanager"
-	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/central"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/runtime"
 )
 
@@ -28,21 +26,13 @@ type CLI struct {
 }
 
 // New creates a CLI.
-func New(ctx context.Context, config *config.Config) (*CLI, error) {
-	fleetManagerPublicAPI, err := fleetmanager.New(ctx, config)
+func New(ctx context.Context, config config.Config) (*CLI, error) {
+	centralService, err := central.NewService(ctx, config)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create fleet manager client")
+		return nil, errors.Wrap(err, "failed to create central service")
 	}
 
-	httpClient := &http.Client{Timeout: config.ProbeHTTPRequestTimeout}
-
-	probe := probe.New(config, fleetManagerPublicAPI, httpClient)
-
-	runtime, err := runtime.New(config, probe)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create runtime")
-	}
-	return &CLI{runtime: runtime}, nil
+	return &CLI{runtime: runtime.New(config, centralService)}, nil
 }
 
 // Command builds the root CLI command.

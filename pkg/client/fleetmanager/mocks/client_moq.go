@@ -35,6 +35,12 @@ var _ fleetmanager.PublicAPI = &PublicAPIMock{}
 //			GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
 //				panic("mock out the GetCentrals method")
 //			},
+//			GetCloudProviderRegionsFunc: func(ctx context.Context, id string, localVarOptionals *public.GetCloudProviderRegionsOpts) (public.CloudRegionList, *http.Response, error) {
+//				panic("mock out the GetCloudProviderRegions method")
+//			},
+//			GetCloudProvidersFunc: func(ctx context.Context, localVarOptionals *public.GetCloudProvidersOpts) (public.CloudProviderList, *http.Response, error) {
+//				panic("mock out the GetCloudProviders method")
+//			},
 //		}
 //
 //		// use mockedPublicAPI in code that requires fleetmanager.PublicAPI
@@ -53,6 +59,12 @@ type PublicAPIMock struct {
 
 	// GetCentralsFunc mocks the GetCentrals method.
 	GetCentralsFunc func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error)
+
+	// GetCloudProviderRegionsFunc mocks the GetCloudProviderRegions method.
+	GetCloudProviderRegionsFunc func(ctx context.Context, id string, localVarOptionals *public.GetCloudProviderRegionsOpts) (public.CloudRegionList, *http.Response, error)
+
+	// GetCloudProvidersFunc mocks the GetCloudProviders method.
+	GetCloudProvidersFunc func(ctx context.Context, localVarOptionals *public.GetCloudProvidersOpts) (public.CloudProviderList, *http.Response, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -88,11 +100,29 @@ type PublicAPIMock struct {
 			// LocalVarOptionals is the localVarOptionals argument value.
 			LocalVarOptionals *public.GetCentralsOpts
 		}
+		// GetCloudProviderRegions holds details about calls to the GetCloudProviderRegions method.
+		GetCloudProviderRegions []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+			// LocalVarOptionals is the localVarOptionals argument value.
+			LocalVarOptionals *public.GetCloudProviderRegionsOpts
+		}
+		// GetCloudProviders holds details about calls to the GetCloudProviders method.
+		GetCloudProviders []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// LocalVarOptionals is the localVarOptionals argument value.
+			LocalVarOptionals *public.GetCloudProvidersOpts
+		}
 	}
-	lockCreateCentral     sync.RWMutex
-	lockDeleteCentralById sync.RWMutex
-	lockGetCentralById    sync.RWMutex
-	lockGetCentrals       sync.RWMutex
+	lockCreateCentral           sync.RWMutex
+	lockDeleteCentralById       sync.RWMutex
+	lockGetCentralById          sync.RWMutex
+	lockGetCentrals             sync.RWMutex
+	lockGetCloudProviderRegions sync.RWMutex
+	lockGetCloudProviders       sync.RWMutex
 }
 
 // CreateCentral calls CreateCentralFunc.
@@ -244,6 +274,82 @@ func (mock *PublicAPIMock) GetCentralsCalls() []struct {
 	mock.lockGetCentrals.RLock()
 	calls = mock.calls.GetCentrals
 	mock.lockGetCentrals.RUnlock()
+	return calls
+}
+
+// GetCloudProviderRegions calls GetCloudProviderRegionsFunc.
+func (mock *PublicAPIMock) GetCloudProviderRegions(ctx context.Context, id string, localVarOptionals *public.GetCloudProviderRegionsOpts) (public.CloudRegionList, *http.Response, error) {
+	if mock.GetCloudProviderRegionsFunc == nil {
+		panic("PublicAPIMock.GetCloudProviderRegionsFunc: method is nil but PublicAPI.GetCloudProviderRegions was just called")
+	}
+	callInfo := struct {
+		Ctx               context.Context
+		ID                string
+		LocalVarOptionals *public.GetCloudProviderRegionsOpts
+	}{
+		Ctx:               ctx,
+		ID:                id,
+		LocalVarOptionals: localVarOptionals,
+	}
+	mock.lockGetCloudProviderRegions.Lock()
+	mock.calls.GetCloudProviderRegions = append(mock.calls.GetCloudProviderRegions, callInfo)
+	mock.lockGetCloudProviderRegions.Unlock()
+	return mock.GetCloudProviderRegionsFunc(ctx, id, localVarOptionals)
+}
+
+// GetCloudProviderRegionsCalls gets all the calls that were made to GetCloudProviderRegions.
+// Check the length with:
+//
+//	len(mockedPublicAPI.GetCloudProviderRegionsCalls())
+func (mock *PublicAPIMock) GetCloudProviderRegionsCalls() []struct {
+	Ctx               context.Context
+	ID                string
+	LocalVarOptionals *public.GetCloudProviderRegionsOpts
+} {
+	var calls []struct {
+		Ctx               context.Context
+		ID                string
+		LocalVarOptionals *public.GetCloudProviderRegionsOpts
+	}
+	mock.lockGetCloudProviderRegions.RLock()
+	calls = mock.calls.GetCloudProviderRegions
+	mock.lockGetCloudProviderRegions.RUnlock()
+	return calls
+}
+
+// GetCloudProviders calls GetCloudProvidersFunc.
+func (mock *PublicAPIMock) GetCloudProviders(ctx context.Context, localVarOptionals *public.GetCloudProvidersOpts) (public.CloudProviderList, *http.Response, error) {
+	if mock.GetCloudProvidersFunc == nil {
+		panic("PublicAPIMock.GetCloudProvidersFunc: method is nil but PublicAPI.GetCloudProviders was just called")
+	}
+	callInfo := struct {
+		Ctx               context.Context
+		LocalVarOptionals *public.GetCloudProvidersOpts
+	}{
+		Ctx:               ctx,
+		LocalVarOptionals: localVarOptionals,
+	}
+	mock.lockGetCloudProviders.Lock()
+	mock.calls.GetCloudProviders = append(mock.calls.GetCloudProviders, callInfo)
+	mock.lockGetCloudProviders.Unlock()
+	return mock.GetCloudProvidersFunc(ctx, localVarOptionals)
+}
+
+// GetCloudProvidersCalls gets all the calls that were made to GetCloudProviders.
+// Check the length with:
+//
+//	len(mockedPublicAPI.GetCloudProvidersCalls())
+func (mock *PublicAPIMock) GetCloudProvidersCalls() []struct {
+	Ctx               context.Context
+	LocalVarOptionals *public.GetCloudProvidersOpts
+} {
+	var calls []struct {
+		Ctx               context.Context
+		LocalVarOptionals *public.GetCloudProvidersOpts
+	}
+	mock.lockGetCloudProviders.RLock()
+	calls = mock.calls.GetCloudProviders
+	mock.lockGetCloudProviders.RUnlock()
 	return calls
 }
 
