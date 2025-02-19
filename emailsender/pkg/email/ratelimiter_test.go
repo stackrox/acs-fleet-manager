@@ -23,9 +23,10 @@ func TestAllowTrue_Success(t *testing.T) {
 		dbConnection:   mockDatabaseClient,
 	}
 
-	allowed := service.IsAllowed(testTenantID)
+	allowed, err := service.IsAllowed(testTenantID)
 
 	assert.True(t, allowed)
+	assert.Nil(t, err)
 	assert.True(t, mockDatabaseClient.CalledCountEmailSentByTenantFrom)
 }
 
@@ -41,9 +42,10 @@ func TestAllowFalse_LimitReached(t *testing.T) {
 		dbConnection:   mockDatabaseClient,
 	}
 
-	allowed := service.IsAllowed(testTenantID)
+	allowed, err := service.IsAllowed(testTenantID)
 
 	assert.False(t, allowed)
+	assert.Nil(t, err)
 	assert.True(t, mockDatabaseClient.CalledCountEmailSentByTenantFrom)
 }
 

@@ -17,11 +17,11 @@ type MockedRateLimiter struct {
 	calledIsAllowed             bool
 	calledPersistEmailSendEvent bool
 
-	IsAllowedFunc             func(tenantID string) bool
+	IsAllowedFunc             func(tenantID string) (bool, error)
 	PersistEmailSendEventFunc func(tenantID string) error
 }
 
-func (m *MockedRateLimiter) IsAllowed(tenantID string) bool {
+func (m *MockedRateLimiter) IsAllowed(tenantID string) (bool, error) {
 	m.calledIsAllowed = true
 	return m.IsAllowedFunc(tenantID)
 }
@@ -52,8 +52,8 @@ func TestSend_Success(t *testing.T) {
 		},
 	}
 	mockedRateLimiter := &MockedRateLimiter{
-		IsAllowedFunc: func(tenantID string) bool {
-			return true
+		IsAllowedFunc: func(tenantID string) (bool, error) {
+			return true, nil
 		},
 		PersistEmailSendEventFunc: func(tenantID string) error {
 			return nil
@@ -80,8 +80,8 @@ func TestSend_LimitExceeded(t *testing.T) {
 
 	mockClient := &MockSESClient{}
 	mockedRateLimiter := &MockedRateLimiter{
-		IsAllowedFunc: func(tenantID string) bool {
-			return false
+		IsAllowedFunc: func(tenantID string) (bool, error) {
+			return false, nil
 		},
 	}
 	mockedSES := &SES{sesClient: mockClient}
@@ -94,6 +94,7 @@ func TestSend_LimitExceeded(t *testing.T) {
 	err := mockedSender.Send(context.Background(), []string{"to@example.com"}, rawMessage, "test-tenant-id")
 
 	assert.ErrorContains(t, err, "rate limit exceeded")
+	assert.ErrorAs(t, err, &RateLimitError{})
 	assert.True(t, mockedRateLimiter.calledIsAllowed)
 	assert.False(t, mockedRateLimiter.calledPersistEmailSendEvent)
 }
@@ -116,8 +117,8 @@ func TestSendAppendsFromAndTo(t *testing.T) {
 		},
 	}
 	mockedRateLimiter := &MockedRateLimiter{
-		IsAllowedFunc: func(tenantID string) bool {
-			return true
+		IsAllowedFunc: func(tenantID string) (bool, error) {
+			return true, nil
 		},
 		PersistEmailSendEventFunc: func(tenantID string) error {
 			return nil

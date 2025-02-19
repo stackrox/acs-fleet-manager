@@ -2,9 +2,10 @@ package email
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/db"
-	"time"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 
 // RateLimiter defines an exact methods for rate limiter
 type RateLimiter interface {
-	IsAllowed(tenantID string) bool
+	IsAllowed(tenantID string) (bool, error)
 	PersistEmailSendEvent(tenantID string) error
 }
 
@@ -32,21 +33,22 @@ func NewRateLimiterService(dbConnection *db.DatabaseConnection, limitPerTenant i
 }
 
 // IsAllowed checks whether specified tenant can send an email for current timestamp
-func (r *RateLimiterService) IsAllowed(tenantID string) bool {
+func (r *RateLimiterService) IsAllowed(tenantID string) (bool, error) {
 	now := time.Now()
 	dayAgo := now.Add(time.Duration(-windowSizeHours) * time.Hour)
 	sentDuringWindow, err := r.dbConnection.CountEmailSentByTenantSince(tenantID, dayAgo)
 	if err != nil {
-		glog.Errorf("Cannot count sent emails during window for tenant %s: %v", tenantID, err)
-		return false
+		wrappedError := fmt.Errorf("Cannot count sent emails during window for tenant %s: %v", tenantID, err)
+		glog.Error(wrappedError)
+		return false, wrappedError
 	}
 
 	if sentDuringWindow >= int64(r.limitPerTenant) {
 		glog.Warningf("Reached limit for sent emails during window for tenant %s", tenantID)
-		return false
+		return false, nil
 	}
 
-	return true
+	return true, nil
 }
 
 // PersistEmailSendEvent stores email sent event

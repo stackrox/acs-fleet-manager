@@ -88,6 +88,17 @@ func TestEmailHandler_SendEmail(t *testing.T) {
 			wantCode:        http.StatusInternalServerError,
 			wantErrorReason: "cannot send email",
 		},
+		{
+			name: "should return 429 status when SendFunc returns RateLimitError",
+			emailSender: &MockEmailSender{
+				SendFunc: func(ctx context.Context, to []string, rawMessage []byte) error {
+					return email.RateLimitError{TenantID: "test-sub"}
+				},
+			},
+			req:             httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonReq)),
+			wantCode:        http.StatusTooManyRequests,
+			wantErrorReason: "rate limited",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -114,7 +125,7 @@ func TestEmailHandler_SendEmail(t *testing.T) {
 					t.Errorf("response error body does not have reason key")
 				}
 				if errorReason != tt.wantErrorReason {
-					t.Errorf("expected error reason %s, got %s", tt.wantBody, resp.Body.String())
+					t.Errorf("expected error reason %s, got %s", tt.wantBody, errorReason)
 				}
 			}
 
