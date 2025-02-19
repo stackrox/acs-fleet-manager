@@ -119,9 +119,9 @@ func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
 		if !hasProbeOwner || (!hasProbePrefix && !isOrphan) {
 			continue
 		}
-		if err := p.deleteCentral(ctx, &central); err != nil {
-			glog.Warningf("failed to clean up central instance %s: %s", central.Id, err)
-			success = false
+		success = false // repeat until there are no more instances left to delete
+		if err := p.callDelete(ctx, central.Id); err != nil {
+			glog.Warningf("failed to delete central instance %s: %s", central.Id, err)
 		}
 	}
 
@@ -176,21 +176,27 @@ func (p *ProbeImpl) verifyCentral(ctx context.Context, centralRequest *public.Ce
 	return nil
 }
 
-// Delete the Central instance and verify that it transitioned to 'deprovision' state.
+// Delete the Central instance and make sure it is missing from the Fleet Manager API.
 func (p *ProbeImpl) deleteCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
-	resp, err := p.fleetManagerPublicAPI.DeleteCentralById(ctx, centralRequest.Id, true)
-	glog.Infof("deletion of central instance %s requested", centralRequest.Id)
-	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
-	if err != nil {
-		err = errors.WithMessage(err, extractCentralError(resp))
-		return errors.Wrapf(err, "deletion of central instance %s failed", centralRequest.Id)
+	if err := p.callDelete(ctx, centralRequest.Id); err != nil {
+		return err
 	}
-
-	err = p.ensureCentralDeleted(ctx, centralRequest)
-	if err != nil {
+	if err := p.ensureCentralDeleted(ctx, centralRequest); err != nil {
 		return errors.Wrapf(err, "central instance %s with status %s could not be deleted", centralRequest.Id, centralRequest.Status)
 	}
 	glog.Info("central deletion succeeded")
+	return nil
+}
+
+// Calls Fleet Manager to delete the central instance with the given ID.
+func (p *ProbeImpl) callDelete(ctx context.Context, id string) error {
+	resp, err := p.fleetManagerPublicAPI.DeleteCentralById(ctx, id, true)
+	glog.Infof("deletion of central instance %s requested", id)
+	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
+	if err != nil {
+		err = errors.WithMessage(err, extractCentralError(resp))
+		return errors.Wrapf(err, "deletion of central instance %s failed", id)
+	}
 	return nil
 }
 
