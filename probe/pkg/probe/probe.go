@@ -106,7 +106,7 @@ func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
 		return err
 	}
 
-	success := true
+	centralsLeft := false
 	for _, central := range centralList.Items {
 		central := central
 		// Remove all instances that have been created by the probe user.
@@ -119,17 +119,25 @@ func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
 		if !hasProbeOwner || (!hasProbePrefix && !isOrphan) {
 			continue
 		}
-		success = false // repeat until there are no more instances left to delete
+		centralsLeft = true
+		if alreadyDeleting(central) {
+			continue
+		}
 		if err := p.callDelete(ctx, central.Id); err != nil {
 			glog.Warningf("failed to delete central instance %s: %s", central.Id, err)
 		}
 	}
 
-	if success {
+	if !centralsLeft {
 		glog.Info("finished clean up attempt of probe resources")
 		return nil
 	}
 	return errors.New("central clean up not successful")
+}
+
+func alreadyDeleting(central public.CentralRequest) bool {
+	status := constants.CentralStatus(central.Status)
+	return status == constants.CentralRequestStatusDeprovision || status == constants.CentralRequestStatusDeleting
 }
 
 // Create a Central and verify that it transitioned to 'ready' state.
