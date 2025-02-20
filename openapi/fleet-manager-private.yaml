@@ -393,8 +393,10 @@ components:
               items:
                 allOf:
                   - $ref: "#/components/schemas/ManagedCentral"
-            rhacs_operators:
-              $ref: "#/components/schemas/RHACSOperatorConfigs"
+            applications:
+              type: array
+              items:
+                type: object
             verticalPodAutoscaling:
               $ref: "#/components/schemas/VerticalPodAutoscaling"
 
@@ -575,17 +577,6 @@ components:
           type: string
         logLevel:
           type: number
-
-    RHACSOperatorConfigs:
-      properties:
-        CrdUrls:
-          type: array
-          items:
-            type: string
-        RHACSOperatorConfigs:
-          type: array
-          items:
-            type: object
 
     DataPlaneClusterUpdateStatusRequest:
       description: "Schema for the request to update a data plane cluster's status"

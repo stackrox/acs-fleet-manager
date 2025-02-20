@@ -9,8 +9,8 @@ import (
 	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/argox"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,41 +48,13 @@ func newArgoReconciler(
 }
 
 func (r *argoReconciler) ensureApplicationExists(ctx context.Context, remoteCentral private.ManagedCentral, centralDBConnectionString string) error {
-	const lastAppliedHashLabel = "last-applied-hash"
-
 	want, err := r.makeDesiredArgoCDApplication(remoteCentral, centralDBConnectionString)
 	if err != nil {
 		return fmt.Errorf("getting ArgoCD application: %w", err)
 	}
-
-	hash, err := util.MD5SumFromJSONStruct(want)
-	if err != nil {
-		return fmt.Errorf("calculating MD5 from JSON: %w", err)
+	if err := argox.ReconcileApplication(ctx, r.client, want); err != nil {
+		return fmt.Errorf("reconciling ArgoCD application: %w", err)
 	}
-	if want.Labels == nil {
-		want.Labels = map[string]string{}
-	}
-	want.Labels[lastAppliedHashLabel] = fmt.Sprintf("%x", hash)
-
-	var existing argocd.Application
-	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: want.Namespace, Name: want.Name}, &existing)
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return fmt.Errorf("getting ArgoCD application: %w", err)
-		}
-		if err := r.client.Create(ctx, want); err != nil {
-			return fmt.Errorf("creating ArgoCD application: %w", err)
-		}
-		return nil
-	}
-
-	if existing.Labels == nil || existing.Labels[lastAppliedHashLabel] != want.Labels[lastAppliedHashLabel] {
-		want.ResourceVersion = existing.ResourceVersion
-		if err := r.client.Update(ctx, want); err != nil {
-			return fmt.Errorf("updating ArgoCD application: %w", err)
-		}
-	}
-
 	return nil
 }
 

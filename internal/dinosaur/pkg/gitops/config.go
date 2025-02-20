@@ -3,9 +3,8 @@ package gitops
 
 import (
 	"fmt"
+	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -13,9 +12,9 @@ import (
 type Config struct {
 	TenantResources        TenantResourceConfig           `json:"tenantResources"`
 	Centrals               CentralsConfig                 `json:"centrals"`
-	RHACSOperators         operator.OperatorConfigs       `json:"rhacsOperators"`
 	DataPlaneClusters      []DataPlaneClusterConfig       `json:"dataPlaneClusters"`
 	VerticalPodAutoscaling private.VerticalPodAutoscaling `json:"verticalPodAutoscaling"`
+	Applications           []argocd.Application           `json:"applications"`
 }
 
 // AuthProviderAddition represents tenant's additional auth provider gitops configuration
@@ -102,9 +101,9 @@ func ValidateConfig(config Config) field.ErrorList {
 	var errs field.ErrorList
 	errs = append(errs, validateCentralsConfig(field.NewPath("centrals"), config.Centrals)...)
 	errs = append(errs, validateTenantResourcesConfig(field.NewPath("tenantResources"), config.TenantResources)...)
-	errs = append(errs, operator.Validate(field.NewPath("rhacsOperators"), config.RHACSOperators)...)
 	errs = append(errs, validateDataPlaneClusterConfigs(field.NewPath("dataPlaneClusters"), config.DataPlaneClusters)...)
 	errs = append(errs, validateVpaConfig(field.NewPath("verticalPodAutoscaling"), &config.VerticalPodAutoscaling)...)
+	errs = append(errs, validateApplications(field.NewPath("applications"), config.Applications)...)
 	return errs
 }
 
@@ -373,6 +372,40 @@ func validateAddonID(path *field.Path, addonID string) field.ErrorList {
 	var errs field.ErrorList
 	if len(addonID) == 0 {
 		errs = append(errs, field.Required(path, "id is required"))
+	}
+	return errs
+}
+
+func validateApplications(path *field.Path, applications []argocd.Application) field.ErrorList {
+	var errs field.ErrorList
+
+	seenNames := make(map[string]struct{})
+
+	for i, app := range applications {
+		pathIndex := path.Index(i)
+		if _, ok := seenNames[app.Name]; ok {
+			errs = append(errs, field.Duplicate(path.Child("name"), app.Name))
+			continue
+		}
+		seenNames[app.Name] = struct{}{}
+		errs = append(errs, validateApplication(pathIndex, app)...)
+	}
+	return errs
+}
+
+func validateApplication(path *field.Path, app argocd.Application) field.ErrorList {
+	var errs field.ErrorList
+	if app.Name == "" {
+		errs = append(errs, field.Required(path.Child("name"), "name is required"))
+	}
+	if app.Spec.Source.RepoURL == "" {
+		errs = append(errs, field.Required(path.Child("repoURL"), "repoURL is required"))
+	}
+	if app.Spec.Source.TargetRevision == "" {
+		errs = append(errs, field.Required(path.Child("targetRevision"), "targetRevision is required"))
+	}
+	if app.Spec.Destination.Namespace == "" {
+		errs = append(errs, field.Required(path.Child("namespace"), "namespace is required"))
 	}
 	return errs
 }

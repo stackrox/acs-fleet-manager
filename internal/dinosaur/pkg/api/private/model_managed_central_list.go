@@ -12,8 +12,8 @@ package private
 
 // ManagedCentralList A list of ManagedCentral
 type ManagedCentralList struct {
-	Kind                   string                 `json:"kind"`
-	Items                  []ManagedCentral       `json:"items"`
-	RhacsOperators         RhacsOperatorConfigs   `json:"rhacs_operators,omitempty"`
-	VerticalPodAutoscaling VerticalPodAutoscaling `json:"verticalPodAutoscaling,omitempty"`
+	Kind                   string                   `json:"kind"`
+	Items                  []ManagedCentral         `json:"items"`
+	Applications           []map[string]interface{} `json:"applications,omitempty"`
+	VerticalPodAutoscaling VerticalPodAutoscaling   `json:"verticalPodAutoscaling,omitempty"`
 }

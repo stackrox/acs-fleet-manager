@@ -64,7 +64,12 @@ var (
 		},
 	}
 
-	useRoutesReconcilerOptions = CentralReconcilerOptions{UseRoutes: true}
+	useRoutesReconcilerOptions = CentralReconcilerOptions{
+		UseRoutes: true,
+		ArgoReconcilerOptions: ArgoReconcilerOptions{
+			ArgoCdNamespace: "openshift-gitops",
+		},
+	}
 
 	defaultAuditLogConfig = config.AuditLogging{
 		Enabled:            true,
@@ -498,10 +503,10 @@ func TestReconcileDeleteWithManagedDBOverride(t *testing.T) {
 		return connection, nil
 	}
 
-	reconcilerOptions := CentralReconcilerOptions{
-		UseRoutes:        true,
-		ManagedDBEnabled: true,
-	}
+	reconcilerOptions := defaultReconcilerOptions
+	reconcilerOptions.UseRoutes = true
+	reconcilerOptions.ManagedDBEnabled = true
+
 	_, _, r := getClientTrackerAndReconciler(
 		t,
 		managedDBProvisioningClient,

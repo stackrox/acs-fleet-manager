@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -77,10 +77,20 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 				return nil, errors.GeneralError("failed to get GitOps configuration: %v", gitopsConfigErr)
 			}
 
-			if features.TargetedOperatorUpgrades.Enabled() {
-				managedDinosaurList.RhacsOperators = gitopsConfig.RHACSOperators.ToAPIResponse()
+			applicationMaps := make([]map[string]interface{}, 0, len(gitopsConfig.Applications))
+			for _, app := range gitopsConfig.Applications {
+				jsonBytes, err := json.Marshal(app)
+				if err != nil {
+					return nil, errors.GeneralError("failed to marshal application: %v", err)
+				}
+				applicationMap := map[string]interface{}{}
+				if err := json.Unmarshal(jsonBytes, &applicationMap); err != nil {
+					return nil, errors.GeneralError("failed to unmarshal application: %v", err)
+				}
+				applicationMaps = append(applicationMaps, applicationMap)
 			}
 
+			managedDinosaurList.Applications = applicationMaps
 			managedDinosaurList.VerticalPodAutoscaling = gitopsConfig.VerticalPodAutoscaling
 
 			managedCentrals, presentErr := h.presenter.PresentManagedCentrals(r.Context(), centralRequests)

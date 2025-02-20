@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
 func TestProvider_Get(t *testing.T) {
@@ -132,8 +133,7 @@ func TestProviderGet_ValidationNotCalledTwiceForSameConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "config.yaml")
 	err := os.WriteFile(tmpFile, []byte(`
-rhacsOperators:
-  crdUrls: [foo]
+applications: []
 `), 0644)
 	if err != nil {
 		t.Fatal(err)
@@ -156,8 +156,7 @@ rhacsOperators:
 	assert.Equal(t, 1, validationFnCalls)
 
 	err = os.WriteFile(tmpFile, []byte(`
-rhacsOperators:
-  crdUrls: [bar]
+applications: [{name: "foo"}]
 `), 0644)
 	require.NoError(t, err)
 

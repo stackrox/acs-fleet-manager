@@ -2,14 +2,26 @@ package e2e
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
+	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/sets"
+	verticalpodautoscalingv1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
+
 	"github.com/stackrox/acs-fleet-manager/e2e/testutil"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
@@ -17,15 +29,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
-	"github.com/stackrox/rox/operator/api/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/sets"
-	verticalpodautoscalingv1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
-	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -37,10 +40,6 @@ const (
 )
 
 var (
-	defaultCRDUrls = []string{
-		"https://raw.githubusercontent.com/stackrox/stackrox/4.5.4/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
-		"https://raw.githubusercontent.com/stackrox/stackrox/4.5.4/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
-	}
 	operatorConfig1         = operatorConfigForVersion(operatorVersion1)
 	operatorConfig2         = operatorConfigForVersion(operatorVersion2)
 	operator1DeploymentName = getDeploymentName(operatorVersion1)
@@ -78,12 +77,12 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 
 		It("should deploy operator 1 "+operator1DeploymentName, func() {
 			// update gitops config to install one operator
-			config := gitops.Config{
-				RHACSOperators: operator.OperatorConfigs{
-					CRDURLs: defaultCRDUrls,
-					Configs: []operator.OperatorConfig{operatorConfig1},
-				},
+			config := defaultGitopsConfig()
+			config.Applications = []argocd.Application{
+				crdsApplication(),
+				operatorsApplication(operatorConfig1),
 			}
+
 			Expect(putGitopsConfig(ctx, config)).To(Succeed())
 			Eventually(assertDeployedOperators(ctx, operator1DeploymentName)).
 				WithTimeout(waitTimeout).
@@ -91,7 +90,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				Should(Succeed())
 		})
 
-		It("should run operator 1 with central label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
+		It("should run operator 1 with central label selector "+operatorConfig1.CentralLabelSelector, func() {
 			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -100,12 +99,12 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 
 		It("should deploy two operators in different versions", func() {
 			// add a second operator version to the gitops config
-			config := gitops.Config{
-				RHACSOperators: operator.OperatorConfigs{
-					CRDURLs: defaultCRDUrls,
-					Configs: []operator.OperatorConfig{operatorConfig1, operatorConfig2},
-				},
+			config := defaultGitopsConfig()
+			config.Applications = []argocd.Application{
+				crdsApplication(),
+				operatorsApplication(operatorConfig1, operatorConfig2),
 			}
+
 			Expect(putGitopsConfig(ctx, config)).To(Succeed())
 			Eventually(assertDeployedOperators(ctx, operator1DeploymentName, operator2DeploymentName)).
 				WithTimeout(waitTimeout).
@@ -113,14 +112,14 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				Should(Succeed())
 		})
 
-		It("should deploy operator 1 with label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
+		It("should deploy operator 1 with label selector "+operatorConfig1.CentralLabelSelector, func() {
 			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
 
-		It("should deploy operator 2 with label selector "+operatorConfig2.GetCentralLabelSelector(), func() {
+		It("should deploy operator 2 with label selector "+operatorConfig2.CentralLabelSelector, func() {
 			Eventually(operatorMatchesConfig(ctx, operatorConfig2)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -128,12 +127,12 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 		})
 
 		It("should delete operator 2 and only run operator 1", func() {
-			config := gitops.Config{
-				RHACSOperators: operator.OperatorConfigs{
-					CRDURLs: defaultCRDUrls,
-					Configs: []operator.OperatorConfig{operatorConfig1},
-				},
+			config := defaultGitopsConfig()
+			config.Applications = []argocd.Application{
+				crdsApplication(),
+				operatorsApplication(operatorConfig1),
 			}
+
 			Expect(putGitopsConfig(ctx, config)).To(Succeed())
 			Eventually(assertDeployedOperators(ctx, operator1DeploymentName)).
 				WithTimeout(waitTimeout).
@@ -141,7 +140,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				Should(Succeed())
 		})
 
-		It("should deploy operator 1 with label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
+		It("should deploy operator 1 with label selector "+operatorConfig1.CentralLabelSelector, func() {
 			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -157,7 +156,10 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 		It("run only one operator with version: "+operatorVersion1, func() {
 			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
 				config = defaultGitopsConfig()
-				config.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
+				config.Applications = []argocd.Application{
+					crdsApplication(),
+					operatorsApplication(operatorConfig1),
+				}
 				config.TenantResources.Overrides = []gitops.TenantResourceOverride{
 					overrideAllCentralsToBeReconciledByOperator(operatorConfig1),
 					overrideAllCentralsToUseMinimalResources(),
@@ -195,7 +197,10 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 		It("upgrade central", func() {
 			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
 				config = defaultGitopsConfig()
-				config.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1, operatorConfig2}
+				config.Applications = []argocd.Application{
+					crdsApplication(),
+					operatorsApplication(operatorConfig1, operatorConfig2),
+				}
 				config.TenantResources.Overrides = []gitops.TenantResourceOverride{
 					overrideAllCentralsToBeReconciledByOperator(operatorConfig2),
 					overrideAllCentralsToUseMinimalResources(),
@@ -378,11 +383,11 @@ func updateGitopsConfig(ctx context.Context, updateFn func(config gitops.Config)
 
 }
 
-func operatorConfigForVersion(version string) operator.OperatorConfig {
-	return operator.OperatorConfig{
-		"deploymentName":       getDeploymentName(version),
-		"image":                fmt.Sprintf("quay.io/rhacs-eng/stackrox-operator:%s", version),
-		"centralLabelSelector": fmt.Sprintf("rhacs.redhat.com/version-selector=%s", version),
+func operatorConfigForVersion(version string) OperatorConfig {
+	return OperatorConfig{
+		DeploymentName:       getDeploymentName(version),
+		Image:                fmt.Sprintf("quay.io/rhacs-eng/stackrox-operator:%s", version),
+		CentralLabelSelector: fmt.Sprintf("rhacs.redhat.com/version-selector=%s", version),
 	}
 }
 
@@ -394,7 +399,7 @@ func getOperatorDeployments(ctx context.Context) ([]appsv1.Deployment, error) {
 	deployments := appsv1.DeploymentList{}
 	labels := map[string]string{"app": "rhacs-operator"}
 	err := k8sClient.List(ctx, &deployments,
-		ctrlClient.InNamespace(operator.ACSOperatorNamespace),
+		ctrlClient.InNamespace("rhacs"),
 		ctrlClient.MatchingLabels(labels))
 	if err != nil {
 		return nil, err
@@ -465,22 +470,28 @@ func validateDeployment(deployment *appsv1.Deployment, assertions ...deploymentA
 	return nil
 }
 
-func operatorMatchesConfig(ctx context.Context, config operator.OperatorConfig) func() error {
+type OperatorConfig struct {
+	DeploymentName       string
+	Image                string
+	CentralLabelSelector string
+}
+
+func operatorMatchesConfig(ctx context.Context, config OperatorConfig) func() error {
 	return func() error {
-		deploy, err := getDeployment(ctx, operator.ACSOperatorNamespace, config.GetDeploymentName())
+		deploy, err := getDeployment(ctx, "rhacs", config.DeploymentName)
 		if err != nil {
-			println("Got err", err.Error(), config.GetDeploymentName())
+			println("Got err", err.Error(), config.DeploymentName)
 			return err
 		}
 		return validateDeployment(deploy,
-			operatorHasImageAssertion(config.GetImage()),
-			operatorHasCentralLabelSelectorAssertion(config.GetCentralLabelSelector()),
+			operatorHasImageAssertion(config.Image),
+			operatorHasCentralLabelSelectorAssertion(config.CentralLabelSelector),
 		)
 	}
 }
 
-func getLabelAndVersionFromOperatorConfig(operatorConfig operator.OperatorConfig) (string, string, error) {
-	selector := operatorConfig.GetCentralLabelSelector()
+func getLabelAndVersionFromOperatorConfig(operatorConfig OperatorConfig) (string, string, error) {
+	selector := operatorConfig.CentralLabelSelector
 	selectorParts := strings.Split(selector, "=")
 	if len(selectorParts) != 2 {
 		return "", "", fmt.Errorf("invalid selector %s", selector)
@@ -490,7 +501,7 @@ func getLabelAndVersionFromOperatorConfig(operatorConfig operator.OperatorConfig
 	return versionLabelKey, versionLabelValue, nil
 }
 
-func overrideAllCentralsToBeReconciledByOperator(operatorConfig operator.OperatorConfig) gitops.TenantResourceOverride {
+func overrideAllCentralsToBeReconciledByOperator(operatorConfig OperatorConfig) gitops.TenantResourceOverride {
 	return overrideAllCentralsWithPatch(reconciledByOperatorPatch(operatorConfig))
 }
 
@@ -512,16 +523,12 @@ func overrideCentralWithPatch(centralID, patch string) gitops.TenantResourceOver
 	}
 }
 
-func reconciledByOperatorPatch(operatorConfig operator.OperatorConfig) string {
+func reconciledByOperatorPatch(operatorConfig OperatorConfig) string {
 	_, value, err := getLabelAndVersionFromOperatorConfig(operatorConfig)
 	if err != nil {
 		panic(err)
 	}
 	return `rolloutGroup: ` + value
-}
-
-func forceReconcilePatch() string {
-	return `forceReconcile: true`
 }
 
 func minimalCentralResourcesPatch() string {
@@ -573,15 +580,6 @@ spec:
 
 func defaultTenantResourceValues() string {
 	return `
-labels:
-  app.kubernetes.io/managed-by: "rhacs-fleetshard"
-  app.kubernetes.io/instance: "{{ .Name }}"
-  rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
-  rhacs.redhat.com/tenant: "{{ .ID }}"
-  rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
-annotations:
-  rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
-centralRdsCidrBlock: "10.1.0.0/16"
 centralVpaEnabled: false
 rolloutGroup: dev
 centralResources:
@@ -619,29 +617,121 @@ func tenantResourcesWithCentralVpaEnabled() string {
 	return `centralVpaEnabled: true`
 }
 
+func mustJson(obj interface{}) []byte {
+	b, err := json.Marshal(obj)
+	Expect(err).ToNot(HaveOccurred())
+	return b
+}
+
 func defaultGitopsConfig() gitops.Config {
 	return gitops.Config{
-		TenantResources: gitops.TenantResourceConfig{
-			Default: defaultTenantResourceValues(),
+		TenantResources: defaultTenantResources(),
+		Applications:    defaultApplications(),
+	}
+}
+
+func defaultTenantResources() gitops.TenantResourceConfig {
+	return gitops.TenantResourceConfig{
+		Default: defaultTenantResourceValues(),
+	}
+}
+
+func defaultApplications() []argocd.Application {
+	return []argocd.Application{
+		crdsApplication(),
+		operatorsApplication(operator462()),
+	}
+}
+
+func restoreDefaultGitopsConfig() error {
+	return putGitopsConfig(context.Background(), defaultGitopsConfig())
+}
+
+func operator462() OperatorConfig {
+	return OperatorConfig{
+		DeploymentName:       "rhacs-operator-4.6.2",
+		Image:                "registry.redhat.io/advanced-cluster-security/rhacs-rhel8-operator@sha256:a96572d0df791da60763dec4b4f0f52124772c3649303170968806dcc3de8269",
+		CentralLabelSelector: "rhacs.redhat.com/version-selector=dev",
+	}
+}
+
+func operatorsApplication(operators ...OperatorConfig) argocd.Application {
+	images := make([]map[string]interface{}, len(operators))
+	for i, operator := range operators {
+		images[i] = map[string]interface{}{
+			"deploymentName":                  operator.DeploymentName,
+			"image":                           operator.Image,
+			"centralLabelSelector":            operator.CentralLabelSelector,
+			"securedClusterReconcilerEnabled": false,
+		}
+	}
+
+	return argocd.Application{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "rhacs-operators",
 		},
-		RHACSOperators: operator.OperatorConfigs{
-			CRDURLs: defaultCRDUrls,
-			Configs: []operator.OperatorConfig{
+		Spec: argocd.ApplicationSpec{
+			IgnoreDifferences: argocd.IgnoreDifferences{
 				{
-					"deploymentName":                  "rhacs-operator-dev",
-					"image":                           "quay.io/rhacs-eng/stackrox-operator:4.5.4",
-					"centralLabelSelector":            "rhacs.redhat.com/version-selector=dev",
-					"securedClusterReconcilerEnabled": false,
+					Kind:         "ServiceAccount",
+					JSONPointers: []string{"/imagePullSecrets"},
+				},
+			},
+			Destination: argocd.ApplicationDestination{
+				Namespace: "rhacs",
+				Server:    "https://kubernetes.default.svc",
+			},
+			Project: "default",
+			Source: &argocd.ApplicationSource{
+				Helm: &argocd.ApplicationSourceHelm{
+					ValuesObject: &runtime.RawExtension{
+						Raw: mustJson(map[string]interface{}{
+							"operator": map[string]interface{}{
+								"images": images,
+							},
+						}),
+					},
+				},
+				Path:           "rhacs-operator-legacy",
+				RepoURL:        "https://github.com/stackrox/acscs-manifests",
+				TargetRevision: "HEAD",
+			},
+			SyncPolicy: &argocd.SyncPolicy{
+				Automated: &argocd.SyncPolicyAutomated{
+					Prune:    true,
+					SelfHeal: true,
 				},
 			},
 		},
 	}
 }
 
-func restoreDefaultGitopsConfig() error {
-	defaultConfig, err := gitops.NewProvider().Get()
-	if err != nil {
-		defaultConfig = defaultGitopsConfig()
+func crdsApplication() argocd.Application {
+	return argocd.Application{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "rhacs-crds",
+		},
+		Spec: argocd.ApplicationSpec{
+			Destination: argocd.ApplicationDestination{
+				Namespace: "rhacs",
+				Server:    "https://kubernetes.default.svc",
+			},
+			Project: "default",
+			Source: &argocd.ApplicationSource{
+				Directory: &argocd.ApplicationSourceDirectory{
+					Include: "{platform.stackrox.io_centrals.yaml,platform.stackrox.io_securedclusters.yaml}",
+				},
+				Path:           "operator/bundle/manifests",
+				RepoURL:        "https://github.com/stackrox/stackrox",
+				TargetRevision: "4.6.2",
+			},
+			SyncPolicy: &argocd.SyncPolicy{
+				Automated: &argocd.SyncPolicyAutomated{
+					Prune:    true,
+					SelfHeal: true,
+				},
+				SyncOptions: argocd.SyncOptions{"ServerSideApply=true"},
+			},
+		},
 	}
-	return putGitopsConfig(context.Background(), defaultConfig)
 }
