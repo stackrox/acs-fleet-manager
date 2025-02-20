@@ -3,18 +3,17 @@ package gitops
 
 import (
 	"fmt"
+
 	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // Config represents the gitops configuration
 type Config struct {
-	TenantResources        TenantResourceConfig           `json:"tenantResources"`
-	Centrals               CentralsConfig                 `json:"centrals"`
-	DataPlaneClusters      []DataPlaneClusterConfig       `json:"dataPlaneClusters"`
-	VerticalPodAutoscaling private.VerticalPodAutoscaling `json:"verticalPodAutoscaling"`
-	Applications           []argocd.Application           `json:"applications"`
+	TenantResources   TenantResourceConfig     `json:"tenantResources"`
+	Centrals          CentralsConfig           `json:"centrals"`
+	DataPlaneClusters []DataPlaneClusterConfig `json:"dataPlaneClusters"`
+	Applications      []argocd.Application     `json:"applications"`
 }
 
 // AuthProviderAddition represents tenant's additional auth provider gitops configuration
@@ -102,7 +101,6 @@ func ValidateConfig(config Config) field.ErrorList {
 	errs = append(errs, validateCentralsConfig(field.NewPath("centrals"), config.Centrals)...)
 	errs = append(errs, validateTenantResourcesConfig(field.NewPath("tenantResources"), config.TenantResources)...)
 	errs = append(errs, validateDataPlaneClusterConfigs(field.NewPath("dataPlaneClusters"), config.DataPlaneClusters)...)
-	errs = append(errs, validateVpaConfig(field.NewPath("verticalPodAutoscaling"), &config.VerticalPodAutoscaling)...)
 	errs = append(errs, validateApplications(field.NewPath("applications"), config.Applications)...)
 	return errs
 }

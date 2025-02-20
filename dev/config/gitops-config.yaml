@@ -83,19 +83,3 @@ tenantResources:
         memory: 100Mi
 
     centralRdsCidrBlock: "10.1.0.0/16"
-
-    verticalPodAutoscalers:
-      central:
-        enabled: true
-        updatePolicy:
-          updateMode: "Auto"
-          minReplicas: 1
-        resourcePolicy:
-          containerPolicies:
-            - containerName: "*"
-              minAllowed:
-                cpu: "100m"
-                memory: "50Mi"
-              maxAllowed:
-                cpu: "1"
-                memory: "2Gi"
