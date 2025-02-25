@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"net/http"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
+
 	"github.com/gorilla/mux"
+
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
@@ -91,7 +93,6 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 			}
 
 			managedDinosaurList.Applications = applicationMaps
-			managedDinosaurList.VerticalPodAutoscaling = gitopsConfig.VerticalPodAutoscaling
 
 			managedCentrals, presentErr := h.presenter.PresentManagedCentrals(r.Context(), centralRequests)
 			if presentErr != nil {

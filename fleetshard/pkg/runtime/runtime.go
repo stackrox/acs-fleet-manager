@@ -8,6 +8,12 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/rox/operator/api/v1alpha1"
+	"github.com/stackrox/rox/pkg/concurrency"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
@@ -22,11 +28,6 @@ import (
 	fleetmanager "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-	"github.com/stackrox/rox/operator/api/v1alpha1"
-	"github.com/stackrox/rox/pkg/concurrency"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
-	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // reconcilerRegistry contains a registry of a reconciler for each Central tenant. The key is the identifier of the
@@ -56,7 +57,6 @@ type Runtime struct {
 	secretCipher                  cipher.Cipher
 	encryptionKeyGenerator        cipher.KeyGenerator
 	addonService                  cluster.AddonService
-	vpaReconciler                 *vpaReconciler
 	runtimeApplicationsReconciler *runtimeApplicationsReconciler
 }
 
@@ -110,7 +110,6 @@ func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient
 		secretCipher:                  secretCipher, // pragma: allowlist secret
 		encryptionKeyGenerator:        encryptionKeyGen,
 		addonService:                  addonService,
-		vpaReconciler:                 newVPAReconciler(k8sClient, k8sClient.RESTMapper()),
 		runtimeApplicationsReconciler: newRuntimeApplicationsReconciler(k8sClient, config.ArgoCdNamespace),
 	}, nil
 }
@@ -165,10 +164,6 @@ func (r *Runtime) Start() error {
 			err = errors.Wrapf(err, "retrieving list of managed centrals")
 			glog.Error(err)
 			return 0, err
-		}
-
-		if err := r.vpaReconciler.reconcile(ctx, list.VerticalPodAutoscaling); err != nil {
-			glog.Errorf("failed to reconcile verticalPodAutoscaling: %v", err)
 		}
 
 		if err := r.runtimeApplicationsReconciler.reconcile(ctx, list); err != nil {
