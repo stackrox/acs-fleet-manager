@@ -32,7 +32,7 @@ spec:
               # Run custom tests for the given Snapshot here
               # After the tests finish, record the overall result in the RESULT variable
               RESULT="SUCCESS"
-              #test commit
+
               # Output the standardized TEST_OUTPUT result in JSON form
               TEST_OUTPUT=$(jq -rc --arg date $(date -u --iso-8601=seconds) --arg RESULT "${RESULT}" --null-input \
                 '{result: $RESULT, timestamp: $date, failures: 0, successes: 1, warnings: 0}')
