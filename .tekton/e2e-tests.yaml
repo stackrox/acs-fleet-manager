@@ -3,12 +3,70 @@ kind: Pipeline
 metadata:
   name: acs-fleet-manager-e2e-tests
 spec:
+  description: |-
+    This pipeline automates the process of running end-to-end tests for ACS Fleet Manager
+    using a ROSA (Red Hat OpenShift Service on AWS) cluster. The pipeline provisions
+    the ROSA cluster, installs fleet manager components, runs the tests
+    and finally deprovisions the ROSA cluster.
   params:
     - description: 'Snapshot of the application'
       name: SNAPSHOT
       default: '{"components": [{"name":"test-app", "containerImage": "quay.io/example/repo:latest"}]}'
       type: string
   tasks:
+    - name: rosa-hcp-metadata
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: common/tasks/rosa/hosted-cp/rosa-hcp-metadata/rosa-hcp-metadata.yaml
+    - name: test-metadata
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: common/tasks/test-metadata/0.2/test-metadata.yaml
+      params:
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
+        - name: test-name
+          value: $(context.pipelineRun.name)
+#    - name: provision-rosa
+#      runAfter:
+#        - rosa-hcp-metadata
+#        - test-metadata
+#      taskRef:
+#        resolver: git
+#        params:
+#          - name: url
+#            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+#          - name: revision
+#            value: main
+#          - name: pathInRepo
+#            value: tasks/rosa/hosted-cp/rosa-hcp-provision/0.2/rosa-hcp-provision.yaml
+#      params:
+#        - name: cluster-name
+#          value: $(tasks.rosa-hcp-metadata.results.cluster-name)
+#        - name: ocp-version
+#          value: $(params.ocp-version)
+#        - name: replicas
+#          value: $(params.replicas)
+#        - name: machine-type
+#          value: $(params.machine-type)
+#        - name: konflux-test-infra-secret
+#          value: $(params.konflux-test-infra-secret)
+#        - name: cloud-credential-key
+#          value: $(params.cloud-credential-key)
+#        - name: oci-container
+#          value: $(params.oci-container-repo):$(context.pipelineRun.name)
     - name: task-1
       description: Placeholder task that prints the Snapshot and outputs standard TEST_OUTPUT
       params:
