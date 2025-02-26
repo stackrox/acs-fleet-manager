@@ -144,3 +144,34 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: make image/push/fleet-manager-tools
+  e2e-test:
+    name: "Run E2E Tests"
+    runs-on: ubuntu-latest
+    # Skip for external contributions.
+    if: |
+      github.event_name == 'push' || !github.event.pull_request.head.repo.fork
+    permissions:
+      id-token: write
+      contents: read
+    environment: development
+    env:
+      AWS_AUTH_HELPER: "none"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up CRC
+        uses: crc-org/crc-github-action@v1
+        with:
+          cache: 'true'
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+      - name: Run tests
+        env:
+          STATIC_TOKEN: dummy
+          STATIC_TOKEN_ADMIN: dummy
+          QUAY_USER: dummy
+          QUAY_TOKEN: dummy
+        run: ".openshift-ci/tests/e2e.sh"
