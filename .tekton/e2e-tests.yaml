@@ -37,7 +37,7 @@ spec:
         results:
           - name: git-url
             type: string
-          - name: revision
+          - name: git-revision
             type: string
         steps:
           - name: prepare-test-metadata
@@ -57,7 +57,7 @@ spec:
               echo "Git URL:"
               echo -n "$GIT_URL" | tee $(results.git-url.path)
               echo "Git revision:"
-              echo -n "$GIT_REVISION" | tee $(results.revision.path)
+              echo -n "$GIT_REVISION" | tee $(results.git-revision.path)
     - name: provision-cluster
       runAfter:
         - generate-cluster-metadata
