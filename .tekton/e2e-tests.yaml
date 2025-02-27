@@ -44,14 +44,14 @@ spec:
       params:
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
-      results:
-        - name: git-url
-          type: string
-        - name: revision
-          type: string
       taskSpec:
         params:
           - name: SNAPSHOT
+        results:
+          - name: git-url
+            type: string
+          - name: revision
+            type: string
         steps:
           - name: prepare-test-metadata
             image: quay.io/konflux-qe-incubator/konflux-qe-tools:latest
