@@ -26,16 +26,6 @@ spec:
             value: tasks/generate-infra-cluster-metadata-task.yaml
           - name: prefix
             value: acscs-e2e
-    - name: install-infractl
-      taskRef:
-        resolver: git
-        params:
-          - name: url
-            value: https://github.com/stackrox/konflux-tasks.git
-          - name: revision
-            value: yury/infractl
-          - name: pathInRepo
-            value: tasks/install-infractl-task.yaml
     - name: prepare-test-metadata
       description: Collects test metadata. Only group context is currently supported.
       params:
@@ -110,7 +100,6 @@ spec:
     - name: provision-cluster
       runAfter:
         - generate-cluster-metadata
-        - install-infractl
       taskRef:
         resolver: git
         params:
@@ -125,8 +114,6 @@ spec:
           value: $(tasks.generate-cluster-metadata.results.cluster-name)
         - name: flavor
           value: rosahcp
-        - name: infractl-bin
-          value: $(tasks.install-infractl.results.infractl-bin)
         - name: no-slack
           value: "true"
         - name: wait
@@ -178,5 +165,3 @@ spec:
       params:
         - name: cluster-name
           value: $(tasks.generate-cluster-metadata.results.cluster-name)
-        - name: infractl-bin
-          value: $(tasks.install-infractl.results.infractl-bin)
