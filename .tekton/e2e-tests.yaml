@@ -24,8 +24,9 @@ spec:
             value: yury/infractl
           - name: pathInRepo
             value: tasks/generate-infra-cluster-metadata-task.yaml
-          - name: prefix
-            value: acscs-e2e
+      params:
+        - name: prefix
+          value: acscs-e2e
     - name: prepare-test-metadata
       description: Collects test metadata. Only group context is currently supported.
       params:
