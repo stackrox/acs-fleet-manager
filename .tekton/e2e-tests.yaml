@@ -36,9 +36,6 @@ spec:
             value: yury/infractl
           - name: pathInRepo
             value: tasks/install-infractl-task.yaml
-      workspaces:
-        - name: workspace
-          workspace: workspace
     - name: prepare-test-metadata
       description: Collects test metadata. Only group context is currently supported.
       params:
@@ -123,9 +120,6 @@ spec:
             value: yury/infractl
           - name: pathInRepo
             value: tasks/create-infra-cluster-task.yaml
-      workspaces:
-        - name: workspace
-          workspace: workspace
       params:
         - name: cluster-name
           value: $(tasks.generate-cluster-metadata.results.cluster-name)
@@ -186,8 +180,3 @@ spec:
           value: $(tasks.generate-cluster-metadata.results.cluster-name)
         - name: infractl-bin
           value: $(tasks.install-infractl.results.infractl-bin)
-      workspaces:
-        - name: workspace
-          workspace: workspace
-  workspaces:
-    - name: workspace
