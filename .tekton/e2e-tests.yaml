@@ -54,49 +54,10 @@ spec:
               GIT_URL=$(jq -r '.components[0].source.git.url' <<< "$SNAPSHOT")
               GIT_REVISION=$(jq -r '.components[0].source.git.revision' <<< "$SNAPSHOT")
 
+              echo "Git URL:"
               echo -n "$GIT_URL" | tee $(results.git-url.path)
+              echo "Git revision:"
               echo -n "$GIT_REVISION" | tee $(results.revision.path)
-    - name: clone-repository
-      params:
-        - name: url
-          value: $(tasks.prepare-test-metadata.results.git-url)
-        - name: revision
-          value: $(tasks.prepare-test-metadata.results.revision)
-      runAfter:
-        - prepare-test-metadata
-      taskRef:
-        params:
-          - name: name
-            value: git-clone
-          - name: bundle
-            value: quay.io/konflux-ci/tekton-catalog/task-git-clone:0.1@sha256:fe27845cdba6fa95d9da2bfc7cb744d4df88711e8b867c4f246bdf944d4b00d0
-          - name: kind
-            value: task
-        resolver: bundles
-    - name: build-e2e-runtime
-      params:
-        - name: IMAGE
-          value: "quay.io/redhat-user-workloads/acscs-rhacs-tenant/acscs-main/e2e-runtime:$(tasks.prepare-test-metadata.results.revision)"
-        - name: DOCKERFILE
-          value: .openshift-ci/e2e-runtime/Dockerfile
-        - name: CONTEXT
-          value: .
-        - name: IMAGE_EXPIRES_AFTER
-          value: 24h
-        - name: COMMIT_SHA
-          value: $(tasks.clone-repository.results.commit)
-      taskRef:
-        params:
-          - name: name
-            value: buildah
-          - name: bundle
-            value: quay.io/konflux-ci/tekton-catalog/task-buildah:0.4@sha256:91caef22ccb5bbc694e33eb8706cddb662840e9dc351c7e57a23f7dc50dae2e5
-          - name: kind
-            value: task
-        resolver: bundles
-      runAfter:
-        - prepare-test-metadata
-        - clone-repository
     - name: provision-cluster
       runAfter:
         - generate-cluster-metadata
@@ -124,33 +85,41 @@ spec:
       timeout: 2h
       runAfter:
         - provision-cluster
-        - build-e2e-runtime
+        - prepare-test-metadata
       params:
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
+        - name: git-url
+          value: $(tasks.prepare-test-metadata.results.git-url)
+        - name: git-revision
+          value: $(tasks.prepare-test-metadata.results.git-revision)
       taskSpec:
         params:
           - name: SNAPSHOT
+          - name: git-url
+          - name: git-revision
         results:
           - name: TEST_OUTPUT
             description: Test output
         steps:
-          - image: registry.redhat.io/openshift4/ose-cli:latest
-            env:
-              - name: SNAPSHOT
-                value: $(params.SNAPSHOT)
+          - name: clone-repo
+            image: quay.io/konflux-qe-incubator/konflux-qe-tools:latest
+            workingDir: /workspace/e2e-runtime
             script: |
-              dnf -y install jq
+              #!/bin/sh
+              set -e
 
-              echo -e "Example test task for the Snapshot:\n ${SNAPSHOT}"
-              # Run custom tests for the given Snapshot here
-              # After the tests finish, record the overall result in the RESULT variable
-              RESULT="SUCCESS"
+              git clone "$(params.git-url)" .
+              git checkout "$(params.git-revision)"
+          - name: run-tests
+            image: registry.redhat.io/openshift4/ose-cli:latest
+            workingDir: /workspace/e2e-runtime
+            script: |
+              #!/usr/bin/env bash
 
-              # Output the standardized TEST_OUTPUT result in JSON form
-              TEST_OUTPUT=$(jq -rc --arg date $(date -u --iso-8601=seconds) --arg RESULT "${RESULT}" --null-input \
-                '{result: $RESULT, timestamp: $date, failures: 0, successes: 1, warnings: 0}')
-              echo -n "${TEST_OUTPUT}" | tee $(results.TEST_OUTPUT.path)
+              set -euo pipefail
+
+              ./.openshift-ci/tests/e2e.sh
   finally:
     - name: deprovision-cluster
       taskRef:
