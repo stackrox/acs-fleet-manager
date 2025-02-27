@@ -9,66 +9,61 @@ spec:
     the ROSA cluster, installs fleet manager components, runs the tests
     and finally deprovisions the ROSA cluster.
   params:
-    - description: 'Snapshot of the application'
-      name: SNAPSHOT
+    - name: SNAPSHOT
+      description: 'The JSON string representing the snapshot of the application under test.'
       default: '{"components": [{"name":"test-app", "containerImage": "quay.io/example/repo:latest"}]}'
       type: string
   tasks:
-    - name: rosa-hcp-metadata
+    - name: generate-cluster-metadata
       taskRef:
         resolver: git
         params:
           - name: url
-            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+            value: https://github.com/stackrox/konflux-tasks.git
           - name: revision
-            value: main
+            value: yury/infractl
           - name: pathInRepo
-            value: common/tasks/rosa/hosted-cp/rosa-hcp-metadata/rosa-hcp-metadata.yaml
-    - name: test-metadata
+            value: tasks/generate-infra-cluster-metadata-task.yaml
+    - name: install-infractl
       taskRef:
         resolver: git
         params:
           - name: url
-            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+            value: https://github.com/stackrox/konflux-tasks.git
           - name: revision
-            value: main
+            value: yury/infractl
           - name: pathInRepo
-            value: common/tasks/test-metadata/0.2/test-metadata.yaml
+            value: tasks/install-infractl-task.yaml
+    - name: provision-cluster
+      runAfter:
+        - generate-cluster-metadata
+        - install-infractl
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/stackrox/konflux-tasks.git
+          - name: revision
+            value: yury/infractl
+          - name: pathInRepo
+            value: tasks/create-infra-cluster-task.yaml
       params:
-        - name: SNAPSHOT
-          value: $(params.SNAPSHOT)
-        - name: test-name
-          value: $(context.pipelineRun.name)
-#    - name: provision-rosa
-#      runAfter:
-#        - rosa-hcp-metadata
-#        - test-metadata
-#      taskRef:
-#        resolver: git
-#        params:
-#          - name: url
-#            value: https://github.com/konflux-ci/tekton-integration-catalog.git
-#          - name: revision
-#            value: main
-#          - name: pathInRepo
-#            value: tasks/rosa/hosted-cp/rosa-hcp-provision/0.2/rosa-hcp-provision.yaml
-#      params:
-#        - name: cluster-name
-#          value: $(tasks.rosa-hcp-metadata.results.cluster-name)
-#        - name: ocp-version
-#          value: $(params.ocp-version)
-#        - name: replicas
-#          value: $(params.replicas)
-#        - name: machine-type
-#          value: $(params.machine-type)
-#        - name: konflux-test-infra-secret
-#          value: $(params.konflux-test-infra-secret)
-#        - name: cloud-credential-key
-#          value: $(params.cloud-credential-key)
-#        - name: oci-container
-#          value: $(params.oci-container-repo):$(context.pipelineRun.name)
-    - name: task-1
-      description: Placeholder task that prints the Snapshot and outputs standard TEST_OUTPUT
+        - name: cluster-name
+          value: $(tasks.generate-cluster-metadata.results.cluster-name)
+        - name: flavor
+          value: rosahcp
+        - name: infractl-bin
+          value: $(tasks.install-infractl.results.infractl-bin)
+        - name: no-slack
+          value: "true"
+        - name: wait
+          value: "true"
+        - name: lifespan
+          value: 2h
+    - name: e2e-tests
+      timeout: 2h
+      runAfter:
+        - provision-cluster
       params:
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
@@ -95,3 +90,19 @@ spec:
               TEST_OUTPUT=$(jq -rc --arg date $(date -u --iso-8601=seconds) --arg RESULT "${RESULT}" --null-input \
                 '{result: $RESULT, timestamp: $date, failures: 0, successes: 1, warnings: 0}')
               echo -n "${TEST_OUTPUT}" | tee $(results.TEST_OUTPUT.path)
+  finally:
+    - name: deprovision-cluster
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/stackrox/konflux-tasks.git
+          - name: revision
+            value: yury/infractl
+          - name: pathInRepo
+            value: tasks/delete-infra-cluster-task.yaml
+      params:
+        - name: cluster-name
+          value: $(tasks.generate-cluster-metadata.results.cluster-name)
+        - name: infractl-bin
+          value: $(tasks.install-infractl.results.infractl-bin)
