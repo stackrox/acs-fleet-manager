@@ -24,6 +24,8 @@ spec:
             value: yury/infractl
           - name: pathInRepo
             value: tasks/generate-infra-cluster-metadata-task.yaml
+          - name: prefix
+            value: acscs-e2e
     - name: install-infractl
       taskRef:
         resolver: git
