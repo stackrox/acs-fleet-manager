@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1179 AS build
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5-1738816775 AS build
 ENV HOME=/opt/helm
 COPY rhacs-terraform  ${HOME}/rhacs-terraform
 WORKDIR ${HOME}
@@ -30,7 +30,7 @@ ARG IMAGE_TAG=latest
 RUN yq -i ".global.image.tag = strenv(IMAGE_TAG)" rhacs-terraform/values.yaml
 
 # RH catalog see: https://catalog.redhat.com/software/containers/openshift4/ose-helm-operator
-FROM registry.redhat.io/openshift4/ose-helm-operator:v4.15.0-202411130135.p0.g52fc4b9.assembly.stream.el8
+FROM registry.redhat.io/openshift4/ose-helm-rhel9-operator:v4.17.0-202502051104.p0.g61a705e.assembly.stream.el9
 
 ENV HOME=/opt/helm
 ENV ADDON_NAME=acs-fleetshard
