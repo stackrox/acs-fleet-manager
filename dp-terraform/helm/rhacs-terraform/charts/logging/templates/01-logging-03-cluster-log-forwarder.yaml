@@ -18,11 +18,15 @@ spec:
       secret:
         name: cloudwatch
   pipelines:
-    - name: data-plane-logs
+    - name: data-plane-application-and-audit
       inputRefs:
-        - infrastructure
         - audit
         - application
+      outputRefs:
+        - cloudwatch-output
+    - name: data-plane-infrastructure
+      inputRefs:
+        - infrastructure
       outputRefs:
         - cloudwatch-output
       filterRefs:
