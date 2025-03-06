@@ -17,6 +17,8 @@ type PublicAPI interface {
 	DeleteCentralById(ctx context.Context, id string, async bool) (*http.Response, error)
 	GetCentralById(ctx context.Context, id string) (public.CentralRequest, *http.Response, error)
 	GetCentrals(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error)
+	GetCloudProviderRegions(ctx context.Context, id string, localVarOptionals *public.GetCloudProviderRegionsOpts) (public.CloudRegionList, *http.Response, error)
+	GetCloudProviders(ctx context.Context, localVarOptionals *public.GetCloudProvidersOpts) (public.CloudProviderList, *http.Response, error)
 }
 
 // PrivateAPI is a wrapper interface for the fleetmanager client private API.

@@ -11,7 +11,7 @@ import (
 )
 
 // New creates a new fleet manager client.
-func New(ctx context.Context, config *config.Config) (fleetmanager.PublicAPI, error) {
+func New(ctx context.Context, config config.Config) (fleetmanager.PublicAPI, error) {
 	auth, err := impl.NewAuth(ctx, config.AuthType, impl.OptionFromEnv())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager authentication")

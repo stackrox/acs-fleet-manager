@@ -14,13 +14,8 @@ import (
 
 var (
 	regionValue = "us-east-1"
-	cfg         = &config.Config{
+	cfg         = config.Config{
 		MetricsAddress: ":8081",
-		CentralSpecs: []config.CentralSpec{
-			{
-				Region: regionValue,
-			},
-		},
 	}
 )
 
@@ -63,7 +58,7 @@ func TestCounterIncrements(t *testing.T) {
 		tc := tc
 		t.Run(tc.metricName, func(t *testing.T) {
 			m := newMetrics()
-			registry := initPrometheus(m, cfg)
+			registry := initPrometheus(m)
 			tc.callIncrementFunc(m)
 
 			targetSeries := getMetricSeries(t, registry, tc.metricName)
@@ -107,17 +102,13 @@ func TestTimestampGauges(t *testing.T) {
 		tc := tc
 		t.Run(tc.metricName, func(t *testing.T) {
 			m := newMetrics()
-			registry := initPrometheus(m, cfg)
+			registry := initPrometheus(m)
 			lowerBound := time.Now().Unix()
-
-			targetSeries := getMetricSeries(t, registry, tc.metricName)
-			value := int64(targetSeries.GetGauge().GetValue())
-			assert.Zero(t, value)
 
 			tc.callSetTimestampFunc(m)
 
-			targetSeries = getMetricSeries(t, registry, tc.metricName)
-			value = int64(targetSeries.GetGauge().GetValue())
+			targetSeries := getMetricSeries(t, registry, tc.metricName)
+			value := int64(targetSeries.GetGauge().GetValue())
 			assert.GreaterOrEqualf(t, value, lowerBound, "metric %s has unexpected value", tc.metricName)
 			label := targetSeries.GetLabel()[0]
 			assert.Containsf(t, label.GetName(), regionLabelName, "metric %s has unexpected label", tc.metricName)
@@ -144,7 +135,7 @@ func TestHistograms(t *testing.T) {
 		tc := tc
 		t.Run(tc.metricName, func(t *testing.T) {
 			m := newMetrics()
-			registry := initPrometheus(m, cfg)
+			registry := initPrometheus(m)
 			expectedCount := uint64(2)
 			expectedSum := 480.0
 			tc.callObserveFunc(m)
