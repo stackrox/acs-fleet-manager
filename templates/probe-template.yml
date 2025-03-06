@@ -23,9 +23,6 @@ parameters:
   - name: FLEET_MANAGER_ENDPOINT
     displayName: Fleet Manager Endpoint
     value: http://fleet-manager.rhacs:8000
-  - name: CENTRAL_SPECS
-    display: Central Specifications
-    value: '[{ "cloudProvider": "standalone", "region": "standalone" }]'
   - name: CPU_REQUESTS
     displayName: CPU Requests
     value: 100m
@@ -84,8 +81,6 @@ objects:
                     secretKeyRef:
                       name: probe-credentials
                       key: RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET
-                - name: CENTRAL_SPECS
-                  value: ${CENTRAL_SPECS}
               ports:
                 - name: monitoring
                   containerPort: 7070
