@@ -615,18 +615,6 @@ image/push/fleetshard-operator/internal: docker/login/internal
 	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/fleetshard-operator:$(IMAGE_TAG)" --platform linux/amd64 --push ${PROJECT_PATH}/dp-terraform/helm
 .PHONY: image/push/fleetshard-operator/internal
 
-# Run the probe based e2e test in container
-test/e2e/probe/run: image/build/probe
-test/e2e/probe/run: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
-test/e2e/probe/run:
-	$(DOCKER) run \
-	-e QUOTA_TYPE="OCM" \
-	-e PROBE_NAME="e2e-probe-$$$$" \
-	-e FLEET_MANAGER_ENDPOINT="${FLEET_MANAGER_ENDPOINT}" \
-	--rm $(IMAGE_REF) \
-	run
-.PHONY: test/e2e/probe/run
-
 # Touch all necessary secret files for fleet manager to start up
 secrets/touch:
 	touch secrets/aws.accesskey \

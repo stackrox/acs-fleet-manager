@@ -37,7 +37,7 @@ func New(config config.Config, centralService central.Service, spec central.Spec
 
 func (p *Probe) recordElapsedTime(start time.Time) {
 	elapsedTime := time.Since(start)
-	glog.Infof("elapsed time: %v", elapsedTime)
+	glog.Infof("elapsed time=%v, region=%s", elapsedTime, p.spec.Region)
 	metrics.MetricsInstance().ObserveTotalDuration(elapsedTime, p.spec.Region)
 }
 
@@ -52,9 +52,8 @@ func (p *Probe) newCentralName() (string, error) {
 
 // Execute the probe of the fleet manager API.
 func (p *Probe) Execute(ctx context.Context) error {
-	glog.Infof("probe run has been started: fleetManagerEndpoint=%q, provider=%q, region=%q",
+	glog.Infof("probe run has been started: fleetManagerEndpoint=%s, region=%s",
 		p.config.FleetManagerEndpoint,
-		p.spec.CloudProvider,
 		p.spec.Region,
 	)
 	defer glog.Info("probe run has ended")
@@ -67,12 +66,12 @@ func (p *Probe) Execute(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	glog.Info("central creation succeeded; proceeding with verification")
+	glog.Infof("central creation succeeded; proceeding with verification. region=%s", p.spec.Region)
 
 	if err := p.verifyCentral(ctx, central); err != nil {
 		return err
 	}
-	glog.Info("central verification succeeded; proceeding with deletion")
+	glog.Infof("central verification succeeded; proceeding with deletion. region=%s", p.spec.Region)
 
 	return p.deleteCentral(ctx, central)
 }
@@ -108,12 +107,12 @@ func (p *Probe) cleanupFunc(ctx context.Context) error {
 			continue
 		}
 		if err := p.centralService.Delete(ctx, central.Id); err != nil {
-			glog.Warningf("failed to delete central instance %s: %s", central.Id, err)
+			glog.Warningf("failed to delete central. id=%s, region=%s: %s", central.Id, p.spec.Region, err)
 		}
 	}
 
 	if !centralsLeft {
-		glog.Info("finished clean up attempt of probe resources")
+		glog.Infof("finished clean up attempt of probe resources. region=%s", p.spec.Region)
 		return nil
 	}
 	return errors.New("central clean up not successful")
@@ -162,7 +161,7 @@ func (p *Probe) deleteCentral(ctx context.Context, centralRequest *public.Centra
 	if err := p.ensureCentralDeleted(ctx, centralRequest); err != nil {
 		return errors.Wrapf(err, "central instance %s with status %s could not be deleted", centralRequest.Id, centralRequest.Status)
 	}
-	glog.Info("central deletion succeeded")
+	glog.Infof("central deletion succeeded. region=%s", p.spec.Region)
 	return nil
 }
 
@@ -184,7 +183,7 @@ func (p *Probe) ensureStateFunc(ctx context.Context, centralRequest *public.Cent
 	}
 
 	if centralResp.Status == targetState {
-		glog.Infof("central instance %s is in %q state", centralResp.Id, targetState)
+		glog.Infof("central is in the target state. id=%s, region=%s, state=%s.", centralResp.Id, p.spec.Region, targetState)
 		return &centralResp, nil
 	}
 	err = errors.Errorf("central instance %s not in target state %q", centralRequest.Id, targetState)
@@ -206,7 +205,7 @@ func (p *Probe) ensureDeletedFunc(ctx context.Context, centralRequest *public.Ce
 	_, err := p.centralService.Get(ctx, centralRequest.Id)
 	if err != nil {
 		if errors.Is(err, central.ErrNotFound) {
-			glog.Infof("central instance %s has been deleted", centralRequest.Id)
+			glog.Infof("central has been deleted. id=%s, region=%s", centralRequest.Id, p.spec.Region)
 			return nil
 		}
 		return errors.Wrapf(err, "central instance %s not deleted", centralRequest.Id)

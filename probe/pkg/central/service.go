@@ -143,7 +143,7 @@ func (s *serviceImpl) Create(ctx context.Context, name string, spec Spec) (publi
 	if central.Id == "" {
 		glog.Info("creation of central instance requested - got empty response")
 	} else {
-		glog.Infof("creation of central instance (%s) requested", central.Id)
+		glog.Infof("creation of central instance %s requested", central.Id)
 	}
 	if err != nil {
 		err = errors.WithMessage(err, extractCentralError(resp))
