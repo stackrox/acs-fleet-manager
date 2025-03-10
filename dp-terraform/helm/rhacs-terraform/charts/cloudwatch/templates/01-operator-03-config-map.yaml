@@ -13,8 +13,8 @@ data:
             - eu-west-1
             - us-east-1
           searchTags:
-            - key: DBInstanceIdentifier
-              value: ^rhacs-.*-db-instance$
+            - key: DataplaneClusterName
+              value: ^{{ .Values.clusterName }}$
           dimensionNameRequirements:
             - DBInstanceIdentifier
           statistics:
