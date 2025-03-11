@@ -87,5 +87,5 @@ data:
             nilToZero: true
             statistics:
               - Average
-            period: 3600
-            length: 7200
+            period: 60
+            length: 300
