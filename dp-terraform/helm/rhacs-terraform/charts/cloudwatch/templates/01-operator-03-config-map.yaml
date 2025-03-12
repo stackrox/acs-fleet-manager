@@ -45,6 +45,7 @@ data:
             - us-east-1
           statistics:
             - Sum
+          nilToZero: true
           metrics:
             - name: Delivery
             - name: Send
@@ -79,12 +80,13 @@ data:
         regions:
             - us-east-1
         dimensions:
-          - name: "Log Group Metrics"
+          - name: LogGroupName
             value: "{{ .Values.clusterName }}.acs_audit_logs"
         metrics:
           - name: IncomingLogEvents
             nilToZero: true
             statistics:
               - Average
-            period: 3600
-            length: 7200
+              - SampleCount
+            period: 60
+            length: 300
