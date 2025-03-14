@@ -25,3 +25,12 @@ spec:
         - application
       outputRefs:
         - cloudwatch-output
+      filterRefs:
+        - drop-package-operator
+  filters:
+    - name: drop-package-operator
+      type: drop
+      drop:
+      - test:
+        - field: .kubernetes.labels."app.kubernetes.io/name"
+          matches: ^package-operator$
