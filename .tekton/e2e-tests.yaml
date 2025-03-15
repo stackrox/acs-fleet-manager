@@ -1,0 +1,135 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: acs-fleet-manager-e2e-tests
+spec:
+  description: |-
+    This pipeline automates the process of running end-to-end tests for ACS Fleet Manager
+    using a ROSA (Red Hat OpenShift Service on AWS) cluster. The pipeline provisions
+    the ROSA cluster, installs fleet manager components, runs the tests
+    and finally deprovisions the ROSA cluster.
+  params:
+    - name: SNAPSHOT
+      description: 'The JSON string representing the snapshot of the application under test.'
+      default: '{"components": [{"name":"test-app", "containerImage": "quay.io/example/repo:latest"}]}'
+      type: string
+  tasks:
+    - name: generate-cluster-metadata
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/stackrox/konflux-tasks.git
+          - name: revision
+            value: yury/infractl
+          - name: pathInRepo
+            value: tasks/generate-infra-cluster-metadata-task.yaml
+      params:
+        - name: prefix
+          value: acscs-e2e
+    - name: prepare-test-metadata
+      description: Collects test metadata. Only group context is currently supported.
+      params:
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
+      taskSpec:
+        params:
+          - name: SNAPSHOT
+        results:
+          - name: git-url
+            type: string
+          - name: git-revision
+            type: string
+        steps:
+          - name: prepare-test-metadata
+            image: quay.io/konflux-qe-incubator/konflux-qe-tools:latest
+            env:
+              - name: SNAPSHOT
+                value: $(params.SNAPSHOT)
+            script: |
+              #!/usr/bin/env bash
+
+              set -euo pipefail
+
+              # we support only the group type and assume that all components have the same revision, so we take the first of them
+              GIT_URL=$(jq -r '.components[0].source.git.url' <<< "$SNAPSHOT")
+              GIT_REVISION=$(jq -r '.components[0].source.git.revision' <<< "$SNAPSHOT")
+
+              echo "Git URL:"
+              echo -n "$GIT_URL" | tee $(results.git-url.path)
+              echo "Git revision:"
+              echo -n "$GIT_REVISION" | tee $(results.git-revision.path)
+    - name: provision-cluster
+      runAfter:
+        - generate-cluster-metadata
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/stackrox/konflux-tasks.git
+          - name: revision
+            value: yury/infractl
+          - name: pathInRepo
+            value: tasks/create-infra-cluster-task.yaml
+      params:
+        - name: cluster-name
+          value: $(tasks.generate-cluster-metadata.results.cluster-name)
+        - name: flavor
+          value: rosahcp
+        - name: no-slack
+          value: "true"
+        - name: wait
+          value: "true"
+        - name: lifespan
+          value: 2h
+    - name: e2e-tests
+      timeout: 2h
+      runAfter:
+        - provision-cluster
+        - prepare-test-metadata
+      params:
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
+        - name: git-url
+          value: $(tasks.prepare-test-metadata.results.git-url)
+        - name: git-revision
+          value: $(tasks.prepare-test-metadata.results.git-revision)
+      taskSpec:
+        params:
+          - name: SNAPSHOT
+          - name: git-url
+          - name: git-revision
+        results:
+          - name: TEST_OUTPUT
+            description: Test output
+        steps:
+#          - name: clone-repo
+#            image: quay.io/konflux-qe-incubator/konflux-qe-tools:latest
+#            workingDir: /workspace/e2e-runtime
+#            script: |
+#              #!/bin/sh
+#              set -e
+#
+#              git clone "$(params.git-url)" .
+#              git checkout "$(params.git-revision)"
+          - name: run-tests
+            image: registry.redhat.io/openshift4/ose-cli:latest
+            workingDir: /workspace/e2e-runtime
+            script: |
+              #!/usr/bin/env bash
+
+              echo "Success!"
+  finally:
+    - name: deprovision-cluster
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/stackrox/konflux-tasks.git
+          - name: revision
+            value: yury/infractl
+          - name: pathInRepo
+            value: tasks/delete-infra-cluster-task.yaml
+      params:
+        - name: cluster-name
+          value: $(tasks.generate-cluster-metadata.results.cluster-name)
