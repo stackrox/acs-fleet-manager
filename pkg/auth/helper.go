@@ -143,17 +143,6 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 	return token, nil
 }
 
-// GetJWTFromSignedToken ...
-func (authHelper *AuthHelper) GetJWTFromSignedToken(signedToken string) (*jwt.Token, error) {
-	token, err := jwt.Parse(signedToken, func(token *jwt.Token) (interface{}, error) {
-		return authHelper.JWTCA, nil
-	})
-	if err != nil {
-		return token, fmt.Errorf("getting JWT from signed token: %w", err)
-	}
-	return token, nil
-}
-
 // ParseJWTKeys Parses JWT Private and Public Keys from the given path
 func ParseJWTKeys(jwtKeyFilePath, jwtCAFilePath string) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	projectRootDir := shared.GetProjectRootDir()

@@ -43,16 +43,6 @@ func NewDefaultClientFactory() *DefaultClientFactory {
 	return &DefaultClientFactory{}
 }
 
-// MockClientFactory ...
-type MockClientFactory struct {
-	mock Client
-}
-
-// NewClient ...
-func (m *MockClientFactory) NewClient(credentials Config, region string) (Client, error) {
-	return m.mock, nil
-}
-
 type awsClient struct {
 	route53Client route53iface.Route53API
 }

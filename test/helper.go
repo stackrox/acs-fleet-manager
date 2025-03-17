@@ -4,7 +4,6 @@ package test
 import (
 	"context"
 	"crypto/rsa"
-	"encoding/json"
 	"fmt"
 	"net/http/httptest"
 	"os"
@@ -28,7 +27,6 @@ import (
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/rs/xid"
 	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
@@ -199,12 +197,6 @@ func (helper *Helper) NewID() string {
 	return xid.New().String()
 }
 
-// NewUUID creates a new unique UUID, which has different formatting than xid
-// UUID is used by telemeter and we validate the format.
-func (helper *Helper) NewUUID() string {
-	return uuid.New().String()
-}
-
 // RestURL ...
 func (helper *Helper) RestURL(path string) string {
 	var serverConfig *server.ServerConfig
@@ -215,20 +207,6 @@ func (helper *Helper) RestURL(path string) string {
 		protocol = "https"
 	}
 	return fmt.Sprintf("%s://%s/api/rhacs/v1%s", protocol, serverConfig.BindAddress, path)
-}
-
-// MetricsURL ...
-func (helper *Helper) MetricsURL(path string) string {
-	var metricsConfig *server.MetricsConfig
-	helper.Env.MustResolveAll(&metricsConfig)
-	return fmt.Sprintf("http://%s%s", metricsConfig.BindAddress, path)
-}
-
-// HealthCheckURL ...
-func (helper *Helper) HealthCheckURL(path string) string {
-	var healthCheckConfig *server.HealthCheckConfig
-	helper.Env.MustResolveAll(&healthCheckConfig)
-	return fmt.Sprintf("http://%s%s", healthCheckConfig.BindAddress, path)
 }
 
 // NewRandAccount returns a random account that has the control plane team org id as its organisation id
@@ -244,18 +222,6 @@ func (helper *Helper) NewAccountWithNameAndOrg(name string, orgID string) *amv1.
 	account, err := helper.AuthHelper.NewAccount(helper.NewID(), name, faker.Email(), orgID)
 	if err != nil {
 		helper.T.Errorf("failed to create a new account: %s", err.Error())
-	}
-	return account
-}
-
-// NewAllowedServiceAccount returns a new account that has the testuser1@example.com
-// without an organization ID
-func (helper *Helper) NewAllowedServiceAccount() *amv1.Account {
-	// this value is taken from config/quota-management-list-configuration.yaml
-	allowedSA := "testuser1@example.com"
-	account, err := helper.AuthHelper.NewAccount(allowedSA, allowedSA, allowedSA, "")
-	if err != nil {
-		helper.T.Errorf("failed to create a new service account: %s", err.Error())
 	}
 	return account
 }
@@ -305,48 +271,6 @@ func (helper *Helper) StartJWKCertServerMock() (string, func()) {
 	return mocks.NewJWKCertServerMock(helper.T, helper.JWTCA, auth.JwkKID)
 }
 
-// DeleteAll ...
-func (helper *Helper) DeleteAll(table interface{}) {
-	gorm := helper.DBFactory().New()
-	err := gorm.Model(table).Unscoped().Delete(table).Error
-	if err != nil {
-		helper.T.Errorf("error deleting from table %v: %v", table, err)
-	}
-}
-
-// Delete ...
-func (helper *Helper) Delete(obj interface{}) {
-	gorm := helper.DBFactory().New()
-	err := gorm.Unscoped().Delete(obj).Error
-	if err != nil {
-		helper.T.Errorf("error deleting object %v: %v", obj, err)
-	}
-}
-
-// SkipIfShort ...
-func (helper *Helper) SkipIfShort() {
-	if testing.Short() {
-		helper.T.Skip("Skipping execution of test in short mode")
-	}
-}
-
-// Count ...
-func (helper *Helper) Count(table string) int64 {
-	gorm := helper.DBFactory().New()
-	var count int64
-	err := gorm.Table(table).Count(&count).Error
-	if err != nil {
-		helper.T.Errorf("error getting count for table %s: %v", table, err)
-	}
-	return count
-}
-
-// DBFactory ...
-func (helper *Helper) DBFactory() (connectionFactory *db.ConnectionFactory) {
-	helper.Env.MustResolveAll(&connectionFactory)
-	return
-}
-
 // Migrations ...
 func (helper *Helper) Migrations() (m []*db.Migration) {
 	helper.Env.MustResolveAll(&m)
@@ -391,15 +315,6 @@ func (helper *Helper) CreateJWTStringWithClaim(account *amv1.Account, jwtClaims 
 	return token
 }
 
-// CreateJWTToken ...
-func (helper *Helper) CreateJWTToken(account *amv1.Account, jwtClaims jwt.MapClaims) *jwt.Token {
-	token, err := helper.AuthHelper.CreateJWTWithClaims(account, jwtClaims)
-	if err != nil {
-		helper.T.Errorf("Failed to create jwt token: %s", err.Error())
-	}
-	return token
-}
-
 // CreateDataPlaneJWTString creates a new JWT token for the dataplane (fleetshard) authorization
 func (helper *Helper) CreateDataPlaneJWTString() string {
 	claims := jwt.MapClaims{
@@ -412,15 +327,4 @@ func (helper *Helper) CreateDataPlaneJWTString() string {
 		helper.T.Errorf("Failed to create jwt token: %s", err.Error())
 	}
 	return token
-}
-
-// OpenapiError Convert an error response from the openapi client to an openapi error struct
-func (helper *Helper) OpenapiError(err error) compat.Error {
-	generic := err.(compat.GenericOpenAPIError)
-	var exErr compat.Error
-	jsonErr := json.Unmarshal(generic.Body(), &exErr)
-	if jsonErr != nil {
-		helper.T.Errorf("Unable to convert error response to openapi error: %s", jsonErr)
-	}
-	return exErr
 }

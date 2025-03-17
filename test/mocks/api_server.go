@@ -126,42 +126,36 @@ const (
 
 // EndpointClusterGet variables for endpoints
 var (
-	EndpointClusterGet                                   = Endpoint{EndpointPathCluster, http.MethodGet}
-	EndpointClusterPatch                                 = Endpoint{EndpointPathCluster, http.MethodPatch}
-	EndpointDinosaurDelete                               = Endpoint{EndpointPathSyncset, http.MethodDelete}
-	EndpointClustersGet                                  = Endpoint{EndpointPathClusters, http.MethodGet}
-	EndpointClustersPost                                 = Endpoint{EndpointPathClusters, http.MethodPost}
-	EndpointClusterDelete                                = Endpoint{EndpointPathCluster, http.MethodDelete}
-	EndpointClusterSyncsetsPost                          = Endpoint{EndpointPathSyncsets, http.MethodPost}
-	EndpointClusterSyncsetGet                            = Endpoint{EndpointPathSyncset, http.MethodGet}
-	EndpointClusterSyncsetPatch                          = Endpoint{EndpointPathSyncset, http.MethodPatch}
-	EndpointClusterIngressGet                            = Endpoint{EndpointPathIngresses, http.MethodGet}
-	EndpointCloudProvidersGet                            = Endpoint{EndpointPathCloudProviders, http.MethodGet}
-	EndpointCloudProviderGet                             = Endpoint{EndpointPathCloudProvider, http.MethodGet}
-	EndpointCloudProviderRegionsGet                      = Endpoint{EndpointPathCloudProviderRegions, http.MethodGet}
-	EndpointCloudProviderRegionGet                       = Endpoint{EndpointPathCloudProviderRegion, http.MethodGet}
-	EndpointClusterStatusGet                             = Endpoint{EndpointPathClusterStatus, http.MethodGet}
-	EndpointClusterAddonsGet                             = Endpoint{EndpointPathClusterAddons, http.MethodGet}
-	EndpointClusterAddonPost                             = Endpoint{EndpointPathClusterAddons, http.MethodPost}
-	EndpointMachinePoolsGet                              = Endpoint{EndpointPathMachinePools, http.MethodGet}
-	EndpointMachinePoolPost                              = Endpoint{EndpointPathMachinePools, http.MethodPost}
-	EndpointMachinePoolPatch                             = Endpoint{EndpointPathMachinePool, http.MethodPatch}
-	EndpointMachinePoolGet                               = Endpoint{EndpointPathMachinePool, http.MethodGet}
-	EndpointIdentityProviderPost                         = Endpoint{EndpointPathClusterIdentityProviders, http.MethodPost}
-	EndpointIdentityProviderPatch                        = Endpoint{EndpointPathClusterIdentityProvider, http.MethodPatch}
-	EndpointAddonInstallationsPost                       = Endpoint{EndpointPathAddonInstallations, http.MethodPost}
-	EndpointAddonInstallationGet                         = Endpoint{EndpointPathAddonInstallation, http.MethodGet}
-	EndpointAddonInstallationPatch                       = Endpoint{EndpointPathAddonInstallation, http.MethodPatch}
-	EndpointFleetshardOperatorAddonInstallationGet       = Endpoint{EndpointPathFleetshardOperatorAddonInstallation, http.MethodGet}
-	EndpointFleetshardOperatorAddonInstallationPatch     = Endpoint{EndpointPathFleetshardOperatorAddonInstallation, http.MethodPatch}
-	EndpointFleetshardOperatorAddonInstallationPost      = Endpoint{EndpointPathFleetshardOperatorAddonInstallation, http.MethodPost}
-	EndpointClusterLoggingOperatorAddonInstallationGet   = Endpoint{EndpointPathClusterLoggingOperatorAddonInstallation, http.MethodGet}
-	EndpointClusterLoggingOperatorAddonInstallationPatch = Endpoint{EndpointPathClusterLoggingOperatorAddonInstallation, http.MethodPatch}
-	EndpointClusterLoggingOperatorAddonInstallationPost  = Endpoint{EndpointPathClusterLoggingOperatorAddonInstallation, http.MethodPost}
-	EndpointClusterAuthorizationPost                     = Endpoint{EndpointPathClusterAuthorization, http.MethodPost}
-	EndpointSubscriptionDelete                           = Endpoint{EndpointPathSubscription, http.MethodDelete}
-	EndpointSubscriptionSearch                           = Endpoint{EndpointPathSubscriptionSearch, http.MethodGet}
-	EndpointTermsReviewPost                              = Endpoint{EndpointPathTermsReview, http.MethodPost}
+	EndpointClusterGet               = Endpoint{EndpointPathCluster, http.MethodGet}
+	EndpointClusterPatch             = Endpoint{EndpointPathCluster, http.MethodPatch}
+	EndpointDinosaurDelete           = Endpoint{EndpointPathSyncset, http.MethodDelete}
+	EndpointClustersGet              = Endpoint{EndpointPathClusters, http.MethodGet}
+	EndpointClustersPost             = Endpoint{EndpointPathClusters, http.MethodPost}
+	EndpointClusterDelete            = Endpoint{EndpointPathCluster, http.MethodDelete}
+	EndpointClusterSyncsetsPost      = Endpoint{EndpointPathSyncsets, http.MethodPost}
+	EndpointClusterSyncsetGet        = Endpoint{EndpointPathSyncset, http.MethodGet}
+	EndpointClusterSyncsetPatch      = Endpoint{EndpointPathSyncset, http.MethodPatch}
+	EndpointClusterIngressGet        = Endpoint{EndpointPathIngresses, http.MethodGet}
+	EndpointCloudProvidersGet        = Endpoint{EndpointPathCloudProviders, http.MethodGet}
+	EndpointCloudProviderGet         = Endpoint{EndpointPathCloudProvider, http.MethodGet}
+	EndpointCloudProviderRegionsGet  = Endpoint{EndpointPathCloudProviderRegions, http.MethodGet}
+	EndpointCloudProviderRegionGet   = Endpoint{EndpointPathCloudProviderRegion, http.MethodGet}
+	EndpointClusterStatusGet         = Endpoint{EndpointPathClusterStatus, http.MethodGet}
+	EndpointClusterAddonsGet         = Endpoint{EndpointPathClusterAddons, http.MethodGet}
+	EndpointClusterAddonPost         = Endpoint{EndpointPathClusterAddons, http.MethodPost}
+	EndpointMachinePoolsGet          = Endpoint{EndpointPathMachinePools, http.MethodGet}
+	EndpointMachinePoolPost          = Endpoint{EndpointPathMachinePools, http.MethodPost}
+	EndpointMachinePoolPatch         = Endpoint{EndpointPathMachinePool, http.MethodPatch}
+	EndpointMachinePoolGet           = Endpoint{EndpointPathMachinePool, http.MethodGet}
+	EndpointIdentityProviderPost     = Endpoint{EndpointPathClusterIdentityProviders, http.MethodPost}
+	EndpointIdentityProviderPatch    = Endpoint{EndpointPathClusterIdentityProvider, http.MethodPatch}
+	EndpointAddonInstallationsPost   = Endpoint{EndpointPathAddonInstallations, http.MethodPost}
+	EndpointAddonInstallationGet     = Endpoint{EndpointPathAddonInstallation, http.MethodGet}
+	EndpointAddonInstallationPatch   = Endpoint{EndpointPathAddonInstallation, http.MethodPatch}
+	EndpointClusterAuthorizationPost = Endpoint{EndpointPathClusterAuthorization, http.MethodPost}
+	EndpointSubscriptionDelete       = Endpoint{EndpointPathSubscription, http.MethodDelete}
+	EndpointSubscriptionSearch       = Endpoint{EndpointPathSubscriptionSearch, http.MethodGet}
+	EndpointTermsReviewPost          = Endpoint{EndpointPathTermsReview, http.MethodPost}
 )
 
 // MockIdentityProvider variables for mocked ocm types
@@ -239,174 +233,9 @@ func (b *MockConfigurableServerBuilder) SetClusterGetResponse(cluster *clustersm
 	b.handlerRegister[EndpointClusterGet] = buildMockRequestHandler(cluster, err)
 }
 
-// SetDinosaurDeleteResponse set a mock response cluster or error for the DELETE /api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets/{syncsetID} endpoint
-func (b *MockConfigurableServerBuilder) SetDinosaurDeleteResponse(syncset *clustersmgmtv1.Syncset, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointDinosaurDelete] = buildMockRequestHandler(syncset, err)
-}
-
-// SetClusterPatchResponse set a mock response cluster or error for the PATCH /api/clusters_mgmt/v1/clusters/{id} endpoint
-func (b *MockConfigurableServerBuilder) SetClusterPatchResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterPatch] = buildMockRequestHandler(cluster, err)
-}
-
-// SetClustersPostResponse set a mock response cluster or error for the POST /api/clusters_mgmt/v1/clusters endpoint
-func (b *MockConfigurableServerBuilder) SetClustersPostResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClustersPost] = buildMockRequestHandler(cluster, err)
-}
-
-// SetClustersGetResponse set a mock response cluster or error for the GET /api/clusters_mgmt/v1/clusters endpoint
-func (b *MockConfigurableServerBuilder) SetClustersGetResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClustersGet] = buildMockRequestHandler(cluster, err)
-}
-
-// SetClusterDeleteResponse set a mock response cluster or error for the DELETE /api/clusters_mgmt/v1/clusters/{id} endpoint
-func (b *MockConfigurableServerBuilder) SetClusterDeleteResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterDelete] = buildMockRequestHandler(cluster, err)
-}
-
-// SetClusterSyncsetGetResponse set a mock response syncset or error for the GET /api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets/{syncsetID}
-func (b *MockConfigurableServerBuilder) SetClusterSyncsetGetResponse(syncset *clustersmgmtv1.Syncset, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterSyncsetGet] = buildMockRequestHandler(syncset, err)
-}
-
-// SetClusterSyncsetPostResponse set a mock response syncset or error for the POST /api/clusters_mgmt/v1/clusters/{id}/syncsets endpoint
-func (b *MockConfigurableServerBuilder) SetClusterSyncsetPostResponse(syncset *clustersmgmtv1.Syncset, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterSyncsetsPost] = buildMockRequestHandler(syncset, err)
-}
-
-// SetClusterSyncsetPatchResponse set a mock response syncset or error for the Patch /api/clusters_mgmt/v1/clusters/{id}/syncsets endpoint
-func (b *MockConfigurableServerBuilder) SetClusterSyncsetPatchResponse(syncset *clustersmgmtv1.Syncset, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterSyncsetPatch] = buildMockRequestHandler(syncset, err)
-}
-
-// SetClusterSyncsetPostRequestHandler ...
-func (b *MockConfigurableServerBuilder) SetClusterSyncsetPostRequestHandler(customMockRequestHandler func() func(w http.ResponseWriter, r *http.Request)) {
-	b.handlerRegister[EndpointClusterSyncsetsPost] = customMockRequestHandler()
-}
-
-// SetClusterIngressGetResponse set a mock response ingress or error for the GET /api/clusters_mgmt/v1/clusters/{id}/ingresses endpoint
-func (b *MockConfigurableServerBuilder) SetClusterIngressGetResponse(ingress *clustersmgmtv1.Ingress, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterIngressGet] = buildMockRequestHandler(ingress, err)
-}
-
-// SetCloudProvidersGetResponse set a mock response provider list or error for GET /api/clusters_mgmt/v1/cloud_providers
-func (b *MockConfigurableServerBuilder) SetCloudProvidersGetResponse(providers *clustersmgmtv1.CloudProviderList, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointCloudProvidersGet] = buildMockRequestHandler(providers, err)
-}
-
 // SetCloudRegionsGetResponse set a mock response region list or error for GET /api/clusters_mgmt/v1/cloud_providers/{id}/regions
 func (b *MockConfigurableServerBuilder) SetCloudRegionsGetResponse(regions *clustersmgmtv1.CloudRegionList, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointCloudProviderRegionsGet] = buildMockRequestHandler(regions, err)
-}
-
-// SetCloudRegionGetResponse set a mock response region or error for GET /api/clusters_mgmt/v1/cloud_providers/{id}/regions/{regionId}
-func (b *MockConfigurableServerBuilder) SetCloudRegionGetResponse(region *clustersmgmtv1.CloudRegion, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointCloudProviderRegionGet] = buildMockRequestHandler(region, err)
-}
-
-// SetClusterStatusGetResponse set a mock response cluster status or error for GET /api/clusters_mgmt/v1/clusters/{id}/status
-func (b *MockConfigurableServerBuilder) SetClusterStatusGetResponse(status *clustersmgmtv1.ClusterStatus, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterStatusGet] = buildMockRequestHandler(status, err)
-}
-
-// SetClusterAddonsGetResponse set a mock response addon list or error for GET /api/clusters_mgmt/v1/clusters/{id}/addons
-func (b *MockConfigurableServerBuilder) SetClusterAddonsGetResponse(addons *clustersmgmtv1.AddOnInstallationList, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterAddonsGet] = buildMockRequestHandler(addons, err)
-}
-
-// SetClusterAddonPostResponse set a mock response addon or error for POST /api/clusters_mgmt/v1/clusters/{id}/addons
-func (b *MockConfigurableServerBuilder) SetClusterAddonPostResponse(addon *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterAddonPost] = buildMockRequestHandler(addon, err)
-}
-
-// SetMachinePoolsGetResponse set a mock response machine pool or error for Get /api/clusters_mgmt/v1/clusters/{id}/machine_pools
-func (b *MockConfigurableServerBuilder) SetMachinePoolsGetResponse(mp *clustersmgmtv1.MachinePoolList, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointMachinePoolsGet] = buildMockRequestHandler(mp, err)
-}
-
-// SetMachinePoolGetResponse set a mock response machine pool list or error for Get /api/clusters_mgmt/v1/clusters/{id}/machine_pools/{machinePoolId}
-func (b *MockConfigurableServerBuilder) SetMachinePoolGetResponse(mp *clustersmgmtv1.MachinePoolList, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointMachinePoolGet] = buildMockRequestHandler(mp, err)
-}
-
-// SetMachinePoolPostResponse set a mock response for Post /api/clusters_mgmt/v1/clusters/{id}/machine_pools
-func (b *MockConfigurableServerBuilder) SetMachinePoolPostResponse(mp *clustersmgmtv1.MachinePool, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointMachinePoolPost] = buildMockRequestHandler(mp, err)
-}
-
-// SetMachinePoolPatchResponse set a mock response for Patch /api/clusters_mgmt/v1/clusters/{id}/machine_pools/{machinePoolId}
-func (b *MockConfigurableServerBuilder) SetMachinePoolPatchResponse(mp *clustersmgmtv1.MachinePool, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointMachinePoolPatch] = buildMockRequestHandler(mp, err)
-}
-
-// SetIdentityProviderPostResponse set a mock response for Post /api/clusters_mgmt/v1/clusters/{id}/identity_providers
-func (b *MockConfigurableServerBuilder) SetIdentityProviderPostResponse(idp *clustersmgmtv1.IdentityProvider, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointIdentityProviderPost] = buildMockRequestHandler(idp, err)
-}
-
-// SetIdentityProviderPatchResponse set a mock response for Patch /api/clusters_mgmt/v1/clusters/{id}/identity_providers/{idp_id}
-func (b *MockConfigurableServerBuilder) SetIdentityProviderPatchResponse(idp *clustersmgmtv1.IdentityProvider, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointIdentityProviderPatch] = buildMockRequestHandler(idp, err)
-}
-
-// SetClusterAuthorizationResponse set a mock response for Post /api/accounts_mgmt/v1/cluster_authorizations
-func (b *MockConfigurableServerBuilder) SetClusterAuthorizationResponse(idp *amsv1.ClusterAuthorizationResponse, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterAuthorizationPost] = buildMockRequestHandler(idp, err)
-}
-
-// SetAddonInstallationsPostResponse set a mock response for Post /api/clusters_mgmt/v1/clusters/{id}/addons
-func (b *MockConfigurableServerBuilder) SetAddonInstallationsPostResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointAddonInstallationsPost] = buildMockRequestHandler(ai, err)
-}
-
-// SetAddonInstallationGetResponse set a mock response for Get /api/clusters_mgmt/v1/clusters/{id}/addons/{addoninstallationId}
-func (b *MockConfigurableServerBuilder) SetAddonInstallationGetResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointAddonInstallationGet] = buildMockRequestHandler(ai, err)
-}
-
-// SetAddonInstallationPatchResponse set a mock response for Patch /api/clusters_mgmt/v1/clusters/{id}/addons/{addoninstallationId}
-func (b *MockConfigurableServerBuilder) SetAddonInstallationPatchResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointAddonInstallationPatch] = buildMockRequestHandler(ai, err)
-}
-
-// SetFleetshardOperatorAddonInstallationGetResponse ...
-func (b *MockConfigurableServerBuilder) SetFleetshardOperatorAddonInstallationGetResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointFleetshardOperatorAddonInstallationGet] = buildMockRequestHandler(ai, err)
-}
-
-// SetFleetshardOperatorAddonInstallationPatchResponse ...
-func (b *MockConfigurableServerBuilder) SetFleetshardOperatorAddonInstallationPatchResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointFleetshardOperatorAddonInstallationPatch] = buildMockRequestHandler(ai, err)
-}
-
-// SetFleetshardOperatorAddonInstallationPostResponse ...
-func (b *MockConfigurableServerBuilder) SetFleetshardOperatorAddonInstallationPostResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointFleetshardOperatorAddonInstallationPost] = buildMockRequestHandler(ai, err)
-}
-
-// SetClusterLoggingOperatorAddonInstallationGetResponse ...
-func (b *MockConfigurableServerBuilder) SetClusterLoggingOperatorAddonInstallationGetResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterLoggingOperatorAddonInstallationGet] = buildMockRequestHandler(ai, err)
-}
-
-// SetClusterLoggingOperatorAddonInstallationPatchResponse ...
-func (b *MockConfigurableServerBuilder) SetClusterLoggingOperatorAddonInstallationPatchResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterLoggingOperatorAddonInstallationPatch] = buildMockRequestHandler(ai, err)
-}
-
-// SetClusterLoggingOperatorAddonInstallationPostResponse ...
-func (b *MockConfigurableServerBuilder) SetClusterLoggingOperatorAddonInstallationPostResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterLoggingOperatorAddonInstallationPost] = buildMockRequestHandler(ai, err)
-}
-
-// SetSubscriptionPathDeleteResponse ...
-func (b *MockConfigurableServerBuilder) SetSubscriptionPathDeleteResponse(idp *amsv1.Subscription, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointSubscriptionDelete] = buildMockRequestHandler(idp, err)
-}
-
-// SetSubscriptionSearchResponse ...
-func (b *MockConfigurableServerBuilder) SetSubscriptionSearchResponse(sl *amsv1.SubscriptionList, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointSubscriptionSearch] = buildMockRequestHandler(sl, err)
 }
 
 // SetTermsReviewPostResponse ...
@@ -439,21 +268,6 @@ func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 		panic(err)
 	}
 	return server
-}
-
-// SwapRouterResponse and update the router to handle this response
-func (b *MockConfigurableServerBuilder) SwapRouterResponse(path string, method string, successType interface{}, serviceErr *ocmErrors.ServiceError) {
-	b.handlerRegister[Endpoint{
-		Path:   path,
-		Method: method,
-	}] = buildMockRequestHandler(successType, serviceErr)
-
-	router = mux.NewRouter()
-	for endpoint, handleFn := range b.handlerRegister {
-		router.HandleFunc(endpoint.Path, handleFn).Methods(endpoint.Method)
-	}
-
-	rSwapper.Swap(router)
 }
 
 // ServeHTTP makes the routerSwapper to implement the http.Handler interface
