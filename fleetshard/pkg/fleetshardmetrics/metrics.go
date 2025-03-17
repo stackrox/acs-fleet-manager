@@ -53,16 +53,6 @@ func (m *Metrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.CertificatesExpiry)
 }
 
-// IncFleetManagerRequests increments the metric counter for fleet-manager requests
-func (m *Metrics) IncFleetManagerRequests() {
-	m.fleetManagerRequests.Inc()
-}
-
-// IncFleetManagerRequestErrors increments the metric counter for fleet-manager request errors
-func (m *Metrics) IncFleetManagerRequestErrors() {
-	m.fleetManagerRequestErrors.Inc()
-}
-
 // IncCentralReconcilations increments the metric counter for central reconcilations errors
 func (m *Metrics) IncCentralReconcilations() {
 	m.centralReconcilations.Inc()
