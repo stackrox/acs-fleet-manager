@@ -61,29 +61,6 @@ func SendMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// SendUnauthorized response
-func SendUnauthorized(w http.ResponseWriter, r *http.Request, message string) {
-	w.Header().Set("Content-Type", "application/json")
-
-	// Prepare the body:
-	apiError := errors.Unauthorized(message).AsOpenapiError("", r.RequestURI)
-	data, err := json.Marshal(apiError)
-	if err != nil {
-		SendPanic(w, r)
-		return
-	}
-
-	// Send the response:
-	w.WriteHeader(http.StatusUnauthorized)
-	_, err = w.Write(data)
-	if err != nil {
-		err = fmt.Errorf("Can't send response body for request '%s'", r.URL.Path)
-		glog.Error(err)
-		sentry.CaptureException(err)
-		return
-	}
-}
-
 // SendPanic sends a panic error response to the client, but it doesn't end the process.
 func SendPanic(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")

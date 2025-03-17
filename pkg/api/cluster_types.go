@@ -108,9 +108,7 @@ const (
 	ClusterProviderOCM        ClusterProviderType = "ocm"
 	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
 	ClusterProviderStandalone ClusterProviderType = "standalone"
-
-	EvalTypeSupport        ClusterInstanceTypeSupport = "eval"
-	StandardTypeSupport    ClusterInstanceTypeSupport = "standard"
+	
 	AllInstanceTypeSupport ClusterInstanceTypeSupport = "standard,eval"
 )
 

@@ -74,10 +74,6 @@ const (
 	// GitopsConfigProviderErrorCount - metric name for the number of errors encountered while fetching GitOps config
 	GitopsConfigProviderErrorCount = "gitops_config_provider_error_count"
 
-	LabelStatusCode = "code"
-	LabelMethod     = "method"
-	LabelPath       = "path"
-
 	LabelDatabaseQueryStatus = "status"
 	LabelDatabaseQueryType   = "query"
 	LabelRegion              = "region"
@@ -89,8 +85,6 @@ type JobType string
 
 // JobTypeClusterCreate ...
 var (
-	// JobTypeClusterCreate - cluster_create job type
-	JobTypeClusterCreate JobType = "cluster_create"
 	// JobTypeCentralCreate - central_create job type
 	JobTypeCentralCreate JobType = "central_create"
 )
@@ -185,14 +179,6 @@ var requestClusterCreationDurationMetric = prometheus.NewHistogramVec(
 	},
 	JobsMetricsLabels,
 )
-
-// UpdateClusterCreationDurationMetric records the duration of a job type
-func UpdateClusterCreationDurationMetric(jobType JobType, elapsed time.Duration) {
-	labels := prometheus.Labels{
-		labelJobType: string(jobType),
-	}
-	requestClusterCreationDurationMetric.With(labels).Observe(elapsed.Seconds())
-}
 
 // create a new counterVec for successful cluster operation counts
 var clusterOperationsSuccessCountMetric = prometheus.NewCounterVec(

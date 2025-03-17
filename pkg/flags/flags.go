@@ -26,15 +26,6 @@ func MustGetString(flagName string, flags *pflag.FlagSet) string {
 	return flagVal
 }
 
-// MustGetBool attempts to get a boolean flag from the provided flag set or panic
-func MustGetBool(flagName string, flags *pflag.FlagSet) bool {
-	flagVal, err := flags.GetBool(flagName)
-	if err != nil {
-		panic(notFoundMessage(flagName, err))
-	}
-	return flagVal
-}
-
 // MarkFlagRequired marks the given flag as required, panics if command has no flag with flagName
 func MarkFlagRequired(flagName string, cmd *cobra.Command) {
 	if err := cmd.MarkFlagRequired(flagName); err != nil {

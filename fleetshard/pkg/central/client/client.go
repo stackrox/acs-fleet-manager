@@ -38,18 +38,6 @@ type Client struct {
 	central    private.ManagedCentral
 }
 
-// NewCentralClient creates a new client for central with basic password authentication.
-func NewCentralClient(central private.ManagedCentral, address, pass string) *Client {
-	return &Client{
-		central: central,
-		address: address,
-		pass:    pass,
-		httpClient: http.Client{
-			Transport: insecureTransport,
-		},
-	}
-}
-
 // NewCentralClientNoAuth creates a new client for central without authentication.
 func NewCentralClientNoAuth(central private.ManagedCentral, address string) *Client {
 	return &Client{

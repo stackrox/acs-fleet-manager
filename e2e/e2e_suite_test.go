@@ -19,7 +19,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/operator/api/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -159,11 +158,6 @@ func assertCentralCRDeleted(ctx context.Context, namespace, name string) func() 
 	return assertObjectDeleted(ctx, central, namespace, name)
 }
 
-func assertDeploymentDeleted(ctx context.Context, namespace, name string) func() error {
-	deployment := &appsv1.Deployment{}
-	return assertObjectDeleted(ctx, deployment, namespace, name)
-}
-
 func assertNamespaceDeleted(ctx context.Context, name string) func() error {
 	ns := &v1.Namespace{}
 	return assertObjectDeleted(ctx, ns, "", name)
@@ -180,24 +174,6 @@ func assertObjectDeleted(ctx context.Context, obj ctrlClient.Object, namespace, 
 			return err
 		}
 		return fmt.Errorf("%T %s/%s still exists", obj, namespace, name)
-	}
-}
-
-func assertDeploymentHealthyReplicas(ctx context.Context, namespace, name string, replicas int32) func() error {
-	return func() error {
-		deployment := &appsv1.Deployment{}
-		key := ctrlClient.ObjectKey{Name: name, Namespace: namespace}
-		err := k8sClient.Get(ctx, key, deployment)
-		if err != nil {
-			return err
-		}
-		if *deployment.Spec.Replicas != replicas {
-			return fmt.Errorf("expected deployment %s/%s replicas %d, got %d. ready=%d. unavailable=%d", namespace, name, replicas, *deployment.Spec.Replicas, deployment.Status.ReadyReplicas, deployment.Status.UnavailableReplicas)
-		}
-		if deployment.Status.ReadyReplicas != replicas {
-			return fmt.Errorf("expected deployment %s/%s ready replicas %d, got %d. ready=%d. unavailable=%d", namespace, name, replicas, deployment.Status.ReadyReplicas, deployment.Status.ReadyReplicas, deployment.Status.UnavailableReplicas)
-		}
-		return nil
 	}
 }
 

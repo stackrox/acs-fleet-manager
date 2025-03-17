@@ -13,7 +13,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
@@ -101,17 +100,6 @@ func NewAPIClient(helper *test.Helper) *public.APIClient {
 	openapiConfig := public.NewConfiguration()
 	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
 	client := public.NewAPIClient(openapiConfig)
-	return client
-}
-
-// NewPrivateAPIClient ...
-func NewPrivateAPIClient(helper *test.Helper) *private.APIClient {
-	var serverConfig *server.ServerConfig
-	helper.Env.MustResolveAll(&serverConfig)
-
-	openapiConfig := private.NewConfiguration()
-	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
-	client := private.NewAPIClient(openapiConfig)
 	return client
 }
 

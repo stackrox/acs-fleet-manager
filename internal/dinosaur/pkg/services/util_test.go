@@ -17,7 +17,6 @@ import (
 
 const (
 	resourceType           = "sampleResource"
-	mockDinosaurRequestID  = "9bsv0s3fd06g02i2be9g" // sample dinosaur request ID
 	mockIDWithInvalidChars = "vp&xG^nl9MStC@SI*#c$6V^TKq0"
 )
 

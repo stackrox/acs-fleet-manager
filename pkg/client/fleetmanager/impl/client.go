@@ -54,14 +54,6 @@ func newAuthTransport(auth Auth) *authTransport {
 // ClientOption to configure the Client.
 type ClientOption func(*options)
 
-// WithDebugEnabled enables the debug logging for API request sent and received from fleet manager.
-// Internally, this will use httputil.DumpRequestOut/DumpResponse.
-func WithDebugEnabled() ClientOption {
-	return func(o *options) {
-		o.debug = true
-	}
-}
-
 // WithUserAgent allows to set a custom value that shall be used as the User-Agent header
 // when sending requests.
 func WithUserAgent(userAgent string) ClientOption {

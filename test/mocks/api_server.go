@@ -900,15 +900,6 @@ func GetMockClusterAuthorization(modifyFn func(b *amsv1.ClusterAuthorizationResp
 	return builder, nil
 }
 
-// GetMockTermsReview ...
-func GetMockTermsReview(modifyFn func(b *authorizationsv1.TermsReviewResponse)) (*authorizationsv1.TermsReviewResponse, error) {
-	resp, err := authorizationsv1.NewTermsReviewResponse().TermsRequired(true).Build()
-	if err != nil {
-		return resp, fmt.Errorf("building TermsReviewResponse: %w", err)
-	}
-	return resp, nil
-}
-
 // GetMockSyncsetBuilder for emulated OCM server
 func GetMockSyncsetBuilder(modifyFn func(b *clustersmgmtv1.SyncsetBuilder)) *clustersmgmtv1.SyncsetBuilder {
 	builder := clustersmgmtv1.NewSyncset().

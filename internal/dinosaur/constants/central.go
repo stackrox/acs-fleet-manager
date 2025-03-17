@@ -37,10 +37,6 @@ const (
 	// CentralMaxDurationWithProvisioningErrs the maximum duration a Central request
 	// might be in provisioning state while receiving 5XX errors
 	CentralMaxDurationWithProvisioningErrs = 5 * time.Minute
-
-	// AcceptedCentralMaxRetryDuration the maximum duration, in minutes, where Fleet Manager
-	// will retry reconciliation of a Central request in an 'accepted' state
-	AcceptedCentralMaxRetryDuration = 5 * time.Minute
 )
 
 // ordinals - Used to decide if a status comes after or before a given state

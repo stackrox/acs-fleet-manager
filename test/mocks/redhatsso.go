@@ -55,26 +55,12 @@ type getTokenResponseMock struct {
 
 var _ RedhatSSOMock = &redhatSSOMock{}
 
-// MockServerOption ...
-type MockServerOption func(mock *redhatSSOMock)
-
-// WithServiceAccountLimit ...
-func WithServiceAccountLimit(limit int) MockServerOption {
-	return func(mock *redhatSSOMock) {
-		mock.serviceAccountsLimit = limit
-	}
-}
-
 // NewMockServer ...
-func NewMockServer(options ...MockServerOption) RedhatSSOMock {
+func NewMockServer() RedhatSSOMock {
 	mockServer := &redhatSSOMock{
 		serviceAccounts:      make(map[string]serviceaccountsclient.ServiceAccountData),
 		dynamicClients:       make(map[string]api.AcsClientResponseData),
 		serviceAccountsLimit: Unlimited,
-	}
-
-	for _, option := range options {
-		option(mockServer)
 	}
 
 	mockServer.init()

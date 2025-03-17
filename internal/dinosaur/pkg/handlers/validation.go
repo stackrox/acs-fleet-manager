@@ -13,7 +13,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
-	corev1 "k8s.io/api/core/v1"
 	genericvalidation "k8s.io/apimachinery/pkg/api/validation"
 )
 
@@ -23,8 +22,6 @@ var (
 
 	// MaxCentralNameLength ...
 	MaxCentralNameLength = 32
-
-	supportedResources = []corev1.ResourceName{corev1.ResourceCPU, corev1.ResourceMemory}
 )
 
 // ValidDinosaurClusterName ...
@@ -118,15 +115,4 @@ func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.
 
 		return nil
 	}
-}
-
-// validateResourceName checks if the given name denotes a supported resource.
-func validateResourceName(name corev1.ResourceName) (corev1.ResourceName, bool) {
-	resourceName := name
-	for _, supportedResource := range supportedResources {
-		if supportedResource == resourceName {
-			return resourceName, true
-		}
-	}
-	return "", false
 }

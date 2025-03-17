@@ -10,14 +10,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 	"github.com/stretchr/testify/require"
 )
-
-func ReturningError() *errors.ServiceError {
-	return nil
-}
 
 func TestAssignCluster(t *testing.T) {
 	t.Setenv("RHACS_CLUSTER_MIGRATION", "true")

@@ -20,9 +20,6 @@ import (
 // TermsSitecode ...
 const TermsSitecode = "OCM"
 
-// TermsEventcodeOnlineService ...
-const TermsEventcodeOnlineService = "onlineService"
-
 // TermsEventcodeRegister ...
 const TermsEventcodeRegister = "register"
 

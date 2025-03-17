@@ -55,8 +55,7 @@ var (
 
 const (
 	// CentralCA certificate authority which is used by central and included with the stackrox distribution.
-	CentralCA     = "test CA"
-	clusterDomain = "test.local"
+	CentralCA = "test CA"
 )
 
 var centralLabels = map[string]string{

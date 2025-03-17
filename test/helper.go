@@ -43,7 +43,6 @@ const (
 	jwtKeyFile         = "test/support/jwt_private_key.pem"
 	jwtCAFile          = "test/support/jwt_ca.pem"
 	dataplaneIssuerURI = "https://dataplane.issuer.test.local"
-	adminIssuer        = "https://auth.redhat.com/"
 )
 
 // TODO jwk mock server needs to be refactored out of the helper and into the testing environment
@@ -61,11 +60,6 @@ type Helper struct {
 	JWTCA         *rsa.PublicKey
 	T             *testing.T
 	Env           *environments.Env
-}
-
-// NewHelper ...
-func NewHelper(t *testing.T, httpServer *httptest.Server, options ...di.Option) (*Helper, func()) {
-	return NewHelperWithHooks(t, httpServer, nil, options...)
 }
 
 // NewHelperWithHooks will init the Helper and start the server, and it allows to customize the configurations of the server via the hook.

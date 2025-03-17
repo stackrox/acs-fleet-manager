@@ -525,11 +525,6 @@ func Unauthorized(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorUnauthorized, reason, values...)
 }
 
-// TermsNotAccepted ...
-func TermsNotAccepted(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorTermsNotAccepted, reason, values...)
-}
-
 // Unauthenticated ...
 func Unauthenticated(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorUnauthenticated, reason, values...)
@@ -575,12 +570,6 @@ func BadRequest(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorBadRequest, reason, values...)
 }
 
-// FailedToParseSearch ...
-func FailedToParseSearch(reason string, values ...interface{}) *ServiceError {
-	message := fmt.Sprintf("%s: %s", ErrorFailedToParseSearchReason, reason)
-	return New(ErrorFailedToParseSearch, message, values...)
-}
-
 // SyncActionNotSupported ...
 func SyncActionNotSupported() *ServiceError {
 	return New(ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason)
@@ -599,11 +588,6 @@ func FailedToCreateServiceAccount(reason string, values ...interface{}) *Service
 // FailedToDeleteServiceAccount ...
 func FailedToDeleteServiceAccount(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToDeleteServiceAccount, reason, values...)
-}
-
-// MaxLimitForServiceAccountReached ...
-func MaxLimitForServiceAccountReached(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorMaxLimitForServiceAccountsReached, reason, values...)
 }
 
 // FailedToGetServiceAccount ...
@@ -636,24 +620,9 @@ func MalformedDinosaurClusterName(reason string, values ...interface{}) *Service
 	return New(ErrorMalformedCentralInstanceName, reason, values...)
 }
 
-// InstancePlanNotSupported ...
-func InstancePlanNotSupported(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorInstancePlanNotSupported, reason, values...)
-}
-
 // MalformedServiceAccountName ...
 func MalformedServiceAccountName(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMalformedServiceAccountName, reason, values...)
-}
-
-// MalformedServiceAccountDesc ...
-func MalformedServiceAccountDesc(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorMalformedServiceAccountDesc, reason, values...)
-}
-
-// MalformedServiceAccountID ...
-func MalformedServiceAccountID(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorMalformedServiceAccountID, reason, values...)
 }
 
 // DuplicateDinosaurClusterName ...
@@ -674,19 +643,6 @@ func MaximumFieldLengthMissing(reason string, values ...interface{}) *ServiceErr
 // UnableToSendErrorResponse ...
 func UnableToSendErrorResponse() *ServiceError {
 	return New(ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason)
-}
-
-// FailedToParseQueryParms ...
-func FailedToParseQueryParms(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorBadRequest, reason, values...)
-
-}
-
-// FieldValidationError ...
-func FieldValidationError(reason string, values ...interface{}) *ServiceError {
-	message := fmt.Sprintf("%s: %s", ErrorFieldValidationErrorReason, reason)
-
-	return New(ErrorFieldValidationError, message, values...)
 }
 
 // InsufficientQuotaError ...
