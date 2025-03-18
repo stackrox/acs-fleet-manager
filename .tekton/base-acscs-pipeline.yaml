@@ -243,9 +243,6 @@ spec:
       operator: in
       values:
       - "true"
-    workspaces:
-    - name: source
-      workspace: workspace
   - name: build-image-index
     params:
     - name: IMAGE
