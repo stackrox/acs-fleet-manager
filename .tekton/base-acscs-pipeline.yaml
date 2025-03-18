@@ -196,14 +196,7 @@ spec:
       - name: kind
         value: task
       resolver: bundles
-    when:
-    - input: $(params.prefetch-input)
-      operator: notin
-      values:
-      - ""
     workspaces:
-    - name: source
-      workspace: workspace
     - name: git-basic-auth
       workspace: git-auth
     - name: netrc
