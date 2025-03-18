@@ -3,14 +3,13 @@ package routes
 
 import (
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/openapi"
 	"net/http"
 
 	"github.com/goava/di"
 	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	pkgerrors "github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/generated"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
@@ -30,7 +29,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 type options struct {
@@ -69,7 +67,7 @@ func NewRouteLoader(s options) environments.RouteLoader {
 // AddRoutes ...
 func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	basePath := fmt.Sprintf("%s/%s", routes.APIEndpoint, routes.FleetManagementAPIPrefix)
-	err := s.buildAPIBaseRouter(mainRouter, basePath, "fleet-manager.yaml")
+	err := s.buildAPIBaseRouter(mainRouter, basePath)
 	if err != nil {
 		return err
 	}
@@ -77,12 +75,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	return nil
 }
 
-func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, openAPIFilePath string) error {
-	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, openAPIFilePath)
-	if err != nil {
-		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
-	}
-
+func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string) error {
 	centralHandler := handlers.NewDinosaurHandler(s.Central, s.ProviderConfig, s.AuthService, s.Telemetry,
 		s.CentralRequestConfig)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
@@ -103,7 +96,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1Router := apiRouter.PathPrefix("/v1").Subrouter()
 
 	//  /openapi
-	apiV1Router.HandleFunc("/openapi", coreHandlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
+	apiV1Router.HandleFunc("/openapi", openapi.HandleGetFleetManagerOpenApiDefinition()).Methods(http.MethodGet)
 
 	//  /errors
 	apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()
