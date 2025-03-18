@@ -5,9 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -16,46 +14,34 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
+	centralPkg "github.com/stackrox/acs-fleet-manager/probe/pkg/central"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/metrics"
-	"github.com/stackrox/rox/pkg/httputil"
-	"github.com/stackrox/rox/pkg/utils"
 )
 
-// Probe is a wrapper interface for the core probe logic.
-//
-//go:generate moq -out probe_moq.go . Probe
-type Probe interface {
-	Execute(ctx context.Context, spec config.CentralSpec) error
-	CleanUp(ctx context.Context) error
-}
-
-var _ Probe = (*ProbeImpl)(nil)
-
-// ProbeImpl executes a probe run against fleet manager.
-type ProbeImpl struct {
-	config                *config.Config
-	fleetManagerPublicAPI fleetmanager.PublicAPI
-	httpClient            *http.Client
+// Probe executes a probe run against fleet manager.
+type Probe struct {
+	config         config.Config
+	spec           centralPkg.Spec
+	centralService centralPkg.Service
 }
 
 // New creates a new probe.
-func New(config *config.Config, fleetManagerPublicAPI fleetmanager.PublicAPI, httpClient *http.Client) *ProbeImpl {
-	return &ProbeImpl{
-		config:                config,
-		fleetManagerPublicAPI: fleetManagerPublicAPI,
-		httpClient:            httpClient,
+func New(config config.Config, centralService centralPkg.Service, spec centralPkg.Spec) *Probe {
+	return &Probe{
+		config:         config,
+		centralService: centralService,
+		spec:           spec,
 	}
 }
 
-func recordElapsedTime(start time.Time, region string) {
+func (p *Probe) recordElapsedTime(start time.Time) {
 	elapsedTime := time.Since(start)
-	glog.Infof("elapsed time: %v", elapsedTime)
-	metrics.MetricsInstance().ObserveTotalDuration(elapsedTime, region)
+	glog.Infof("elapsed time=%v, region=%s", elapsedTime, p.spec.Region)
+	metrics.MetricsInstance().ObserveTotalDuration(elapsedTime, p.spec.Region)
 }
 
-func (p *ProbeImpl) newCentralName() (string, error) {
+func (p *Probe) newCentralName() (string, error) {
 	rnd := make([]byte, 2)
 	if _, err := rand.Read(rnd); err != nil {
 		return "", errors.Wrapf(err, "reading random bytes for unique central name")
@@ -65,49 +51,49 @@ func (p *ProbeImpl) newCentralName() (string, error) {
 }
 
 // Execute the probe of the fleet manager API.
-func (p *ProbeImpl) Execute(ctx context.Context, spec config.CentralSpec) error {
-	glog.Infof("probe run has been started: fleetManagerEndpoint=%q, provider=%q, region=%q",
+func (p *Probe) Execute(ctx context.Context) error {
+	glog.Infof("probe run has been started: fleetManagerEndpoint=%s, region=%s",
 		p.config.FleetManagerEndpoint,
-		spec.CloudProvider,
-		spec.Region,
+		p.spec.Region,
 	)
 	defer glog.Info("probe run has ended")
-	defer recordElapsedTime(time.Now(), spec.Region)
+	defer p.recordElapsedTime(time.Now())
+	// Run a cleanup before creating Central to remove unused instances and avoid exceeding the limit.
+	// If the cleanup fails, there may be something wrong not only with de-provisioning, but also with provisioning.
+	// We don't want to put additional load on the clusters, so we skip the creation.
+	if err := p.cleanup(ctx); err != nil {
+		return err
+	}
 
-	central, err := p.createCentral(ctx, spec)
+	central, err := p.createCentral(ctx)
 	if err != nil {
 		return err
 	}
-	glog.Info("central creation succeeded; proceeding with verification")
+	glog.Infof("central creation succeeded; proceeding with verification. region=%s", p.spec.Region)
 
 	if err := p.verifyCentral(ctx, central); err != nil {
 		return err
 	}
-	glog.Info("central verification succeeded; proceeding with deletion")
+	glog.Infof("central verification succeeded; proceeding with deletion. region=%s", p.spec.Region)
 
 	return p.deleteCentral(ctx, central)
 }
 
-// CleanUp remaining probe resources.
-func (p *ProbeImpl) CleanUp(ctx context.Context) error {
+func (p *Probe) cleanup(ctx context.Context) error {
 	if err := retryUntilSucceeded(ctx, p.cleanupFunc, p.config.ProbePollPeriod); err != nil {
 		return errors.Wrap(err, "cleanup centrals failed")
 	}
 	return nil
 }
 
-func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
-	centralList, resp, err := p.fleetManagerPublicAPI.GetCentrals(ctx, nil)
-	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
+func (p *Probe) cleanupFunc(ctx context.Context) error {
+	centralList, err := p.centralService.List(ctx, p.spec)
 	if err != nil {
-		err = errors.WithMessage(err, extractCentralError(resp))
-		err = errors.Wrap(err, "could not list centrals")
-		glog.Error(err)
-		return err
+		return errors.Wrap(err, "cleanup failed")
 	}
 
-	success := true
-	for _, central := range centralList.Items {
+	centralsLeft := false
+	for _, central := range centralList {
 		central := central
 		// Remove all instances that have been created by the probe user.
 		// To avoid intefering with other probe instances, we only remove instances
@@ -119,43 +105,39 @@ func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
 		if !hasProbeOwner || (!hasProbePrefix && !isOrphan) {
 			continue
 		}
-		if err := p.deleteCentral(ctx, &central); err != nil {
-			glog.Warningf("failed to clean up central instance %s: %s", central.Id, err)
-			success = false
+		centralsLeft = true
+		if alreadyDeleting(central) {
+			continue
 		}
+		go func() {
+			if err := p.centralService.Delete(ctx, central.Id); err != nil {
+				glog.Warningf("failed to delete central. id=%s, region=%s: %s", central.Id, p.spec.Region, err)
+			}
+		}()
 	}
 
-	if success {
-		glog.Info("finished clean up attempt of probe resources")
-		return nil
+	if centralsLeft {
+		return errors.New("central clean up not successful")
 	}
-	return errors.New("central clean up not successful")
+	glog.Infof("finished clean up attempt of probe resources. region=%s", p.spec.Region)
+	return nil
+}
+
+func alreadyDeleting(central public.CentralRequest) bool {
+	status := constants.CentralStatus(central.Status)
+	return status == constants.CentralRequestStatusDeprovision || status == constants.CentralRequestStatusDeleting
 }
 
 // Create a Central and verify that it transitioned to 'ready' state.
-func (p *ProbeImpl) createCentral(ctx context.Context, spec config.CentralSpec) (*public.CentralRequest, error) {
+func (p *Probe) createCentral(ctx context.Context) (*public.CentralRequest, error) {
 	centralName, err := p.newCentralName()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create central name")
 	}
-	request := public.CentralRequestPayload{
-		Name:          centralName,
-		MultiAz:       true,
-		CloudProvider: spec.CloudProvider,
-		Region:        spec.Region,
-	}
-	central, resp, err := p.fleetManagerPublicAPI.CreateCentral(ctx, true, request)
-	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
-	if central.Id == "" {
-		glog.Info("creation of central instance requested - got empty response")
-	} else {
-		glog.Infof("creation of central instance (%s) requested", central.Id)
-	}
+	central, err := p.centralService.Create(ctx, centralName, p.spec)
 	if err != nil {
-		err = errors.WithMessage(err, extractCentralError(resp))
-		return nil, errors.Wrap(err, "creation of central instance failed")
+		return nil, errors.Wrap(err, "failed to create central instance")
 	}
-
 	centralResp, err := p.ensureCentralState(ctx, &central, constants.CentralRequestStatusReady.String())
 	if err != nil {
 		return nil, errors.Wrapf(err, "central instance %s did not reach ready state", central.Id)
@@ -165,7 +147,7 @@ func (p *ProbeImpl) createCentral(ctx context.Context, spec config.CentralSpec) 
 
 // Verify that the Central instance has the expected properties and that the
 // Central UI is reachable.
-func (p *ProbeImpl) verifyCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
+func (p *Probe) verifyCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
 	if centralRequest.InstanceType != types.STANDARD.String() {
 		return errors.Errorf("central has wrong instance type: expected %s, got %s", types.STANDARD, centralRequest.InstanceType)
 	}
@@ -176,25 +158,19 @@ func (p *ProbeImpl) verifyCentral(ctx context.Context, centralRequest *public.Ce
 	return nil
 }
 
-// Delete the Central instance and verify that it transitioned to 'deprovision' state.
-func (p *ProbeImpl) deleteCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
-	resp, err := p.fleetManagerPublicAPI.DeleteCentralById(ctx, centralRequest.Id, true)
-	glog.Infof("deletion of central instance %s requested", centralRequest.Id)
-	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
-	if err != nil {
-		err = errors.WithMessage(err, extractCentralError(resp))
-		return errors.Wrapf(err, "deletion of central instance %s failed", centralRequest.Id)
+// Delete the Central instance and make sure it is missing from the Fleet Manager API.
+func (p *Probe) deleteCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
+	if err := p.centralService.Delete(ctx, centralRequest.Id); err != nil {
+		return err
 	}
-
-	err = p.ensureCentralDeleted(ctx, centralRequest)
-	if err != nil {
+	if err := p.ensureCentralDeleted(ctx, centralRequest); err != nil {
 		return errors.Wrapf(err, "central instance %s with status %s could not be deleted", centralRequest.Id, centralRequest.Status)
 	}
-	glog.Info("central deletion succeeded")
+	glog.Infof("central deletion succeeded. region=%s", p.spec.Region)
 	return nil
 }
 
-func (p *ProbeImpl) ensureCentralState(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
+func (p *Probe) ensureCentralState(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
 	funcWrapper := func(funcCtx context.Context) (*public.CentralRequest, error) {
 		return p.ensureStateFunc(funcCtx, centralRequest, targetState)
 	}
@@ -205,25 +181,21 @@ func (p *ProbeImpl) ensureCentralState(ctx context.Context, centralRequest *publ
 	return centralResp, nil
 }
 
-func (p *ProbeImpl) ensureStateFunc(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
-	centralResp, resp, err := p.fleetManagerPublicAPI.GetCentralById(ctx, centralRequest.Id)
-	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
+func (p *Probe) ensureStateFunc(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
+	centralResp, err := p.centralService.Get(ctx, centralRequest.Id)
 	if err != nil {
-		err = errors.WithMessage(err, extractCentralError(resp))
-		err = errors.Wrapf(err, "central instance %s not reachable", centralRequest.Id)
-		glog.Error(err)
-		return nil, err
+		return nil, errors.Wrapf(err, "ensure state %s for central %s", targetState, centralRequest.Id)
 	}
 
 	if centralResp.Status == targetState {
-		glog.Infof("central instance %s is in %q state", centralResp.Id, targetState)
+		glog.Infof("central is in the target state. id=%s, region=%s, state=%s.", centralResp.Id, p.spec.Region, targetState)
 		return &centralResp, nil
 	}
 	err = errors.Errorf("central instance %s not in target state %q", centralRequest.Id, targetState)
 	return nil, err
 }
 
-func (p *ProbeImpl) ensureCentralDeleted(ctx context.Context, centralRequest *public.CentralRequest) error {
+func (p *Probe) ensureCentralDeleted(ctx context.Context, centralRequest *public.CentralRequest) error {
 	funcWrapper := func(funcCtx context.Context) error {
 		return p.ensureDeletedFunc(funcCtx, centralRequest)
 	}
@@ -234,51 +206,26 @@ func (p *ProbeImpl) ensureCentralDeleted(ctx context.Context, centralRequest *pu
 	return nil
 }
 
-func (p *ProbeImpl) ensureDeletedFunc(ctx context.Context, centralRequest *public.CentralRequest) error {
-	_, response, err := p.fleetManagerPublicAPI.GetCentralById(ctx, centralRequest.Id)
-	defer utils.IgnoreError(closeBodyIfNonEmpty(response))
+func (p *Probe) ensureDeletedFunc(ctx context.Context, centralRequest *public.CentralRequest) error {
+	_, err := p.centralService.Get(ctx, centralRequest.Id)
 	if err != nil {
-		if response != nil && response.StatusCode == http.StatusNotFound {
-			glog.Infof("central instance %s has been deleted", centralRequest.Id)
+		if errors.Is(err, centralPkg.ErrNotFound) {
+			glog.Infof("central has been deleted. id=%s, region=%s", centralRequest.Id, p.spec.Region)
 			return nil
 		}
-		err = errors.WithMessage(err, extractCentralError(response))
-		err = errors.Wrapf(err, "central instance %s not reachable", centralRequest.Id)
-		glog.Error(err)
-		return err
+		return errors.Wrapf(err, "central instance %s not deleted", centralRequest.Id)
+
 	}
 	err = errors.Errorf("central instance %s not deleted", centralRequest.Id)
 	return err
 }
 
-func (p *ProbeImpl) pingURL(ctx context.Context, url string) error {
+func (p *Probe) pingURL(ctx context.Context, url string) error {
 	funcWrapper := func(funcCtx context.Context) error {
-		return p.pingFunc(funcCtx, url)
+		return p.centralService.Ping(funcCtx, url)
 	}
 	if err := retryUntilSucceeded(ctx, funcWrapper, p.config.ProbePollPeriod); err != nil {
 		return errors.Wrap(err, "URL ping failed")
-	}
-	return nil
-}
-
-func (p *ProbeImpl) pingFunc(ctx context.Context, url string) error {
-	request, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
-	if err != nil {
-		err = errors.Wrap(err, "failed to create request")
-		glog.Error(err)
-		return err
-	}
-	response, err := p.httpClient.Do(request)
-	defer utils.IgnoreError(closeBodyIfNonEmpty(response))
-	if err != nil {
-		err = errors.Wrap(err, "URL not reachable")
-		glog.Error(err)
-		return err
-	}
-	if !httputil.Is2xxStatusCode(response.StatusCode) {
-		err = errors.Errorf("URL ping did not succeed: %s", extractCentralError(response))
-		glog.Warning(err)
-		return err
 	}
 	return nil
 }
@@ -312,28 +259,5 @@ func retryUntilSucceededWithResponse(ctx context.Context, fn func(context.Contex
 				return centralResp, nil
 			}
 		}
-	}
-}
-
-func extractCentralError(resp *http.Response) string {
-	var centralError public.Error
-	if resp == nil || resp.Body == nil {
-		return ""
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&centralError); err != nil {
-		return "parsing HTTP response"
-	}
-	return fmt.Sprintf("request responded with %d: central error %s and reason %s", resp.StatusCode,
-		centralError.Code, centralError.Reason)
-}
-
-func closeBodyIfNonEmpty(resp *http.Response) func() error {
-	if resp == nil || resp.Body == nil {
-		return func() error {
-			return nil
-		}
-	}
-	return func() error {
-		return errors.Wrap(resp.Body.Close(), "closing response body")
 	}
 }
