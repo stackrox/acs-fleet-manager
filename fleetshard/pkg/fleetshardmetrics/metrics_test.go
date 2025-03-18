@@ -17,18 +17,6 @@ func TestCounterIncrements(t *testing.T) {
 		callIncrementFunc func(m *Metrics)
 	}{
 		{
-			metricName: "total_fleet_manager_requests",
-			callIncrementFunc: func(m *Metrics) {
-				m.IncFleetManagerRequests()
-			},
-		},
-		{
-			metricName: "total_fleet_manager_request_errors",
-			callIncrementFunc: func(m *Metrics) {
-				m.IncFleetManagerRequestErrors()
-			},
-		},
-		{
 			metricName: "total_central_reconcilations",
 			callIncrementFunc: func(m *Metrics) {
 				m.IncCentralReconcilations()

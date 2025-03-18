@@ -1,10 +1,6 @@
 package clusters
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/wellknown"
@@ -12,25 +8,11 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/restmapper"
 )
-
-// fieldManager indicates that the fleet-manager will be used as a field manager for conflict resolution
-const fieldManager = "fleet-manager"
-
-// lastAppliedConfigurationAnnotation is an annotation applied in a resources which tracks the last applied configuration of a resource.
-// this is used to decide whether a new apply request should be taken into account or not
-const lastAppliedConfigurationAnnotation = "fleet-manager/last-applied-resource-configuration"
 
 // dinosaurSREOpenIDPSecretName is the secret name holding the clientSecret content
 const dinosaurSREOpenIDPSecretName = "dinosaur-sre-idp-secret" // pragma: allowlist secret
-
-var ctx = context.Background()
 
 // StandaloneProvider ...
 type StandaloneProvider struct {
@@ -202,108 +184,4 @@ func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProv
 	}
 
 	return &types.CloudProviderRegionInfoList{Items: items}, nil
-}
-
-func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredDiscoveryRESTMapper, resource interface{}) (runtime.Object, error) {
-	// parse resource obj to unstructure.Unstructered
-	data, err := json.Marshal(resource)
-	if err != nil {
-		return nil, fmt.Errorf("marshalling resource into JSON: %w", err)
-	}
-
-	var obj unstructured.Unstructured
-	err = json.Unmarshal(data, &obj)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshalling data from JSON: %w", err)
-	}
-
-	newConfiguration := string(data)
-	newAnnotations := obj.GetAnnotations()
-	if newAnnotations == nil {
-		newAnnotations = map[string]string{}
-		obj.SetAnnotations(newAnnotations)
-	}
-	// add last configuration annotation with contents pointing to latest marshalled resources
-	// this is needed to see if new changes will need to be applied during reconciliation
-	newAnnotations[lastAppliedConfigurationAnnotation] = newConfiguration
-	obj.SetAnnotations(newAnnotations)
-
-	// Find Group Version resource for rest mapping
-	gvk := obj.GroupVersionKind()
-	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-	if err != nil {
-		return nil, fmt.Errorf("getting REST mapping: %w", err)
-	}
-
-	desiredObj := &obj
-	namespace, err := meta.NewAccessor().Namespace(desiredObj)
-	if err != nil {
-		return nil, fmt.Errorf("creating namespace accessor: %w", err)
-	}
-
-	var dr dynamic.ResourceInterface
-	if namespace != "" && mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-		// namespaced resources should specify the namespace
-		dr = dynamicClient.Resource(mapping.Resource).Namespace(namespace)
-	} else {
-		// for cluster-wide resources
-		dr = dynamicClient.Resource(mapping.Resource)
-	}
-
-	name, err := meta.NewAccessor().Name(desiredObj)
-	if err != nil {
-		return nil, fmt.Errorf("creating name accessor: %w", err)
-	}
-
-	// check if resources needs to be applied
-	existingObj, _ := dr.Get(ctx, name, metav1.GetOptions{})
-	applyChanges := shouldApplyChanges(dr, existingObj, newConfiguration)
-
-	if !applyChanges { // no need to apply changes as resource has not changed
-		return existingObj, nil
-	}
-
-	// apply new changes which will lead to creation of new resources
-	return applyChangesFn(dr, desiredObj, existingObj)
-}
-
-func shouldApplyChanges(dynamicClient dynamic.ResourceInterface, existingObj *unstructured.Unstructured, newConfiguration string) bool {
-	if existingObj == nil {
-		return true
-	}
-
-	originalAnnotations := existingObj.GetAnnotations()
-	if originalAnnotations != nil {
-		lastApplied, ok := originalAnnotations[lastAppliedConfigurationAnnotation]
-		if !ok {
-			return true // new object, create it
-		}
-		return newConfiguration != lastApplied // check if configuration has changed before applying changes
-	}
-
-	return true
-}
-
-func applyChangesFn(client dynamic.ResourceInterface, desiredObj *unstructured.Unstructured, existingObj *unstructured.Unstructured) (runtime.Object, error) {
-	if existingObj == nil { // create object if it does not exist
-		newObj, err := client.Create(ctx, desiredObj, metav1.CreateOptions{
-			FieldManager: fieldManager,
-		})
-		if err != nil {
-			return newObj, fmt.Errorf("creating new object: %w", err)
-		}
-		return newObj, nil
-	}
-
-	desiredObj.SetResourceVersion(existingObj.GetResourceVersion())
-
-	// we are replacing the whole object instead of using server-side apply which is in beta
-	// the object is set to exactly desired object
-	updatedObj, err := client.Update(ctx, desiredObj, metav1.UpdateOptions{
-		FieldManager: fieldManager,
-	})
-	if err != nil {
-		return updatedObj, fmt.Errorf("updating object: %w", err)
-	}
-	return updatedObj, nil
 }

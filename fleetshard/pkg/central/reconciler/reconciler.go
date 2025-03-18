@@ -85,7 +85,6 @@ const (
 	centralEncryptionKeySecretName = "central-encryption-key-chain" // pragma: allowlist secret
 
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
-	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
 
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
 	additionalAuthProviderConfigKey  = "additional-auth-provider"

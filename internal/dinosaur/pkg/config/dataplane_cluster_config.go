@@ -218,18 +218,6 @@ func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool
 	return c.EnableReadyDataPlaneClustersReconcile
 }
 
-type stringValue string
-
-func (s *stringValue) Set(val string) error {
-	*s = stringValue(val)
-	return nil
-}
-func (s *stringValue) Type() string {
-	return "string"
-}
-
-func (s *stringValue) String() string { return string(*s) }
-
 // AddFlags ...
 func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")

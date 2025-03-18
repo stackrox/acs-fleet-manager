@@ -109,8 +109,6 @@ const (
 	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
 	ClusterProviderStandalone ClusterProviderType = "standalone"
 
-	EvalTypeSupport        ClusterInstanceTypeSupport = "eval"
-	StandardTypeSupport    ClusterInstanceTypeSupport = "standard"
 	AllInstanceTypeSupport ClusterInstanceTypeSupport = "standard,eval"
 )
 
@@ -158,21 +156,6 @@ type Cluster struct {
 	Schedulable bool `json:"schedulable"`
 	// stores the actual information about addons installed on the cluster
 	Addons JSON `json:"addons"`
-}
-
-// ClusterList ...
-type ClusterList []*Cluster
-
-// ClusterIndex ...
-type ClusterIndex map[string]*Cluster
-
-// Index ...
-func (c ClusterList) Index() ClusterIndex {
-	index := ClusterIndex{}
-	for _, o := range c {
-		index[o.ID] = o
-	}
-	return index
 }
 
 // BeforeCreate ...

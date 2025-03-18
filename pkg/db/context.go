@@ -2,10 +2,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
@@ -64,50 +62,4 @@ func Resolve(ctx context.Context) error {
 		}
 	}
 	return nil
-}
-
-// Begin ...
-func Begin(ctx context.Context) error {
-	tx, ok := ctx.Value(transactionKey).(*txFactory)
-	if !ok {
-		return fmt.Errorf("Could not retrieve transaction from context")
-	}
-
-	err := tx.begin()
-	if err != nil {
-		return fmt.Errorf("Could not begin transaction: %v", err)
-	}
-	return nil
-}
-
-// AddPostCommitAction ...
-func AddPostCommitAction(ctx context.Context, f func()) error {
-	tx, ok := ctx.Value(transactionKey).(*txFactory)
-	if !ok {
-		return fmt.Errorf("Could not retrieve transaction from context")
-	}
-
-	tx.postCommitActions = append(tx.postCommitActions, f)
-	return nil
-}
-
-// FromContext Retrieves the transaction from the context.
-func FromContext(ctx context.Context) (*sql.Tx, error) {
-	transaction, ok := ctx.Value(transactionKey).(*txFactory)
-	if !ok {
-		return nil, errors.GeneralError("Could not retrieve transaction from context")
-	}
-	return transaction.tx, nil
-}
-
-// MarkForRollback flags the transaction stored in the context for rollback and logs whatever error caused the rollback
-func MarkForRollback(ctx context.Context, err error) {
-	ulog := logger.NewUHCLogger(ctx)
-	transaction, ok := ctx.Value(transactionKey).(*txFactory)
-	if !ok {
-		ulog.Errorf("failed to mark transaction for rollback: could not retrieve transaction from context")
-		return
-	}
-	ulog.Infof("Marked transaction for rollback, err: %v", err)
-	transaction.rollbackFlag = true
 }

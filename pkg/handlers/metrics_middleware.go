@@ -99,12 +99,6 @@ func MetricsMiddleware(handler http.Handler) http.Handler {
 	})
 }
 
-// ResetMetricCollectors resets all prometheus collectors
-func ResetMetricCollectors() {
-	requestCountMetric.Reset()
-	requestDurationMetric.Reset()
-}
-
 // Regular expression used to remove variables from route path templates:
 var metricsPathVarRE = regexp.MustCompile(`{[^}]*}`)
 
@@ -133,12 +127,6 @@ const (
 	requestCount    = "request_count"
 	requestDuration = "request_duration"
 )
-
-// MetricsNames - Array of Names of the metrics:
-var MetricsNames = []string{
-	requestCount,
-	requestDuration,
-}
 
 // Description of the requests count metric:
 var requestCountMetric = prometheus.NewCounterVec(

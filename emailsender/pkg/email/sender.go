@@ -12,8 +12,6 @@ import (
 )
 
 const (
-	// EmailProviderAWSSES is the type name for the AWSEmailSender implementation of the Sender interface
-	EmailProviderAWSSES = "AWS_SES"
 	// EmailProviderLog is the type name for the LogEmailSender implementation of the Sender interface
 	EmailProviderLog = "LOG"
 

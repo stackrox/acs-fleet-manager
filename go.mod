@@ -39,20 +39,16 @@ require (
 	github.com/openshift/api v0.0.0-20240415161129-d7aff303fa1a
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.62.0
 	github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt v0.0.0-20230323122535-49460b57cc45
 	github.com/rs/xid v1.5.0
-	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0
 	github.com/selvatico/go-mocket v1.0.7
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
-	github.com/spyzhov/ajson v0.9.6
 	github.com/stackrox/rox v0.0.0-20230323083409-e83503a98fb4
 	github.com/stretchr/testify v1.10.0
-	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zgalor/weberr v0.8.2
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/oauth2 v0.25.0
@@ -211,6 +207,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pjbgf/sha1cd v0.3.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.0 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/pquerna/otp v1.2.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/redis/go-redis/v9 v9.0.5 // indirect
@@ -236,6 +233,7 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
+	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/zmap/zcrypto v0.0.0-20231219022726-a1f61fb1661c // indirect
 	github.com/zmap/zlint/v3 v3.6.0 // indirect

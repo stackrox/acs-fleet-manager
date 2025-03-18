@@ -23,12 +23,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
-	authv1 "github.com/openshift/api/authorization/v1"
-	userv1 "github.com/openshift/api/user/v1"
 	"github.com/pkg/errors"
-
-	k8sCoreV1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // TODO change these constants to match your own
@@ -704,70 +699,6 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 		} // region
 	} // provider
 	return errs
-}
-
-// buildReadOnlyGroupResource creates a group to which read-only cluster users are added.
-func (c *ClusterManager) buildReadOnlyGroupResource() *userv1.Group {
-	return &userv1.Group{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: userv1.SchemeGroupVersion.String(),
-			Kind:       "Group",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: mkReadOnlyGroupName,
-		},
-		Users: c.DataplaneClusterConfig.ReadOnlyUserList,
-	}
-}
-
-// buildDedicatedReaderClusterRoleBindingResource creates a cluster role binding, associates it with the mk-readonly-access group, and attaches the dedicated-reader cluster role.
-func (c *ClusterManager) buildDedicatedReaderClusterRoleBindingResource() *authv1.ClusterRoleBinding {
-	return &authv1.ClusterRoleBinding{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "rbac.authorization.k8s.io/v1",
-			Kind:       "ClusterRoleBinding",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: mkReadOnlyRoleBindingName,
-		},
-		Subjects: []k8sCoreV1.ObjectReference{
-			{
-				Kind:       "Group",
-				APIVersion: "rbac.authorization.k8s.io",
-				Name:       mkReadOnlyGroupName,
-			},
-		},
-		RoleRef: k8sCoreV1.ObjectReference{
-			Kind:       "ClusterRole",
-			Name:       dedicatedReadersRoleBindingName,
-			APIVersion: "rbac.authorization.k8s.io",
-		},
-	}
-}
-
-// buildClusterAdminClusterRoleBindingResource creates a cluster role binding, associates it with the dinosaur-sre group, and attaches the cluster-admin role.
-func (c *ClusterManager) buildDinosaurSREClusterRoleBindingResource() *authv1.ClusterRoleBinding {
-	return &authv1.ClusterRoleBinding{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "rbac.authorization.k8s.io/v1",
-			Kind:       "ClusterRoleBinding",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: mkSRERoleBindingName,
-		},
-		Subjects: []k8sCoreV1.ObjectReference{
-			{
-				Kind:       "Group",
-				APIVersion: "rbac.authorization.k8s.io",
-				Name:       mkSREGroupName,
-			},
-		},
-		RoleRef: k8sCoreV1.ObjectReference{
-			Kind:       "ClusterRole",
-			Name:       clusterAdminRoleName,
-			APIVersion: "rbac.authorization.k8s.io",
-		},
-	}
 }
 
 func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() {

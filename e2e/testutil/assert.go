@@ -41,16 +41,6 @@ func AssertCentralRequestDeprovisioning(ctx context.Context, client *fleetmanage
 	return AssertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusDeprovision.String())
 }
 
-// AssertCentralRequestDeleting gets the central requests from the client by ID and asserts the deleting status
-func AssertCentralRequestDeleting(ctx context.Context, client *fleetmanager.Client, id string) func() error {
-	return AssertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusDeleting.String())
-}
-
-// AssertCentralRequestAccepted gets the central requests from the client by ID and asserts the accepted status
-func AssertCentralRequestAccepted(ctx context.Context, client *fleetmanager.Client, id string) func() error {
-	return AssertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusAccepted.String())
-}
-
 // AssertDNSMatchesRouter asserts that every domain in centralDomainNames is in recordSets and targets
 // the correct hostname given by the routeIngress
 func AssertDNSMatchesRouter(centralDomainNames []string, recordSets []*route53.ResourceRecordSet, routeIngress *openshiftRouteV1.RouteIngress) {

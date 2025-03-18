@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
-
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -210,16 +208,4 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 		shared.WriteJSONResponse(w, http.StatusOK, results)
 	}
 	success(r)
-}
-
-// ConvertToPrivateError ...
-func ConvertToPrivateError(e compat.Error) compat.PrivateError {
-	return compat.PrivateError{
-		Id:          e.Id,
-		Kind:        e.Kind,
-		Href:        e.Href,
-		Code:        e.Code,
-		Reason:      e.Reason,
-		OperationId: e.OperationId,
-	}
 }

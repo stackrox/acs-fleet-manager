@@ -98,6 +98,5 @@ func ServiceProviders() di.Option {
 		di.Provide(server.NewHealthCheckServer, di.As(new(environments.BootService))),
 		di.Provide(serviceregistration.NewService, di.As(new(environments.BootService))),
 		di.Provide(services.NewTelemetry, di.As(new(environments.BootService))),
-		di.Provide(services.NewDataMigration, di.As(new(environments.BootService))),
 	)
 }

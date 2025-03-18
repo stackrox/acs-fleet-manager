@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -68,8 +67,4 @@ func TestTimePtrToNullTime(t *testing.T) {
 			assert.Equal(t, test.want, got)
 		})
 	}
-}
-
-func TestCentralRequestNoPointers(t *testing.T) {
-	assert.True(t, db.IsStructWithoutPointers(&CentralRequest{}))
 }
