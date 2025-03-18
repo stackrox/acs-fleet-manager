@@ -202,7 +202,7 @@ external-secrets:
   installCRDs: false
   image:
     repository: quay.io/app-sre/external-secrets
-    tag: v0.9.18
+    tag: v0.14.4
   securityContext:
     runAsUser: null
   webhook:
