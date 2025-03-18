@@ -15,19 +15,19 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
-	"github.com/stackrox/acs-fleet-manager/probe/pkg/central"
+	centralPkg "github.com/stackrox/acs-fleet-manager/probe/pkg/central"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/metrics"
 )
 
 // Probe executes a probe run against fleet manager.
 type Probe struct {
 	config         config.Config
-	spec           central.Spec
-	centralService central.Service
+	spec           centralPkg.Spec
+	centralService centralPkg.Service
 }
 
 // New creates a new probe.
-func New(config config.Config, centralService central.Service, spec central.Spec) *Probe {
+func New(config config.Config, centralService centralPkg.Service, spec centralPkg.Spec) *Probe {
 	return &Probe{
 		config:         config,
 		centralService: centralService,
@@ -58,6 +58,9 @@ func (p *Probe) Execute(ctx context.Context) error {
 	)
 	defer glog.Info("probe run has ended")
 	defer p.recordElapsedTime(time.Now())
+	// Run a cleanup before creating Central to remove unused instances and avoid exceeding the limit.
+	// If the cleanup fails, there may be something wrong not only with de-provisioning, but also with provisioning.
+	// We don't want to put additional load on the clusters, so we skip the creation.
 	if err := p.cleanup(ctx); err != nil {
 		return err
 	}
@@ -106,16 +109,18 @@ func (p *Probe) cleanupFunc(ctx context.Context) error {
 		if alreadyDeleting(central) {
 			continue
 		}
-		if err := p.centralService.Delete(ctx, central.Id); err != nil {
-			glog.Warningf("failed to delete central. id=%s, region=%s: %s", central.Id, p.spec.Region, err)
-		}
+		go func() {
+			if err := p.centralService.Delete(ctx, central.Id); err != nil {
+				glog.Warningf("failed to delete central. id=%s, region=%s: %s", central.Id, p.spec.Region, err)
+			}
+		}()
 	}
 
-	if !centralsLeft {
-		glog.Infof("finished clean up attempt of probe resources. region=%s", p.spec.Region)
-		return nil
+	if centralsLeft {
+		return errors.New("central clean up not successful")
 	}
-	return errors.New("central clean up not successful")
+	glog.Infof("finished clean up attempt of probe resources. region=%s", p.spec.Region)
+	return nil
 }
 
 func alreadyDeleting(central public.CentralRequest) bool {
@@ -204,7 +209,7 @@ func (p *Probe) ensureCentralDeleted(ctx context.Context, centralRequest *public
 func (p *Probe) ensureDeletedFunc(ctx context.Context, centralRequest *public.CentralRequest) error {
 	_, err := p.centralService.Get(ctx, centralRequest.Id)
 	if err != nil {
-		if errors.Is(err, central.ErrNotFound) {
+		if errors.Is(err, centralPkg.ErrNotFound) {
 			glog.Infof("central has been deleted. id=%s, region=%s", centralRequest.Id, p.spec.Region)
 			return nil
 		}

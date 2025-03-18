@@ -19,7 +19,7 @@ type Config struct {
 	ProbeName               string        `env:"PROBE_NAME" envDefault:"${HOSTNAME}" envExpand:"true"`
 	ProbeHTTPRequestTimeout time.Duration `env:"PROBE_HTTP_REQUEST_TIMEOUT" envDefault:"5s"`
 	ProbePollPeriod         time.Duration `env:"PROBE_POLL_PERIOD" envDefault:"5s"`
-	ProbeRunTimeout         time.Duration `env:"PROBE_RUN_TIMEOUT" envDefault:"30m"`
+	ProbeRunTimeout         time.Duration `env:"PROBE_RUN_TIMEOUT" envDefault:"35m"`
 	ProbeRunWaitPeriod      time.Duration `env:"PROBE_RUN_WAIT_PERIOD" envDefault:"30s"`
 
 	ProbeUsername string
