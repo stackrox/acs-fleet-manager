@@ -418,11 +418,6 @@ openapi/generate/public: openapi-generator
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager.yaml -g go -o internal/dinosaur/pkg/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/dinosaur/pkg/api/public
-
-	mkdir -p .generate/openapi
-	cp ./openapi/fleet-manager.yaml .generate/openapi
-	$(GOFMT) -w internal/dinosaur/pkg/generated
-	rm -rf .generate/openapi
 .PHONY: openapi/generate/public
 
 openapi/generate/private: openapi-generator
