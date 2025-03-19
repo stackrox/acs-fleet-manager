@@ -26,36 +26,6 @@ paths:
           description: Version metadata
       summary: Returns the version metadata
 
-  /api/rhacs/v1/errors/{id}:
-    get:
-      operationId: getErrorById
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-          description: Get error by Id
-      summary: Returns the error by id
-      tags:
-        - errors
-      parameters:
-        - $ref: "#/components/parameters/id"
-
-  /api/rhacs/v1/errors:
-    get:
-      operationId: getErrors
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorList"
-          description: List of possible errors
-      summary: Returns the list of possible API errors
-      tags:
-        - errors
-
   /api/rhacs/v1/status:
     get:
       operationId: getServiceStatus
@@ -481,16 +451,17 @@ components:
         total:
           type: integer
     Error:
-      allOf:
-        - $ref: "#/components/schemas/ObjectReference"
-        - type: object
-          properties:
-            code:
-              type: string
-            reason:
-              type: string
-            operation_id:
-              type: string
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        code:
+          type: string
+        reason:
+          type: string
+        operation_id:
+          type: string
     ErrorList:
       allOf:
         - $ref: "#/components/schemas/List"
@@ -1065,7 +1036,6 @@ components:
       value:
         id: "103"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/103"
         code: "RHACS-MGMT-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
@@ -1073,7 +1043,6 @@ components:
       value:
         id: "103"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/103"
         code: "RHACS-MGMT-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
@@ -1081,7 +1050,6 @@ components:
       value:
         id: "23"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/23"
         code: "RHACS-MGMT-23"
         reason: "Failed to parse search query: Unable to list Central requests for api_central_service: RHACS-MGMT-23: Failed to parse search query: Unsupported column name for search: 'id'. Supported column names are: region, name, cloud_provider, name, status. Query invalid: id = 123"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
@@ -1089,7 +1057,6 @@ components:
       value:
         id: "21"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/21"
         code: "RHACS-MGMT-21"
         reason: "missing path parameter: central id"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
@@ -1097,14 +1064,12 @@ components:
       value:
         id: "7"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/7"
         code: "RHACS-MGMT-7"
         reason: "The requested resource doesn't exist"
     404DeleteExample:
       value:
         id: "7"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/7"
         code: "RHACS-MGMT-7"
         reason: "CentralResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found"
         operation_id: "1iYO7g2g6HTdUKUa2ksH82kQD3y"
@@ -1112,7 +1077,6 @@ components:
       value:
         id: "11"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/11"
         code: "RHACS-MGMT-11"
         reason: "Unable to verify JWT token: Required authorization token not found"
         operation_id: "1iY3UhEhwmXBpWPfI2lNekpd4ZD"
@@ -1120,7 +1084,6 @@ components:
       value:
         id: "4"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/4"
         code: "RHACS-MGMT-4"
         reason: "User 'foo-bar' is not authorized to access the service."
         operation_id: "1lY3UiEhznXBpWPfI2lNejpd4YC"
@@ -1128,7 +1091,6 @@ components:
       value:
         id: "5"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/5"
         code: "RHACS-MGMT-5"
         reason: "User 'foo-bar' has reached a maximum number of 6 allowed instances."
         operation_id: "1lY3UiEkxnXBpVPeI2oNejd3XB"
@@ -1136,7 +1098,6 @@ components:
       value:
         id: "12"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/12"
         code: "RHACS-MGMT-12"
         reason: "Required terms have not been accepted"
         operation_id: "kXCzWPeI2oXBpVPeI2LvF9jMQY"
@@ -1144,7 +1105,6 @@ components:
       value:
         id: "36"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/36"
         code: "RHACS-MGMT-36"
         reason: "Cental name is already used"
         operation_id: "6kY0UiEkzkXCzWPeI2oYehd3ED"
@@ -1152,7 +1112,6 @@ components:
       value:
         id: "9"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/9"
         code: "RHACS-MGMT-9"
         reason: "Unspecified error"
         operation_id: "1ieELvF9jMQY6YghfM9gGRsHvEW"
@@ -1160,7 +1119,6 @@ components:
       value:
         id: "9"
         kind: "Error"
-        href: "/api/rhacs/v1/errors/9"
         code: "RHACS-MGMT-9"
         reason:
           "error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e

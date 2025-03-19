@@ -10,36 +10,6 @@ servers:
     description: current domain
 paths:
 
-  /api/v1/acscsemail/errors/{id}:
-    get:
-      operationId: getErrorById
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-          description: Get error by Id
-      summary: Returns the error by id
-      tags:
-        - errors
-      parameters:
-        - $ref: "#/components/parameters/id"
-
-  /api/v1/acscsemail/errors:
-    get:
-      operationId: getErrors
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorList"
-          description: List of possible errors
-      summary: Returns the list of possible API errors
-      tags:
-        - errors
-
   /api/v1/acscsemail:
     post:
       operationId: sendEmail
@@ -119,15 +89,6 @@ paths:
 
 components:
   schemas:
-    ObjectReference:
-      type: object
-      properties:
-        id:
-          type: string
-        kind:
-          type: string
-        href:
-          type: string
     List:
       required:
         - kind
@@ -146,16 +107,18 @@ components:
         total:
           type: integer
     Error:
-      allOf:
-        - $ref: "#/components/schemas/ObjectReference"
-        - type: object
-          properties:
-            code:
-              type: string
-            reason:
-              type: string
-            operation_id:
-              type: string
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        code:
+          type: string
+        reason:
+          type: string
+        operation_id:
+          type: string
     ErrorList:
       allOf:
         - $ref: "#/components/schemas/List"
@@ -233,7 +196,6 @@ components:
       value:
         id: "23"
         kind: "Error"
-        href: "/api/v1/acscsemail/errors/23"
         code: "ACSCS-EMAIL-23"
         reason: "failed to decode send email request payload"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
@@ -241,7 +203,6 @@ components:
       value:
         id: "11"
         kind: "Error"
-        href: "/api/v1/acscsemail/errors/11"
         code: "ACSCS-EMAIL-11"
         reason: "Unable to verify JWT token: Required authorization token not found"
         operation_id: "1iY3UhEhwmXBpWPfI2lNekpd4ZD"
@@ -249,7 +210,6 @@ components:
       value:
         id: "15"
         kind: "Error"
-        href: "/api/v1/acscsemail/errors/15"
         code: "ACSCS-EMAIL-15"
         reason: "Request doesn't contain the 'Authorization' header or the 'cs_jwt' cookie"
         operation_id: "1lY3UiEkxnXBpVPeI2oNejd3XB"
@@ -257,7 +217,6 @@ components:
       value:
         id: "4"
         kind: "Error"
-        href: "/api/v1/acscsemail/errors/4"
         code: "ACSCS-EMAIL-4"
         reason: "User 'foo-bar' is not authorized to access the service"
         operation_id: "1lY3UiEhznXBpWPfI2lNejpd4YC"
@@ -265,7 +224,6 @@ components:
       value:
         id: "11"
         kind: "Error"
-        href: "/api/v1/acscsemail/errors/11"
         code: "ACSCS-EMAIL-11"
         reason: "Account is unauthorized to perform this action"
         operation_id: "kXCzWPeI2oXBpVPeI2LvF9jMQY"
@@ -273,7 +231,6 @@ components:
       value:
         id: "429"
         kind: "Error"
-        href: "/api/v1/acscsemail/errors/429"
         code: "ACSCS-EMAIL-429"
         reason: "rate limited"
         operation_id: "1ieELvF9jMQY6YghfM9gGRsHvEW"
@@ -281,7 +238,6 @@ components:
       value:
         id: "9"
         kind: "Error"
-        href: "/api/v1/acscsemail/errors/9"
         code: "ACSCS-EMAIL-9"
         reason: "Unspecified error"
         operation_id: "1ieELvF9jMQY6YghfM9gGRsHvEW"

@@ -21,20 +21,12 @@ type stackTracer interface {
 // use this in case you are using the service errors defined in this package for other services
 var ErrorCodePrefixOverride = ""
 
-// ErrorHREFOverride is used to override the ErrorHREF used in error messages for ServiceErrors
-// use this in case you are using the service errors defined in this package for other services
-var ErrorHREFOverride = ""
-
 // ErrorCodePrefix ...
 const (
 	ErrorCodePrefix = "RHACS-MGMT"
 
-	// HREF for API errors
-	ErrorHREF = "/api/rhacs/v1/errors/"
-
 	// To support connector errors too..
 	ConnectorMgmtErrorCodePrefix = "CONNECTOR-MGMT"
-	ConnectorMgmtErrorHREF       = "/api/connector_mgmt/v1/errors/"
 
 	// Forbidden occurs when a user is not allowed to access the service
 	ErrorForbidden       ServiceErrorCode = 4
@@ -473,11 +465,9 @@ func (e *ServiceError) IsInstanceTypeNotSupported() bool {
 
 // AsOpenapiError ...
 func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compat.Error {
-	href := Href(e.Code)
 	code := CodeStr(e.Code)
 
 	if strings.Contains(basePath, "/api/connector_mgmt/") {
-		href = strings.Replace(href, ErrorHREF, ConnectorMgmtErrorHREF, 1)
 		code = strings.Replace(code, ErrorCodePrefix, ConnectorMgmtErrorCodePrefix, 1)
 	}
 
@@ -485,7 +475,6 @@ func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compa
 	return compat.Error{
 		Kind:        "Error",
 		Id:          strconv.Itoa(int(e.Code)),
-		Href:        href,
 		Code:        code,
 		Reason:      e.Reason,
 		OperationId: operationID,
@@ -499,15 +488,6 @@ func CodeStr(code ServiceErrorCode) string {
 		prefix = ErrorCodePrefixOverride
 	}
 	return fmt.Sprintf("%s-%d", prefix, code)
-}
-
-// Href ...
-func Href(code ServiceErrorCode) string {
-	href := ErrorHREF
-	if ErrorHREFOverride != "" {
-		href = ErrorHREFOverride
-	}
-	return fmt.Sprintf("%s%d", href, code)
 }
 
 // NotFound ...

@@ -79,7 +79,6 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string) er
 	centralHandler := handlers.NewDinosaurHandler(s.Central, s.ProviderConfig, s.AuthService, s.Telemetry,
 		s.CentralRequestConfig)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
-	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Central, s.AccessControlListConfig)
 	cloudAccountsHandler := handlers.NewCloudAccountsHandler(s.AMSClient)
 
@@ -97,12 +96,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string) er
 
 	//  /openapi
 	apiV1Router.HandleFunc("/openapi", openapi.HandleGetFleetManagerOpenApiDefinition()).Methods(http.MethodGet)
-
-	//  /errors
-	apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()
-	apiV1ErrorsRouter.HandleFunc("", errorsHandler.List).Methods(http.MethodGet)
-	apiV1ErrorsRouter.HandleFunc("/{id}", errorsHandler.Get).Methods(http.MethodGet)
-
+	
 	// /status
 	apiV1Status := apiV1Router.PathPrefix("/status").Subrouter()
 	apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
