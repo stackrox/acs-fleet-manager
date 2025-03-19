@@ -96,7 +96,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string) er
 
 	//  /openapi
 	apiV1Router.HandleFunc("/openapi", openapi.HandleGetFleetManagerOpenApiDefinition()).Methods(http.MethodGet)
-	
+
 	// /status
 	apiV1Status := apiV1Router.PathPrefix("/status").Subrouter()
 	apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
