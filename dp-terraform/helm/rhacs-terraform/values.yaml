@@ -204,7 +204,8 @@ external-secrets:
     repository: quay.io/app-sre/external-secrets
     tag: v0.14.4
   securityContext:
-    runAsUser: null
+    # user id matching the range for SCC restricted v2
+    runAsUser: 1001059998
   webhook:
     create: false
   certController:
