@@ -38,7 +38,7 @@ dependencies:
     version: "0.1.0"
     condition: secured-cluster.enabled
   - name: external-secrets
-    version: "0.9.5"
+    version: "0.15.0"
     repository: https://charts.external-secrets.io/
     condition: external-secrets.enabled
   - name: vertical-pod-autoscaler
