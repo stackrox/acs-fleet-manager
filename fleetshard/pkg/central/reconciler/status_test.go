@@ -105,12 +105,12 @@ func TestStatusesCount(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			counter := StatusesCount{}
 			for _, status := range test.statuses {
-				counter.Increment(status)
+				counter.IncrementWithStatus(status)
 			}
-			require.Equal(t, test.wantInvalid, counter["Invalid"])
-			require.Equal(t, test.wantReady, counter["Ready"])
-			require.Equal(t, test.wantInstalling, counter["Installing"])
-			require.Equal(t, test.wantDeleted, counter["Deleted"])
+			require.Equal(t, test.wantInvalid, counter["invalid"])
+			require.Equal(t, test.wantReady, counter["ready"])
+			require.Equal(t, test.wantInstalling, counter["installing"])
+			require.Equal(t, test.wantDeleted, counter["deleted"])
 		})
 	}
 }

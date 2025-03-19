@@ -174,7 +174,7 @@ func (r *Runtime) Start() error {
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
 		reconciledCentralCountCache = int32(len(list.Items))
 		logger.InfoChangedInt32(&reconciledCentralCountCache, "Received central count changed: received %d centrals", reconciledCentralCountCache)
-		reconcileResults := make(chan centralStatusEntry, len(list.Items))
+		reconcileResults := make(chan reconcileResult, len(list.Items))
 		var wg sync.WaitGroup
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
@@ -195,7 +195,7 @@ func (r *Runtime) Start() error {
 
 				status, err := reconciler.Reconcile(ctx, central)
 				fleetshardmetrics.MetricsInstance().IncCentralReconcilations()
-				handleReconcileResult(central, status, err, reconcileResults)
+				submitReconcileResult(central, status, err, reconcileResults)
 			}(reconciler, central)
 
 			reconcilePaused, err := r.isReconcilePaused(ctx, central)
@@ -209,21 +209,7 @@ func (r *Runtime) Start() error {
 		go func() {
 			wg.Wait()
 			close(reconcileResults)
-			statuses := map[string]private.DataPlaneCentralStatus{}
-			statusesCount := centralReconciler.StatusesCount{}
-			defer statusesCount.SubmitMetric()
-
-			for entry := range reconcileResults {
-				statuses[entry.key] = entry.value
-				statusesCount.Increment(entry.value)
-			}
-
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-			defer cancel()
-			_, err = r.client.PrivateAPI().UpdateCentralClusterStatus(ctx, r.clusterID, statuses)
-			if err != nil {
-				glog.Errorf("updating statuses for Centrals: %v", err)
-			}
+			r.handleReconcileResults(reconcileResults)
 		}()
 
 		if reconcilerOpts.ManagedDBEnabled {
@@ -260,28 +246,60 @@ func (r *Runtime) Start() error {
 	return nil
 }
 
-type centralStatusEntry struct {
-	key   string
-	value private.DataPlaneCentralStatus
+type reconcileResult struct {
+	central private.ManagedCentral
+	status  private.DataPlaneCentralStatus
+	err     error
 }
 
-func handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error, results chan<- centralStatusEntry) {
+func submitReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error, results chan<- reconcileResult) {
 	if err != nil {
-		if centralReconciler.IsSkippable(err) {
-			glog.V(10).Infof("Skip sending the status for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
-		} else {
-			fleetshardmetrics.MetricsInstance().IncCentralReconcilationErrors()
-			glog.Errorf("Unexpected error occurred %s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err.Error())
+		results <- reconcileResult{
+			central: central,
+			err:     err,
 		}
-		return
+	} else if status == nil {
+		results <- reconcileResult{
+			central: central,
+			err:     centralReconciler.ErrCentralNotChanged,
+		}
+	} else {
+		results <- reconcileResult{
+			central: central,
+			status:  *status,
+		}
 	}
-	if status == nil {
-		glog.Infof("No status update for Central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
-		return
+}
+
+func (r *Runtime) handleReconcileResults(results <-chan reconcileResult) {
+	statuses := map[string]private.DataPlaneCentralStatus{}
+	statusesCount := centralReconciler.StatusesCount{}
+	defer statusesCount.SubmitMetric()
+
+	for result := range results {
+		central := result.central
+		err := result.err
+		if err != nil {
+			if centralReconciler.IsSkippable(err) {
+				glog.V(10).Infof("Skip sending the status for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
+				statusesCount.Increment(central.RequestStatus) // get previous status
+			} else {
+				fleetshardmetrics.MetricsInstance().IncCentralReconcilationErrors()
+				glog.Errorf("Unexpected error occurred %s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err.Error())
+				statusesCount.Increment("error")
+			}
+		} else {
+			statusesCount.IncrementWithStatus(result.status)
+		}
+
+		statuses[central.Id] = result.status
 	}
-	results <- centralStatusEntry{
-		key:   central.Id,
-		value: *status,
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	_, err := r.client.PrivateAPI().UpdateCentralClusterStatus(ctx, r.clusterID, statuses)
+	if err != nil {
+		glog.Errorf("updating statuses for Centrals: %v", err)
 	}
 }
 
