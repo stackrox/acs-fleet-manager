@@ -19,8 +19,6 @@ RUN microdnf install gzip tar && \
         chmod +x /usr/local/bin/yq && \
         rm /tmp/yq_linux_amd64.tar.gz
 
-RUN cd rhacs-terraform/charts && for filename in *.tgz; do tar -xf "$filename" && rm -f "$filename"; done
-
 ARG IMAGE_TAG=latest
 RUN yq -i ".global.image.tag = strenv(IMAGE_TAG)" rhacs-terraform/values.yaml
 
