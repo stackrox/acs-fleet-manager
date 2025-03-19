@@ -91,10 +91,6 @@ MOQ_BIN := $(LOCAL_BIN_PATH)/moq
 $(MOQ_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/matryer/moq
 
-GOBINDATA_BIN := $(LOCAL_BIN_PATH)/go-bindata
-$(GOBINDATA_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
-	cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/go-bindata/go-bindata/...
-
 CHAMBER_BIN := $(LOCAL_BIN_PATH)/chamber
 $(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/segmentio/chamber/v2
@@ -417,41 +413,35 @@ openapi/validate: openapi-generator
 openapi/generate: openapi/generate/public openapi/generate/private openapi/generate/admin openapi/generate/rhsso openapi/generate/emailsender
 .PHONY: openapi/generate
 
-openapi/generate/public: $(GOBINDATA_BIN) openapi-generator
+openapi/generate/public: openapi-generator
 	rm -rf internal/dinosaur/pkg/api/public
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager.yaml -g go -o internal/dinosaur/pkg/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/dinosaur/pkg/api/public
-
-	mkdir -p .generate/openapi
-	cp ./openapi/fleet-manager.yaml .generate/openapi
-	$(GOBINDATA_BIN) -o ./internal/dinosaur/pkg/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
-	$(GOFMT) -w internal/dinosaur/pkg/generated
-	rm -rf .generate/openapi
 .PHONY: openapi/generate/public
 
-openapi/generate/private: $(GOBINDATA_BIN) openapi-generator
+openapi/generate/private: openapi-generator
 	rm -rf internal/dinosaur/pkg/api/private
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private.yaml -g go -o internal/dinosaur/pkg/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/dinosaur/pkg/api/private
 .PHONY: openapi/generate/private
 
-openapi/generate/admin: $(GOBINDATA_BIN) openapi-generator
+openapi/generate/admin: openapi-generator
 	rm -rf internal/dinosaur/pkg/api/admin/private
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private-admin.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private-admin.yaml -g go -o internal/dinosaur/pkg/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/dinosaur/pkg/api/admin/private
 .PHONY: openapi/generate/admin
 
-openapi/generate/rhsso: $(GOBINDATA_BIN) openapi-generator
+openapi/generate/rhsso: openapi-generator
 	rm -rf pkg/client/redhatsso/api
 	$(OPENAPI_GENERATOR) validate -i openapi/rh-sso-dynamic-client.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/rh-sso-dynamic-client.yaml -g go -o pkg/client/redhatsso/api --package-name api -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w pkg/client/redhatsso/api
 .PHONY: openapi/generate/rhsso
 
-openapi/generate/emailsender: $(GOBINDATA_BIN) openapi-generator
+openapi/generate/emailsender: openapi-generator
 	rm -rf emailsender/pkg/client/openapi
 	$(OPENAPI_GENERATOR) validate -i openapi/emailsender.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/emailsender.yaml -g go -o emailsender/pkg/client/openapi --package-name openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
