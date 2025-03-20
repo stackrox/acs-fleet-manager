@@ -912,18 +912,17 @@ components:
           type: string
       type: object
     Error:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/Error_allOf'
-    ObjectReference:
       properties:
         id:
           type: string
         kind:
           type: string
-        href:
+        code:
           type: string
-      type: object
+        reason:
+          type: string
+        operation_id:
+          type: string
     CentralRequestPayload:
       description: Schema for the request body sent to /centrals POST
       example:
@@ -959,6 +958,15 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/CentralRequest_allOf'
+    ObjectReference:
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+      type: object
     List:
       properties:
         kind:
@@ -1048,14 +1056,6 @@ components:
             allOf:
             - $ref: '#/components/schemas/Central'
           type: array
-    Error_allOf:
-      properties:
-        code:
-          type: string
-        reason:
-          type: string
-        operation_id:
-          type: string
     CentralRequest_allOf:
       example: '{"$ref":"#/components/examples/CentralRequestExample"}'
       properties:

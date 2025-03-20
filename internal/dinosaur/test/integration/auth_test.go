@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -45,7 +44,7 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewCentralHelper(t, ocmServer)
+	h, _, teardown := test.NewCentralHelper(t, ocmServer)
 	defer teardown()
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
@@ -53,15 +52,6 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	Expect(err).To(BeNil())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
 
-	errorsList, resp, err := client.ErrorsApi.GetErrors(context.Background())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(errorsList.Items).NotTo(BeEmpty())
-	Expect(err).To(BeNil())
-
-	errorCode := "7"
-	_, notFoundErrorResp, err := client.ErrorsApi.GetErrorById(context.Background(), errorCode)
-	Expect(notFoundErrorResp.StatusCode).To(Equal(http.StatusOK))
-	Expect(err).To(BeNil())
 }
 
 func TestAuthSuccess_usingSSORHToken(t *testing.T) {

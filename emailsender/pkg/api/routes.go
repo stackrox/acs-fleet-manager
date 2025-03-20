@@ -15,12 +15,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/emailsender/pkg/client"
 	acscsAPI "github.com/stackrox/acs-fleet-manager/pkg/api"
 	acscsErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
-	acscsHandlers "github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	loggingMiddleware "github.com/stackrox/acs-fleet-manager/pkg/server/logging"
 )
 
 const emailsenderPrefix = "ACSCS-EMAIL"
-const emailsenderErrorHREF = "/api/v1/acscsemail/errors/"
 
 type authnHandlerBuilder func(router http.Handler, cfg config.AuthConfig) (http.Handler, error)
 
@@ -33,7 +31,6 @@ func SetupRoutes(authConfig config.AuthConfig, emailHandler *EmailHandler) (http
 
 func setupRoutes(authnHandlerFunc authnHandlerBuilder, authConfig config.AuthConfig, emailHandler *EmailHandler) (http.Handler, error) {
 	router := mux.NewRouter()
-	errorsHandler := acscsHandlers.NewErrorsHandler()
 	openAPIHandler := NewOpenAPIHandler(client.OpenAPIDefinition)
 
 	router.NotFoundHandler = http.HandlerFunc(acscsAPI.SendNotFound)
@@ -60,17 +57,12 @@ func setupRoutes(authnHandlerFunc authnHandlerBuilder, authConfig config.AuthCon
 	// openAPI definiton endpoint
 	router.HandleFunc("/openapi", openAPIHandler.Get).Methods("GET")
 
-	// errors endpoint
-	router.HandleFunc("/api/v1/acscsemail/errors/{id}", errorsHandler.Get).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/acscsemail/errors", errorsHandler.List).Methods(http.MethodGet)
-
 	// send email endpoint
 	apiV1Router.HandleFunc("/acscsemail", emailHandler.SendEmail).Methods("POST")
 
 	// this settings are to make sure the middlewares shared with acs-fleet-manager
 	// print a prefix and href matching to the emailsender application
 	acscsErrors.ErrorCodePrefixOverride = emailsenderPrefix
-	acscsErrors.ErrorHREFOverride = emailsenderErrorHREF
 
 	return authnHandlerFunc(router, authConfig)
 }
@@ -91,8 +83,7 @@ func buildAuthnHandler(router http.Handler, cfg config.AuthConfig) (http.Handler
 		Service(emailsenderPrefix).
 		Next(router).
 		Public("/health").
-		Public("/openapi").
-		Public("/api/v1/acscsemail/errors/?[0-9]*")
+		Public("/openapi")
 
 	for _, keyURL := range cfg.JwksURLs {
 		authnHandlerBuilder.KeysURL(keyURL)

@@ -12,7 +12,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/telemetry"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
@@ -88,7 +87,6 @@ func ServiceProviders() di.Option {
 		di.Provide(aws.NewDefaultClientFactory, di.As(new(aws.ClientFactory))),
 
 		di.Provide(acl.NewAccessControlListMiddleware),
-		di.Provide(handlers.NewErrorsHandler),
 		di.Provide(services.NewTelemetryAuth),
 
 		// Types registered as a BootService are started when the env is started

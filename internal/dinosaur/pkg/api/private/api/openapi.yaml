@@ -296,7 +296,6 @@ components:
       value:
         id: "21"
         kind: Error
-        href: /api/rhacs/v1/errors/21
         code: RHACS-MGMT-21
         reason: Bad request
         operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
@@ -304,7 +303,6 @@ components:
       value:
         id: "7"
         kind: Error
-        href: /api/rhacs/v1/errors/7
         code: RHACS-MGMT-7
         reason: The requested resource doesn't exist
   schemas:
@@ -392,18 +390,17 @@ components:
           type: object
       type: object
     Error:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/Error_allOf'
-    ObjectReference:
       properties:
         id:
           type: string
         kind:
           type: string
-        href:
+        code:
           type: string
-      type: object
+        reason:
+          type: string
+        operation_id:
+          type: string
     ManagedCentral_allOf_metadata_annotations:
       properties:
         mas/id:
@@ -595,14 +592,6 @@ components:
         domain:
           type: string
         router:
-          type: string
-    Error_allOf:
-      properties:
-        code:
-          type: string
-        reason:
-          type: string
-        operation_id:
           type: string
   securitySchemes:
     Bearer:

@@ -56,8 +56,7 @@ func NewAuthenticationHandler(IAMConfig *iam.IAMConfig, next http.Handler) (http
 		Service(errors.ErrorCodePrefix).
 		Public(fmt.Sprintf("^%s/%s/?$", routes.APIEndpoint, routes.FleetManagementAPIPrefix)).
 		Public(fmt.Sprintf("^%s/%s/%s/?$", routes.APIEndpoint, routes.FleetManagementAPIPrefix, routes.Version)).
-		Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.APIEndpoint, routes.FleetManagementAPIPrefix, routes.Version)).
-		Public(fmt.Sprintf("^%s/%s/%s/errors/?[0-9]*", routes.APIEndpoint, routes.FleetManagementAPIPrefix, routes.Version))
+		Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.APIEndpoint, routes.FleetManagementAPIPrefix, routes.Version))
 
 	// Add additional JWKS endpoints to the builder if there are any.
 	for _, jwksEndpointURI := range IAMConfig.AdditionalSSOIssuers.JWKSURIs {
