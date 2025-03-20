@@ -11,11 +11,8 @@ dependencies:
 - name: secured-cluster
   repository: ""
   version: 0.1.0
-- name: external-secrets
-  repository: https://charts.external-secrets.io/
-  version: 0.9.5
 - name: vertical-pod-autoscaler
   repository: ""
   version: 0.1.0
-digest: sha256:0be6aed6c8e38f2703f02e1e70979987839ab27ac7b4b44689025c0283ba67ab
-generated: "2024-11-26T16:20:45.541627+01:00"
+digest: sha256:0a36a3980788badb99f58aec94b6b1e643e6345c053fced0267561574894b605
+generated: "2025-03-20T14:38:43.263767+01:00"

@@ -52,7 +52,10 @@ func renderTemplate(t *testing.T, values map[string]string, template string) str
 		KubectlOptions: k8s.NewKubectlOptions("", "", namespaceName),
 	}
 
-	output := helm.RenderTemplate(t, options, helmChartPath, releaseName, []string{template})
+	extraHelmArgs := []string{
+		"--api-versions", "external-secrets.io/v1beta1",
+	}
+	output := helm.RenderTemplate(t, options, helmChartPath, releaseName, []string{template}, extraHelmArgs...)
 	return output
 }
 
