@@ -91,8 +91,6 @@ jobs:
       - name: Setup tests secrets
         run: |
           make ocm/setup aws/setup redhatsso/setup centralcert/setup secrets/touch
-      - name: Run Migration Script
-        run: make db/migrate
       - name: Verify & Test
         run: |
           GOPATH=$(go env GOPATH)
