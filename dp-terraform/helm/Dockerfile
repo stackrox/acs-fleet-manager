@@ -19,6 +19,13 @@ RUN microdnf install gzip tar && \
         chmod +x /usr/local/bin/yq && \
         rm /tmp/yq_linux_amd64.tar.gz
 
+# Fix ignored securityContext.runAsUser set to null in values.yaml file.
+# Manually dropping  securityContext.runAsUser value from the external secret subchart.
+# This could be fixed with ose-helm-operator version bump.
+# See: https://github.com/operator-framework/operator-sdk/issues/6635
+RUN cd rhacs-terraform/charts && for filename in *.tgz; do tar -xf "$filename" && rm -f "$filename"; done && \
+        yq -i 'del(.securityContext.runAsUser) | del(.webhook.securityContext.runAsUser) | del(.certController.securityContext.runAsUser)' external-secrets/values.yaml
+
 ARG IMAGE_TAG=latest
 RUN yq -i ".global.image.tag = strenv(IMAGE_TAG)" rhacs-terraform/values.yaml
 
