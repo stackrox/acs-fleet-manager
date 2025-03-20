@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/stackrox/acs-fleet-manager/test"
 	"os"
 	"testing"
 
@@ -20,6 +21,8 @@ import (
 func TestInjections(t *testing.T) {
 	RegisterTestingT(t)
 
+	dbFiles := test.SetupPostgresDBFiles(t)
+
 	env, err := environments.New(environments.DevelopmentEnv,
 		central.ConfigProviders(),
 	)
@@ -33,7 +36,11 @@ func TestInjections(t *testing.T) {
 	Expect(err).To(BeNil())
 	err = env.AddFlags(command.Flags())
 	Expect(err).To(BeNil())
-	command.SetArgs([]string{"--central-idp-client-secret-file", file.Name()})
+	command.SetArgs([]string{
+		"--central-idp-client-secret-file", file.Name(),
+		"--db-host-file", dbFiles.DbHostFile,
+		"--db-port-file", dbFiles.DbPortFile,
+	})
 	err = command.Execute()
 	Expect(err).To(BeNil())
 

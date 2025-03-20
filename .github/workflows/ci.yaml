@@ -57,21 +57,6 @@ jobs:
       ROUTE53_ACCESS_KEY: aws_route53_access_key # pragma: allowlist secret - dummy value
       ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key # pragma: allowlist secret - dummy value
       TEST_TIMEOUT: 30m
-    services:
-      postgres:
-        image: postgres:11
-        env:
-          POSTGRES_PASSWORD: foobar-bizz-buzz # pragma: allowlist secret - dummy value
-          POSTGRES_USER: fleet_manager
-          POSTGRES_DB: serviceapitests
-        ports:
-          - 5432:5432
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: Cancel Previous Runs
@@ -103,8 +88,6 @@ jobs:
       - name: Setup tests secrets
         run: |
           make ocm/setup aws/setup redhatsso/setup secrets/touch
-      - name: Run Migration Script
-        run: make db/migrate
       - name: Verify & Test
         run: |
           GOPATH=$(go env GOPATH)
