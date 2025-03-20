@@ -60,7 +60,7 @@ jobs:
       CENTRAL_TLS_CERT: central_tls_cert # pragma: allowlist secret - dummy value
       CENTRAL_TLS_KEY: central_tls_key # pragma: allowlist secret - dummy value
       TEST_TIMEOUT: 30m
-    
+
     steps:
       - name: Cancel Previous Runs
         uses: n1hility/cancel-previous-runs@v3
