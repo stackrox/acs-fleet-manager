@@ -152,13 +152,9 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	}
 
 	// Configure the database to use the dynamically created testcontainer postgres database
-	dir := t.TempDir()
-	dbHostFile := dir + "/dbhost"
-	require.NoError(t, os.WriteFile(dbHostFile, []byte(dbHost), 0644))
-	dbPortFile := dir + "/dbport"
-	require.NoError(t, os.WriteFile(dbPortFile, []byte(dbPort), 0644))
-	dbConfig.HostFile = dbHostFile
-	dbConfig.PortFile = dbPortFile
+	dbFiles := SetupPostgresDBFiles(t)
+	dbConfig.HostFile = dbFiles.DbHostFile
+	dbConfig.PortFile = dbFiles.DbPortFile
 
 	// loads the config files and create the services...
 	err = env.CreateServices()
@@ -346,6 +342,20 @@ func (helper *Helper) CreateDataPlaneJWTString() string {
 var postgresContainer *postgres.PostgresContainer
 var dbHost string
 var dbPort string
+
+type PostgresDBFiles struct {
+	DbHostFile string
+	DbPortFile string
+}
+
+func SetupPostgresDBFiles(t *testing.T) (ret PostgresDBFiles) {
+	tmpDir := t.TempDir()
+	ret.DbHostFile = tmpDir + "/dbhost"
+	ret.DbPortFile = tmpDir + "/dbport"
+	require.NoError(t, os.WriteFile(ret.DbHostFile, []byte(dbHost), 0644))
+	require.NoError(t, os.WriteFile(ret.DbPortFile, []byte(dbPort), 0644))
+	return
+}
 
 func init() {
 	ctx := context.Background()
