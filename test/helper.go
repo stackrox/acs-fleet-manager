@@ -35,6 +35,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
+	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 const (
@@ -103,8 +107,9 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	var ocmConfig *ocm.OCMConfig
 	var iamConfig *iam.IAMConfig
 	var centralConfig *config.CentralConfig
+	var dbConfig *db.DatabaseConfig
 
-	env.MustResolveAll(&ocmConfig, &iamConfig, &centralConfig)
+	env.MustResolveAll(&ocmConfig, &iamConfig, &centralConfig, &dbConfig)
 
 	// Create a new helper
 	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, iamConfig.RedhatSSORealm.ValidIssuerURI)
@@ -145,6 +150,15 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	if configurationHook != nil {
 		env.MustInvoke(configurationHook)
 	}
+
+	// Configure the database to use the dynamically created testcontainer postgres database
+	dir := t.TempDir()
+	dbHostFile := dir + "/dbhost"
+	require.NoError(t, os.WriteFile(dbHostFile, []byte(dbHost), 0644))
+	dbPortFile := dir + "/dbport"
+	require.NoError(t, os.WriteFile(dbPortFile, []byte(dbPort), 0644))
+	dbConfig.HostFile = dbHostFile
+	dbConfig.PortFile = dbPortFile
 
 	// loads the config files and create the services...
 	err = env.CreateServices()
@@ -327,4 +341,42 @@ func (helper *Helper) CreateDataPlaneJWTString() string {
 		helper.T.Errorf("Failed to create jwt token: %s", err.Error())
 	}
 	return token
+}
+
+var postgresContainer *postgres.PostgresContainer
+var dbHost string
+var dbPort string
+
+func init() {
+	ctx := context.Background()
+	dbName := "serviceapitests"
+	dbUser := "fleet_manager"
+	dbPassword := "foobar-bizz-buzz" // # pragma: allowlist secret
+	var err error
+	postgresContainer, err = postgres.Run(ctx,
+		"postgres:11-alpine",
+		postgres.WithDatabase(dbName),
+		postgres.WithUsername(dbUser),
+		postgres.WithPassword(dbPassword),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(5*time.Second)),
+	)
+	if err != nil {
+		glog.Fatalf("Failed to start postgres container: %v", err)
+	}
+
+	containerPort, err := postgresContainer.MappedPort(ctx, "5432/tcp")
+	if err != nil {
+		glog.Fatalf("Failed to get postgres container port: %v", err)
+	}
+	postgresHost, err := postgresContainer.Host(ctx)
+	if err != nil {
+		glog.Fatalf("Failed to get postgres container host: %v", err)
+	}
+
+	dbHost = postgresHost
+	dbPort = containerPort.Port()
+
 }
