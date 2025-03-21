@@ -45,8 +45,6 @@ kind load docker-image "${EMAILSENDER_IMG}"
 kubectl create ns $EMAILSENDER_NS -o yaml --dry-run=client | kubectl apply -f -
 kubectl create ns $CENTRAL_NS -o yaml --dry-run=client | kubectl apply -f -
 
-helm repo add external-secrets https://charts.external-secrets.io/
-helm dependency build "${EMAILSENDER_HELM_DIR}"
 # Render emailsender kubernetes resources
 helm template --namespace "${EMAILSENDER_NS}" \
   -f "${SOURCE_DIR}/emailsender-values.yaml" "${EMAILSENDER_HELM_DIR}" \
