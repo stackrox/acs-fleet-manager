@@ -47,11 +47,6 @@ spec:
     enabled: false
   secured-cluster:
     enabled: false
-  external-secrets:
-    enabled: $ENABLE_EXTERNAL_SECRETS
-  secretStore:
-    aws:
-      enableTokenAuth: false
   scc:
     enabled: false
   verticalPodAutoscaler:

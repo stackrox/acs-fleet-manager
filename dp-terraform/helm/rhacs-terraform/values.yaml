@@ -196,35 +196,6 @@ secured-cluster:
       nodeSelector:
         node-role.kubernetes.io/acscs-infra: ""
 
-external-secrets:
-  enabled: true
-  fullnameOverride: rhacs-external-secrets
-  installCRDs: false
-  image:
-    repository: quay.io/app-sre/external-secrets
-    tag: v0.9.18
-  securityContext:
-    runAsUser: null
-  webhook:
-    create: false
-  certController:
-    create: false
-  tolerations:
-    - key: node-role.kubernetes.io/acscs-infra
-      operator: Exists
-      effect: NoSchedule
-  nodeSelector:
-    node-role.kubernetes.io/acscs-infra: ""
-
-secretStore:
-  aws:
-    region: "us-east-1"
-    enableTokenAuth: true
-    # used only when enableTokenAuth == false
-    secretName: aws-access-keys # pragma: allowlist secret
-    accessKeyId: ""
-    secretAccessKey: ""
-
 verticalPodAutoscaler:
   enabled: true
 
@@ -234,6 +205,7 @@ scc:
 global:
   image:
     tag: "latest"
+  createExternalSecrets: true
   secretStore:
     aws:
       secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret

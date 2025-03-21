@@ -3,14 +3,6 @@ ENV HOME=/opt/helm
 COPY rhacs-terraform  ${HOME}/rhacs-terraform
 WORKDIR ${HOME}
 
-RUN curl -L --retry 10 --silent --show-error --fail -o /usr/local/bin/helm \
-    "https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64" && \
-    chmod +x /usr/local/bin/helm && \
-    helm version
-
-RUN helm repo add external-secrets "https://charts.external-secrets.io/" && \
-    helm dependencies build ${HOME}/rhacs-terraform
-
 RUN microdnf install gzip tar && \
     curl -L --retry 10 --silent --show-error --fail -o /tmp/yq_linux_amd64.tar.gz \
         "https://github.com/mikefarah/yq/releases/download/v4.44.5/yq_linux_amd64.tar.gz" && \
@@ -18,13 +10,6 @@ RUN microdnf install gzip tar && \
         mv yq_linux_amd64 /usr/local/bin/yq && \
         chmod +x /usr/local/bin/yq && \
         rm /tmp/yq_linux_amd64.tar.gz
-
-# Fix ignored securityContext.runAsUser set to null in values.yaml file.
-# Manually dropping  securityContext.runAsUser value from the external secret subchart.
-# This could be fixed with ose-helm-operator version bump.
-# See: https://github.com/operator-framework/operator-sdk/issues/6635
-RUN cd rhacs-terraform/charts && for filename in *.tgz; do tar -xf "$filename" && rm -f "$filename"; done && \
-        yq -i 'del(.securityContext.runAsUser) | del(.webhook.securityContext.runAsUser) | del(.certController.securityContext.runAsUser)' external-secrets/values.yaml
 
 ARG IMAGE_TAG=latest
 RUN yq -i ".global.image.tag = strenv(IMAGE_TAG)" rhacs-terraform/values.yaml
