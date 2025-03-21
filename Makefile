@@ -335,8 +335,6 @@ test/integration/dinosaur: $(GOTESTSUM_BIN)
 .PHONY: test/integration/dinosaur
 
 test/dp-terraform: $(GOTESTSUM_BIN)
-	@helm repo add external-secrets "https://charts.external-secrets.io/"
-	@helm dependency build ./dp-terraform/helm/rhacs-terraform
 	$(GOTESTSUM_BIN) --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
 				./dp-terraform/test/...
 .PHONY: test/dp-terraform
