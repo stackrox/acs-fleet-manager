@@ -48,6 +48,8 @@ eval "$secrets"
 
 KUBECTL="$(which kubectl)"
 export KUBECTL
+log "kubectl version:"
+kubectl version --client
 
 bash "$SOURCE_DIR/deploy.sh"
 EXIT_CODE="$?"
