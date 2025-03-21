@@ -15,10 +15,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"github.com/stackrox/acs-fleet-manager/pkg/server"
 )
 
-var _ server.Server = &PprofServer{}
 var _ environments.BootService = &PprofServer{}
 
 // PprofServer ...

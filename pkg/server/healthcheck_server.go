@@ -20,8 +20,6 @@ var (
 	updater = health.NewStatusUpdater()
 )
 
-var _ Server = &HealthCheckServer{}
-
 // HealthCheckServer ...
 type HealthCheckServer struct {
 	httpServer          *http.Server

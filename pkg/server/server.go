@@ -1,7 +1,6 @@
 package server
 
 import (
-	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -10,14 +9,6 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 )
-
-// Server ...
-type Server interface {
-	Run()
-	Stop()
-	Listen() (net.Listener, error)
-	Serve(net.Listener)
-}
 
 func removeTrailingSlash(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

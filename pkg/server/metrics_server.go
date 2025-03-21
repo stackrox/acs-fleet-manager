@@ -47,8 +47,6 @@ type MetricsServer struct {
 	sentryTimeout time.Duration
 }
 
-var _ Server = &MetricsServer{}
-
 // Listen ...
 func (s MetricsServer) Listen() (listener net.Listener, err error) {
 	return nil, nil
