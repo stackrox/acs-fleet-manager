@@ -1,6 +1,11 @@
 package reconciler
 
-import "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+import (
+	"strings"
+
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+)
 
 func readyStatus() *private.DataPlaneCentralStatus {
 	return &private.DataPlaneCentralStatus{
@@ -35,4 +40,38 @@ func installingStatus() *private.DataPlaneCentralStatus {
 			},
 		},
 	}
+}
+
+// StatusesCount is a container that holds counters grouped by statuses
+type StatusesCount map[string]int32
+
+// IncrementWithStatus increments the counter for a given status
+func (c StatusesCount) IncrementWithStatus(status private.DataPlaneCentralStatus) {
+	c.Increment(deriveStatusKey(status))
+}
+
+// Increment increments the counter for a given key
+func (c StatusesCount) Increment(key string) {
+	c[key]++
+}
+
+// SubmitMetric sets corresponding prometheus metric of total central instances
+func (c StatusesCount) SubmitMetric() {
+	for key, count := range c {
+		fleetshardmetrics.MetricsInstance().SetTotalCentrals(float64(count), key)
+	}
+}
+
+func deriveStatusKey(status private.DataPlaneCentralStatus) string {
+	if status.Conditions == nil || len(status.Conditions) != 1 {
+		return "invalid"
+	}
+	condition := status.Conditions[0]
+	if condition.Type != "Ready" {
+		return "invalid"
+	}
+	if condition.Status == "True" {
+		return "ready"
+	}
+	return strings.ToLower(condition.Reason)
 }
