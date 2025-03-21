@@ -24,39 +24,31 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
-// APIServerReadyCondition ...
-type APIServerReadyCondition interface {
-	Wait()
-}
+var _ environments.BootService = &APIServer{}
 
 // APIServer ...
 type APIServer struct {
-	httpServer      *http.Server
-	serverConfig    *ServerConfig
-	sentryTimeout   time.Duration
-	readyConditions []APIServerReadyCondition
+	httpServer    *http.Server
+	serverConfig  *ServerConfig
+	sentryTimeout time.Duration
 }
-
-var _ Server = &APIServer{}
 
 // ServerOptions ...
 type ServerOptions struct {
 	di.Inject
-	ServerConfig    *ServerConfig
-	IAMConfig       *iam.IAMConfig
-	SentryConfig    *sentry.Config
-	RouteLoaders    []environments.RouteLoader
-	Env             *environments.Env
-	ReadyConditions []APIServerReadyCondition `di:"optional"`
+	ServerConfig *ServerConfig
+	IAMConfig    *iam.IAMConfig
+	SentryConfig *sentry.Config
+	RouteLoaders []environments.RouteLoader
+	Env          *environments.Env
 }
 
 // NewAPIServer ...
 func NewAPIServer(options ServerOptions) *APIServer {
 	s := &APIServer{
-		httpServer:      nil,
-		serverConfig:    options.ServerConfig,
-		sentryTimeout:   options.SentryConfig.Timeout,
-		readyConditions: options.ReadyConditions,
+		httpServer:    nil,
+		serverConfig:  options.ServerConfig,
+		sentryTimeout: options.SentryConfig.Timeout,
 	}
 
 	// mainRouter is top level "/"
@@ -125,7 +117,7 @@ func NewAPIServer(options ServerOptions) *APIServer {
 func (s *APIServer) Serve(listener net.Listener) {
 	var err error
 	if s.serverConfig.EnableHTTPS {
-		// Check https cert and key path path
+		// Check https cert and key path
 		if s.serverConfig.HTTPSCertFile == "" || s.serverConfig.HTTPSKeyFile == "" {
 			check(
 				fmt.Errorf("Unspecified required --https-cert-file, --https-key-file"),
@@ -149,36 +141,21 @@ func (s *APIServer) Serve(listener net.Listener) {
 
 // Listen only starts the listener, not the server.
 // Useful for breaking up ListenAndServer (Start) when you require the server to be listening before continuing
-func (s *APIServer) Listen() (listener net.Listener, err error) {
+func (s *APIServer) listen() net.Listener {
 	l, err := net.Listen("tcp", s.serverConfig.BindAddress)
-	if err != nil {
-		return l, fmt.Errorf("starting the listener: %w", err)
-	}
-	return l, nil
-}
-
-// Start ...
-func (s *APIServer) Start() {
-	go s.Run()
-}
-
-// Run Start listening on the configured port and start the server. This is a convenience wrapper for Listen() and Serve(listener Listener)
-func (s *APIServer) Run() {
-	listener, err := s.Listen()
 	if err != nil {
 		glog.Fatalf("Unable to start API server: %s", err)
 	}
-
-	// Before we start processing requests, wait
-	// for the server to be ready to run.
-	for _, condition := range s.readyConditions {
-		condition.Wait()
-	}
-
-	s.Serve(listener)
+	return l
 }
 
-// Stop ...
+// Start starts listening on the configured port and start the server.
+func (s *APIServer) Start() {
+	listener := s.listen() // bind address in the same goroutine to avoid concurrency issues
+	go s.Serve(listener)
+}
+
+// Stop stops the service
 func (s *APIServer) Stop() {
 	err := s.httpServer.Shutdown(context.Background())
 	if err != nil {
