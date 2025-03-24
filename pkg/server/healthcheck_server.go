@@ -3,12 +3,12 @@ package server
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
 	health "github.com/docker/go-healthcheck"
@@ -20,7 +20,7 @@ var (
 	updater = health.NewStatusUpdater()
 )
 
-var _ Server = &HealthCheckServer{}
+var _ environments.BootService = &HealthCheckServer{}
 
 // HealthCheckServer ...
 type HealthCheckServer struct {
@@ -60,11 +60,10 @@ func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *Se
 
 // Start ...
 func (s HealthCheckServer) Start() {
-	go s.Run()
+	go s.run()
 }
 
-// Run ...
-func (s HealthCheckServer) Run() {
+func (s HealthCheckServer) run() {
 	var err error
 	if s.healthCheckConfig.EnableHTTPS {
 		if s.serverConfig.HTTPSCertFile == "" || s.serverConfig.HTTPSKeyFile == "" {
@@ -91,15 +90,6 @@ func (s HealthCheckServer) Stop() {
 	if err != nil {
 		glog.Warningf("Unable to stop health check server: %s", err)
 	}
-}
-
-// Listen Unimplemented
-func (s HealthCheckServer) Listen() (listener net.Listener, err error) {
-	return nil, nil
-}
-
-// Serve Unimplemented
-func (s HealthCheckServer) Serve(listener net.Listener) {
 }
 
 func upHandler(w http.ResponseWriter, r *http.Request) {

@@ -3,11 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
 	"github.com/gorilla/mux"
@@ -15,6 +15,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 )
+
+var _ environments.BootService = &MetricsServer{}
 
 // NewMetricsServer ...
 func NewMetricsServer(metricsConfig *MetricsConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config) *MetricsServer {
@@ -47,24 +49,12 @@ type MetricsServer struct {
 	sentryTimeout time.Duration
 }
 
-var _ Server = &MetricsServer{}
-
-// Listen ...
-func (s MetricsServer) Listen() (listener net.Listener, err error) {
-	return nil, nil
-}
-
-// Serve ...
-func (s MetricsServer) Serve(listener net.Listener) {
-}
-
 // Start ...
 func (s MetricsServer) Start() {
-	go s.Run()
+	go s.run()
 }
 
-// Run ...
-func (s MetricsServer) Run() {
+func (s MetricsServer) run() {
 	glog.Infof("start metrics server")
 	var err error
 	if s.metricsConfig.EnableHTTPS {
