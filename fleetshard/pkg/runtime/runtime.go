@@ -278,8 +278,7 @@ func (r *Runtime) handleReconcileResults(results <-chan reconcileResult) {
 
 	for result := range results {
 		central := result.central
-		err := result.err
-		if err != nil {
+		if err := result.err; err != nil {
 			if centralReconciler.IsSkippable(err) {
 				glog.V(10).Infof("Skip sending the status for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
 				statusesCount.Increment(central.RequestStatus) // get previous status
@@ -290,9 +289,8 @@ func (r *Runtime) handleReconcileResults(results <-chan reconcileResult) {
 			}
 		} else {
 			statusesCount.IncrementWithStatus(result.status)
+			statuses[central.Id] = result.status
 		}
-
-		statuses[central.Id] = result.status
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
