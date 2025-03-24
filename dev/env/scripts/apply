@@ -13,7 +13,7 @@ apply_res() {
     short_path=${path/#${GITROOT}/}
     res=$(envsubst <"$path")
     log "Applying resource from '${short_path}'"
-    echo "$res" | $KUBECTL apply -f -
+    echo "$res" | $KUBECTL apply --server-side -f -
 }
 
 for path in "$@"; do
