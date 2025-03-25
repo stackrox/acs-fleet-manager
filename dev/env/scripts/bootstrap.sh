@@ -65,6 +65,13 @@ else
     exit 1
 fi
 
+if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
+    log "Installing External Secrets Operator"
+    chamber exec external-secrets -- apply "${MANIFESTS_DIR}/external-secrets"
+else
+    log "Skipping installation of External Secrets Operator"
+fi
+
 # skip manifests if openshift cluster using is_openshift_cluster
 if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     apply "${MANIFESTS_DIR}/monitoring"
