@@ -68,6 +68,8 @@ fi
 if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
     wait_for_cluster_resource_to_appear crd applications.argoproj.io
     log "Installing External Secrets Operator"
+    apply "${MANIFESTS_DIR}/external-secrets/application"
+    wait_for_cluster_resource_to_appear crd clustersecretstores.external-secrets.io
     chamber exec external-secrets -- apply "${MANIFESTS_DIR}/external-secrets"
 else
     log "Skipping installation of External Secrets Operator"
