@@ -289,7 +289,15 @@ func routesManagedByArgoCD(remoteCentral private.ManagedCentral) bool {
 	return ok && centralIngressEnabledValue
 }
 
+func routeSecretsManagedByArgoCD(remoteCentral private.ManagedCentral) bool {
+	centralIngressManageSecretsValue, ok := remoteCentral.Spec.TenantResourcesValues["centralIngressManageSecrets"].(bool)
+	return ok && centralIngressManageSecretsValue
+}
+
 func (r *CentralReconciler) reconcileIngressSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	if routeSecretsManagedByArgoCD(remoteCentral) {
+		return nil
+	}
 	if err := r.ensureCentralCASecretExists(ctx, remoteCentral.Metadata.Namespace); err != nil {
 		return err
 	}
