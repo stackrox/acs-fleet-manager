@@ -271,13 +271,34 @@ wait_for_resource_to_appear() {
 
     for _ in $(seq "$seconds"); do
         if $KUBECTL -n "$namespace" get "$kind" "$name" 2>/dev/null >&2; then
-            log "Resource ${kind}/${namespace} in namespace ${namespace} appeared"
+            log "Resource ${kind}/${name} in namespace ${namespace} appeared"
             return 0
         fi
         sleep 1
     done
 
     log "Giving up after ${seconds}s waiting for ${kind}/${name} in namespace ${namespace}"
+
+    return 1
+}
+
+
+wait_for_cluster_resource_to_appear() {
+    local kind="$1"
+    local name="$2"
+    local seconds="${3:-60}"
+
+    log "Waiting for ${kind}/${name} to be created"
+
+    for _ in $(seq "$seconds"); do
+        if $KUBECTL get "$kind" "$name" 2>/dev/null >&2; then
+            log "Resource ${kind}/${name} appeared"
+            return 0
+        fi
+        sleep 1
+    done
+
+    log "Giving up after ${seconds}s waiting for ${kind}/${name}"
 
     return 1
 }
