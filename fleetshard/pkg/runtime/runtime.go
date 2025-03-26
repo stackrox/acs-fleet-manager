@@ -292,7 +292,9 @@ func (r *Runtime) handleReconcileResults(results <-chan reconcileResult) {
 			statuses[central.Id] = result.status
 		}
 	}
-
+	if len(statuses) == 0 {
+		return
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 	_, err := r.client.PrivateAPI().UpdateCentralClusterStatus(ctx, r.clusterID, statuses)
