@@ -283,22 +283,23 @@ wait_for_resource_to_appear() {
 }
 
 
-wait_for_cluster_resource_to_appear() {
-    local kind="$1"
-    local name="$2"
-    local seconds="${3:-60}"
+wait_for_crd_to_appear() {
+    local name="$1"
+    local retry_attempts="${3:-60}"
 
-    log "Waiting for ${kind}/${name} to be created"
+    log "Waiting for crd/${name} to be created"
 
-    for _ in $(seq "$seconds"); do
-        if $KUBECTL get "$kind" "$name" 2>/dev/null >&2; then
-            log "Resource ${kind}/${name} appeared"
+    # If resource is missing kubectl wait will return NotFound error. That's why we need retries.
+    # Once CRD is available on the cluster we wait until it moves to the established condition.
+    for _ in $(seq "${retry_attempts}"); do
+        if kubectl wait --for condition=established --timeout="60s" "crd/$name" 2>/dev/null >&2; then
+            log "Resource crd/${name} appeared"
             return 0
         fi
         sleep 1
     done
 
-    log "Giving up after ${seconds}s waiting for ${kind}/${name}"
+    log "Giving up after ${retry_attempts}s waiting for crd/${name} in namespace"
 
     return 1
 }
