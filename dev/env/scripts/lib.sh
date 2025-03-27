@@ -86,6 +86,7 @@ init() {
     export EXPOSE_OPENSHIFT_ROUTER="${EXPOSE_OPENSHIFT_ROUTER:-$EXPOSE_OPENSHIFT_ROUTER_DEFAULT}"
     export INSTALL_VERTICAL_POD_AUTOSCALER="${INSTALL_VERTICAL_POD_AUTOSCALER:-$INSTALL_VERTICAL_POD_AUTOSCALER_DEFAULT}"
     export INSTALL_VERTICAL_POD_AUTOSCALER_OLM="${INSTALL_VERTICAL_POD_AUTOSCALER_OLM:-$INSTALL_VERTICAL_POD_AUTOSCALER_OLM_DEFAULT}"
+    export INSTALL_EXTERNAL_SECRETS="${INSTALL_EXTERNAL_SECRETS:-$INSTALL_EXTERNAL_SECRETS_DEFAULT}"
     export OCM_SERVICE_CLIENT_ID=${OCM_SERVICE_CLIENT_ID:-$OCM_SERVICE_CLIENT_ID_DEFAULT}
     export OCM_SERVICE_CLIENT_SECRET=${OCM_SERVICE_CLIENT_SECRET:-$OCM_SERVICE_CLIENT_SECRET_DEFAULT}
     export OCM_SERVICE_TOKEN=${OCM_SERVICE_TOKEN:-$OCM_SERVICE_TOKEN_DEFAULT}
@@ -153,6 +154,7 @@ INSTALL_VERTICAL_POD_AUTOSCALER: ${INSTALL_VERTICAL_POD_AUTOSCALER}
 INSTALL_VERTICAL_POD_AUTOSCALER_OLM: ${INSTALL_VERTICAL_POD_AUTOSCALER_OLM}
 INSTALL_ARGOCD: ${INSTALL_ARGOCD}
 INSTALL_OPENSHIFT_GITOPS: ${INSTALL_OPENSHIFT_GITOPS}
+INSTALL_EXTERNAL_SECRETS: ${INSTALL_EXTERNAL_SECRETS}
 ARGOCD_NAMESPACE: ${ARGOCD_NAMESPACE}
 ARGOCD_TENANT_APP_TARGET_REVISION: ${ARGOCD_TENANT_APP_TARGET_REVISION}
 OCM_SERVICE_CLIENT_ID: ********
@@ -269,13 +271,35 @@ wait_for_resource_to_appear() {
 
     for _ in $(seq "$seconds"); do
         if $KUBECTL -n "$namespace" get "$kind" "$name" 2>/dev/null >&2; then
-            log "Resource ${kind}/${namespace} in namespace ${namespace} appeared"
+            log "Resource ${kind}/${name} in namespace ${namespace} appeared"
             return 0
         fi
         sleep 1
     done
 
     log "Giving up after ${seconds}s waiting for ${kind}/${name} in namespace ${namespace}"
+
+    return 1
+}
+
+
+wait_for_crd_to_appear() {
+    local name="$1"
+    local retry_attempts="${3:-60}"
+
+    log "Waiting for crd/${name} to be created"
+
+    # If resource is missing kubectl wait will return NotFound error. That's why we need retries.
+    # Once CRD is available on the cluster we wait until it moves to the established condition.
+    for _ in $(seq "${retry_attempts}"); do
+        if kubectl wait --for condition=established --timeout="60s" "crd/$name" 2>/dev/null >&2; then
+            log "Resource crd/${name} appeared"
+            return 0
+        fi
+        sleep 1
+    done
+
+    log "Giving up after ${retry_attempts}s waiting for crd/${name} in namespace"
 
     return 1
 }

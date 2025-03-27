@@ -109,7 +109,7 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 			testutil.GetCentralRequest(context.Background(), fleetmanagerClient, centralRequest.Id, &centralRequest)
 
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
-			routeService := k8s.NewRouteService(cluster1KubeClient, routeConfig)
+			routeService := k8s.NewRouteService(cluster1KubeClient)
 
 			var reencryptIngress openshiftRouteV1.RouteIngress
 			Eventually(testutil.AssertReencryptIngressRouteExist(context.Background(), routeService, namespaceName, &reencryptIngress)).
@@ -160,7 +160,7 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 			testutil.GetCentralRequest(context.Background(), fleetmanagerClient, centralRequest.Id, &centralRequest)
 
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
-			routeService := k8s.NewRouteService(cluster2KubeClient, routeConfig)
+			routeService := k8s.NewRouteService(cluster2KubeClient)
 
 			var reencryptIngress openshiftRouteV1.RouteIngress
 			Eventually(testutil.AssertReencryptIngressRouteExist(context.Background(), routeService, namespaceName, &reencryptIngress)).

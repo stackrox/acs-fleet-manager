@@ -44,7 +44,6 @@ type Config struct {
 	Telemetry                                  Telemetry
 	AuditLogging                               AuditLogging
 	SecretEncryption                           SecretEncryption
-	RouteParameters                            RouteConfig
 	FleetshardAddonName                        string `env:"FLEETSHARD_ADDON_NAME" envDefault:"acs-fleetshard"`
 }
 
@@ -75,33 +74,6 @@ type Telemetry struct {
 type SecretEncryption struct {
 	Type  string `env:"SECRET_ENCRYPTION_TYPE" envDefault:"local"`
 	KeyID string `env:"SECRET_ENCRYPTION_KEY_ID"`
-}
-
-// RouteConfig defines parameters to configure routes.
-type RouteConfig struct {
-	ThrottlingEnabled bool `env:"ROUTE_ENABLE_THROTTLING" envDefault:"true"`
-	ConcurrentTCP     int  `env:"ROUTE_CONCURRENT_TCP_CONNECTIONS" envDefault:"131072"`
-	RateHTTP          int  `env:"ROUTE_HTTP_REQUEST_RATE" envDefault:"131072"`
-	RateTCP           int  `env:"ROUTE_TCP_NEW_CONNECTION_RATE" envDefault:"131072"`
-	// The RateHTTP default value was computed based on the prometheus monitoring values.
-	// The query to retrieve the value focuses on `haproxy_backend_http_responses_total`.
-	// Actual query (maximum seen around 10k in 5 minutes):
-	// sum(
-	//  increase(
-	//   haproxy_backend_http_responses_total{exported_namespace=~"rhacs-.*",route="managed-central-reencrypt"}[5m]
-	//  )
-	// ) by (exported_namespace)
-	//
-	// The ConcurrentTCP value was computed similarly using the haproxy_backend_connections_total metric.
-	// Actual query (maximum seed around 11k in 5 minutes):
-	// sum(
-	//  irate(
-	//   haproxy_backend_connections_total{exported_namespace=~"rhacs-.*",route="managed-central-reencrypt"}[5m]
-	//  )
-	// ) by (exported_namespace)
-	//
-	// The RateTCP value is conservatively set to the same value as ConcurrentTCP.
-
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.
