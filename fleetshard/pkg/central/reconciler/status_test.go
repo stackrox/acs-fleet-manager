@@ -9,40 +9,42 @@ import (
 
 func TestStatusesCount(t *testing.T) {
 	tests := []struct {
-		name           string
-		statuses       []private.DataPlaneCentralStatus
-		wantInvalid    int32
-		wantReady      int32
-		wantInstalling int32
-		wantDeleted    int32
+		name      string
+		statuses  []private.DataPlaneCentralStatus
+		wantTotal int
+		wantReady int
+		wantError int
 	}{
 		{
-			name: "should contain invalid when status is empty",
+			name: "should contain error when status is empty",
 			statuses: []private.DataPlaneCentralStatus{
 				{},
 			},
-			wantInvalid: 1,
+			wantTotal: 1,
+			wantError: 1,
 		},
 		{
-			name: "should contain invalid when conditions is nil",
+			name: "should contain error when conditions is nil",
 			statuses: []private.DataPlaneCentralStatus{
 				{
 					Conditions: nil,
 				},
 			},
-			wantInvalid: 1,
+			wantTotal: 1,
+			wantError: 1,
 		},
 		{
-			name: "should contain invalid when conditions is empty",
+			name: "should contain error when conditions is empty",
 			statuses: []private.DataPlaneCentralStatus{
 				{
 					Conditions: []private.DataPlaneCentralStatusConditions{},
 				},
 			},
-			wantInvalid: 1,
+			wantTotal: 1,
+			wantError: 1,
 		},
 		{
-			name: "should contain invalid when conditions length more than one",
+			name: "should contain error when conditions length more than one",
 			statuses: []private.DataPlaneCentralStatus{
 				{
 					Conditions: []private.DataPlaneCentralStatusConditions{
@@ -51,10 +53,11 @@ func TestStatusesCount(t *testing.T) {
 					},
 				},
 			},
-			wantInvalid: 1,
+			wantError: 1,
+			wantTotal: 1,
 		},
 		{
-			name: "should contain invalid when conditions type is not ready",
+			name: "should contain error when conditions type is not ready",
 			statuses: []private.DataPlaneCentralStatus{
 				{
 					Conditions: []private.DataPlaneCentralStatusConditions{
@@ -62,7 +65,8 @@ func TestStatusesCount(t *testing.T) {
 					},
 				},
 			},
-			wantInvalid: 1,
+			wantTotal: 1,
+			wantError: 1,
 		},
 		{
 			name: "should contain ready when conditions status is ready",
@@ -70,20 +74,22 @@ func TestStatusesCount(t *testing.T) {
 				*readyStatus(),
 			},
 			wantReady: 1,
+			wantTotal: 1,
 		},
 		{
 			name: "should contain installing when condition is ready and reason is installing",
 			statuses: []private.DataPlaneCentralStatus{
 				*installingStatus(),
 			},
-			wantInstalling: 1,
+			wantTotal: 1,
 		},
 		{
 			name: "should contain installing when condition is ready and reason is installing",
 			statuses: []private.DataPlaneCentralStatus{
 				*deletedStatus(),
 			},
-			wantDeleted: 1,
+			wantTotal: 1,
+			wantReady: 0,
 		},
 		{
 			name: "should combine multiple statuses",
@@ -95,9 +101,8 @@ func TestStatusesCount(t *testing.T) {
 				*installingStatus(),
 				*deletedStatus(),
 			},
-			wantReady:      3,
-			wantInstalling: 2,
-			wantDeleted:    1,
+			wantReady: 3,
+			wantTotal: 6,
 		},
 	}
 
@@ -107,10 +112,9 @@ func TestStatusesCount(t *testing.T) {
 			for _, status := range test.statuses {
 				counter.IncrementWithStatus(status)
 			}
-			require.Equal(t, test.wantInvalid, counter["invalid"])
-			require.Equal(t, test.wantReady, counter["ready"])
-			require.Equal(t, test.wantInstalling, counter["installing"])
-			require.Equal(t, test.wantDeleted, counter["deleted"])
+			require.Equal(t, test.wantTotal, counter.totalCentrals)
+			require.Equal(t, test.wantReady, counter.readyCentrals)
+			require.Equal(t, test.wantError, counter.errorCentrals)
 		})
 	}
 }

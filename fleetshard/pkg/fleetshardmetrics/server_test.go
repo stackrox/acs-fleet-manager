@@ -33,31 +33,13 @@ func TestMetricsServerServesCustomMetrics(t *testing.T) {
 		"total_central_reconcilations",
 		"total_central_reconcilation_errors",
 		"active_central_reconcilations",
+		"total_centrals",
+		"ready_centrals",
 	}
 
 	for _, key := range expectedKeys {
 		assert.Containsf(t, metrics, metricsPrefix+key, "expected metrics to contain %s but it did not: %v", key, metrics)
 	}
-}
-
-func TestMetricsServerServesTotalCentralsMetric(t *testing.T) {
-	server := NewMetricsServer(":8081")
-
-	MetricsInstance().SetTotalCentrals(1, "ready")
-
-	rec := httptest.NewRecorder()
-	req, err := http.NewRequest(http.MethodGet, "/metrics", nil)
-	require.NoError(t, err, "failed creating metrics requests")
-
-	server.Handler.ServeHTTP(rec, req)
-	require.Equal(t, http.StatusOK, rec.Code, "status code should be OK")
-
-	promParser := expfmt.TextParser{}
-	metrics, err := promParser.TextToMetricFamilies(rec.Body)
-	require.NoError(t, err, "failed parsing metrics file")
-
-	key := metricsPrefix + "total_centrals"
-	assert.Containsf(t, metrics, key, "expected metrics to contain %s but it did not: %v", key, metrics)
 }
 
 func serveMetrics(t *testing.T, customMetrics *Metrics) metricResponse {

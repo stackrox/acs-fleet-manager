@@ -43,32 +43,47 @@ func installingStatus() *private.DataPlaneCentralStatus {
 }
 
 // StatusesCount is a container that holds counters grouped by statuses
-type StatusesCount map[string]int32
+type StatusesCount struct {
+	readyCentrals int
+	totalCentrals int
+	errorCentrals int
+}
 
 // IncrementWithStatus increments the counter for a given status
-func (c StatusesCount) IncrementWithStatus(status private.DataPlaneCentralStatus) {
+func (c *StatusesCount) IncrementWithStatus(status private.DataPlaneCentralStatus) {
 	c.Increment(deriveStatusKey(status))
 }
 
+// IncrementError increments the error counter
+func (c *StatusesCount) IncrementError() {
+	c.Increment("error")
+}
+
 // Increment increments the counter for a given key
-func (c StatusesCount) Increment(key string) {
-	c[key]++
+func (c *StatusesCount) Increment(key string) {
+	c.totalCentrals++
+	if key == "ready" {
+		c.readyCentrals++
+	}
+	if key == "error" {
+		c.errorCentrals++
+	}
 }
 
 // SubmitMetric sets corresponding prometheus metric of total central instances
-func (c StatusesCount) SubmitMetric() {
-	for key, count := range c {
-		fleetshardmetrics.MetricsInstance().SetTotalCentrals(float64(count), key)
-	}
+func (c *StatusesCount) SubmitMetric() {
+	fleetshardmetrics.MetricsInstance().SetTotalCentrals(c.totalCentrals)
+	fleetshardmetrics.MetricsInstance().SetReadyCentrals(c.readyCentrals)
+	fleetshardmetrics.MetricsInstance().AddCentralReconcilationErrors(c.errorCentrals)
 }
 
 func deriveStatusKey(status private.DataPlaneCentralStatus) string {
 	if status.Conditions == nil || len(status.Conditions) != 1 {
-		return "invalid"
+		return "error"
 	}
 	condition := status.Conditions[0]
 	if condition.Type != "Ready" {
-		return "invalid"
+		return "error"
 	}
 	if condition.Status == "True" {
 		return "ready"
