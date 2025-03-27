@@ -2,7 +2,6 @@ package k8s
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 
@@ -83,15 +82,4 @@ func getSecret(ctx context.Context, client ctrlClient.Client, secretname, namesp
 	}
 
 	return centralSecret, nil
-}
-
-// IsCentralTLSNotFound return true if err or a wrapped error is a SecretNotFound error
-// with the name of CentralTLSSecretName
-func IsCentralTLSNotFound(err error) bool {
-	var secretNotFound *SecretNotFound
-	if errors.As(err, &secretNotFound) {
-		return secretNotFound.SecretName == CentralTLSSecretName // pragma: allowlist secret
-	}
-
-	return false
 }
