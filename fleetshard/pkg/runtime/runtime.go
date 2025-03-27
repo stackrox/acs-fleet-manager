@@ -283,9 +283,8 @@ func (r *Runtime) handleReconcileResults(results <-chan reconcileResult) {
 				glog.V(10).Infof("Skip sending the status for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
 				statusesCount.Increment(central.RequestStatus) // get previous status
 			} else {
-				fleetshardmetrics.MetricsInstance().IncCentralReconcilationErrors()
 				glog.Errorf("Unexpected error occurred %s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err.Error())
-				statusesCount.Increment("error")
+				statusesCount.IncrementError()
 			}
 		} else {
 			statusesCount.IncrementWithStatus(result.status)

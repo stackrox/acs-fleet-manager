@@ -25,7 +25,7 @@ func TestCounterIncrements(t *testing.T) {
 		{
 			metricName: "total_central_reconcilation_errors",
 			callIncrementFunc: func(m *Metrics) {
-				m.IncCentralReconcilationErrors()
+				m.AddCentralReconcilationErrors(1)
 			},
 		},
 	}
@@ -48,10 +48,22 @@ func TestCounterIncrements(t *testing.T) {
 func TestTotalCentrals(t *testing.T) {
 	m := newMetrics()
 	metricName := metricsPrefix + "total_centrals"
-	expectedValue := 37.0
-	expectedStatus := "Ready"
+	expectedValue := 37
 
-	m.SetTotalCentrals(expectedValue, expectedStatus)
+	m.SetTotalCentrals(expectedValue)
+	metrics := serveMetrics(t, m)
+
+	targetMetric := requireMetric(t, metrics, metricName)
+	value := targetMetric.Metric[0].Gauge.Value
+	assert.Equalf(t, 37.0, *value, "expected metric: %s to have value: %v", metricName, expectedValue)
+}
+
+func TestReadyCentrals(t *testing.T) {
+	m := newMetrics()
+	metricName := metricsPrefix + "ready_centrals"
+	expectedValue := 37
+
+	m.SetReadyCentrals(expectedValue)
 	metrics := serveMetrics(t, m)
 
 	targetMetric := requireMetric(t, metrics, metricName)

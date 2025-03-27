@@ -24,7 +24,8 @@ type Metrics struct {
 	centralReconcilations       prometheus.Counter
 	centralReconcilationErrors  prometheus.Counter
 	activeCentralReconcilations prometheus.Gauge
-	totalCentrals               *prometheus.GaugeVec
+	totalCentrals               prometheus.Gauge
+	readyCentrals               prometheus.Gauge
 	centralDBClustersUsed       prometheus.Gauge
 	centralDBClustersMax        prometheus.Gauge
 	centralDBInstancesUsed      prometheus.Gauge
@@ -43,6 +44,7 @@ func (m *Metrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.centralReconcilationErrors)
 	r.MustRegister(m.activeCentralReconcilations)
 	r.MustRegister(m.totalCentrals)
+	r.MustRegister(m.readyCentrals)
 	r.MustRegister(m.centralDBClustersUsed)
 	r.MustRegister(m.centralDBClustersMax)
 	r.MustRegister(m.centralDBInstancesUsed)
@@ -58,14 +60,19 @@ func (m *Metrics) IncCentralReconcilations() {
 	m.centralReconcilations.Inc()
 }
 
-// IncCentralReconcilationErrors increments the metric counter for central reconcilation errors
-func (m *Metrics) IncCentralReconcilationErrors() {
-	m.centralReconcilationErrors.Inc()
+// AddCentralReconcilationErrors increments the metric counter for central reconcilation errors
+func (m *Metrics) AddCentralReconcilationErrors(v int) {
+	m.centralReconcilationErrors.Add(float64(v))
 }
 
 // SetTotalCentrals sets the metric for total centrals to the given value
-func (m *Metrics) SetTotalCentrals(v float64, status string) {
-	m.totalCentrals.With(prometheus.Labels{"status": status}).Set(v)
+func (m *Metrics) SetTotalCentrals(v int) {
+	m.totalCentrals.Set(float64(v))
+}
+
+// SetReadyCentrals sets the metric for ready centrals to the given value
+func (m *Metrics) SetReadyCentrals(v int) {
+	m.readyCentrals.Set(float64(v))
 }
 
 // IncActiveCentralReconcilations increments the metric gauge for active central reconcilations
@@ -152,13 +159,14 @@ func newMetrics() *Metrics {
 			Name: metricsPrefix + "active_central_reconcilations",
 			Help: "The number of currently running central reconcilations",
 		}),
-		totalCentrals: prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Name: metricsPrefix + "total_centrals",
-				Help: "The total number of centrals monitored by fleetshard-sync",
-			},
-			[]string{"status"},
-		),
+		totalCentrals: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: metricsPrefix + "total_centrals",
+			Help: "The total number of centrals monitored by fleetshard-sync",
+		}),
+		readyCentrals: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: metricsPrefix + "ready_centrals",
+			Help: "The ready number of centrals monitored by fleetshard-sync",
+		}),
 		centralDBClustersUsed: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: metricsPrefix + "central_db_clusters_used",
 			Help: "The current number of Central DB clusters in the cloud region of fleetshard-sync",
