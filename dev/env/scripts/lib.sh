@@ -299,7 +299,7 @@ wait_for_crd_to_appear() {
         sleep 1
     done
 
-    log "Giving up after ${retry_attempts}s waiting for crd/${name} in namespace"
+    log "Giving up after ${retry_attempts}s waiting for crd/${name}"
 
     return 1
 }
