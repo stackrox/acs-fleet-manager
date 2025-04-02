@@ -140,7 +140,6 @@ type CentralReconciler struct {
 	managedDBEnabled    bool
 
 	wantsAuthProvider     bool
-	hasAuthProvider       bool
 	tenantImagePullSecret []byte
 	clock                 clock
 
@@ -182,7 +181,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	needsReconcile := r.needsReconcileFunc(changed, remoteCentral, remoteCentral.Metadata.SecretsStored)
 
-	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
+	if !needsReconcile && isRemoteCentralReady(&remoteCentral) {
 		shouldUpdateCentralHash = true
 		return nil, ErrCentralNotChanged
 	}
@@ -1081,11 +1080,6 @@ func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
 	}
 	namespaceAnnotations[ovnACLLoggingAnnotationKey] = ovnACLLoggingAnnotationDefault
 	return namespaceAnnotations
-}
-
-func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
-	return r.wantsAuthProvider == r.hasAuthProvider &&
-		isRemoteCentralReady(&remoteCentral)
 }
 
 func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.ManagedCentral, storedSecrets []string) bool {
