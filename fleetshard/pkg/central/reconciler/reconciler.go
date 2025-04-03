@@ -139,11 +139,9 @@ type CentralReconciler struct {
 	managedDbReconciler *managedDbReconciler
 	managedDBEnabled    bool
 
-	wantsAuthProvider      bool
-	hasAuthProvider        bool
-	verifyAuthProviderFunc verifyAuthProviderExistsFunc
-	tenantImagePullSecret  []byte
-	clock                  clock
+	wantsAuthProvider     bool
+	tenantImagePullSecret []byte
+	clock                 clock
 
 	areSecretsStoredFunc      areSecretsStoredFunc
 	needsReconcileFunc        needsReconcileFunc
@@ -183,7 +181,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	needsReconcile := r.needsReconcileFunc(changed, remoteCentral, remoteCentral.Metadata.SecretsStored)
 
-	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
+	if !needsReconcile && isRemoteCentralReady(&remoteCentral) {
 		shouldUpdateCentralHash = true
 		return nil, ErrCentralNotChanged
 	}
@@ -272,15 +270,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return installingStatus(), nil
 	}
 
-	exists, err := r.ensureAuthProviderExists(ctx, remoteCentral)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		glog.Infof("Default auth provider for central %s/%s is not yet ready.", remoteCentralNamespace, remoteCentralName)
-		return nil, ErrCentralNotChanged
-	}
-
 	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
 	if err != nil {
 		return nil, err
@@ -349,24 +338,6 @@ func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCen
 	}
 
 	return nil
-}
-
-func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
-	// Short-circuit if an auth provider isn't desired or already exists.
-	if !r.wantsAuthProvider {
-		return true, nil
-	}
-
-	exists, err := r.verifyAuthProviderFunc(ctx, remoteCentral, r.client)
-	if err != nil {
-		return false, errors.Wrapf(err, "failed to verify that the default auth provider exists within "+
-			"Central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
-	}
-	if exists {
-		r.hasAuthProvider = true
-		return true, nil
-	}
-	return false, nil
 }
 
 func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
@@ -1111,11 +1082,6 @@ func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
 	return namespaceAnnotations
 }
 
-func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
-	return r.wantsAuthProvider == r.hasAuthProvider &&
-		isRemoteCentralReady(&remoteCentral)
-}
-
 func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.ManagedCentral, storedSecrets []string) bool {
 	if !r.areSecretsStoredFunc(storedSecrets) {
 		return true
@@ -1231,8 +1197,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		managedDbReconciler: dbReconciler,
 		managedDBEnabled:    opts.ManagedDBEnabled,
 
-		verifyAuthProviderFunc: hasAuthProvider,
-		tenantImagePullSecret:  []byte(opts.TenantImagePullSecret),
+		tenantImagePullSecret: []byte(opts.TenantImagePullSecret),
 
 		clock: realClock{},
 	}

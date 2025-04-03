@@ -8,7 +8,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
 	"github.com/stackrox/rox/pkg/urlfmt"
 	appsv1 "k8s.io/api/apps/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -79,35 +78,6 @@ func authProviderName(central private.ManagedCentral) (name string) {
 		name = "SSO"
 	}
 	return
-}
-
-// hasAuthProvider verifies whether the given central has a default auth provider.
-// It will return a boolean that indicates whether the auth provider exists.
-func hasAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error) {
-	ready, err := isCentralDeploymentReady(ctx, client, central.Metadata.Namespace)
-	if !ready || err != nil {
-		return false, err
-	}
-	address, err := getServiceAddress(ctx, central.Metadata.Namespace, client)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	centralClient := centralClientPkg.NewCentralClientNoAuth(central, address)
-	authProvidersResp, err := centralClient.GetLoginAuthProviders(ctx)
-	if err != nil {
-		return false, errors.Wrap(err, "sending GetLoginAuthProviders request to central")
-	}
-
-	for _, provider := range authProvidersResp.AuthProviders {
-		if provider.Type == oidcType && provider.GetName() == authProviderName(central) {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 func checkSecretExists(
