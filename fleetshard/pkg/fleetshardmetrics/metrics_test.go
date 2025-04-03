@@ -25,7 +25,7 @@ func TestCounterIncrements(t *testing.T) {
 		{
 			metricName: "total_central_reconcilation_errors",
 			callIncrementFunc: func(m *Metrics) {
-				m.AddCentralReconcilationErrors(1)
+				m.IncCentralReconcilationErrors()
 			},
 		},
 	}

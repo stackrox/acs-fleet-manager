@@ -60,9 +60,9 @@ func (m *Metrics) IncCentralReconcilations() {
 	m.centralReconcilations.Inc()
 }
 
-// AddCentralReconcilationErrors increments the metric counter for central reconcilation errors
-func (m *Metrics) AddCentralReconcilationErrors(v int) {
-	m.centralReconcilationErrors.Add(float64(v))
+// IncCentralReconcilationErrors increments the metric counter for central reconcilation errors
+func (m *Metrics) IncCentralReconcilationErrors() {
+	m.centralReconcilationErrors.Inc()
 }
 
 // SetTotalCentrals sets the metric for total centrals to the given value

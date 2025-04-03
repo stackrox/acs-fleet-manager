@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
+	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 )
 
@@ -46,27 +47,18 @@ func installingStatus() *private.DataPlaneCentralStatus {
 type StatusesCount struct {
 	readyCentrals int
 	totalCentrals int
-	errorCentrals int
 }
 
-// IncrementWithStatus increments the counter for a given status
-func (c *StatusesCount) IncrementWithStatus(status private.DataPlaneCentralStatus) {
-	c.Increment(deriveStatusKey(status))
+// IncrementCurrent increments the counter for a given status
+func (c *StatusesCount) IncrementCurrent(status private.DataPlaneCentralStatus) {
+	c.IncrementRemote(deriveStatusKey(status))
 }
 
-// IncrementError increments the error counter
-func (c *StatusesCount) IncrementError() {
-	c.Increment("error")
-}
-
-// Increment increments the counter for a given key
-func (c *StatusesCount) Increment(key string) {
+// IncrementRemote increments the counter for a given key from the reported central
+func (c *StatusesCount) IncrementRemote(status string) {
 	c.totalCentrals++
-	if key == "ready" {
+	if status == centralConstants.CentralRequestStatusReady.String() {
 		c.readyCentrals++
-	}
-	if key == "error" {
-		c.errorCentrals++
 	}
 }
 
@@ -74,7 +66,6 @@ func (c *StatusesCount) Increment(key string) {
 func (c *StatusesCount) SubmitMetric() {
 	fleetshardmetrics.MetricsInstance().SetTotalCentrals(c.totalCentrals)
 	fleetshardmetrics.MetricsInstance().SetReadyCentrals(c.readyCentrals)
-	fleetshardmetrics.MetricsInstance().AddCentralReconcilationErrors(c.errorCentrals)
 }
 
 func deriveStatusKey(status private.DataPlaneCentralStatus) string {
