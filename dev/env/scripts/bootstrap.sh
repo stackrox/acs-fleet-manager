@@ -65,6 +65,16 @@ else
     exit 1
 fi
 
+if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
+    wait_for_crd_to_appear applications.argoproj.io
+    log "Installing External Secrets Operator"
+    apply "${MANIFESTS_DIR}/external-secrets/application"
+    wait_for_crd_to_appear clustersecretstores.external-secrets.io
+    chamber exec external-secrets -- apply "${MANIFESTS_DIR}/external-secrets"
+else
+    log "Skipping installation of External Secrets Operator"
+fi
+
 # skip manifests if openshift cluster using is_openshift_cluster
 if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     apply "${MANIFESTS_DIR}/monitoring"
