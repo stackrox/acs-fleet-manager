@@ -16,7 +16,7 @@ require (
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.31.1
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
-	github.com/go-gormigrate/gormigrate/v2 v2.1.2
+	github.com/go-gormigrate/gormigrate/v2 v2.1.4
 	github.com/go-logr/logr v1.4.2
 	github.com/goava/di v1.11.1
 	github.com/golang-jwt/jwt/v4 v4.5.1
@@ -246,7 +246,7 @@ require (
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
