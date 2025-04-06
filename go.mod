@@ -227,7 +227,7 @@ require (
 	github.com/urfave/cli v1.22.14 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
 	github.com/vmihailenco/go-tinylfu v0.2.2 // indirect
-	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/weppos/publicsuffix-go v0.30.3-0.20240411085455-21202160c2ed // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
