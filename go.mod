@@ -21,7 +21,7 @@ require (
 	github.com/goava/di v1.11.1
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/golang/glog v1.2.4
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
@@ -51,7 +51,7 @@ require (
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/oauth2 v0.25.0
 	golang.org/x/sync v0.11.0
-	golang.org/x/sys v0.29.0
+	golang.org/x/sys v0.30.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.11
@@ -209,7 +209,7 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/pquerna/otp v1.2.0 // indirect
-	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/prometheus/procfs v0.16.0 // indirect
 	github.com/redis/go-redis/v9 v9.0.5 // indirect
 	github.com/rhobs/obo-prometheus-operator/pkg/apis/monitoring v0.66.0-rhobs1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
