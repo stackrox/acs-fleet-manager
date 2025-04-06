@@ -192,7 +192,6 @@ require (
 	github.com/mitchellh/hashstructure v1.1.0 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/mmcloughlin/avo v0.6.0 // indirect
 	github.com/moby/spdystream v0.4.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -205,7 +204,7 @@ require (
 	github.com/openshift/client-go v0.0.0-20240415191513-dcdeb09390b4 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
-	github.com/pjbgf/sha1cd v0.3.1 // indirect
+	github.com/pjbgf/sha1cd v0.3.2 // indirect
 	github.com/planetscale/vtprotobuf v0.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/pquerna/otp v1.2.0 // indirect
@@ -243,7 +242,6 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230307190834-24139beb5833 // indirect
-	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
