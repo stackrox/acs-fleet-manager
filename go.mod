@@ -40,7 +40,7 @@ require (
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.62.0
-	github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt v0.0.0-20230323122535-49460b57cc45
+	github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt v0.0.0-20230628114717-26f9c4c359f6
 	github.com/rs/xid v1.5.0
 	github.com/selvatico/go-mocket v1.0.7
 	github.com/spf13/cobra v1.8.1
