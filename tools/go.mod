@@ -9,7 +9,7 @@ require (
 )
 
 require (
-	github.com/alessio/shellescape v1.4.2 // indirect
+	github.com/alessio/shellescape v1.6.0 // indirect
 	github.com/aws/aws-sdk-go v1.50.30 // indirect
 	github.com/bitfield/gotestdox v0.2.2 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
