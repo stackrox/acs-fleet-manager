@@ -44,7 +44,7 @@ require (
 	github.com/rs/xid v1.5.0
 	github.com/selvatico/go-mocket v1.0.7
 	github.com/spf13/cobra v1.8.1
-	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
+	github.com/spf13/pflag v1.0.6
 	github.com/stackrox/rox v0.0.0-20230323083409-e83503a98fb4
 	github.com/stretchr/testify v1.10.0
 	github.com/zgalor/weberr v0.8.2
