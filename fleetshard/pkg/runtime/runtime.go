@@ -281,13 +281,13 @@ func (r *Runtime) handleReconcileResults(results <-chan reconcileResult) {
 		if err := result.err; err != nil {
 			if centralReconciler.IsSkippable(err) {
 				glog.V(10).Infof("Skip sending the status for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
-				statusesCount.Increment(central.RequestStatus) // get previous status
+				statusesCount.IncrementRemote(central.RequestStatus) // get remote status
 			} else {
+				fleetshardmetrics.MetricsInstance().IncCentralReconcilationErrors()
 				glog.Errorf("Unexpected error occurred %s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err.Error())
-				statusesCount.IncrementError()
 			}
 		} else {
-			statusesCount.IncrementWithStatus(result.status)
+			statusesCount.IncrementCurrent(result.status)
 			statuses[central.Id] = result.status
 		}
 	}

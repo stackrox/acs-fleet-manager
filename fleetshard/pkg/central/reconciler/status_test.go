@@ -110,11 +110,10 @@ func TestStatusesCount(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			counter := StatusesCount{}
 			for _, status := range test.statuses {
-				counter.IncrementWithStatus(status)
+				counter.IncrementCurrent(status)
 			}
 			require.Equal(t, test.wantTotal, counter.totalCentrals)
 			require.Equal(t, test.wantReady, counter.readyCentrals)
-			require.Equal(t, test.wantError, counter.errorCentrals)
 		})
 	}
 }
