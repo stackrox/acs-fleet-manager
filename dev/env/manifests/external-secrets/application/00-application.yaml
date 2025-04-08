@@ -19,17 +19,17 @@ spec:
   source:
     chart: external-secrets
     repoURL: https://charts.external-secrets.io
-    targetRevision: 0.14.4
+    targetRevision: "$EXTERNAL_SECRETS_VERSION"
     helm:
       valuesObject:
         image:
           repository: quay.io/app-sre/external-secrets
-          tag: v0.14.4
+          tag: "$EXTERNAL_SECRETS_VERSION"
         webhook:
           image:
             repository: quay.io/app-sre/external-secrets
-            tag: v0.14.4
+            tag: "$EXTERNAL_SECRETS_VERSION"
         certController:
           image:
             repository: quay.io/app-sre/external-secrets
-            tag: v0.14.4
+            tag: "$EXTERNAL_SECRETS_VERSION"

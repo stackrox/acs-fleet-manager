@@ -66,13 +66,13 @@ else
 fi
 
 if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
-    wait_for_crd "applications.argoproj.io"
-    wait_for_resource_to_appear "$ARGOCD_NAMESPACE" "appprojects.argoproj.io" "default"
     log "Installing External Secrets Operator"
-    apply "${MANIFESTS_DIR}/external-secrets/application"
-    wait_for_crd "clustersecretstores.external-secrets.io"
-    wait_for_container_to_appear "rhacs-external-secrets" "app.kubernetes.io/name=external-secrets-webhook" "webhook"
+    # install CRDs first
+    $KUBECTL apply -k "https://raw.githubusercontent.com/external-secrets/external-secrets/$EXTERNAL_SECRETS_VERSION/deploy/crds/bundle.yaml"
+    # then install ClusterSecretStore (don't wait for the app provisioning and webhook start)
     chamber exec external-secrets -- apply "${MANIFESTS_DIR}/external-secrets"
+    # finally, install ESO ArgoCD app
+    apply "${MANIFESTS_DIR}/external-secrets/application"
 else
     log "Skipping installation of External Secrets Operator"
 fi
