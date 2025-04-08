@@ -228,18 +228,6 @@ wait_for_container_to_appear() {
     return 1
 }
 
-is_pod_ready() {
-    local namespace="$1"
-    local pod_selector="$2"
-    local status
-    status=$($KUBECTL -n "$namespace" get pod -l "$pod_selector" -o jsonpath="{.items[0].status.conditions[?(@.type == 'ContainersReady')].status}" 2>/dev/null || true)
-    if [[ "$status" == "True" ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 wait_for_container_to_become_ready() {
     local namespace="$1"
     local pod_selector="$2"
@@ -311,12 +299,7 @@ wait_for_resource_condition() {
         return 1
     fi
     log "Waiting for ${kind}/${name} in namespace ${namespace} to have status ${condition}"
-    if $KUBECTL -n "${namespace}" wait --for "${condition}" --timeout="60s" "${kind}/${name}" 2>/dev/null >&2; then
-        log "Resource ${kind}/${name} in namespace ${namespace} has status ${condition}"
-        return 0
-    fi
-    log "Giving up after 60s waiting for ${kind}/${name} in namespace ${namespace} to have status ${condition}"
-    return 1
+    $KUBECTL -n "${namespace}" wait --for="${condition}" --timeout="3m" "${kind}/${name}"
 }
 
 wait_for_cluster_resource_condition() {
@@ -328,17 +311,12 @@ wait_for_cluster_resource_condition() {
         return 1
     fi
     log "Waiting for ${kind}/${name} to have status ${condition}"
-    if $KUBECTL wait --for "${condition}" --timeout="60s" "${kind}/${name}" 2>/dev/null >&2; then
-        log "Resource ${kind}/${name} has status ${condition}"
-        return 0
-    fi
-    log "Giving up after 60s waiting for ${kind}/${name} to have status ${condition}"
-    return 1
+    $KUBECTL wait --for "${condition}" --timeout="3m" "${kind}/${name}"
 }
 
 wait_for_crd() {
     local name="$1"
-    wait_for_cluster_resource_to_appear crd "$name" "condition=established"
+    wait_for_cluster_resource_condition crd "$name" "condition=established"
 }
 
 assemble_kubeconfig() {

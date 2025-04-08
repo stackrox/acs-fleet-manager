@@ -66,11 +66,12 @@ else
 fi
 
 if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
-    argocd_resource_name="$ARGOCD_NAMESPACE"
-    wait_for_resource_condition "$ARGOCD_NAMESPACE" "argocd" "$argocd_resource_name" "phase=Available"
+    wait_for_crd "applications.argoproj.io"
+    wait_for_resource_to_appear "$ARGOCD_NAMESPACE" "appprojects.argoproj.io" "default"
     log "Installing External Secrets Operator"
     apply "${MANIFESTS_DIR}/external-secrets/application"
     wait_for_crd "clustersecretstores.external-secrets.io"
+    wait_for_container_to_appear "rhacs-external-secrets" "app.kubernetes.io/name=external-secrets-webhook" "webhook"
     chamber exec external-secrets -- apply "${MANIFESTS_DIR}/external-secrets"
 else
     log "Skipping installation of External Secrets Operator"
