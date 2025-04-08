@@ -282,26 +282,63 @@ wait_for_resource_to_appear() {
     return 1
 }
 
+wait_for_cluster_resource_to_appear() {
+    local kind="$1"
+    local name="$2"
+    local seconds="${3:-60}"
 
-wait_for_crd_to_appear() {
-    local name="$1"
-    local retry_attempts="${3:-60}"
-
-    log "Waiting for crd/${name} to be created"
-
-    # If resource is missing kubectl wait will return NotFound error. That's why we need retries.
-    # Once CRD is available on the cluster we wait until it moves to the established condition.
-    for _ in $(seq "${retry_attempts}"); do
-        if kubectl wait --for condition=established --timeout="60s" "crd/$name" 2>/dev/null >&2; then
-            log "Resource crd/${name} appeared"
+    log "Waiting for ${kind}/${name} to be created"
+    for _ in $(seq "$seconds"); do
+        if $KUBECTL get "$kind" "$name" 2>/dev/null >&2; then
+            log "Resource ${kind}/${name} appeared"
             return 0
         fi
         sleep 1
     done
 
-    log "Giving up after ${retry_attempts}s waiting for crd/${name}"
-
+    log "Giving up after ${seconds}s waiting for ${kind}/${name}"
     return 1
+}
+
+
+wait_for_resource_condition() {
+    local namespace="$1"
+    local kind="$2"
+    local name="$3"
+    local condition="$4"
+
+    if ! wait_for_resource_to_appear "${namespace}" "${kind}" "${name}"; then
+        return 1
+    fi
+    log "Waiting for ${kind}/${name} in namespace ${namespace} to have status ${condition}"
+    if $KUBECTL -n "${namespace}" wait --for "${condition}" --timeout="60s" "${kind}/${name}" 2>/dev/null >&2; then
+        log "Resource ${kind}/${name} in namespace ${namespace} has status ${condition}"
+        return 0
+    fi
+    log "Giving up after 60s waiting for ${kind}/${name} in namespace ${namespace} to have status ${condition}"
+    return 1
+}
+
+wait_for_cluster_resource_condition() {
+    local kind="$1"
+    local name="$2"
+    local condition="$3"
+
+    if ! wait_for_cluster_resource_to_appear "${kind}" "${name}"; then
+        return 1
+    fi
+    log "Waiting for ${kind}/${name} to have status ${condition}"
+    if $KUBECTL wait --for "${condition}" --timeout="60s" "${kind}/${name}" 2>/dev/null >&2; then
+        log "Resource ${kind}/${name} has status ${condition}"
+        return 0
+    fi
+    log "Giving up after 60s waiting for ${kind}/${name} to have status ${condition}"
+    return 1
+}
+
+wait_for_crd() {
+    local name="$1"
+    wait_for_cluster_resource_to_appear crd "$name" "condition=established"
 }
 
 assemble_kubeconfig() {

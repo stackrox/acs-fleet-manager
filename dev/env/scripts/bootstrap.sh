@@ -66,10 +66,11 @@ else
 fi
 
 if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
-    wait_for_crd_to_appear applications.argoproj.io
+    argocd_resource_name="$ARGOCD_NAMESPACE"
+    wait_for_resource_condition "$ARGOCD_NAMESPACE" "argocd" "$argocd_resource_name" "phase=Available"
     log "Installing External Secrets Operator"
     apply "${MANIFESTS_DIR}/external-secrets/application"
-    wait_for_crd_to_appear clustersecretstores.external-secrets.io
+    wait_for_crd "clustersecretstores.external-secrets.io"
     chamber exec external-secrets -- apply "${MANIFESTS_DIR}/external-secrets"
 else
     log "Skipping installation of External Secrets Operator"
