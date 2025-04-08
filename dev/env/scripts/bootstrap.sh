@@ -68,7 +68,7 @@ fi
 if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
     log "Installing External Secrets Operator"
     # install CRDs first
-    $KUBECTL apply -k "https://raw.githubusercontent.com/external-secrets/external-secrets/$EXTERNAL_SECRETS_VERSION/deploy/crds/bundle.yaml"
+    $KUBECTL apply -f "https://raw.githubusercontent.com/external-secrets/external-secrets/$EXTERNAL_SECRETS_VERSION/deploy/crds/bundle.yaml"
     # then install ClusterSecretStore (don't wait for the app provisioning and webhook start)
     chamber exec external-secrets -- apply "${MANIFESTS_DIR}/external-secrets"
     # finally, install ESO ArgoCD app
