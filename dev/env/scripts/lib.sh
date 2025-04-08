@@ -272,6 +272,55 @@ wait_for_resource_to_appear() {
     return 1
 }
 
+wait_for_cluster_resource_to_appear() {
+    local kind="$1"
+    local name="$2"
+    local seconds="${3:-60}"
+
+    log "Waiting for ${kind}/${name} to be created"
+    for _ in $(seq "$seconds"); do
+        if $KUBECTL get "$kind" "$name" 2>/dev/null >&2; then
+            log "Resource ${kind}/${name} appeared"
+            return 0
+        fi
+        sleep 1
+    done
+
+    log "Giving up after ${seconds}s waiting for ${kind}/${name}"
+    return 1
+}
+
+
+wait_for_resource_condition() {
+    local namespace="$1"
+    local kind="$2"
+    local name="$3"
+    local condition="$4"
+
+    if ! wait_for_resource_to_appear "${namespace}" "${kind}" "${name}"; then
+        return 1
+    fi
+    log "Waiting for ${kind}/${name} in namespace ${namespace} to have status ${condition}"
+    $KUBECTL -n "${namespace}" wait --for="${condition}" --timeout="3m" "${kind}/${name}"
+}
+
+wait_for_cluster_resource_condition() {
+    local kind="$1"
+    local name="$2"
+    local condition="$3"
+
+    if ! wait_for_cluster_resource_to_appear "${kind}" "${name}"; then
+        return 1
+    fi
+    log "Waiting for ${kind}/${name} to have status ${condition}"
+    $KUBECTL wait --for "${condition}" --timeout="3m" "${kind}/${name}"
+}
+
+wait_for_crd() {
+    local name="$1"
+    wait_for_cluster_resource_condition crd "$name" "condition=established"
+}
+
 assemble_kubeconfig() {
     kubeconf=$($KUBECTL config view --minify=true --raw=true 2>/dev/null)
     CONTEXT_NAME=$(echo "$kubeconf" | yq e .current-context -)
