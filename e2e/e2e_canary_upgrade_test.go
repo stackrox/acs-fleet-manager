@@ -610,6 +610,8 @@ scannerDbResources:
   requests:
     cpu: 100m
     memory: 100Mi
+centralIngressEnabled: true
+centralIngressManageSecrets: true
 `
 }
 
