@@ -348,6 +348,11 @@ test/cluster/cleanup:
 	./scripts/cleanup_test_cluster.sh
 .PHONY: test/cluster/cleanup
 
+# Runs E2E test suite
+#
+# Examples:
+#    make test/e2e
+#    make test/e2e GINKGO_FLAGS="-v --focus='should be created and deployed to k8s'" -- runs a specific test
 test/e2e: $(GINKGO_BIN)
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	RUN_E2E=true \
