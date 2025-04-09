@@ -66,7 +66,7 @@ func AssertReencryptIngressRouteExist(ctx context.Context, routeService *k8s.Rou
 	return func(g Gomega) {
 		ingresses, err := routeService.FindAdmittedIngresses(ctx, namespace)
 		g.Expect(err).ToNot(HaveOccurred(), "failed to find reencrypt ingresses in namespace %s", namespace)
-		g.Expect(ingresses).To(ContainElement(WithTransform(getRouteIngressHost, Equal(centralUIURL.Host)), &ingress))
+		g.Expect(ingresses).To(ContainElement(WithTransform(getRouteIngressHost, Equal(centralUIURL.Host)), ingress))
 	}
 }
 
