@@ -168,30 +168,22 @@ func assertObjectDeleted(ctx context.Context, obj ctrlClient.Object, namespace, 
 	}
 }
 
-func assertReencryptRouteExist(ctx context.Context, namespace string, route *openshiftRouteV1.Route) func() error {
-	return func() error {
-		reencryptRoute, err := routeService.FindReencryptRoute(ctx, namespace)
-		if err != nil {
-			return fmt.Errorf("failed finding reencrypt route: %v", err)
-		}
-		if reencryptRoute == nil {
-			return fmt.Errorf("reencrypt route in namespace %s not found", namespace)
-		}
-		*route = *reencryptRoute
-		return nil
+func assertRouteExists(ctx context.Context, namespace string, expectedTermination openshiftRouteV1.TLSTerminationType, expectedHost string) func(g Gomega) {
+	return func(g Gomega) {
+		routes := &openshiftRouteV1.RouteList{}
+		err := k8sClient.List(ctx, routes, ctrlClient.InNamespace(namespace))
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(routes.Items).To(ContainElement(SatisfyAll(
+			WithTransform(getRouteTermination, Equal(expectedTermination)),
+			WithTransform(getRouteHost, Equal(expectedHost)),
+		)))
 	}
 }
 
-func assertPassthroughRouteExist(ctx context.Context, namespace string, route *openshiftRouteV1.Route) func() error {
-	return func() error {
-		passthroughRoute, err := routeService.FindPassthroughRoute(ctx, namespace)
-		if err != nil {
-			return fmt.Errorf("failed finding passthrough route in namespace %s: %v", namespace, err)
-		}
-		if passthroughRoute == nil {
-			return fmt.Errorf("passthrough route not found in namespace %s", namespace)
-		}
-		*route = *passthroughRoute
-		return nil
-	}
+func getRouteTermination(route openshiftRouteV1.Route) openshiftRouteV1.TLSTerminationType {
+	return route.Spec.TLS.Termination
+}
+
+func getRouteHost(route openshiftRouteV1.Route) string {
+	return route.Spec.Host
 }

@@ -112,7 +112,7 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 			routeService := k8s.NewRouteService(cluster1KubeClient)
 
 			var reencryptIngress openshiftRouteV1.RouteIngress
-			Eventually(testutil.AssertReencryptIngressRouteExist(context.Background(), routeService, namespaceName, &reencryptIngress)).
+			Eventually(testutil.AssertReencryptIngressRouteExist(context.Background(), routeService, centralRequest, &reencryptIngress)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -163,7 +163,7 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 			routeService := k8s.NewRouteService(cluster2KubeClient)
 
 			var reencryptIngress openshiftRouteV1.RouteIngress
-			Eventually(testutil.AssertReencryptIngressRouteExist(context.Background(), routeService, namespaceName, &reencryptIngress)).
+			Eventually(testutil.AssertReencryptIngressRouteExist(context.Background(), routeService, centralRequest, &reencryptIngress)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
