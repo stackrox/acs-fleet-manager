@@ -406,3 +406,41 @@ delete_tenant_namespaces() {
     done
     log "All RHACS tenant namespaces deleted."
 }
+
+print_pull_secret() {
+    local name="$1"
+    [[ -n "$name" ]] || die "Image pull secret name is empty"
+    local registry_auth="$2"
+    [[ -n "$registry_auth" ]] || die "Unable to create an image pull secret with name $name: .dockerconfigjson is empty"
+    cat <<EOF
+apiVersion: v1
+data:
+  .dockerconfigjson: ${registry_auth}
+kind: Secret
+metadata:
+  name: $name
+type: kubernetes.io/dockerconfigjson
+EOF
+}
+
+redhat_registry_auth() {
+    # Try to fetch an access token from ocm.
+    local registry_auth
+    registry_auth=$(ocm post /api/accounts_mgmt/v1/access_token <<< '' 2>/dev/null | jq -r '. | @base64')
+    if [ -n "$registry_auth" ]; then
+        echo "$registry_auth"
+        return
+    fi
+    # If failed, fallback to retrieving credentials from docker config / cred store.
+    docker_auth.sh -m k8s registry.redhat.io
+}
+
+quay_registry_auth() {
+    REGISTRY_USERNAME="${QUAY_USER:-}" REGISTRY_PASSWORD="${QUAY_TOKEN:-}" docker_auth.sh -m k8s quay.io
+}
+
+# support both registry.redhat.io and quay.io to quickly switch images between upstream and downstream.
+# order is important, the latter takes precedence (overrides) in case the registry is defined in both auth-s
+composite_registry_auth() {
+    echo "$(redhat_registry_auth | base64 -d)" "$(quay_registry_auth | base64 -d)" | jq -s -r 'reduce .[] as $x ({}; . * $x) | @base64'
+}

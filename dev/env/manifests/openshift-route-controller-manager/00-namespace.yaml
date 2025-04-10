@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-route-controller-manager
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-infra

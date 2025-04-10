@@ -37,6 +37,8 @@ create-imagepullsecrets
 if [[ "$INSTALL_OPENSHIFT_ROUTER" == "true" ]]; then
     log "Installing OpenShift Router"
     apply "${MANIFESTS_DIR}/openshift-router"
+    apply "${MANIFESTS_DIR}/openshift-route-controller-manager"
+    print_pull_secret "redhat-pull-secret" "$(redhat_registry_auth)" | $KUBECTL -n "openshift-route-controller-manager" apply -f -
 elif [[ "$EXPOSE_OPENSHIFT_ROUTER" == "true" ]]; then
     log "Exposing OpenShift Router"
     oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"defaultRoute":true}}'

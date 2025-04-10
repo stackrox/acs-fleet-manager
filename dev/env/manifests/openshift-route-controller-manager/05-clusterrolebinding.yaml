@@ -1,0 +1,52 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:openshift:openshift-route-controller-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:openshift-route-controller-manager
+subjects:
+  - kind: ServiceAccount
+    name: route-controller-manager-sa
+    namespace: openshift-route-controller-manager
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:openshift:tokenreview-openshift-route-controller-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:tokenreview-openshift-route-controller-manager
+subjects:
+  - kind: ServiceAccount
+    name: route-controller-manager-sa
+    namespace: openshift-route-controller-manager
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:openshift:auth-delegator-openshift-route-controller-manager
+roleRef:
+  apiGroup: ""
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: route-controller-manager-sa
+    namespace: openshift-route-controller-manager
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: system:openshift:openshift-controller-manager:ingress-to-route-controller
+subjects:
+  - kind: ServiceAccount
+    name: ingress-to-route-controller
+    namespace: openshift-infra
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:openshift-controller-manager:ingress-to-route-controller
