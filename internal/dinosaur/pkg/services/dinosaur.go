@@ -887,7 +887,8 @@ func (k *dinosaurService) AssignCluster(ctx context.Context, centralID string, c
 	}
 
 	readyStatus := dinosaurConstants.CentralRequestStatusReady.String()
-	if central.Status != readyStatus {
+	provisioningStatus := dinosaurConstants.CentralRequestStatusProvisioning.String()
+	if central.Status != readyStatus && central.Status != provisioningStatus {
 		return errors.BadRequest("Cannot assing cluster_id for tenant in status: %q, status %q is required", central.Status, readyStatus)
 	}
 
