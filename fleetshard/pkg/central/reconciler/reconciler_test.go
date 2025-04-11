@@ -6,10 +6,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"net/http"
 	"testing"
 	"time"
+
+	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
@@ -28,12 +29,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/mocks"
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
-	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -93,12 +92,6 @@ var (
 		AuditLogTargetHost: "audit-logs-aggregator.rhacs-audit-logs",
 		AuditLogTargetPort: 8888,
 		SkipTLSVerify:      false,
-	}
-
-	defaultRouteConfig = config.RouteConfig{
-		ConcurrentTCP: 32,
-		RateHTTP:      128,
-		RateTCP:       16,
 	}
 )
 
@@ -240,7 +233,7 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	reconcilerOptions := defaultReconcilerOptions
 	reconcilerOptions.ManagedDBEnabled = true
 
-	fakeClient, _, r := getClientTrackerAndReconciler(t, managedDBProvisioningClient, reconcilerOptions, defaultObjects()...)
+	fakeClient, _, r := getClientTrackerAndReconciler(t, managedDBProvisioningClient, reconcilerOptions)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -299,14 +292,14 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {
-	_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, defaultObjects()...)
+	_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions)
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
 	assert.Equal(t, "True", status.Conditions[0].Status)
 }
 
 func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
-	_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, defaultObjects()...)
+	_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions)
 	r.restoreCentralSecretsFunc = func(ctx context.Context, remoteCentral private.ManagedCentral) error {
 		return errors.New("dummy")
 	}
@@ -352,7 +345,7 @@ func TestReconcileLastHashSecretsOrderIndependent(t *testing.T) {
 }
 
 func TestIgnoreCacheForCentralNotReady(t *testing.T) {
-	_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, defaultObjects()...)
+	_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions)
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusProvisioning.String()
@@ -389,7 +382,7 @@ func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
 }
 
 func TestReconcileDelete(t *testing.T) {
-	fakeClient, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, defaultObjects()...)
+	fakeClient, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -442,7 +435,7 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 
 	reconcilerOptions := defaultReconcilerOptions
 	reconcilerOptions.ManagedDBEnabled = true
-	fakeClient, _, r := getClientTrackerAndReconciler(t, managedDBProvisioningClient, reconcilerOptions, defaultObjects()...)
+	fakeClient, _, r := getClientTrackerAndReconciler(t, managedDBProvisioningClient, reconcilerOptions)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -596,7 +589,7 @@ func TestCentralChanged(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, _, reconciler := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, centralDeploymentObject())
+			_, _, reconciler := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, defaultObjects()...)
 
 			if test.lastCentral != nil {
 				centralHash, err := reconciler.computeCentralHash(*test.lastCentral)
@@ -744,28 +737,18 @@ func centralAppObject() *argocd.Application {
 	}
 }
 
-func centralObject() *v1alpha1.Central {
-	return &v1alpha1.Central{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralName,
-			Namespace: centralNamespace,
-		},
-	}
-}
-
-func centralDeploymentObject() *appsv1.Deployment {
-	return testutils.NewCentralDeployment(centralNamespace)
-}
-
 func defaultObjects() []client.Object {
-	return []client.Object{
-		centralAppObject(),
-		centralObject(),
-		centralDeploymentObject(),
-		centralTLSSecretObject(),
-		centralDBPasswordSecretObject(),
-		centralEncryptionKeySecretObject(),
-	}
+	centralApp := centralAppObject()
+	tenantResources, _ := testutils.NewTenantResources(centralApp)
+
+	var objects []client.Object
+
+	objects = append(objects, centralApp)
+	objects = append(objects, tenantResources.Objects()...)
+	objects = append(objects, centralDBPasswordSecretObject())
+	objects = append(objects, centralEncryptionKeySecretObject())
+
+	return objects
 }
 
 func TestTelemetryOptionsAreSetInCR(t *testing.T) {
@@ -795,7 +778,7 @@ func TestTelemetryOptionsAreSetInCR(t *testing.T) {
 
 			reconcilerOptions := defaultReconcilerOptions
 			reconcilerOptions.ArgoReconcilerOptions.Telemetry = tc.telemetry
-			fakeClient, _, r := getClientTrackerAndReconciler(t, nil, reconcilerOptions, defaultObjects()...)
+			fakeClient, _, r := getClientTrackerAndReconciler(t, nil, reconcilerOptions)
 
 			_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 			require.NoError(t, err)
@@ -822,36 +805,26 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 		testName                string
 		expectedReencryptHost   string
 		expectedPassthroughHost string
-		expectedTLSCert         string
-		expectedTLSKey          string
 	}{
 		{
 			testName:                "should update reencrypt route with TLS cert changes",
 			expectedReencryptHost:   simpleManagedCentral.Spec.UiEndpoint.Host,
 			expectedPassthroughHost: simpleManagedCentral.Spec.DataEndpoint.Host,
-			expectedTLSCert:         "new-tls-cert-data",
-			expectedTLSKey:          simpleManagedCentral.Spec.UiEndpoint.Tls.Key,
 		},
 		{
 			testName:                "should update reencrypt route with TLS key changes",
 			expectedReencryptHost:   simpleManagedCentral.Spec.UiEndpoint.Host,
 			expectedPassthroughHost: simpleManagedCentral.Spec.DataEndpoint.Host,
-			expectedTLSCert:         simpleManagedCentral.Spec.UiEndpoint.Tls.Cert,
-			expectedTLSKey:          "new-tls-key-data",
 		},
 		{
 			testName:                "should update reencrypt route with host name changes",
 			expectedReencryptHost:   "new-hostname.acs.test",
 			expectedPassthroughHost: simpleManagedCentral.Spec.DataEndpoint.Host,
-			expectedTLSCert:         simpleManagedCentral.Spec.UiEndpoint.Tls.Cert,
-			expectedTLSKey:          simpleManagedCentral.Spec.UiEndpoint.Tls.Key,
 		},
 		{
 			testName:                "should update passthrough route with host name changes",
 			expectedReencryptHost:   simpleManagedCentral.Spec.UiEndpoint.Host,
 			expectedPassthroughHost: "new-hostname.acs.test",
-			expectedTLSCert:         simpleManagedCentral.Spec.UiEndpoint.Tls.Cert,
-			expectedTLSKey:          simpleManagedCentral.Spec.UiEndpoint.Tls.Key,
 		},
 	}
 
@@ -861,7 +834,7 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 				t, nil,
 				useRoutesReconcilerOptions,
 			)
-			r.routeService = k8s.NewRouteService(fakeClient, &defaultRouteConfig)
+			r.routeService = k8s.NewRouteService(fakeClient)
 			central := simpleManagedCentral
 
 			// create the initial reencrypt route
@@ -877,8 +850,6 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 			require.NoError(t, err)
 
 			central.Spec.UiEndpoint.Host = tc.expectedReencryptHost
-			central.Spec.UiEndpoint.Tls.Cert = tc.expectedTLSCert
-			central.Spec.UiEndpoint.Tls.Key = tc.expectedTLSKey
 			central.Spec.DataEndpoint.Host = tc.expectedPassthroughHost
 
 			// run another reconcile to update the route
@@ -891,8 +862,6 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, tc.expectedReencryptHost, reencryptRoute.Spec.Host)
-			require.Equal(t, tc.expectedTLSCert, reencryptRoute.Spec.TLS.Certificate)
-			require.Equal(t, tc.expectedTLSKey, reencryptRoute.Spec.TLS.Key)
 			require.Equal(t, tc.expectedPassthroughHost, passthroughRoute.Spec.Host)
 
 		})

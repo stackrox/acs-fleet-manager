@@ -3,12 +3,15 @@ package testutil
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
@@ -53,18 +56,20 @@ func AssertDNSMatchesRouter(centralDomainNames []string, recordSets []*route53.R
 	}
 }
 
-// AssertReencryptIngressRouteExist asserts that the reencyrpt RouteIngress for a CentralREquest is created
-// and stores it in the given route object
-func AssertReencryptIngressRouteExist(ctx context.Context, routeService *k8s.RouteService, namespace string, route *openshiftRouteV1.RouteIngress) func() error {
-	return func() error {
-		reencryptIngress, err := routeService.FindReencryptIngress(ctx, namespace)
-		if err != nil {
-			return fmt.Errorf("failed finding reencrypt ingress in namespace %s: %v", namespace, err)
-		}
-		if reencryptIngress == nil {
-			return fmt.Errorf("reencrypt ingress in namespace %s not found", namespace)
-		}
-		*route = *reencryptIngress
-		return nil
+// AssertReencryptIngressRouteExist asserts that the reencrypt RouteIngress for a CentralRequest is created
+// and stores it in the given RouteIngress object
+func AssertReencryptIngressRouteExist(ctx context.Context, routeService *k8s.RouteService, centralRequest public.CentralRequest, ingress *openshiftRouteV1.RouteIngress) func(g Gomega) {
+	namespace, err := services.FormatNamespace(centralRequest.Id)
+	Expect(err).ToNot(HaveOccurred())
+	centralUIURL, err := url.Parse(centralRequest.CentralUIURL)
+	Expect(err).ToNot(HaveOccurred())
+	return func(g Gomega) {
+		ingresses, err := routeService.FindAdmittedIngresses(ctx, namespace)
+		g.Expect(err).ToNot(HaveOccurred(), "failed to find reencrypt ingresses in namespace %s", namespace)
+		g.Expect(ingresses).To(ContainElement(WithTransform(getRouteIngressHost, Equal(centralUIURL.Host)), ingress))
 	}
+}
+
+func getRouteIngressHost(ingress openshiftRouteV1.RouteIngress) string {
+	return ingress.Host
 }

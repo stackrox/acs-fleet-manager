@@ -86,6 +86,8 @@ init() {
     export EXPOSE_OPENSHIFT_ROUTER="${EXPOSE_OPENSHIFT_ROUTER:-$EXPOSE_OPENSHIFT_ROUTER_DEFAULT}"
     export INSTALL_VERTICAL_POD_AUTOSCALER="${INSTALL_VERTICAL_POD_AUTOSCALER:-$INSTALL_VERTICAL_POD_AUTOSCALER_DEFAULT}"
     export INSTALL_VERTICAL_POD_AUTOSCALER_OLM="${INSTALL_VERTICAL_POD_AUTOSCALER_OLM:-$INSTALL_VERTICAL_POD_AUTOSCALER_OLM_DEFAULT}"
+    export INSTALL_EXTERNAL_SECRETS="${INSTALL_EXTERNAL_SECRETS:-$INSTALL_EXTERNAL_SECRETS_DEFAULT}"
+    export EXTERNAL_SECRETS_VERSION="${EXTERNAL_SECRETS_VERSION:-$EXTERNAL_SECRETS_VERSION_DEFAULT}"
     export OCM_SERVICE_CLIENT_ID=${OCM_SERVICE_CLIENT_ID:-$OCM_SERVICE_CLIENT_ID_DEFAULT}
     export OCM_SERVICE_CLIENT_SECRET=${OCM_SERVICE_CLIENT_SECRET:-$OCM_SERVICE_CLIENT_SECRET_DEFAULT}
     export OCM_SERVICE_TOKEN=${OCM_SERVICE_TOKEN:-$OCM_SERVICE_TOKEN_DEFAULT}
@@ -153,6 +155,8 @@ INSTALL_VERTICAL_POD_AUTOSCALER: ${INSTALL_VERTICAL_POD_AUTOSCALER}
 INSTALL_VERTICAL_POD_AUTOSCALER_OLM: ${INSTALL_VERTICAL_POD_AUTOSCALER_OLM}
 INSTALL_ARGOCD: ${INSTALL_ARGOCD}
 INSTALL_OPENSHIFT_GITOPS: ${INSTALL_OPENSHIFT_GITOPS}
+INSTALL_EXTERNAL_SECRETS: ${INSTALL_EXTERNAL_SECRETS}
+EXTERNAL_SECRETS_VERSION: ${EXTERNAL_SECRETS_VERSION}
 ARGOCD_NAMESPACE: ${ARGOCD_NAMESPACE}
 ARGOCD_TENANT_APP_TARGET_REVISION: ${ARGOCD_TENANT_APP_TARGET_REVISION}
 OCM_SERVICE_CLIENT_ID: ********
@@ -226,18 +230,6 @@ wait_for_container_to_appear() {
     return 1
 }
 
-is_pod_ready() {
-    local namespace="$1"
-    local pod_selector="$2"
-    local status
-    status=$($KUBECTL -n "$namespace" get pod -l "$pod_selector" -o jsonpath="{.items[0].status.conditions[?(@.type == 'ContainersReady')].status}" 2>/dev/null || true)
-    if [[ "$status" == "True" ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 wait_for_container_to_become_ready() {
     local namespace="$1"
     local pod_selector="$2"
@@ -269,7 +261,7 @@ wait_for_resource_to_appear() {
 
     for _ in $(seq "$seconds"); do
         if $KUBECTL -n "$namespace" get "$kind" "$name" 2>/dev/null >&2; then
-            log "Resource ${kind}/${namespace} in namespace ${namespace} appeared"
+            log "Resource ${kind}/${name} in namespace ${namespace} appeared"
             return 0
         fi
         sleep 1
@@ -278,6 +270,55 @@ wait_for_resource_to_appear() {
     log "Giving up after ${seconds}s waiting for ${kind}/${name} in namespace ${namespace}"
 
     return 1
+}
+
+wait_for_cluster_resource_to_appear() {
+    local kind="$1"
+    local name="$2"
+    local seconds="${3:-60}"
+
+    log "Waiting for ${kind}/${name} to be created"
+    for _ in $(seq "$seconds"); do
+        if $KUBECTL get "$kind" "$name" 2>/dev/null >&2; then
+            log "Resource ${kind}/${name} appeared"
+            return 0
+        fi
+        sleep 1
+    done
+
+    log "Giving up after ${seconds}s waiting for ${kind}/${name}"
+    return 1
+}
+
+
+wait_for_resource_condition() {
+    local namespace="$1"
+    local kind="$2"
+    local name="$3"
+    local condition="$4"
+
+    if ! wait_for_resource_to_appear "${namespace}" "${kind}" "${name}"; then
+        return 1
+    fi
+    log "Waiting for ${kind}/${name} in namespace ${namespace} to have status ${condition}"
+    $KUBECTL -n "${namespace}" wait --for="${condition}" --timeout="3m" "${kind}/${name}"
+}
+
+wait_for_cluster_resource_condition() {
+    local kind="$1"
+    local name="$2"
+    local condition="$3"
+
+    if ! wait_for_cluster_resource_to_appear "${kind}" "${name}"; then
+        return 1
+    fi
+    log "Waiting for ${kind}/${name} to have status ${condition}"
+    $KUBECTL wait --for "${condition}" --timeout="3m" "${kind}/${name}"
+}
+
+wait_for_crd() {
+    local name="$1"
+    wait_for_cluster_resource_condition crd "$name" "condition=established"
 }
 
 assemble_kubeconfig() {

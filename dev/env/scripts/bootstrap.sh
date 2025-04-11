@@ -65,6 +65,21 @@ else
     exit 1
 fi
 
+if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
+    log "Installing External Secrets Operator"
+    # The following sequence of actions avoids unnecessary waiting for apps, projects, webhooks to be created.
+    # install CRDs first
+    $KUBECTL apply -f "https://raw.githubusercontent.com/external-secrets/external-secrets/$EXTERNAL_SECRETS_VERSION/deploy/crds/bundle.yaml"
+    # then install ClusterSecretStore. Do not wait for the webhook start.
+    chamber exec external-secrets -- apply "${MANIFESTS_DIR}/external-secrets/secretstore"
+    # have to wait for CRD when ArgoCD is installed via OLM
+    wait_for_crd "applications.argoproj.io"
+    # finally, install ESO ArgoCD app. Sync happens asynchronously.
+    apply "${MANIFESTS_DIR}/external-secrets/application"
+else
+    log "Skipping installation of External Secrets Operator"
+fi
+
 # skip manifests if openshift cluster using is_openshift_cluster
 if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     apply "${MANIFESTS_DIR}/monitoring"
