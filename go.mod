@@ -1,6 +1,8 @@
 module github.com/stackrox/acs-fleet-manager
 
-go 1.22.9
+go 1.24
+
+toolchain go1.24.2
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -21,7 +23,7 @@ require (
 	github.com/goava/di v1.11.1
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/golang/glog v1.2.4
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
@@ -122,7 +124,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.6.1 // indirect
 	github.com/go-git/go-git/v5 v5.13.1 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
-	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
