@@ -5,7 +5,7 @@ go 1.22.9
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/antihax/optional v1.0.0
-	github.com/argoproj/argo-cd/v2 v2.12.10
+	github.com/argoproj/argo-cd/v2 v2.14.9
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.9
