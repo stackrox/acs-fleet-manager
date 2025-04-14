@@ -11,7 +11,7 @@ export CLUSTER_2_KUBECONFIG=${CLUSTER_2_KUBECONFIG:-"$HOME/.kube/cluster2"}
 # Bootstrap C1
 export KUBECONFIG="$CLUSTER_1_KUBECONFIG"
 export INHERIT_IMAGEPULLSECRETS="true" # pragma: allowlist secret
-export ENABLE_CENTRAL_EXTERNAL_CERTIFICATE="true"
+export ENABLE_CENTRAL_EXTERNAL_DOMAIN="true"
 
 make deploy/bootstrap
 make deploy/dev

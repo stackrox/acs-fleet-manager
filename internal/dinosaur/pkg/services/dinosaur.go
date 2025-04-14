@@ -332,8 +332,8 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 	centralRequest.Namespace = namespace
 
 	// Set host.
-	if k.centralConfig.EnableCentralExternalCertificate {
-		// If we enable DinosaurTLS, the host should use the external domain name rather than the cluster domain
+	if k.centralConfig.EnableCentralExternalDomain {
+		// the host should use the external domain name rather than the cluster domain
 		centralRequest.Host = k.centralConfig.CentralDomainName
 	} else {
 		clusterDNS, err := k.clusterService.GetClusterDNS(centralRequest.ClusterID)
@@ -597,7 +597,7 @@ func (k *dinosaurService) Delete(centralRequest *dbapi.CentralRequest, force boo
 			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 		}
 		// Only delete the routes when they are set
-		if routes != nil && k.centralConfig.EnableCentralExternalCertificate {
+		if routes != nil && k.centralConfig.EnableCentralExternalDomain {
 			_, err := k.ChangeCentralCNAMErecords(centralRequest, CentralRoutesActionDelete)
 			if err != nil {
 				if force {

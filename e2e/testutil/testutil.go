@@ -38,7 +38,7 @@ func GetWaitTimeout() time.Duration {
 func DNSConfiguration(routesEnabled bool) (dnsEnabled bool, accessKey string, secretKey string) {
 	accessKey = os.Getenv("ROUTE53_ACCESS_KEY")
 	secretKey = os.Getenv("ROUTE53_SECRET_ACCESS_KEY")
-	enableExternal := os.Getenv("ENABLE_CENTRAL_EXTERNAL_CERTIFICATE")
+	enableExternal := os.Getenv("ENABLE_CENTRAL_EXTERNAL_DOMAIN")
 	dnsEnabled = accessKey != "" &&
 		secretKey != "" &&
 		enableExternal == "true" && routesEnabled
