@@ -11,7 +11,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/e2e/testutil"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,12 +23,6 @@ var (
 	fleetManagerEndpoint = "http://localhost:8000"
 	route53Client        *route53.Route53
 	dnsEnabled           bool
-
-	routeConfig = &config.RouteConfig{
-		ConcurrentTCP: 32,
-		RateHTTP:      128,
-		RateTCP:       16,
-	}
 )
 
 func TestMulticlusterE2E(t *testing.T) {

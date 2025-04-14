@@ -83,3 +83,5 @@ tenantResources:
         memory: 100Mi
 
     centralRdsCidrBlock: "10.1.0.0/16"
+    centralIngressEnabled: true
+    centralIngressManageSecrets: true
