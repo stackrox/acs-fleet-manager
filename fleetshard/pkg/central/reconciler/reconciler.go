@@ -383,7 +383,7 @@ func getAuthProviderConfig(remoteCentral private.ManagedCentral) *declarativecon
 	}
 	return &declarativeconfig.AuthProvider{
 		Name:             authProviderName(remoteCentral),
-		UIEndpoint:       remoteCentral.Spec.UiEndpoint.Host,
+		UIEndpoint:       remoteCentral.Spec.UiHost,
 		ExtraUIEndpoints: []string{"localhost:8443"},
 		Groups:           groups,
 		RequiredAttributes: []declarativeconfig.RequiredAttribute{
@@ -675,8 +675,8 @@ func isRemoteCentralReady(remoteCentral *private.ManagedCentral) bool {
 // Therefore, all required routes must be reported when Central is ready.
 func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, central *private.ManagedCentral) ([]private.DataPlaneCentralStatusRoutes, error) {
 	unprocessedHosts := make(map[string]struct{}, 2)
-	unprocessedHosts[central.Spec.UiEndpoint.Host] = struct{}{}
-	unprocessedHosts[central.Spec.DataEndpoint.Host] = struct{}{}
+	unprocessedHosts[central.Spec.UiHost] = struct{}{}
+	unprocessedHosts[central.Spec.DataHost] = struct{}{}
 
 	ingresses, err := r.routeService.FindAdmittedIngresses(ctx, central.Metadata.Namespace)
 	if err != nil {
@@ -1014,7 +1014,7 @@ func findAdditionalAuthProvider(central private.ManagedCentral) *declarativeconf
 
 	return &declarativeconfig.AuthProvider{
 		Name:               authProvider.Name,
-		UIEndpoint:         central.Spec.UiEndpoint.Host,
+		UIEndpoint:         central.Spec.UiHost,
 		ExtraUIEndpoints:   []string{"localhost:8443"},
 		Groups:             groups,
 		RequiredAttributes: requiredAttributes,

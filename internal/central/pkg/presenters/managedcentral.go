@@ -136,18 +136,10 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 				Issuer:               from.AuthConfig.Issuer,
 			},
 			AdditionalAuthProvider: additionalAuthProvider,
-			UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
-				Host: from.GetUIHost(),
-				Tls: private.ManagedCentralAllOfSpecUiEndpointTls{
-					Cert: c.centralConfig.CentralTLSCert,
-					Key:  c.centralConfig.CentralTLSKey,
-				},
-			},
-			DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
-				Host: from.GetDataHost(),
-			},
-			TenantResourcesValues: renderedCentral.Values,
-			InstanceType:          from.InstanceType,
+			UiHost:                 from.GetUIHost(),
+			DataHost:               from.GetDataHost(),
+			TenantResourcesValues:  renderedCentral.Values,
+			InstanceType:           from.InstanceType,
 		},
 		RequestStatus: from.Status,
 	}

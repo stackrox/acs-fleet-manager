@@ -36,8 +36,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **enable-deletion-of-expired-central**: Enables deletion of eval Central instances when its life span has expired.
     - `central-lifespan` [Optional]: The desired lifespan of a Central instance in hour(s) (default: `48`).
 - **enable-central-external-domain**: Enables custom Central domain.
-    - `central-tls-cert-file` [Required]: The path to the file containing the Central TLS certificate (default: `'secrets/central-tls.crt'`).
-    - `central-tls-key-file` [Required]: The path to the file containing the Central TLS private key (default: `'secrets/central-tls.key'`).
 - **enable-evaluator-instance**: Enable the creation of one central evaluator instances per user
 
 - **central-idp-***: A collection of flags describing _static_ auth config for Central.

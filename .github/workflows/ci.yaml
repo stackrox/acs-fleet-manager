@@ -56,9 +56,6 @@ jobs:
       AWS_SECRET_ACCESS_KEY: aws_secretaccesskey # pragma: allowlist secret - dummy value
       ROUTE53_ACCESS_KEY: aws_route53_access_key # pragma: allowlist secret - dummy value
       ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key # pragma: allowlist secret - dummy value
-      # Dummy Central TLS env variables
-      CENTRAL_TLS_CERT: central_tls_cert # pragma: allowlist secret - dummy value
-      CENTRAL_TLS_KEY: central_tls_key # pragma: allowlist secret - dummy value
       TEST_TIMEOUT: 30m
     services:
       postgres:
@@ -105,7 +102,7 @@ jobs:
           git diff --exit-code
       - name: Setup tests secrets
         run: |
-          make ocm/setup aws/setup redhatsso/setup centralcert/setup secrets/touch
+          make ocm/setup aws/setup redhatsso/setup secrets/touch
       - name: Run Migration Script
         run: make db/migrate
       - name: Verify & Test

@@ -209,7 +209,6 @@ help:
 	@echo "make image/push                  push image"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make secrets/touch               touch all required secret files"
-	@echo "make centralcert/setup           setup the central TLS certificate used for Managed Central Service"
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
 	@echo "make image/push/internal         push image to an openshift cluster image registry."
 	@echo "make deploy/project              deploy the service via templates to an openshift cluster"
@@ -620,8 +619,6 @@ secrets/touch:
           secrets/db.password \
           secrets/db.port \
           secrets/db.user \
-          secrets/central-tls.crt \
-          secrets/central-tls.key \
           secrets/central.idp-client-secret \
           secrets/ocm-service.clientId \
           secrets/ocm-service.clientSecret \
@@ -657,12 +654,6 @@ centralidp/setup:
 	@echo -n "$(CENTRAL_IDP_CLIENT_SECRET)" > secrets/central.idp-client-secret
 .PHONY:centralidp/setup
 
-# Setup for the central broker certificate
-centralcert/setup:
-	@echo -n "$(CENTRAL_TLS_CERT)" > secrets/central-tls.crt
-	@echo -n "$(CENTRAL_TLS_KEY)" > secrets/central-tls.key
-.PHONY:centralcert/setup
-
 # Setup dummy OCM_OFFLINE_TOKEN for integration testing
 ocm/setup: OCM_OFFLINE_TOKEN ?= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c" # pragma: allowlist secret
 ocm/setup:
@@ -686,8 +677,6 @@ deploy/db:
 .PHONY: deploy/db
 
 # deploys the secrets required by the service to an OpenShift cluster
-# TLS cert and key are base64 encoded because make translates newlines in the shell command output into spaces which makes
-# pem certificates invalid
 deploy/secrets:
 	@oc process -f ./templates/secrets-template.yml --local \
 		-p DATABASE_HOST="fleet-manager-db" \
@@ -706,8 +695,6 @@ deploy/secrets:
 		-p SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${SSO_CLIENT_ID}')" \
 		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
 		-p CENTRAL_IDP_CLIENT_SECRET="$(shell ([ -s './secrets/central.idp-client-secret' ] && [ -z '${CENTRAL_IDP_CLIENT_SECRET}' ]) && cat ./secrets/central.idp-client-secret || echo '${CENTRAL_IDP_CLIENT_SECRET}')" \
-		-p CENTRAL_TLS_CERT="$(shell ([ -s './secrets/central-tls.crt' ] && [ -z '${CENTRAL_TLS_CERT}' ]) && (cat ./secrets/central-tls.crt || echo '${CENTRAL_TLS_CERT}') | base64)" \
-		-p CENTRAL_TLS_KEY="$(shell ([ -s './secrets/central-tls.key' ] && [ -z '${CENTRAL_TLS_KEY}' ]) && (cat ./secrets/central-tls.key || echo '${CENTRAL_TLS_KEY}') | base64)" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/secrets
 
