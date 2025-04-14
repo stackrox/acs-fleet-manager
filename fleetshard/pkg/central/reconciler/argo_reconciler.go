@@ -77,8 +77,8 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 	values["telemetryStorageEndpoint"] = r.argoOpts.Telemetry.StorageEndpoint
 	values["centralAdminPasswordEnabled"] = !r.argoOpts.WantsAuthProvider
 	values["centralEnabled"] = true // TODO: Remove once ROX-27129 fully released
-	values["centralUIHost"] = remoteCentral.Spec.UiEndpoint.Host
-	values["centralDataHost"] = remoteCentral.Spec.DataEndpoint.Host
+	values["centralUIHost"] = remoteCentral.Spec.UiHost
+	values["centralDataHost"] = remoteCentral.Spec.DataHost
 
 	if remoteCentral.Metadata.ExpiredAt != nil {
 		values["expiredAt"] = remoteCentral.Metadata.ExpiredAt.Format(time.RFC3339)
