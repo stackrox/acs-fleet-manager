@@ -355,25 +355,12 @@ components:
                           type: string
                         disableOfflineAccessScope:
                           type: boolean
-                uiEndpoint:
-                  type: object
+                uiHost:
+                  type: string
                   description: 'Handles GUI/CLI/API connections'
-                  properties:
-                    host:
-                      type: string
-                    tls:
-                      type: object
-                      properties:
-                        cert:
-                          type: string
-                        key:
-                          type: string
-                dataEndpoint:
-                  type: object
+                dataHost:
+                  type: string
                   description: 'Handles Sensor connections'
-                  properties:
-                    host:
-                      type: string
             requestStatus:
               type: string
 

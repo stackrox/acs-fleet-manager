@@ -17,6 +17,8 @@ type ManagedCentralAllOfSpec struct {
 	Owners                 []string                                      `json:"owners,omitempty"`
 	Auth                   ManagedCentralAllOfSpecAuth                   `json:"auth,omitempty"`
 	AdditionalAuthProvider ManagedCentralAllOfSpecAdditionalAuthProvider `json:"additionalAuthProvider,omitempty"`
-	UiEndpoint             ManagedCentralAllOfSpecUiEndpoint             `json:"uiEndpoint,omitempty"`
-	DataEndpoint           ManagedCentralAllOfSpecDataEndpoint           `json:"dataEndpoint,omitempty"`
+	// Handles GUI/CLI/API connections
+	UiHost string `json:"uiHost,omitempty"`
+	// Handles Sensor connections
+	DataHost string `json:"dataHost,omitempty"`
 }
