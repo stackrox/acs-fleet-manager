@@ -182,7 +182,7 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, eval: {}}}]}]"
 
-- name: ENABLE_CENTRAL_EXTERNAL_CERTIFICATE
+- name: ENABLE_CENTRAL_EXTERNAL_DOMAIN
   displayName: Enable Central TLS
   description: Enable the Central TLS certificate
   value: "true"
@@ -897,7 +897,7 @@ objects:
             - serve
             - --central-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --central-tls-key-file=/secrets/dataplane-certificate/tls.key
-            - --enable-central-external-certificate=${ENABLE_CENTRAL_EXTERNAL_CERTIFICATE}
+            - --enable-central-external-domain=${ENABLE_CENTRAL_EXTERNAL_DOMAIN}
             - --providers-config-file=${PROVIDERS_CONFIG_FILE}
             - --quota-management-list-config-file=/config/quota-management-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml

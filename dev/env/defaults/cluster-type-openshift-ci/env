@@ -1,6 +1,6 @@
 export SPAWN_LOGGER_DEFAULT="true"
 export DUMP_LOGS_DEFAULT="true"
 export GOTESTSUM="/usr/local/bin/gotestsum"
-export ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=true
+export ENABLE_CENTRAL_EXTERNAL_DOMAIN=true
 # To be adjusted for runnign in OpenShift CI
 # export FLEETSHARD_SYNC_RESOURCES_DEFAULT='{"requests":{"cpu":"200m","memory":"300Mi"},"limits":{"cpu":"200m","memory":"300Mi"}}'

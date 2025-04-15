@@ -58,7 +58,7 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 	}
 
 	for _, central := range centrals {
-		if k.centralConfig.EnableCentralExternalCertificate {
+		if k.centralConfig.EnableCentralExternalDomain {
 			if central.RoutesCreationID == "" {
 				glog.Infof("creating CNAME records for central %s", central.ID)
 
