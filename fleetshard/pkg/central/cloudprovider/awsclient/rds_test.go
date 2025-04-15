@@ -2,6 +2,7 @@ package awsclient
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -16,6 +17,7 @@ import (
 	"github.com/stackrox/rox/pkg/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 const awsTimeoutMinutes = 30
@@ -218,4 +220,65 @@ func TestGetAccountQuotas(t *testing.T) {
 		assert.GreaterOrEqual(t, quotaValue.Used, minQuotaValue)
 		assert.GreaterOrEqual(t, quotaValue.Max, minQuotaValue)
 	}
+}
+
+func TestRestoreIfFinalSnapshotExists(t *testing.T) {
+	mockRDSClient := RDSClientMock{}
+	tenantID := "veryrandomid"
+	clusterID := "rhacs-veryrandomid"
+	finalSnapshotID := getFinalSnapshotID(clusterID)
+
+	// Mocking describe cluster to return not found, which triggers creation
+	mockRDSClient.DescribeDBClustersFunc = func(describeDBClustersInput *rds.DescribeDBClustersInput) (*rds.DescribeDBClustersOutput, error) {
+		return nil, awserr.New(rds.ErrCodeDBClusterNotFoundFault, "db cluster not found", errors.New("db cluster not found"))
+	}
+
+	// Mocking describe snapshots to return a valid final snapshot and catch input
+	var describeSnapshotInput *rds.DescribeDBClusterSnapshotsInput
+	mockRDSClient.DescribeDBClusterSnapshotsFunc = func(describeDBClusterSnapshotsInput *rds.DescribeDBClusterSnapshotsInput) (*rds.DescribeDBClusterSnapshotsOutput, error) {
+		describeSnapshotInput = describeDBClusterSnapshotsInput
+		return &rds.DescribeDBClusterSnapshotsOutput{
+			DBClusterSnapshots: []*rds.DBClusterSnapshot{
+				// using multiple snapshots to make sure we find the final in the mid of available snapshots
+				{DBClusterSnapshotIdentifier: randomNonFinalSnapshotsID(clusterID)},
+				{DBClusterSnapshotIdentifier: randomNonFinalSnapshotsID(clusterID)},
+				{DBClusterSnapshotIdentifier: randomNonFinalSnapshotsID(clusterID)},
+				{DBClusterSnapshotIdentifier: finalSnapshotID},
+				{DBClusterSnapshotIdentifier: randomNonFinalSnapshotsID(clusterID)},
+				{DBClusterSnapshotIdentifier: randomNonFinalSnapshotsID(clusterID)},
+			},
+		}, nil
+	}
+
+	// Mocking cluster restore function to catch input
+	var restoreInput *rds.RestoreDBClusterFromSnapshotInput
+	mockRDSClient.RestoreDBClusterFromSnapshotFunc = func(restoreDBClusterFromSnapshotInput *rds.RestoreDBClusterFromSnapshotInput) (*rds.RestoreDBClusterFromSnapshotOutput, error) {
+		restoreInput = restoreDBClusterFromSnapshotInput
+		return &rds.RestoreDBClusterFromSnapshotOutput{}, nil
+	}
+
+	// Mocking create function to make sure it was not called
+	var createCalled bool
+	mockRDSClient.CreateDBClusterFunc = func(createDBClusterInput *rds.CreateDBClusterInput) (*rds.CreateDBClusterOutput, error) {
+		createCalled = true
+		return nil, nil
+	}
+	// create function should not be called for restore operations
+
+	rds := RDS{
+		rdsClient: &mockRDSClient,
+	}
+
+	err := rds.ensureDBClusterCreated(clusterID, tenantID, "testpassword1234", false)
+
+	require.NoError(t, err)
+	require.NotNil(t, describeSnapshotInput)
+	require.NotNil(t, restoreInput)
+	assert.Equal(t, *describeSnapshotInput.DBClusterIdentifier, clusterID)
+	assert.Equal(t, *restoreInput.SnapshotIdentifier, *finalSnapshotID)
+	assert.False(t, createCalled)
+}
+
+func randomNonFinalSnapshotsID(clusterID string) *string {
+	return aws.String(fmt.Sprintf("%s-%s", clusterID, rand.String(20)))
 }
