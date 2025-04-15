@@ -444,12 +444,13 @@ var _ = Describe("Central", Ordered, func() {
 				res, err := adminAPI.RestoreCentral(ctx, centralRequestID)
 				Expect(err).To(Not(HaveOccurred()))
 				Expect(res.StatusCode).To(Equal(200))
-				It("should reach ready state", func() {
-					Eventually(testutil.AssertCentralRequestReady(ctx, client, centralRequestID)).
-						WithTimeout(waitTimeout).
-						WithPolling(defaultPolling).
-						Should(Succeed())
-				})
+			})
+
+			It("should reach ready state", func() {
+				Eventually(testutil.AssertCentralRequestReady(ctx, client, centralRequestID)).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(Succeed())
 			})
 
 			It("should delete all resources after deleting again", func() {
@@ -460,7 +461,7 @@ var _ = Describe("Central", Ordered, func() {
 						Should(Succeed())
 				})
 
-				It("by deleting external DNS entries", func() {
+				By("by deleting external DNS entries", func() {
 					testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
 					var centralRequest public.CentralRequest
 					Expect(testutil.GetCentralRequest(ctx, client, centralRequestID, &centralRequest)).
