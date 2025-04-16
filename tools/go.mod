@@ -1,6 +1,6 @@
 module github.com/stackrox/acs-fleet-manager/tools
 
-go 1.22
+go 1.23
 
 require (
 	github.com/matryer/moq v0.3.4
