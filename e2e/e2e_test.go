@@ -446,7 +446,7 @@ var _ = Describe("Central", Ordered, func() {
 				Expect(res.StatusCode).To(Equal(200))
 			})
 
-			It("should reach ready state", func() {
+			By("reaching ready state", func() {
 				Eventually(testutil.AssertCentralRequestReady(ctx, client, centralRequestID)).
 					WithTimeout(waitTimeout).
 					WithPolling(defaultPolling).
