@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

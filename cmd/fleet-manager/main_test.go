@@ -12,7 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 
 	. "github.com/onsi/gomega"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	"github.com/stackrox/acs-fleet-manager/internal/central"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/serviceregistration"
 )
@@ -21,7 +21,7 @@ func TestInjections(t *testing.T) {
 	RegisterTestingT(t)
 
 	env, err := environments.New(environments.DevelopmentEnv,
-		dinosaur.ConfigProviders(),
+		central.ConfigProviders(),
 	)
 
 	// Puts non-empty central IdP client secret value so config validation does not fail.

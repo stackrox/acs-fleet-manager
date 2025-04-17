@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/central/compat"
 )
 
 // PresentReferenceWith ...

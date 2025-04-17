@@ -11,7 +11,7 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/argox"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 )
 
 type runtimeApplicationsReconciler struct {

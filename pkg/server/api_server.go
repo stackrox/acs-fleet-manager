@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/goava/di"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/handlers"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/server/logging"

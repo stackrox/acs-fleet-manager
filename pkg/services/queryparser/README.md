@@ -14,7 +14,7 @@ error prone. For that reason, we provided some objects that simplifies the proce
 * `StateMachine`: this moves from one state to another according to the received token and the valid transitions from the current state
 * `StateMachineBuilder`: receives a `Grammar` object and configure a `StateMachine` accordingly
 * `QueryParser`: this is the only ad-hoc object. This configures the `StateMachine` to make it ready to be used
-to parse the SQL subset we use in the dinosaur list endpoint
+to parse the SQL subset we use in the central list endpoint
 
 ### The `Scanner`
 The scanner object is the lowest level object of the parser.
