@@ -9,7 +9,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"

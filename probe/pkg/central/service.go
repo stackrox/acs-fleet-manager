@@ -10,7 +10,7 @@ import (
 	"github.com/antihax/optional"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/acs-fleet-manager/probe/config"

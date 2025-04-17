@@ -24,7 +24,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cluster"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	fmAPI "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fleetmanager "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"

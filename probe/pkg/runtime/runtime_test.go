@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/central"
 	"github.com/stackrox/rox/pkg/concurrency"

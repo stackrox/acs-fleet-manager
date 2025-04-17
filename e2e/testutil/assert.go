@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/central/constants"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
