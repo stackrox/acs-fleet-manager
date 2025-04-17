@@ -180,29 +180,23 @@ var _ = Describe("Central", Ordered, func() {
 			Expect(testutil.GetCentralRequest(ctx, client, centralRequestID, &centralRequest)).
 				To(Succeed())
 
-			var reencryptRoute openshiftRouteV1.Route
-			Eventually(assertReencryptRouteExist(ctx, namespaceName, &reencryptRoute)).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(Succeed())
-
 			centralUIURL, err := url.Parse(centralRequest.CentralUIURL)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(centralUIURL.Scheme).To(Equal("https"))
-			Expect(reencryptRoute.Spec.Host).To(Equal(centralUIURL.Host))
-			Expect(reencryptRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationReencrypt))
 
-			var passthroughRoute openshiftRouteV1.Route
-			Eventually(assertPassthroughRouteExist(ctx, namespaceName, &passthroughRoute)).
+			Eventually(assertRouteExists(ctx, namespaceName, openshiftRouteV1.TLSTerminationReencrypt, centralUIURL.Host)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 
 			centralDataHost, centralDataPort, err := net.SplitHostPort(centralRequest.CentralDataURL)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(passthroughRoute.Spec.Host).To(Equal(centralDataHost))
 			Expect(centralDataPort).To(Equal("443"))
-			Expect(passthroughRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationPassthrough))
+
+			Eventually(assertRouteExists(ctx, namespaceName, openshiftRouteV1.TLSTerminationPassthrough, centralDataHost)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("should have created AWS Route53 records", func() {
@@ -213,7 +207,7 @@ var _ = Describe("Central", Ordered, func() {
 				To(Succeed())
 
 			var reencryptIngress openshiftRouteV1.RouteIngress
-			Eventually(testutil.AssertReencryptIngressRouteExist(context.Background(), routeService, namespaceName, &reencryptIngress)).
+			Eventually(testutil.AssertReencryptIngressRouteExist(context.Background(), routeService, centralRequest, &reencryptIngress)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())

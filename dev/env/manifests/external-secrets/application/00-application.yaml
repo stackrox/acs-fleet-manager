@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rhacs-external-secrets
+  namespace: "$ARGOCD_NAMESPACE"
+spec:
+  destination:
+    namespace: rhacs-external-secrets
+    server: https://kubernetes.default.svc
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        argocd.argoproj.io/managed-by: "$ARGOCD_NAMESPACE"
+        app.kubernetes.io/managed-by: "$ARGOCD_NAMESPACE"
+    retry:
+      limit: -1 # number of failed sync attempt retries; unlimited number of attempts if less than 0
+      backoff:
+        duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
+        factor: 2 # a factor to multiply the base duration after each failed retry
+        maxDuration: 3m # the maximum amount of time allowed for the backoff strategy
+  source:
+    chart: external-secrets
+    repoURL: https://charts.external-secrets.io
+    targetRevision: "$EXTERNAL_SECRETS_VERSION"
+    helm:
+      valuesObject:
+        image:
+          repository: quay.io/app-sre/external-secrets
+          tag: "$EXTERNAL_SECRETS_VERSION"
+        webhook:
+          image:
+            repository: quay.io/app-sre/external-secrets
+            tag: "$EXTERNAL_SECRETS_VERSION"
+        certController:
+          image:
+            repository: quay.io/app-sre/external-secrets
+            tag: "$EXTERNAL_SECRETS_VERSION"
