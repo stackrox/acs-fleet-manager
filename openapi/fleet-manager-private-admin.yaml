@@ -346,6 +346,7 @@ paths:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
   '/api/rhacs/v1/admin/centrals/{id}/restore':
     post:
+      operationId: restoreCentral
       summary: Restore a central tenant that was already deleted
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"

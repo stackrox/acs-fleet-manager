@@ -478,6 +478,7 @@ paths:
       summary: Rotate RHSSO client or Secret Backup of a central tenant
   /api/rhacs/v1/admin/centrals/{id}/restore:
     post:
+      operationId: restoreCentral
       parameters:
       - description: The ID of record
         in: path
