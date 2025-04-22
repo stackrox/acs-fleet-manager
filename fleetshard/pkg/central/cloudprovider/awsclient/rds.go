@@ -12,12 +12,20 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"k8s.io/apimachinery/pkg/util/rand"
 )
+
+// RDSClient is a wrapper around the rdsiface.RDSAPI to generate a mock
+//
+//go:generate moq -out rds_client_moq.go . RDSClient
+type RDSClient interface {
+	rdsiface.RDSAPI
+}
 
 const (
 	dbAvailableStatus = "available"
@@ -60,7 +68,7 @@ type RDS struct {
 	performanceInsights  bool
 	dataplaneClusterName string
 
-	rdsClient *rds.RDS
+	rdsClient rdsiface.RDSAPI
 }
 
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
