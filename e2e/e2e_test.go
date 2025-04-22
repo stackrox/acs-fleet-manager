@@ -452,28 +452,32 @@ var _ = Describe("Central", Ordered, func() {
 					WithPolling(defaultPolling).
 					Should(Succeed())
 			})
+		})
 
-			It("should delete all resources after deleting again", func() {
-				By("removing central namespace", func() {
-					Eventually(assertNamespaceDeleted(ctx, namespaceName)).
-						WithTimeout(waitTimeout).
-						WithPolling(defaultPolling).
-						Should(Succeed())
-				})
+		It("should delete restored resources", func() {
 
-				By("by deleting external DNS entries", func() {
-					testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
-					var centralRequest public.CentralRequest
-					Expect(testutil.GetCentralRequest(ctx, client, centralRequestID, &centralRequest)).
-						To(Succeed())
-					dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
-					Eventually(dnsRecordsLoader.LoadDNSRecords).
-						WithTimeout(waitTimeout).
-						WithPolling(defaultPolling).
-						Should(BeEmpty(), "Started at %s", time.Now())
-				})
+			By("calling the delete API", func() {
+				Expect(deleteCentralByID(ctx, client, centralRequestID)).To(Succeed())
 			})
 
+			By("removing central namespace", func() {
+				Eventually(assertNamespaceDeleted(ctx, namespaceName)).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(Succeed())
+			})
+
+			By("deleting external DNS entries", func() {
+				testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
+				var centralRequest public.CentralRequest
+				Expect(testutil.GetCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+					To(Succeed())
+				dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
+				Eventually(dnsRecordsLoader.LoadDNSRecords).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(BeEmpty(), "Started at %s", time.Now())
+			})
 		})
 
 	})
