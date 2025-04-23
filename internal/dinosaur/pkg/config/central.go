@@ -10,12 +10,12 @@ import (
 
 // CentralConfig ...
 type CentralConfig struct {
-	CentralTLSCert                   string `json:"central_tls_cert"`
-	CentralTLSCertFile               string `json:"central_tls_cert_file"`
-	CentralTLSKey                    string `json:"central_tls_key"`
-	CentralTLSKeyFile                string `json:"central_tls_key_file"`
-	EnableCentralExternalCertificate bool   `json:"enable_central_external_certificate"`
-	CentralDomainName                string `json:"central_domain_name"`
+	CentralTLSCert              string `json:"central_tls_cert"`
+	CentralTLSCertFile          string `json:"central_tls_cert_file"`
+	CentralTLSKey               string `json:"central_tls_key"`
+	CentralTLSKeyFile           string `json:"central_tls_key_file"`
+	EnableCentralExternalDomain bool   `json:"enable_central_external_domain"`
+	CentralDomainName           string `json:"central_domain_name"`
 
 	CentralLifespan *CentralLifespanConfig `json:"central_lifespan"`
 	Quota           *CentralQuotaConfig    `json:"central_quota"`
@@ -33,15 +33,15 @@ type CentralConfig struct {
 // NewCentralConfig ...
 func NewCentralConfig() *CentralConfig {
 	return &CentralConfig{
-		CentralTLSCertFile:               "secrets/central-tls.crt",
-		CentralTLSKeyFile:                "secrets/central-tls.key",
-		EnableCentralExternalCertificate: false,
-		CentralDomainName:                "rhacs-dev.com",
-		CentralLifespan:                  NewCentralLifespanConfig(),
-		Quota:                            NewCentralQuotaConfig(),
-		CentralIDPClientSecretFile:       "secrets/central.idp-client-secret", //pragma: allowlist secret
-		CentralIDPIssuer:                 "https://sso.redhat.com/auth/realms/redhat-external",
-		CentralRetentionPeriodDays:       7,
+		CentralTLSCertFile:          "secrets/central-tls.crt",
+		CentralTLSKeyFile:           "secrets/central-tls.key",
+		EnableCentralExternalDomain: false,
+		CentralDomainName:           "rhacs-dev.com",
+		CentralLifespan:             NewCentralLifespanConfig(),
+		Quota:                       NewCentralQuotaConfig(),
+		CentralIDPClientSecretFile:  "secrets/central.idp-client-secret", //pragma: allowlist secret
+		CentralIDPIssuer:            "https://sso.redhat.com/auth/realms/redhat-external",
+		CentralRetentionPeriodDays:  7,
 	}
 }
 
@@ -49,7 +49,7 @@ func NewCentralConfig() *CentralConfig {
 func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.CentralTLSCertFile, "central-tls-cert-file", c.CentralTLSCertFile, "File containing central certificate")
 	fs.StringVar(&c.CentralTLSKeyFile, "central-tls-key-file", c.CentralTLSKeyFile, "File containing central certificate private key")
-	fs.BoolVar(&c.EnableCentralExternalCertificate, "enable-central-external-certificate", c.EnableCentralExternalCertificate, "Enable custom certificate for Central TLS")
+	fs.BoolVar(&c.EnableCentralExternalDomain, "enable-central-external-domain", c.EnableCentralExternalDomain, "Enable custom domain for Central TLS")
 	fs.BoolVar(&c.CentralLifespan.EnableDeletionOfExpiredCentral, "enable-deletion-of-expired-central", c.CentralLifespan.EnableDeletionOfExpiredCentral, "Enable the deletion of centrals when its life span has expired")
 	fs.IntVar(&c.CentralLifespan.CentralLifespanInHours, "central-lifespan", c.CentralLifespan.CentralLifespanInHours, "The desired lifespan of a Central instance")
 	fs.StringVar(&c.CentralDomainName, "central-domain-name", c.CentralDomainName, "The domain name to use for Central instances")

@@ -102,7 +102,7 @@ export ROUTE53_ACCESS_KEY="<key-id>"
 export ROUTE53_SECRET_ACCESS_KEY="<secret-key>"
 
 # Depending on cluster type and its default configuration you might need
-export ENABLE_CENTRAL_EXTERNAL_CERTIFICATE_DEFAULT=true
+export ENABLE_CENTRAL_EXTERNAL_DOMAIN_DEFAULT=true
 
 # If the domain you test against is not the default dev domain
 export CENTRAL_DOMAIN_NAME="<domain>"
