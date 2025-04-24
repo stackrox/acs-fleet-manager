@@ -5,9 +5,9 @@ import (
 	"net/url"
 
 	"github.com/pkg/errors"
-	admin "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	admin "github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/admin/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 	fleetmanager "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 

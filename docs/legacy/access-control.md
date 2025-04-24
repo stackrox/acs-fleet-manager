@@ -6,4 +6,4 @@ Users can be denied access to the service explicitly by adding their usernames i
 
 The username is the account in question.
 
->NOTE: Once a user is in the deny list, all Dinosaurs created by this user will be deprovisioned.
+>NOTE: Once a user is in the deny list, all Centrals created by this user will be deprovisioned.

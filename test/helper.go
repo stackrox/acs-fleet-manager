@@ -10,14 +10,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/testutils"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	ocm "github.com/stackrox/acs-fleet-manager/pkg/client/ocm/impl"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/central/compat"
 
 	"github.com/goava/di"
 	"github.com/golang/glog"
@@ -29,7 +29,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/rs/xid"
-	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
+	adminprivate "github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"

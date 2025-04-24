@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 )
 
 func Test_runtimeApplicationsReconciler_reconcile_emptyList(t *testing.T) {

@@ -5,9 +5,9 @@ package mocks
 
 import (
 	"context"
-	admin "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	admin "github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/admin/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"net/http"
 	"sync"

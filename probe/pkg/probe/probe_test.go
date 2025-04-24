@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/internal/central/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	centralPkg "github.com/stackrox/acs-fleet-manager/probe/pkg/central"
 	"github.com/stackrox/rox/pkg/concurrency"

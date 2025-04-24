@@ -122,11 +122,9 @@ $ make db/migrate
 
 #### Background
 
-This project was started from a fleet-manager template with an example "Dinosaur" application as a managed service.
-Implementations which reference "Dinosaur" are replaced iteratively.
+This project was started from a fleet-manager template.
 
-For a real service written using the same fleet management pattern see the
-[kas-fleet-manager](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager).
+Another fleet manager which was built from the same template [kas-fleet-manager](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager).
 Original [fleet-manager template](https://github.com/bf2fc6cc711aee1a0c2a/ffm-fleet-manager-go-template).
 
 To contact the people that created this template go to [zulip](https://bf2.zulipchat.com/).

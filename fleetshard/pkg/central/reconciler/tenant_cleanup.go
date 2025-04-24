@@ -3,9 +3,10 @@ package reconciler
 import (
 	"context"
 	"fmt"
+
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 

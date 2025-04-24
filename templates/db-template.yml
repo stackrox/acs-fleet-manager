@@ -5,7 +5,7 @@ metadata:
   annotations:
     description: PostgreSQL database service for use with the Managed Services API
     iconClass: icon-postgresql
-    openshift.io/display-name: Dinosaur Service Fleet Manager PostgreSQL Database
+    openshift.io/display-name: ACSCS Fleet Manager PostgreSQL Database
     tags: database,postgresql
   name: fleet-manager-db
 parameters:
@@ -17,7 +17,7 @@ parameters:
 
   - name: DATABASE_SERVICE_NAME
     description: The name of the OpenShift Service exposed for the database.
-    displayName: Dinosaur Service Fleet Manager Database
+    displayName: ACSCS Fleet Manager Database
     required: true
     value: fleet-manager-db
 

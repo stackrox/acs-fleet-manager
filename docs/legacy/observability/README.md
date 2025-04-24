@@ -5,7 +5,7 @@ This README will outline the adaptations and modifications that need to be made 
 The file [metrics.go](../../pkg/metrics/metrics.go) creates Prometheus metrics of differing types. These are the metrics which are then reported and visualised in each Grafana dashboard.
 See [here](https://prometheus.io/docs/concepts/metric_types/) for more info about Prometheus metric types
 
-These metrics are grouped by metric subject: data plane clusters, service ('central' for this template) and reconcilers. These metrics need to be updated with service name (ie 'dinosaur' replaced and service name included).
+These metrics are grouped by metric subject: data plane clusters, service ('central' for this template) and reconcilers. These metrics need to be updated with service name.
 
 The file [metrics_middleware.go](../../pkg/handlers/metrics_middleware.go) creates metrics concerned with incoming API requests. This file contains useful and important information about how these metrics are written and reported.
 
@@ -15,7 +15,6 @@ See the [Getting Started](https://grafana.com/docs/grafana/latest/getting-starte
 See the [JSON Model](https://grafana.com/docs/grafana/latest/dashboards/json-model/?pg=docs) section for more info about Grafana Dashboard JSON models
 
 ### Dashboard fields to be updated
-In general `dinosaur` has been used as placeholder throughout this template and should be replaced with the service being used.
 
 There are three `config.yaml` files located in `observability` folder responsible for generating Grafana dashboards:
 * `grafana-dashboard-fleet-manager-metrics.configmap.yaml`

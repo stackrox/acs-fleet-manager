@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/golang/glog"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	"github.com/stackrox/acs-fleet-manager/internal/central"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
@@ -30,7 +30,7 @@ var serverConfig *server.ServerConfig
 func TestMain(m *testing.M) {
 	var err error
 	env, err = environments.New(environments.GetEnvironmentStrFromEnv(),
-		dinosaur.ConfigProviders(),
+		central.ConfigProviders(),
 	)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
@@ -79,7 +79,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, err := http.NewRequest("GET", "/api/dinosaurs_mgmt/dinosaurs", nil) // TODO change here to call your fleet manager endpoint
+			req, err := http.NewRequest("GET", "/api/centrals_mgmt/centrals", nil) // TODO change here to call your fleet manager endpoint
 			Expect(err).NotTo(HaveOccurred())
 
 			rr := httptest.NewRecorder()

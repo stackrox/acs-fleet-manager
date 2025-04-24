@@ -5,7 +5,7 @@ package central
 
 import (
 	"context"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 	"sync"
 )
 

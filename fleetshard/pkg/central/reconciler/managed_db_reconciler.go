@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	admin "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	admin "github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/admin/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 )
 
 //go:generate moq -rm -out mocks/client_moq.go -pkg mocks . PublicAPI PrivateAPI AdminAPI
