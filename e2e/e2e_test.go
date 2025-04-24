@@ -240,10 +240,6 @@ var _ = Describe("Central", Ordered, func() {
 			Expect(putGitopsConfig(ctx, cfg)).To(Succeed())
 		})
 
-		// TODO(ROX-11368): Add test to eventually reach ready state
-		// TODO(ROX-11368): create test to check that Central and Scanner are healthy
-		// TODO(ROX-11368): Create test to check Central is correctly exposed
-
 		It("should restore secrets and deployment on namespace delete", func() {
 			// Using managedDB false here because e2e don't run with managed postgresql
 			secretBackup := k8s.NewSecretBackup(k8sClient, false)
@@ -442,6 +438,48 @@ var _ = Describe("Central", Ordered, func() {
 				WithPolling(defaultPolling).
 				Should(BeEmpty(), "Started at %s", time.Now())
 		})
+
+		It("should be restorable", func() {
+			By("calling the admin restore API", func() {
+				res, err := adminAPI.RestoreCentral(ctx, centralRequestID)
+				Expect(err).To(Not(HaveOccurred()))
+				Expect(res.StatusCode).To(Equal(200))
+			})
+
+			By("reaching ready state", func() {
+				Eventually(testutil.AssertCentralRequestReady(ctx, client, centralRequestID)).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(Succeed())
+			})
+		})
+
+		It("should delete restored resources", func() {
+
+			By("calling the delete API", func() {
+				Expect(deleteCentralByID(ctx, client, centralRequestID)).To(Succeed())
+			})
+
+			By("removing central namespace", func() {
+				Eventually(assertNamespaceDeleted(ctx, namespaceName)).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(Succeed())
+			})
+
+			By("deleting external DNS entries", func() {
+				testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
+				var centralRequest public.CentralRequest
+				Expect(testutil.GetCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+					To(Succeed())
+				dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
+				Eventually(dnsRecordsLoader.LoadDNSRecords).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(BeEmpty(), "Started at %s", time.Now())
+			})
+		})
+
 	})
 
 	Describe("should be deployed and can be force-deleted", Ordered, func() {

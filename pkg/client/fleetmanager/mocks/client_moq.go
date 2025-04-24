@@ -612,6 +612,9 @@ var _ fleetmanager.AdminAPI = &AdminAPIMock{}
 //			GetCentralsFunc: func(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error) {
 //				panic("mock out the GetCentrals method")
 //			},
+//			RestoreCentralFunc: func(ctx context.Context, id string) (*http.Response, error) {
+//				panic("mock out the RestoreCentral method")
+//			},
 //			UpdateCentralNameByIdFunc: func(ctx context.Context, id string, centralUpdateNameRequest admin.CentralUpdateNameRequest) (admin.Central, *http.Response, error) {
 //				panic("mock out the UpdateCentralNameById method")
 //			},
@@ -636,6 +639,9 @@ type AdminAPIMock struct {
 
 	// GetCentralsFunc mocks the GetCentrals method.
 	GetCentralsFunc func(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error)
+
+	// RestoreCentralFunc mocks the RestoreCentral method.
+	RestoreCentralFunc func(ctx context.Context, id string) (*http.Response, error)
 
 	// UpdateCentralNameByIdFunc mocks the UpdateCentralNameById method.
 	UpdateCentralNameByIdFunc func(ctx context.Context, id string, centralUpdateNameRequest admin.CentralUpdateNameRequest) (admin.Central, *http.Response, error)
@@ -683,6 +689,13 @@ type AdminAPIMock struct {
 			// LocalVarOptionals is the localVarOptionals argument value.
 			LocalVarOptionals *admin.GetCentralsOpts
 		}
+		// RestoreCentral holds details about calls to the RestoreCentral method.
+		RestoreCentral []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+		}
 		// UpdateCentralNameById holds details about calls to the UpdateCentralNameById method.
 		UpdateCentralNameById []struct {
 			// Ctx is the ctx argument value.
@@ -698,6 +711,7 @@ type AdminAPIMock struct {
 	lockCreateCentral         sync.RWMutex
 	lockDeleteDbCentralById   sync.RWMutex
 	lockGetCentrals           sync.RWMutex
+	lockRestoreCentral        sync.RWMutex
 	lockUpdateCentralNameById sync.RWMutex
 }
 
@@ -890,6 +904,42 @@ func (mock *AdminAPIMock) GetCentralsCalls() []struct {
 	mock.lockGetCentrals.RLock()
 	calls = mock.calls.GetCentrals
 	mock.lockGetCentrals.RUnlock()
+	return calls
+}
+
+// RestoreCentral calls RestoreCentralFunc.
+func (mock *AdminAPIMock) RestoreCentral(ctx context.Context, id string) (*http.Response, error) {
+	if mock.RestoreCentralFunc == nil {
+		panic("AdminAPIMock.RestoreCentralFunc: method is nil but AdminAPI.RestoreCentral was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		ID  string
+	}{
+		Ctx: ctx,
+		ID:  id,
+	}
+	mock.lockRestoreCentral.Lock()
+	mock.calls.RestoreCentral = append(mock.calls.RestoreCentral, callInfo)
+	mock.lockRestoreCentral.Unlock()
+	return mock.RestoreCentralFunc(ctx, id)
+}
+
+// RestoreCentralCalls gets all the calls that were made to RestoreCentral.
+// Check the length with:
+//
+//	len(mockedAdminAPI.RestoreCentralCalls())
+func (mock *AdminAPIMock) RestoreCentralCalls() []struct {
+	Ctx context.Context
+	ID  string
+} {
+	var calls []struct {
+		Ctx context.Context
+		ID  string
+	}
+	mock.lockRestoreCentral.RLock()
+	calls = mock.calls.RestoreCentral
+	mock.lockRestoreCentral.RUnlock()
 	return calls
 }
 
