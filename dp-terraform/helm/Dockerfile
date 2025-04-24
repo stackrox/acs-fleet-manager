@@ -15,7 +15,7 @@ ARG IMAGE_TAG=latest
 RUN yq -i ".global.image.tag = strenv(IMAGE_TAG)" rhacs-terraform/values.yaml
 
 # RH catalog see: https://catalog.redhat.com/software/containers/openshift4/ose-helm-operator
-FROM registry.redhat.io/openshift4/ose-helm-operator:v4.15.0-202411130135.p0.g52fc4b9.assembly.stream.el8
+FROM registry.redhat.io/openshift4/ose-helm-operator:v4.15.0-202503310336.p0.g52fc4b9.assembly.stream.el8
 
 ENV HOME=/opt/helm
 ENV ADDON_NAME=acs-fleetshard
