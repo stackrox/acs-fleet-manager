@@ -17,7 +17,6 @@ metadata:
     pipelines.appstudio.openshift.io/type: build
   name: acs-fleet-manager-on-push
   namespace: acscs-rhacs-tenant
-
 spec:
   params:
   - name: git-url
@@ -30,11 +29,10 @@ spec:
     value: Dockerfile
   - name: path-context
     value: .
-
   pipelineRef:
     name: base-acscs-pipeline
-
-  taskRunTemplate: {}
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-acs-fleet-manager
   workspaces:
   - name: workspace
     volumeClaimTemplate:

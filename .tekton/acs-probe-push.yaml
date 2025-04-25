@@ -29,11 +29,10 @@ spec:
     value: probe/Dockerfile
   - name: path-context
     value: .
-
   pipelineRef:
     name: base-acscs-pipeline
-
-  taskRunTemplate: {}
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-acs-probe
   workspaces:
   - name: workspace
     volumeClaimTemplate:
