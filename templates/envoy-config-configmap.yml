@@ -148,14 +148,14 @@ data:
                   # directly to the service without rate limiting
                   - name: fleet-shard-operator-agent-cluster-routes
                     match:
-                      prefix: /api/centrals_mgmt/v1/agent-clusters
+                      prefix: /api/rhacs/v1/agent-clusters
                     route:
                       cluster: backend
 
                   # Apply rate limit to all other fleet-manager endpoints
                   - name: fleet-manager-v1-routes
                     match:
-                      prefix: /api/centrals_mgmt/v1
+                      prefix: /api/rhacs/v1
                     route:
                       cluster: backend
                       rate_limits:
@@ -221,6 +221,6 @@ data:
                     json_format:
                       kind: "Error"
                       id: "429"
-                      href: "/api/centrals_mgmt/v1/errors/429"
+                      href: "/api/rhacs/v1/errors/429"
                       code: "CENTRALS-MGMT-429"
                       reason: "Too Many Requests"

@@ -32,7 +32,7 @@ and retrieve OCM tokens using it. To do so:
 1. Generate an OCM token by running: `ocm token`. The generated token is the token
    that should be used to perform a request to the Fleet Manager API. For example:
   ```
-  curl -H "Authorization: Bearer <result-of-ocm-token-command>" http://127.0.0.1:/8000/api/centrals_mgmt
+  curl -H "Authorization: Bearer <result-of-ocm-token-command>" http://127.0.0.1:/8000/api/rhacs/v1
   ```
   OCM tokens other than the OCM offline token have an expiration time so a
   new one will need to be generated when that happens

@@ -18,7 +18,7 @@ Project source is to be found under `$GOPATH/src` by a distinct directory path.
 /cmd
   /fleet-manager  -- Main CLI entrypoint
 /internal   -- service specific implementations
-   /central -- should be renamed to central
+   /central -- represents ACS Central component (central, external central-db, scanner, scanner-db)
        providers.go -- centrals service injection setup
       /test  -- integration test folder
       /internal

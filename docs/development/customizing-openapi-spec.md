@@ -56,14 +56,14 @@ The following are some general things that you can update or add to this templat
 
 Further customizations for existing endpoints are described in the following sections below.
 
-### (GET) ​/api​/centrals_mgmt​/v1​/agent-clusters​/{id}
+### (GET) ​/api​/rhacs/v1​/agent-clusters​/{id}
 This endpoint is intended to be used by the agent in a given data plane cluster to get the agents' own configuration from the control plane.
 The configuration is defined in the `DataplaneClusterAgentConfig` OpenAPI data type
 
 ##### Customizations
 Modify this OpenAPI type in the OpenAPI spec to define the information you to be part of the data plane cluster agent configuration
 
-### (PUT) /api/centrals_mgmt/v1/agent-clusters/{id}/status
+### (PUT) /api/rhacs/v1/agent-clusters/{id}/status
 This endpoint is intended to be used by the agent to report to the control plane the status of a data plane cluster.
 
 #### Request
@@ -79,7 +79,7 @@ The template currently has three example responses defined. The following change
 - Addition of any other responses can be added here to suit your requirements.
 - Update any references of 'Central' to the name of your service.
 
-### (GET) /api/centrals_mgmt/v1/agent-clusters/{id}/centrals
+### (GET) /api/rhacs/v1/agent-clusters/{id}/centrals
 This endpoint is intended to be used by the agent to get a list of existing or new custom resources
 for instances/clusters (i.e. 'ManagedCentral') that is currently or will be managed by the agent on the data plane cluster.
 
@@ -94,7 +94,7 @@ Further customizations for specific responses can be seen in the sections below.
 ###### 200
 **ManagedCentralList** is the schema used to define the response body for this endpoint. The fields for each 'Managed Central' custom resource is defined by the schema **ManagedCentral**.
 
-### (PUT) /api/centrals_mgmt/v1/agent-clusters/{id}/centrals/status
+### (PUT) /api/rhacs/v1/agent-clusters/{id}/centrals/status
 This endpoint is intended to be used by the agent to report to the control plane the statuses of instances or clusters managed by the agent (i.e. 'Central' clusters).
 
 #### Request
