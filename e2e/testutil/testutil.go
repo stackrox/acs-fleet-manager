@@ -8,7 +8,7 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 

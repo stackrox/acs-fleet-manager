@@ -1,7 +1,7 @@
 package reconciler
 
 import (
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

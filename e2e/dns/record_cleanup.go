@@ -3,8 +3,8 @@ package dns
 import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	. "github.com/onsi/gomega"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/services"
 )
 
 // CleanupCentralRequestRecords deletes all route53 resoruces associated with the centralRequest

@@ -13,7 +13,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	core "k8s.io/api/core/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )

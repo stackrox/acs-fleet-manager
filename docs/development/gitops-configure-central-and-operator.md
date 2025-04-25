@@ -14,7 +14,7 @@ See: [Gitops repo](https://gitlab.cee.redhat.com/stackrox/acs-cloud-service/conf
 
 ### Gitops Flow
 
-See: [detailed diagram](../../internal/dinosaur/pkg/gitops/README.md)
+See: [detailed diagram](../../internal/central/pkg/gitops/README.md)
 
 
 ## Benefits

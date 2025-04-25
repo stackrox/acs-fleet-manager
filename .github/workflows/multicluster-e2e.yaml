@@ -10,8 +10,8 @@ on:
       - '.github/workflows/multicluster-e2e.yaml'
       - 'scripts/ci/**'
       - 'scripts/lib/**'
-      - 'internal/pkg/handlers/admin_dinosaur.go'
-      - 'internal/dinosaur/pkg/services/dinosaur.go'
+      - 'internal/central/pkg/handlers/admin_central.go'
+      - 'internal/central/pkg/services/central.go'
 
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -21,8 +21,8 @@ on:
       - '.github/workflows/multicluster-e2e.yaml'
       - 'scripts/ci/**'
       - 'scripts/lib/**'
-      - 'internal/pkg/handlers/admin_dinosaur.go'
-      - 'internal/dinosaur/pkg/services/dinosaur.go'
+      - 'internal/central/pkg/handlers/admin_central.go'
+      - 'internal/central/pkg/services/central.go'
 
 jobs:
   create-cluster:

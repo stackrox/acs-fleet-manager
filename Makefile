@@ -329,17 +329,17 @@ test/aws: $(GOTESTSUM_BIN)
 #   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
-test/integration/dinosaur: $(GOTESTSUM_BIN)
+test/integration/central: $(GOTESTSUM_BIN)
 	OCM_ENV=integration $(GOTESTSUM_BIN) --junitfile data/results/fleet-manager-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
-				./internal/dinosaur/test/integration/...
-.PHONY: test/integration/dinosaur
+				./internal/central/test/integration/...
+.PHONY: test/integration/central
 
 test/dp-terraform: $(GOTESTSUM_BIN)
 	$(GOTESTSUM_BIN) --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
 				./dp-terraform/test/...
 .PHONY: test/dp-terraform
 
-test/integration: test/integration/dinosaur test/dp-terraform
+test/integration: test/integration/central test/dp-terraform
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM
@@ -417,24 +417,24 @@ openapi/generate: openapi/generate/public openapi/generate/private openapi/gener
 .PHONY: openapi/generate
 
 openapi/generate/public: openapi-generator
-	rm -rf internal/dinosaur/pkg/api/public
+	rm -rf internal/central/pkg/api/public
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager.yaml -g go -o internal/dinosaur/pkg/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/dinosaur/pkg/api/public
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager.yaml -g go -o internal/central/pkg/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/central/pkg/api/public
 .PHONY: openapi/generate/public
 
 openapi/generate/private: openapi-generator
-	rm -rf internal/dinosaur/pkg/api/private
+	rm -rf internal/central/pkg/api/private
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private.yaml -g go -o internal/dinosaur/pkg/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/dinosaur/pkg/api/private
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private.yaml -g go -o internal/central/pkg/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/central/pkg/api/private
 .PHONY: openapi/generate/private
 
 openapi/generate/admin: openapi-generator
-	rm -rf internal/dinosaur/pkg/api/admin/private
+	rm -rf internal/central/pkg/api/admin/private
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private-admin.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private-admin.yaml -g go -o internal/dinosaur/pkg/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/dinosaur/pkg/api/admin/private
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private-admin.yaml -g go -o internal/central/pkg/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/central/pkg/api/admin/private
 .PHONY: openapi/generate/admin
 
 openapi/generate/rhsso: openapi-generator

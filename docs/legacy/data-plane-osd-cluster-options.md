@@ -2,13 +2,13 @@
 ## Using an existing OSD Cluster
 
 Any OSD cluster can be used by the service, it does not have to be created with the service itself. If you already have an existing OSD
-cluster, you will need to register it in the database so that it can be used by the service for incoming Dinosaur requests.  The cluster must have been created with multizone availability.
+cluster, you will need to register it in the database so that it can be used by the service for incoming Central requests.  The cluster must have been created with multizone availability.
 
 Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`) using the CLI
         - Run `ocm list clusters`
         - The ID should be displayed under the ID column
 
->NOTE: By default the auto scaling feature is disabled in development mode. You can enable it by passing `--dataplane-cluster-scaling-type=auto` when starting a built binary. Or changing the default value in [default development environment flags file](../internal/dinosaur/pkg/environments/development.go) when using `make run` to start the API.
+>NOTE: By default the auto scaling feature is disabled in development mode. You can enable it by passing `--dataplane-cluster-scaling-type=auto` when starting a built binary. Or changing the default value in [default development environment flags file](../internal/central/pkg/environments/development.go) when using `make run` to start the API.
 
 ## Using an existing OSD cluster with manual scaling enabled
 
@@ -41,20 +41,20 @@ clusters:
     region: us-east-1
     multi_az: true
     schedulable: true # change this to false if you do not want the cluster to be schedulable
-    dinosaur_instance_limit: 2 # change this to match any value of configuration
+    central_instance_limit: 2 # change this to match any value of configuration
     supported_instance_type: "standard,eval" # could be "eval", "standard" or both i.e "standard,eval" or "eval,standard". Defaults to "standard,eval" if not set
 ```
 ### Connecting to a standalone cluster
 
-fleet-manager allows provisioning of dinosaurs in an already preexisting standalone dataplane cluster. To do so, add the standalone cluster in the [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml) giving the:
+fleet-manager allows provisioning of centrals in an already preexisting standalone dataplane cluster. To do so, add the standalone cluster in the [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml) giving the:
  - `name` of the kubeconfig context to use. This option is required and it has to be an existing name of a context in kubeconfig
  - `provider_type` must be set to `standalone`. This is required to indicate that we are using a standalone
- - `cluster_dns` This will be used to build dinosaur host url and to communicate with clusters e.g `apps.example.dns.com`. This option is required.
+ - `cluster_dns` This will be used to build central host url and to communicate with clusters e.g `apps.example.dns.com`. This option is required.
  - `cloud_provider` the cloud provider where the standalone cluster is provisioned in
  - `region` the cloud region where the standalone cluster is provisioned
  - ... rest of the options
 
-> NOTE: [OLM](https://github.com/operator-framework/operator-lifecycle-manager#installation) in the destination standalone cluster/s is a prerequisite to be able to install dinosaur operator and fleetshard operators
+> NOTE: [OLM](https://github.com/operator-framework/operator-lifecycle-manager#installation) in the destination standalone cluster/s is a prerequisite to be able to install central operator and fleetshard operators
 
 ## Configuring OSD Cluster Creation and AutoScaling
 
@@ -78,7 +78,7 @@ Once auto scaling is enabled this will activate the scaling up/down of compute n
             - Run `./fleet-manager migrate`
         - Once the table is available, the generated **INSERT** command can now be run.
 
-2. Ensure the cluster is ready to be used for incoming Dinosaur requests.
-    - Take note of the status of the cluster, `cluster_provisioned`, when you registered it to the database in step 2. This means that the cluster has been successfully provisioned but still have remaining resources to set up (i.e. Dinosaur operator installation).
-    - Run the service using `make run` and let it reconcile resources required in order to make the cluster ready to be used by Dinosaur requests.
-    - Once done, the cluster status in your database should have changed to `ready`. This means that the service can now assign this cluster to any incoming Dinosaur requests so that the service can process them.
+2. Ensure the cluster is ready to be used for incoming Central requests.
+    - Take note of the status of the cluster, `cluster_provisioned`, when you registered it to the database in step 2. This means that the cluster has been successfully provisioned but still have remaining resources to set up (i.e. Central operator installation).
+    - Run the service using `make run` and let it reconcile resources required in order to make the cluster ready to be used by Central requests.
+    - Once done, the cluster status in your database should have changed to `ready`. This means that the service can now assign this cluster to any incoming Central requests so that the service can process them.

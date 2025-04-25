@@ -4,7 +4,7 @@ package metrics
 import (
 	"time"
 
-	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/central/constants"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -191,7 +191,7 @@ var clusterOperationsSuccessCountMetric = prometheus.NewCounterVec(
 )
 
 // IncreaseClusterSuccessOperationsCountMetric - increase counter for clusterOperationsSuccessCountMetric
-func IncreaseClusterSuccessOperationsCountMetric(operation constants2.ClusterOperation) {
+func IncreaseClusterSuccessOperationsCountMetric(operation constants.ClusterOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}
@@ -249,7 +249,7 @@ var clusterStatusCapacityUsedMetric = prometheus.NewGaugeVec(
 )
 
 // IncreaseClusterTotalOperationsCountMetric - increase counter for clusterOperationsTotalCountMetric
-func IncreaseClusterTotalOperationsCountMetric(operation constants2.ClusterOperation) {
+func IncreaseClusterTotalOperationsCountMetric(operation constants.ClusterOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}
@@ -385,7 +385,7 @@ var centralOperationsSuccessCountMetric = prometheus.NewCounterVec(
 )
 
 // UpdateCentralRequestsStatusSinceCreatedMetric ...
-func UpdateCentralRequestsStatusSinceCreatedMetric(status constants2.CentralStatus, centralID string, clusterID string, elapsed time.Duration) {
+func UpdateCentralRequestsStatusSinceCreatedMetric(status constants.CentralStatus, centralID string, clusterID string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelStatus:    string(status),
 		LabelID:        centralID,
@@ -395,7 +395,7 @@ func UpdateCentralRequestsStatusSinceCreatedMetric(status constants2.CentralStat
 }
 
 // UpdateCentralRequestsStatusCountMetric ...
-func UpdateCentralRequestsStatusCountMetric(status constants2.CentralStatus, count int) {
+func UpdateCentralRequestsStatusCountMetric(status constants.CentralStatus, count int) {
 	labels := prometheus.Labels{
 		LabelStatus: string(status),
 	}
@@ -441,7 +441,7 @@ func IncreaseCentralTimeoutCountMetric(centralID, clusterID string) {
 }
 
 // IncreaseCentralSuccessOperationsCountMetric - increase counter for the centralOperationsSuccessCountMetric
-func IncreaseCentralSuccessOperationsCountMetric(operation constants2.CentralOperation) {
+func IncreaseCentralSuccessOperationsCountMetric(operation constants.CentralOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}
@@ -459,7 +459,7 @@ var centralOperationsTotalCountMetric = prometheus.NewCounterVec(
 )
 
 // IncreaseCentralTotalOperationsCountMetric - increase counter for the centralOperationsTotalCountMetric
-func IncreaseCentralTotalOperationsCountMetric(operation constants2.CentralOperation) {
+func IncreaseCentralTotalOperationsCountMetric(operation constants.CentralOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}

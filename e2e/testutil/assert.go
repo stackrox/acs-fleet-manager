@@ -9,9 +9,9 @@ import (
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/internal/central/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 

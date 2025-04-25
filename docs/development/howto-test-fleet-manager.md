@@ -37,7 +37,7 @@ $ fmcurl 'rhacs/v1/centrals?async=true' -XPOST --data-binary '@./central-request
 ```
 $ make db/psql
 [...]
-serviceapitests=# select * from dinosaur_requests ;
+serviceapitests=# select * from central_requests ;
 ┌─[ RECORD 1 ]──────────────────────┬──────────────────────────────────┐
 │ id                                │ ca6duifafa3g1gsiu3jg             │
 │ created_at                        │ 2022-05-24 13:36:09.416818+00    │
@@ -56,12 +56,12 @@ serviceapitests=# select * from dinosaur_requests ;
 │ organisation_id                   │ 11009103                         │
 │ failed_reason                     │                                  │
 │ placement_id                      │                                  │
-│ desired_dinosaur_version          │                                  │
-│ actual_dinosaur_version           │                                  │
-│ desired_dinosaur_operator_version │                                  │
-│ actual_dinosaur_operator_version  │                                  │
-│ dinosaur_upgrading                │ f                                │
-│ dinosaur_operator_upgrading       │ f                                │
+│ desired_central_version           │                                  │
+│ actual_central_version            │                                  │
+│ desired_central_operator_version  │                                  │
+│ actual_central_operator_version   │                                  │
+│ central_upgrading                 │ f                                │
+│ central_operator_upgrading        │ f                                │
 │ instance_type                     │ eval                             │
 │ quota_type                        │ quota-management-list            │
 │ routes                            │                                  │
@@ -73,7 +73,7 @@ serviceapitests=# select * from dinosaur_requests ;
 
 After some reconciliations the central request should automatically transition to `provisioning`.
 
-### Transition Dinosaur to ready
+### Transition Central to ready
 
 ```
 $ export CENTRAL_ID=$(fmcurl rhacs/v1/agent-clusters/1234567890abcdef1234567890abcdef/centrals | jq -r '.items[0].id')
@@ -86,7 +86,7 @@ Yes, this needs to be called twice to reflect fleetshard-sync's expected behavio
 Yields:
 
 ```
-serviceapitests=# select * from dinosaur_requests ;
+serviceapitests=# select * from central_requests ;
 ┌─[ RECORD 1 ]──────────────────────┬──────────────────────────────────────────────────────┐
 │ id                                │ ca6e9bnafa3gja5a36pg                                 │
 │ created_at                        │ 2022-05-24 13:59:10.918577+00                        │
@@ -105,12 +105,12 @@ serviceapitests=# select * from dinosaur_requests ;
 │ organisation_id                   │ 11009103                                             │
 │ failed_reason                     │                                                      │
 │ placement_id                      │                                                      │
-│ desired_dinosaur_version          │                                                      │
-│ actual_dinosaur_version           │ 2.4.1                                                │
-│ desired_dinosaur_operator_version │                                                      │
-│ actual_dinosaur_operator_version  │ 0.21.2                                               │
-│ dinosaur_upgrading                │ f                                                    │
-│ dinosaur_operator_upgrading       │ f                                                    │
+│ desired_central_version          │                                                      │
+│ actual_central_version           │ 2.4.1                                                │
+│ desired_central_operator_version │                                                      │
+│ actual_central_operator_version  │ 0.21.2                                               │
+│ central_upgrading                │ f                                                    │
+│ central_operator_upgrading       │ f                                                    │
 │ instance_type                     │ eval                                                 │
 │ quota_type                        │ quota-management-list                                │
 │ routes                            │ \x5b7b22446f6d61696e223a22746573742d726f7574652[...] │

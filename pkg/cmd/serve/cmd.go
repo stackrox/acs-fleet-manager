@@ -17,7 +17,7 @@ func NewServeCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Serve the fleet-manager",
-		Long:  "Serve the Dinosaur Service Fleet Manager.",
+		Long:  "Serve the ACS Cloud Services Fleet Manager.",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			err := env.CreateServices()
 			if err != nil {

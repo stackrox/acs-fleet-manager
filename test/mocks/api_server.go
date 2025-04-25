@@ -128,7 +128,7 @@ const (
 var (
 	EndpointClusterGet               = Endpoint{EndpointPathCluster, http.MethodGet}
 	EndpointClusterPatch             = Endpoint{EndpointPathCluster, http.MethodPatch}
-	EndpointDinosaurDelete           = Endpoint{EndpointPathSyncset, http.MethodDelete}
+	EndpointCentralDelete            = Endpoint{EndpointPathSyncset, http.MethodDelete}
 	EndpointClustersGet              = Endpoint{EndpointPathClusters, http.MethodGet}
 	EndpointClustersPost             = Endpoint{EndpointPathClusters, http.MethodPost}
 	EndpointClusterDelete            = Endpoint{EndpointPathCluster, http.MethodDelete}
@@ -286,7 +286,7 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 	return HandlerRegister{
 		EndpointClusterGet:               buildMockRequestHandler(MockCluster, nil),
 		EndpointClusterPatch:             buildMockRequestHandler(MockCluster, nil),
-		EndpointDinosaurDelete:           buildMockRequestHandler(MockSyncset, nil),
+		EndpointCentralDelete:            buildMockRequestHandler(MockSyncset, nil),
 		EndpointClustersGet:              buildMockRequestHandler(MockCluster, nil),
 		EndpointClustersPost:             buildMockRequestHandler(MockCluster, nil),
 		EndpointClusterDelete:            buildMockRequestHandler(MockCluster, ocmErrors.NotFound("setting this to not found to mimick a successul deletion")),

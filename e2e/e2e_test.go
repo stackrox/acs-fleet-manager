@@ -11,7 +11,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/gitops"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -19,10 +19,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/e2e/dns"
 	"github.com/stackrox/acs-fleet-manager/e2e/testutil"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/internal/central/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/admin/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
 	"github.com/stackrox/rox/operator/api/v1alpha1"

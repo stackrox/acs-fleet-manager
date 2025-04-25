@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/central/compat"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -88,9 +88,9 @@ const (
 	ErrorFailedToParseSearch       ServiceErrorCode = 23
 	ErrorFailedToParseSearchReason string           = "Failed to parse search query"
 
-	// TooManyRequests occurs when a the dinosaur instances capacity gets filled up
-	ErrorTooManyDinosaurInstancesReached       ServiceErrorCode = 24
-	ErrorTooManyDinosaurInstancesReachedReason string           = "The maximum number of allowed central instances has been reached"
+	// TooManyRequests occurs when a the Central instances capacity gets filled up
+	ErrorTooManyCentralInstancesReached       ServiceErrorCode = 24
+	ErrorTooManyCentralInstancesReachedReason string           = "The maximum number of allowed central instances has been reached"
 
 	// Gone occurs when a record is accessed that has been deleted
 	ErrorGone       ServiceErrorCode = 25
@@ -233,7 +233,7 @@ func Errors() ServiceErrors {
 	return ServiceErrors{
 		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden, nil},
 		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorTooManyDinosaurInstancesReached, ErrorTooManyDinosaurInstancesReachedReason, http.StatusForbidden, nil},
+		ServiceError{ErrorTooManyCentralInstancesReached, ErrorTooManyCentralInstancesReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, http.StatusTooManyRequests, nil},
 		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict, nil},
 		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound, nil},
@@ -540,9 +540,9 @@ func MaximumAllowedInstanceReached(reason string, values ...interface{}) *Servic
 	return New(ErrorMaxAllowedInstanceReached, reason, values...)
 }
 
-// TooManyDinosaurInstancesReached ...
-func TooManyDinosaurInstancesReached(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorTooManyDinosaurInstancesReached, reason, values...)
+// TooManyCentralInstancesReached ...
+func TooManyCentralInstancesReached(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorTooManyCentralInstancesReached, reason, values...)
 }
 
 // NotImplemented ...
@@ -615,8 +615,8 @@ func ProviderNotSupported(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorProviderNotSupported, reason, values...)
 }
 
-// MalformedDinosaurClusterName ...
-func MalformedDinosaurClusterName(reason string, values ...interface{}) *ServiceError {
+// MalformedCentralClusterName ...
+func MalformedCentralClusterName(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMalformedCentralInstanceName, reason, values...)
 }
 
@@ -625,8 +625,8 @@ func MalformedServiceAccountName(reason string, values ...interface{}) *ServiceE
 	return New(ErrorMalformedServiceAccountName, reason, values...)
 }
 
-// DuplicateDinosaurClusterName ...
-func DuplicateDinosaurClusterName() *ServiceError {
+// DuplicateCentralClusterName ...
+func DuplicateCentralClusterName() *ServiceError {
 	return New(ErrorDuplicateCentralInstanceName, ErrorDuplicateCentralInstanceNameReason)
 }
 

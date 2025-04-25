@@ -10,11 +10,6 @@
 
 ## Specialities
 
-### Dinosaurs
-
-The `dinosaur` is a placeholder for the service name. It originated from the [fleet-manager template](https://github.com/bf2fc6cc711aee1a0c2a/ffm-fleet-manager-go-template).
-Long-term all `dinosaur` occurrences will be replaced with our product name.
-
 ### Go package structure
 
 Project source is to be found under `$GOPATH/src` by a distinct directory path.
@@ -23,8 +18,8 @@ Project source is to be found under `$GOPATH/src` by a distinct directory path.
 /cmd
   /fleet-manager  -- Main CLI entrypoint
 /internal   -- service specific implementations
-   /dinosaur -- should be renamed to central
-       providers.go -- dinosaurs service injection setup
+   /central -- represents ACS Central component (central, external central-db, scanner, scanner-db)
+       providers.go -- centrals service injection setup
       /test  -- integration test folder
       /internal
         /services -- central services
