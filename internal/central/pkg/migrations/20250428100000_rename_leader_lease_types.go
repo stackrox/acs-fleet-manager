@@ -16,12 +16,7 @@ func renameLeaderLeaseTypes() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "20250428100000",
 		Migrate: func(tx *gorm.DB) error {
-			// Update only the central requests which do not already specify client_origin after migrating the table
-			// schema. For central requests which do not specify it, we can assume shared_static_sso, since the field
-			// was not available before adding the possibility to create centrals with a dynamic OIDC client.
-			// **Note**: This update is _not_ done within a transaction since we pass `UseTransaction=false` as
-			// gormigrate option, meaning this will be on a best-effort basis, but the risk of not doing it within a
-			// transaction is minor.
+			// Update "dinosaur" containing lease types to "central" in the LeaderLease table
 			for n := range oldLeaseTypes {
 				old := oldLeaseTypes[n]
 				new := newLeaseTypes[n]
