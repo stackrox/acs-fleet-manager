@@ -24,7 +24,7 @@ FLEET_MANAGER_IMAGE=$(make -s -C "$GITROOT" full-image-tag)
 # Run the necessary docker actions out of the container
 ensure_fleet_manager_image_exists
 
-docker build -t acscs-e2e -f "$GITROOT/.openshift-ci/e2e-runtime/Dockerfile" "${GITROOT}"
+docker build -t acscs-e2e --platform linux/amd64 -f "$GITROOT/.openshift-ci/e2e-runtime/Dockerfile" "${GITROOT}"
 
 docker run \
     -v "${KUBECONFIG:-$HOME/.kube/config}":/var/kubeconfig -e KUBECONFIG=/var/kubeconfig \

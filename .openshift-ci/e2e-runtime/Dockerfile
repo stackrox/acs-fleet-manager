@@ -5,12 +5,11 @@ RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
 
 RUN dnf update -y --disablerepo=\* --enablerepo=baseos,appstream && dnf -y install procps make which git gettext jq gcc && dnf clean all && rm -rf /var/cache/dnf
 
-COPY --from=registry.ci.openshift.org/openshift/release:golang-1.22 /usr/local/go /usr/local/go
+COPY --from=registry.ci.openshift.org/openshift/release:golang-1.23 /usr/lib/golang /usr/lib/golang
 COPY --from=quay.io/openshift/origin-cli:4.13 /usr/bin/oc /usr/bin
-COPY --from=quay.io/operator-framework/operator-sdk:v1.39 /usr/local/bin/operator-sdk /usr/local/bin
 
 ENV GOPATH=/go
-ENV GOROOT=/usr/local/go
+ENV GOROOT=/usr/lib/golang
 ENV PATH="${GOROOT}/bin:${PATH}"
 
 RUN ln -s /usr/bin/oc /usr/bin/kubectl
@@ -34,11 +33,6 @@ ARG OCM_VERSION=0.1.64
 RUN curl -L --retry 10 --silent --show-error --fail -o "/usr/local/bin/ocm" \
     "https://github.com/openshift-online/ocm-cli/releases/download/v${OCM_VERSION}/ocm-linux-amd64" && \
     chmod +x /usr/local/bin/ocm
-
-RUN curl -L --retry 10 --silent --show-error --fail -o /usr/local/bin/helm \
-    "https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64" && \
-    chmod +x /usr/local/bin/helm && \
-    helm version
 
 RUN mkdir /src $GOPATH
 WORKDIR /src
