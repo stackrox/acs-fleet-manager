@@ -17,7 +17,7 @@ import (
 	"github.com/golang/glog"
 )
 
-const acceptedCentralWorkerType = "accepted_dinosaur"
+const acceptedCentralWorkerType = "accepted_central"
 
 // AcceptedCentralManager represents a manager that periodically reconciles central requests
 type AcceptedCentralManager struct {

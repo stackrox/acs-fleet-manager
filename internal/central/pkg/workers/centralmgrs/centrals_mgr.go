@@ -36,7 +36,7 @@ func NewCentralManager(centralService services.CentralService, accessControlList
 	return &CentralManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
-			WorkerType: "general_dinosaur_worker",
+			WorkerType: "general_central_worker",
 			Reconciler: workers.Reconciler{},
 		},
 		centralService:          centralService,

@@ -16,7 +16,7 @@ import (
 	"github.com/golang/glog"
 )
 
-const provisioningCentralWorkerType = "provisioning_dinosaur"
+const provisioningCentralWorkerType = "provisioning_central"
 
 // ProvisioningCentralManager represents a central manager that periodically reconciles central requests
 type ProvisioningCentralManager struct {

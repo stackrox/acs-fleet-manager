@@ -56,6 +56,7 @@ func getMigrations() []*gormigrate.Migration {
 		addTraitsFieldToCentralRequests(),
 		addSecretDataSha256SumToCentralRequest(),
 		addEnteredProvisioningAtToCentralRequest(),
+		renameLeaderLeaseTypes(),
 	}
 }
 
