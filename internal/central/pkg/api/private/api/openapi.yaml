@@ -503,6 +503,16 @@ components:
           type: array
         oidc:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuthProvider_oidc'
+    ManagedCentral_allOf_spec_uiEndpoint:
+      description: 'Deprecated: use uiHost instead'
+      properties:
+        host:
+          type: string
+    ManagedCentral_allOf_spec_dataEndpoint:
+      description: 'Deprecated: use dataHost instead'
+      properties:
+        host:
+          type: string
     ManagedCentral_allOf_spec:
       properties:
         instanceType:
@@ -526,6 +536,10 @@ components:
         dataHost:
           description: Handles Sensor connections
           type: string
+        uiEndpoint:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint'
+        dataEndpoint:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_dataEndpoint'
     ManagedCentral_allOf:
       properties:
         metadata:

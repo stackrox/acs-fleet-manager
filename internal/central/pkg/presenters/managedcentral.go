@@ -136,10 +136,18 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 				Issuer:               from.AuthConfig.Issuer,
 			},
 			AdditionalAuthProvider: additionalAuthProvider,
-			UiHost:                 from.GetUIHost(),
-			DataHost:               from.GetDataHost(),
-			TenantResourcesValues:  renderedCentral.Values,
-			InstanceType:           from.InstanceType,
+			// TODO(ROX-29092): Remove after FSS is updated
+			UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
+				Host: from.GetUIHost(),
+			},
+			// TODO(ROX-29092): Remove after FSS is updated
+			DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
+				Host: from.GetDataHost(),
+			},
+			UiHost:                from.GetUIHost(),
+			DataHost:              from.GetDataHost(),
+			TenantResourcesValues: renderedCentral.Values,
+			InstanceType:          from.InstanceType,
 		},
 		RequestStatus: from.Status,
 	}
@@ -195,13 +203,13 @@ func constructAdditionalOidcConfig(authProvider *gitops.AuthProvider, from *dbap
 	oidcConfig := private.ManagedCentralAllOfSpecAdditionalAuthProviderOidc{}
 	if authProvider.OIDC != nil && authProvider.OIDC.ClientID != "" {
 		oidcConfig.ClientID = authProvider.OIDC.ClientID
-		oidcConfig.ClientSecret = authProvider.OIDC.ClientSecret
+		oidcConfig.ClientSecret = authProvider.OIDC.ClientSecret // pragma: allowlist secret
 		oidcConfig.Issuer = authProvider.OIDC.Issuer
 		oidcConfig.CallbackMode = authProvider.OIDC.Mode
 		oidcConfig.DisableOfflineAccessScope = authProvider.OIDC.DisableOfflineAccessScope
 	} else {
 		oidcConfig.ClientID = from.ClientID
-		oidcConfig.ClientSecret = from.ClientSecret
+		oidcConfig.ClientSecret = from.ClientSecret // pragma: allowlist secret
 		oidcConfig.Issuer = from.Issuer
 		oidcConfig.CallbackMode = "post"
 		oidcConfig.DisableOfflineAccessScope = true

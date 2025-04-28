@@ -361,6 +361,24 @@ components:
                 dataHost:
                   type: string
                   description: 'Handles Sensor connections'
+                # Kept for backward compatibility
+                # TODO(ROX-29092): Delete once FM/FS use uiHost
+                uiEndpoint:
+                  type: object
+                  description: 'Deprecated: use uiHost instead'
+                  deprecated: true
+                  properties:
+                    host:
+                      type: string
+                # Kept for backward compatibility
+                # TODO(ROX-29092): Delete once FM/FS use dataHost
+                dataEndpoint:
+                  type: object
+                  description: 'Deprecated: use dataHost instead'
+                  deprecated: true
+                  properties:
+                    host:
+                      type: string
             requestStatus:
               type: string
 
