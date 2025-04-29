@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1179 AS build
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1255 AS build
 ENV HOME=/opt/helm
 COPY rhacs-terraform  ${HOME}/rhacs-terraform
 WORKDIR ${HOME}
