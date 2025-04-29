@@ -3,7 +3,7 @@ module github.com/stackrox/acs-fleet-manager/tools
 go 1.23
 
 require (
-	github.com/matryer/moq v0.3.4
+	github.com/matryer/moq v0.5.2
 	github.com/segmentio/chamber/v2 v2.14.1
 	gotest.tools/gotestsum v1.12.1
 )
@@ -28,12 +28,12 @@ require (
 	github.com/segmentio/backo-go v1.0.1 // indirect
 	github.com/spf13/cobra v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/mod v0.20.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/mod v0.23.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
-	golang.org/x/tools v0.24.0 // indirect
+	golang.org/x/tools v0.30.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
