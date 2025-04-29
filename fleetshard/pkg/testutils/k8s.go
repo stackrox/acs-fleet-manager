@@ -66,6 +66,10 @@ var centralLabels = map[string]string{
 	"app.kubernetes.io/component": "central",
 }
 
+var (
+	_ k8sTesting.ObjectTracker = (*ReconcileTracker)(nil)
+)
+
 // ReconcileTracker keeps track of objects. It is intended to be used to
 // fake calls to a server by returning objects based on their kind,
 // namespace and name. This is fleetshard specific implementation of k8sTesting.ObjectTracker
@@ -145,7 +149,7 @@ func (t *ReconcileTracker) SetSkipRoute(routeName string, skip bool) {
 }
 
 // Create adds an object to the tracker in the specified namespace.
-func (t *ReconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
+func (t *ReconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string, _ ...metav1.CreateOptions) error {
 	if err := t.ObjectTracker.Create(gvr, obj, ns); err != nil {
 		return fmt.Errorf("adding GVR %q to reconcile tracker: %w", gvr, err)
 	}
@@ -206,7 +210,7 @@ func (t *TenantResources) Objects() []ctrlClient.Object {
 }
 
 // Update updates an existing object in the tracker in the specified namespace.
-func (t *ReconcileTracker) Update(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
+func (t *ReconcileTracker) Update(gvr schema.GroupVersionResource, obj runtime.Object, ns string, _ ...metav1.UpdateOptions) error {
 	if gvr == argoAppGVR {
 		tenantResources, err := NewTenantResources(obj.(*argoCd.Application))
 		if err != nil {
