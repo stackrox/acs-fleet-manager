@@ -355,22 +355,27 @@ components:
                           type: string
                         disableOfflineAccessScope:
                           type: boolean
+                uiHost:
+                  type: string
+                  description: 'Handles GUI/CLI/API connections'
+                dataHost:
+                  type: string
+                  description: 'Handles Sensor connections'
+                # Kept for backward compatibility
+                # TODO(ROX-29092): Delete once FM/FS use uiHost
                 uiEndpoint:
                   type: object
-                  description: 'Handles GUI/CLI/API connections'
+                  description: 'Deprecated: use uiHost instead'
+                  deprecated: true
                   properties:
                     host:
                       type: string
-                    tls:
-                      type: object
-                      properties:
-                        cert:
-                          type: string
-                        key:
-                          type: string
+                # Kept for backward compatibility
+                # TODO(ROX-29092): Delete once FM/FS use dataHost
                 dataEndpoint:
                   type: object
-                  description: 'Handles Sensor connections'
+                  description: 'Deprecated: use dataHost instead'
+                  deprecated: true
                   properties:
                     host:
                       type: string

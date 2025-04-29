@@ -503,21 +503,13 @@ components:
           type: array
         oidc:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuthProvider_oidc'
-    ManagedCentral_allOf_spec_uiEndpoint_tls:
-      properties:
-        cert:
-          type: string
-        key:
-          type: string
     ManagedCentral_allOf_spec_uiEndpoint:
-      description: Handles GUI/CLI/API connections
+      description: 'Deprecated: use uiHost instead'
       properties:
         host:
           type: string
-        tls:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint_tls'
     ManagedCentral_allOf_spec_dataEndpoint:
-      description: Handles Sensor connections
+      description: 'Deprecated: use dataHost instead'
       properties:
         host:
           type: string
@@ -538,6 +530,12 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_auth'
         additionalAuthProvider:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalAuthProvider'
+        uiHost:
+          description: Handles GUI/CLI/API connections
+          type: string
+        dataHost:
+          description: Handles Sensor connections
+          type: string
         uiEndpoint:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint'
         dataEndpoint:

@@ -115,38 +115,6 @@ In the Data Plane cluster, the Central Operator and the FleetShard Deployments
 might reference container images that are located in authenticated container
 image registries.
 
-## Setup a custom TLS certificate for Central Host URLs
-
-When Fleet Manager creates Central instances, it can be configured to
-send a custom TLS certificate to associate to each one of the Central instances
-host URLs. That custom TLS certificate is sent to the data plane clusters where
-those instances are located.
-
-In order for the Fleet Manager to be able to start, create the following files:
-```
-touch secrets/central-tls.crt
-touch secrets/central-tls.key
-```
-
-If you need to setup a custom TLS certificate for the Central instances' host
-URLs keep reading. Otherwise, this section can be skipped.
-
-To configure Fleet Manager so it sends the custom TLS certificate, provide the
-certificate and its corresponding key to the Fleet Manager by running the
-following command:
-```
-CENTRAL_TLS_CERT=<central-tls-cert> \
-CENTRAL_TLS_KEY=<central-tls-key> \
-make centralcert/setup
-```
-> NOTE: The certificate domain/s should match the URL endpoint domain if you
-  want the certificate to be valid when accessing the endpoint
-> NOTE: The expected Certificate and Key values are in PEM format, preserving
-  the newlines
-
-Additionally, make sure that the functionality is enabled by setting the
-`--enable-central-external-certificate` Fleet Manager binary CLI flag
-
 ## Configure Sentry logging
 Fleet Manager can be configured to send its logs to the
 [Sentry](https://sentry.io/) logging service.

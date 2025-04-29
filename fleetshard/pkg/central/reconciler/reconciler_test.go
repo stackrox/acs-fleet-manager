@@ -110,12 +110,8 @@ var simpleManagedCentral = private.ManagedCentral{
 			OwnerOrgName: "org-name",
 			Issuer:       "https://example.com",
 		},
-		UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
-			Host: fmt.Sprintf("acs-%s.acs.rhcloud.test", centralID),
-		},
-		DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
-			Host: fmt.Sprintf("acs-data-%s.acs.rhcloud.test", centralID),
-		},
+		UiHost:       fmt.Sprintf("acs-%s.acs.rhcloud.test", centralID),
+		DataHost:     fmt.Sprintf("acs-data-%s.acs.rhcloud.test", centralID),
 		InstanceType: "standard",
 	},
 }
@@ -578,9 +574,7 @@ func TestCentralChanged(t *testing.T) {
 			currentCentral: private.ManagedCentral{
 				Metadata: simpleManagedCentral.Metadata,
 				Spec: private.ManagedCentralAllOfSpec{
-					UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
-						Host: "central.cluster.local",
-					},
+					UiHost: "central.cluster.local",
 				},
 			},
 			want: true,
@@ -808,22 +802,22 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 	}{
 		{
 			testName:                "should update reencrypt route with TLS cert changes",
-			expectedReencryptHost:   simpleManagedCentral.Spec.UiEndpoint.Host,
-			expectedPassthroughHost: simpleManagedCentral.Spec.DataEndpoint.Host,
+			expectedReencryptHost:   simpleManagedCentral.Spec.UiHost,
+			expectedPassthroughHost: simpleManagedCentral.Spec.DataHost,
 		},
 		{
 			testName:                "should update reencrypt route with TLS key changes",
-			expectedReencryptHost:   simpleManagedCentral.Spec.UiEndpoint.Host,
-			expectedPassthroughHost: simpleManagedCentral.Spec.DataEndpoint.Host,
+			expectedReencryptHost:   simpleManagedCentral.Spec.UiHost,
+			expectedPassthroughHost: simpleManagedCentral.Spec.DataHost,
 		},
 		{
 			testName:                "should update reencrypt route with host name changes",
 			expectedReencryptHost:   "new-hostname.acs.test",
-			expectedPassthroughHost: simpleManagedCentral.Spec.DataEndpoint.Host,
+			expectedPassthroughHost: simpleManagedCentral.Spec.DataHost,
 		},
 		{
 			testName:                "should update passthrough route with host name changes",
-			expectedReencryptHost:   simpleManagedCentral.Spec.UiEndpoint.Host,
+			expectedReencryptHost:   simpleManagedCentral.Spec.UiHost,
 			expectedPassthroughHost: "new-hostname.acs.test",
 		},
 	}
@@ -849,8 +843,8 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 			err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: central.Metadata.Namespace, Name: "managed-central-passthrough"}, passthroughRoute)
 			require.NoError(t, err)
 
-			central.Spec.UiEndpoint.Host = tc.expectedReencryptHost
-			central.Spec.DataEndpoint.Host = tc.expectedPassthroughHost
+			central.Spec.UiHost = tc.expectedReencryptHost
+			central.Spec.DataHost = tc.expectedPassthroughHost
 
 			// run another reconcile to update the route
 			_, err = r.Reconcile(context.Background(), central)

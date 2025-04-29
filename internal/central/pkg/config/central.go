@@ -10,10 +10,6 @@ import (
 
 // CentralConfig ...
 type CentralConfig struct {
-	CentralTLSCert              string `json:"central_tls_cert"`
-	CentralTLSCertFile          string `json:"central_tls_cert_file"`
-	CentralTLSKey               string `json:"central_tls_key"`
-	CentralTLSKeyFile           string `json:"central_tls_key_file"`
 	EnableCentralExternalDomain bool   `json:"enable_central_external_domain"`
 	CentralDomainName           string `json:"central_domain_name"`
 
@@ -33,8 +29,6 @@ type CentralConfig struct {
 // NewCentralConfig ...
 func NewCentralConfig() *CentralConfig {
 	return &CentralConfig{
-		CentralTLSCertFile:          "secrets/central-tls.crt",
-		CentralTLSKeyFile:           "secrets/central-tls.key",
 		EnableCentralExternalDomain: false,
 		CentralDomainName:           "rhacs-dev.com",
 		CentralLifespan:             NewCentralLifespanConfig(),
@@ -47,8 +41,6 @@ func NewCentralConfig() *CentralConfig {
 
 // AddFlags ...
 func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.CentralTLSCertFile, "central-tls-cert-file", c.CentralTLSCertFile, "File containing central certificate")
-	fs.StringVar(&c.CentralTLSKeyFile, "central-tls-key-file", c.CentralTLSKeyFile, "File containing central certificate private key")
 	fs.BoolVar(&c.EnableCentralExternalDomain, "enable-central-external-domain", c.EnableCentralExternalDomain, "Enable custom domain for Central TLS")
 	fs.BoolVar(&c.CentralLifespan.EnableDeletionOfExpiredCentral, "enable-deletion-of-expired-central", c.CentralLifespan.EnableDeletionOfExpiredCentral, "Enable the deletion of centrals when its life span has expired")
 	fs.IntVar(&c.CentralLifespan.CentralLifespanInHours, "central-lifespan", c.CentralLifespan.CentralLifespanInHours, "The desired lifespan of a Central instance")
@@ -64,18 +56,10 @@ func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
 
 // ReadFiles ...
 func (c *CentralConfig) ReadFiles() error {
-	err := shared.ReadFileValueString(c.CentralTLSCertFile, &c.CentralTLSCert)
-	if err != nil {
-		return fmt.Errorf("reading TLS certificate file: %w", err)
-	}
-	err = shared.ReadFileValueString(c.CentralTLSKeyFile, &c.CentralTLSKey)
-	if err != nil {
-		return fmt.Errorf("reading TLS key file: %w", err)
-	}
 
 	// Initialise and check that all parts of static auth config are present.
 	if c.HasStaticAuth() {
-		err = shared.ReadFileValueString(c.CentralIDPClientSecretFile, &c.CentralIDPClientSecret)
+		err := shared.ReadFileValueString(c.CentralIDPClientSecretFile, &c.CentralIDPClientSecret)
 		if err != nil {
 			return fmt.Errorf("reading Central's IdP client secret file: %w", err)
 		}
