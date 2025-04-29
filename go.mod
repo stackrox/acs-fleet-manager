@@ -57,12 +57,12 @@ require (
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.25.12
 	helm.sh/helm/v3 v3.17.3
-	k8s.io/api v0.32.2
-	k8s.io/apimachinery v0.32.2
+	k8s.io/api v0.32.4
+	k8s.io/apimachinery v0.32.4
 	k8s.io/autoscaler/vertical-pod-autoscaler v1.2.0
 	k8s.io/client-go v11.0.1-0.20190816222228-6d55c1b1f1ca+incompatible
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
-	sigs.k8s.io/controller-runtime v0.19.3
+	sigs.k8s.io/controller-runtime v0.20.4
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -111,10 +111,11 @@ require (
 	github.com/emicklei/go-restful/v3 v3.11.2 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/evanphx/json-patch v5.9.0+incompatible // indirect
-	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
+	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
@@ -139,7 +140,7 @@ require (
 	github.com/gonvenience/text v1.0.7 // indirect
 	github.com/gonvenience/wrap v1.1.2 // indirect
 	github.com/gonvenience/ytbx v1.4.4 // indirect
-	github.com/google/btree v1.1.2 // indirect
+	github.com/google/btree v1.1.3 // indirect
 	github.com/google/certificate-transparency-go v1.2.1 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
 	github.com/google/go-github/v53 v53.2.0 // indirect
@@ -259,17 +260,17 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.4.6 // indirect
-	k8s.io/apiextensions-apiserver v0.32.2 // indirect
-	k8s.io/apiserver v0.32.2 // indirect
-	k8s.io/cli-runtime v0.32.2 // indirect
-	k8s.io/component-base v0.32.2 // indirect
-	k8s.io/component-helpers v0.32.2 // indirect
+	k8s.io/apiextensions-apiserver v0.32.4 // indirect
+	k8s.io/apiserver v0.32.4 // indirect
+	k8s.io/cli-runtime v0.32.4 // indirect
+	k8s.io/component-base v0.32.4 // indirect
+	k8s.io/component-helpers v0.32.4 // indirect
 	k8s.io/controller-manager v0.0.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-aggregator v0.29.6 // indirect
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
-	k8s.io/kubectl v0.32.2 // indirect
-	k8s.io/kubernetes v1.32.2 // indirect
+	k8s.io/kubectl v0.32.4 // indirect
+	k8s.io/kubernetes v1.32.4 // indirect
 	oras.land/oras-go/v2 v2.3.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/kustomize/api v0.18.0 // indirect
@@ -304,36 +305,36 @@ replace (
 	// Avoid CVE-2022-28948
 	gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.1
 
-	k8s.io/api => k8s.io/api v0.32.2
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.32.2
-	k8s.io/apimachinery => k8s.io/apimachinery v0.32.2
-	k8s.io/apiserver => k8s.io/apiserver v0.32.2
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.32.2
-	k8s.io/client-go => k8s.io/client-go v0.32.2
-	k8s.io/cloud-provider => k8s.io/cloud-provider v0.32.2
-	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.32.2
-	k8s.io/code-generator => k8s.io/code-generator v0.32.2
-	k8s.io/component-base => k8s.io/component-base v0.32.2
-	k8s.io/component-helpers => k8s.io/component-helpers v0.32.2
-	k8s.io/controller-manager => k8s.io/controller-manager v0.32.2
-	k8s.io/cri-api => k8s.io/cri-api v0.32.2
-	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.32.2
-	k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.32.2
-	k8s.io/endpointslice => k8s.io/endpointslice v0.32.2
-	k8s.io/kms => k8s.io/kms v0.32.2
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.32.2
-	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.32.2
-	k8s.io/kube-proxy => k8s.io/kube-proxy v0.32.2
-	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.32.2
-	k8s.io/kubectl => k8s.io/kubectl v0.32.2
-	k8s.io/kubelet => k8s.io/kubelet v0.32.2
-	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.32.2
-	k8s.io/metrics => k8s.io/metrics v0.32.2
-	k8s.io/mount-utils => k8s.io/mount-utils v0.32.2
-	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.32.2
-	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.32.2
-	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.32.2
-	k8s.io/sample-controller => k8s.io/sample-controller v0.32.2
+	k8s.io/api => k8s.io/api v0.32.4
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.32.4
+	k8s.io/apimachinery => k8s.io/apimachinery v0.32.4
+	k8s.io/apiserver => k8s.io/apiserver v0.32.4
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.32.4
+	k8s.io/client-go => k8s.io/client-go v0.32.4
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.32.4
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.32.4
+	k8s.io/code-generator => k8s.io/code-generator v0.32.4
+	k8s.io/component-base => k8s.io/component-base v0.32.4
+	k8s.io/component-helpers => k8s.io/component-helpers v0.32.4
+	k8s.io/controller-manager => k8s.io/controller-manager v0.32.4
+	k8s.io/cri-api => k8s.io/cri-api v0.32.4
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.32.4
+	k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.32.4
+	k8s.io/endpointslice => k8s.io/endpointslice v0.32.4
+	k8s.io/kms => k8s.io/kms v0.32.4
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.32.4
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.32.4
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.32.4
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.32.4
+	k8s.io/kubectl => k8s.io/kubectl v0.32.4
+	k8s.io/kubelet => k8s.io/kubelet v0.32.4
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.32.4
+	k8s.io/metrics => k8s.io/metrics v0.32.4
+	k8s.io/mount-utils => k8s.io/mount-utils v0.32.4
+	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.32.4
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.32.4
+	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.32.4
+	k8s.io/sample-controller => k8s.io/sample-controller v0.32.4
 )
 
 exclude k8s.io/client-go v12.0.0+incompatible
