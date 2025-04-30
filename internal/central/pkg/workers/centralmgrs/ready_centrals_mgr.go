@@ -10,7 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
-const readyCentralWorkerType = "ready_dinosaur"
+const readyCentralWorkerType = "ready_central"
 
 var readyCentralCountCache int32
 

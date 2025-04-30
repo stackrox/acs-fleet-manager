@@ -19,7 +19,7 @@ import (
 	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
-const preparingCentralWorkerType = "preparing_dinosaur"
+const preparingCentralWorkerType = "preparing_central"
 
 // PreparingCentralManager represents a central manager that periodically reconciles central requests
 type PreparingCentralManager struct {

@@ -21,7 +21,7 @@ import (
 	"github.com/golang/glog"
 )
 
-const deletingCentralWorkerType = "deleting_dinosaur"
+const deletingCentralWorkerType = "deleting_central"
 
 // DeletingCentralManager represents a central manager that periodically reconciles central requests.
 type DeletingCentralManager struct {
