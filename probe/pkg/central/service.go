@@ -113,6 +113,9 @@ func (s *serviceImpl) appendRegions(ctx context.Context, cloudProvider public.Cl
 		return specs
 	}
 	for _, region := range regions.Items {
+		if !region.Enabled {
+			continue
+		}
 		specs = append(specs, Spec{CloudProvider: cloudProvider.Id, Region: region.Id})
 	}
 	return specs
