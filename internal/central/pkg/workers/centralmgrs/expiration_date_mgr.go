@@ -3,6 +3,7 @@ package centralmgrs
 import (
 	"time"
 
+	"github.com/bxcodec/faker/v3/support/slice"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -93,19 +94,32 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 
 	quotaCostCache := make(map[quotaCostCacheKey]bool, 0)
 	for _, central := range centrals {
+		if slice.Contains(k.centralConfig.Quota.InternalOrganisationIDs, central.OrganisationID) {
+			glog.Infof("skipping quota check for central instance %q as it belongs to an internal organisation", central.ID)
+			// remove expiration date from internal organisation Central instances
+			if central.ExpiredAt.Valid {
+				central.ExpiredAt = dbapi.TimePtrToNullTime(nil)
+				if err := k.updateExpiredAtInDB(central); err != nil {
+					svcErrors = append(svcErrors, errors.Wrapf(err,
+						"failed to update expired_at for internal organisation central instance %q", central.ID))
+				}
+			}
+			continue
+		}
+
 		key := quotaCostCacheKey{central.OrganisationID, central.CloudAccountID, central.InstanceType}
-		active, inCache := quotaCostCache[key]
+		hasQuota, inCache := quotaCostCache[key]
 		if !inCache {
 			var svcErr *serviceErr.ServiceError
-			active, svcErr = quotaService.HasQuotaAllowance(central, types.CentralInstanceType(central.InstanceType))
+			hasQuota, svcErr = quotaService.HasQuotaAllowance(central, types.CentralInstanceType(central.InstanceType))
 			if svcErr != nil {
 				svcErrors = append(svcErrors, errors.Wrapf(svcErr, "failed to get quota entitlement status of central instance %q", central.ID))
 				continue
 			}
-			quotaCostCache[key] = active
+			quotaCostCache[key] = hasQuota
 		}
 
-		if timestamp, needsChange := k.expiredAtNeedsUpdate(central, active); needsChange {
+		if timestamp, needsChange := k.expiredAtNeedsUpdate(central, hasQuota); needsChange {
 			central.ExpiredAt = dbapi.TimePtrToNullTime(timestamp)
 			if err := k.updateExpiredAtInDB(central); err != nil {
 				svcErrors = append(svcErrors, errors.Wrapf(err,
@@ -126,7 +140,7 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 func (k *ExpirationDateManager) updateExpiredAtInDB(central *dbapi.CentralRequest) *serviceErr.ServiceError {
 	glog.Infof("updating expired_at of central %q to %q", central.ID, central.ExpiredAt)
 	return k.centralService.Updates(&dbapi.CentralRequest{Meta: api.Meta{ID: central.ID}},
-		map[string]interface{}{"expired_at": central.ExpiredAt})
+		map[string]any{"expired_at": central.ExpiredAt})
 }
 
 // Returns whether the expired_at field of the given Central instance needs to be updated.

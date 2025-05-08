@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
@@ -39,6 +40,10 @@ func (q QuotaManagementListService) HasQuotaAllowance(central *dbapi.CentralRequ
 	if userIsRegistered && instanceType == types.STANDARD ||
 		!userIsRegistered && instanceType == types.EVAL {
 		return allowed, nil
+	}
+
+	if !allowed {
+		glog.Infof("no allowed quota for central instance %s", central.ID)
 	}
 
 	return false, nil
