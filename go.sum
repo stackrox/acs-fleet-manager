@@ -726,8 +726,8 @@ github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go v0.1.0/go.
 github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt v0.0.0-20230323122535-49460b57cc45 h1:zB7YuR81lby8jPK9CKIvzKQIrbpooR7R2lr5l3aL5KE=
 github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt v0.0.0-20230323122535-49460b57cc45/go.mod h1:9UjE86bWDvSfAwSAqweZPRNEAjAgI0ZvKYMIoz06qd0=
 github.com/redis/go-redis/v9 v9.0.0-rc.4/go.mod h1:Vo3EsyWnicKnSKCA7HhgnvnyA74wOA69Cd2Meli5mmA=
-github.com/redis/go-redis/v9 v9.7.1 h1:4LhKRCIduqXqtvCUlaq9c8bdHOkICjDMrr1+Zb3osAc=
-github.com/redis/go-redis/v9 v9.7.1/go.mod h1:f6zhXITC7JUJIlPEiBOTXxJgPLdZcA93GewI7inzyWw=
+github.com/redis/go-redis/v9 v9.7.3 h1:YpPyAayJV+XErNsatSElgRZZVCwXX9QzkKYNvO7x0wM=
+github.com/redis/go-redis/v9 v9.7.3/go.mod h1:bGUrSggJ9X9GUmZpZNEOQKaANxSGgOEBRltRTZHSvrA=
 github.com/rhobs/obo-prometheus-operator/pkg/apis/monitoring v0.66.0-rhobs1 h1:+2dvyv90foYNSUceYWSlE+SfkeJSFRHV9eOqfnhE0Rw=
 github.com/rhobs/obo-prometheus-operator/pkg/apis/monitoring v0.66.0-rhobs1/go.mod h1:D7aYXoiteBUNwv3nMQ3NKKNlIEvFA1zS1nKJi7t8/IE=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
