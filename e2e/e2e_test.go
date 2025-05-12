@@ -184,7 +184,8 @@ var _ = Describe("Central", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(centralUIURL.Scheme).To(Equal("https"))
 
-			Eventually(assertRouteExists(ctx, namespaceName, openshiftRouteV1.TLSTerminationReencrypt, centralUIURL.Host)).
+			// TODO change the route name
+			Eventually(assertRouteExists(ctx, namespaceName, openshiftRouteV1.TLSTerminationPassthrough, centralUIURL.Host)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -286,7 +287,7 @@ var _ = Describe("Central", Ordered, func() {
 			Expect(oldSecrets).ToNot(BeEmpty())
 
 			// modify secrets to later test that the backup was updated succesfully
-			for _, secret := range oldSecrets {
+			for _, secret := range oldSecrets { // pragma: allowlist secret
 				secret.Data["test"] = []byte("modified")
 				err := k8sClient.Update(ctx, secret)
 				Expect(err).ToNot(HaveOccurred())
