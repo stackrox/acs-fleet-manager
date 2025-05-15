@@ -43,8 +43,10 @@ func TestExpirationDateManager(t *testing.T) {
 			},
 		}
 	}
+	quotaConf := config.NewCentralQuotaConfig()
+	quotaConf.InternalOrganisationIDs = []string{"internal-org-id"}
 	defaultCfg := &config.CentralConfig{
-		Quota: config.NewCentralQuotaConfig(),
+		Quota: quotaConf,
 	}
 
 	t.Run("no centrals, no problem", func(t *testing.T) {
@@ -88,6 +90,18 @@ func TestExpirationDateManager(t *testing.T) {
 		assert.Len(t, quotaSvc.HasQuotaAllowanceCalls(), 1)
 		assert.Len(t, centralService.UpdatesCalls(), 1)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
+	})
+
+	t.Run("skip setting expired_at for internal organisation even if no valid quota", func(t *testing.T) {
+		central := &dbapi.CentralRequest{OrganisationID: "internal-org-id"}
+		centralService := withCentrals(central)
+		quotaSvc, quotaFactory := withEntitlement(true)
+		gpm := NewExpirationDateManager(centralService, quotaFactory, defaultCfg)
+		errs := gpm.Reconcile()
+		require.Empty(t, errs)
+		require.False(t, central.ExpiredAt.Valid)
+		assert.Len(t, quotaSvc.HasQuotaAllowanceCalls(), 0)
+		assert.Len(t, centralService.UpdatesCalls(), 0)
 	})
 
 	t.Run("quota cost cache in use", func(t *testing.T) {
