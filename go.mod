@@ -43,8 +43,8 @@ require (
 	github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt v0.0.0-20230323122535-49460b57cc45
 	github.com/rs/xid v1.5.0
 	github.com/selvatico/go-mocket v1.0.7
-	github.com/spf13/cobra v1.8.1
-	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
+	github.com/spf13/cobra v1.9.1
+	github.com/spf13/pflag v1.0.6
 	github.com/stackrox/rox v0.0.0-20230323083409-e83503a98fb4
 	github.com/stretchr/testify v1.10.0
 	github.com/zgalor/weberr v0.8.2
@@ -103,7 +103,7 @@ require (
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/cloudflare/cfssl v1.6.5 // indirect
 	github.com/cloudflare/circl v1.5.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
