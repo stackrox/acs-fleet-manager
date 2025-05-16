@@ -1,6 +1,6 @@
 clusterName: ""
 environment: ""
-image: "ghcr.io/nerdswords/yet-another-cloudwatch-exporter:v0.62.1"
+image: "quay.io/prometheuscommunity/yet-another-cloudwatch-exporter:v0.62.1"
 
 nodeSelector: {}
 
