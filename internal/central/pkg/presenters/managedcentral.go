@@ -136,18 +136,10 @@ func (c *ManagedCentralPresenter) presentManagedCentral(gitopsConfig gitops.Conf
 				Issuer:               from.AuthConfig.Issuer,
 			},
 			AdditionalAuthProvider: additionalAuthProvider,
-			// TODO(ROX-29092): Remove after FSS is updated
-			UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
-				Host: from.GetUIHost(),
-			},
-			// TODO(ROX-29092): Remove after FSS is updated
-			DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
-				Host: from.GetDataHost(),
-			},
-			UiHost:                from.GetUIHost(),
-			DataHost:              from.GetDataHost(),
-			TenantResourcesValues: renderedCentral.Values,
-			InstanceType:          from.InstanceType,
+			UiHost:                 from.GetUIHost(),
+			DataHost:               from.GetDataHost(),
+			TenantResourcesValues:  renderedCentral.Values,
+			InstanceType:           from.InstanceType,
 		},
 		RequestStatus: from.Status,
 	}
