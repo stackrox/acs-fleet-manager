@@ -5,7 +5,7 @@ go 1.23
 require (
 	github.com/matryer/moq v0.5.2
 	github.com/segmentio/chamber/v2 v2.14.1
-	gotest.tools/gotestsum v1.12.1
+	gotest.tools/gotestsum v1.12.2
 )
 
 require (
@@ -13,7 +13,7 @@ require (
 	github.com/aws/aws-sdk-go v1.50.30 // indirect
 	github.com/bitfield/gotestdox v0.2.2 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
-	github.com/fatih/color v1.17.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.1 // indirect
