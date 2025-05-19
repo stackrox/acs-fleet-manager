@@ -773,8 +773,8 @@ github.com/spf13/cobra v1.7.0/go.mod h1:uLxZILRyS/50WlhOIKD7W6V5bgeIt+4sICxh6uRM
 github.com/spf13/cobra v1.8.1 h1:e5/vxKd/rZsfSJMUX1agtjeTDf+qv1/JdBF8gg5k9ZM=
 github.com/spf13/cobra v1.8.1/go.mod h1:wHxEcudfqmLYa8iTfL+OuZPbBZkmvliBWKIezN3kD9Y=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
-github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace h1:9PNP1jnUjRhfmGMlkXHjYPishpcw4jpSt/V/xYY3FMA=
-github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
+github.com/spf13/pflag v1.0.6 h1:jFzHGLGAlb3ruxLB8MhbI6A8+AQX/2eW4qeyNZXNp2o=
+github.com/spf13/pflag v1.0.6/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/stackrox/scanner v0.0.0-20240830165150-d133ba942d59 h1:XrOPpgBpAnwTXGbyAYSOongfFeVJJBWPTdWEgYw+Uck=
 github.com/stackrox/scanner v0.0.0-20240830165150-d133ba942d59/go.mod h1:xVs4A0Vur2djLSTZYtIj/5hgUORT1t405Fg0RX4/1kA=
 github.com/stackrox/stackrox v0.0.0-20241218141528-2037522bc808 h1:jm+j4XyfjwQ2+YXhfnHXBGjN3oIjAVz+BXWxnTpdGLc=
