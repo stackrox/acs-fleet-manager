@@ -14,7 +14,7 @@ require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/docker/go-healthcheck v0.1.0
-	github.com/getsentry/sentry-go v0.31.1
+	github.com/getsentry/sentry-go v0.33.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-gormigrate/gormigrate/v2 v2.1.4
 	github.com/go-logr/logr v1.4.2
