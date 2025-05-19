@@ -68,6 +68,9 @@ type AdminCentralHandler interface {
 
 	// PatchBillingParameters changes the billing model of a central
 	PatchBillingParameters(w http.ResponseWriter, r *http.Request)
+
+	// PatchCloudAccountParameters changes the cloud account of a central
+	PatchCloudAccountParameters(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -420,6 +423,18 @@ func (h adminCentralHandler) PatchBillingParameters(w http.ResponseWriter, r *ht
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			return nil, h.service.ChangeBillingParameters(r.Context(), mux.Vars(r)["id"],
 				request.Model, request.CloudAccountId, request.CloudProvider, request.Product)
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h adminCentralHandler) PatchCloudAccountParameters(w http.ResponseWriter, r *http.Request) {
+	var request *private.CentralCloudAccountChangeRequest
+	cfg := &handlers.HandlerConfig{
+		MarshalInto: &request,
+		Action: func() (i any, serviceError *errors.ServiceError) {
+			return nil, h.service.ChangeCloudAccount(r.Context(), mux.Vars(r)["id"],
+				request.CloudAccountId, request.CloudProvider)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)

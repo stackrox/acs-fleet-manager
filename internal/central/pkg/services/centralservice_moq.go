@@ -37,6 +37,9 @@ var _ CentralService = &CentralServiceMock{}
 //			ChangeCentralCNAMErecordsFunc: func(centralRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
 //				panic("mock out the ChangeCentralCNAMErecords method")
 //			},
+//			ChangeCloudAccountFunc: func(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError {
+//				panic("mock out the ChangeCloudAccount method")
+//			},
 //			CountByRegionAndInstanceTypeFunc: func() ([]CentralRegionCount, error) {
 //				panic("mock out the CountByRegionAndInstanceType method")
 //			},
@@ -127,6 +130,9 @@ type CentralServiceMock struct {
 
 	// ChangeCentralCNAMErecordsFunc mocks the ChangeCentralCNAMErecords method.
 	ChangeCentralCNAMErecordsFunc func(centralRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
+
+	// ChangeCloudAccountFunc mocks the ChangeCloudAccount method.
+	ChangeCloudAccountFunc func(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError
 
 	// CountByRegionAndInstanceTypeFunc mocks the CountByRegionAndInstanceType method.
 	CountByRegionAndInstanceTypeFunc func() ([]CentralRegionCount, error)
@@ -237,6 +243,17 @@ type CentralServiceMock struct {
 			CentralRequest *dbapi.CentralRequest
 			// Action is the action argument value.
 			Action CentralRoutesAction
+		}
+		// ChangeCloudAccount holds details about calls to the ChangeCloudAccount method.
+		ChangeCloudAccount []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// CentralID is the centralID argument value.
+			CentralID string
+			// CloudAccountID is the cloudAccountID argument value.
+			CloudAccountID string
+			// CloudProvider is the cloudProvider argument value.
+			CloudProvider string
 		}
 		// CountByRegionAndInstanceType holds details about calls to the CountByRegionAndInstanceType method.
 		CountByRegionAndInstanceType []struct {
@@ -377,6 +394,7 @@ type CentralServiceMock struct {
 	lockAssignCluster                    sync.RWMutex
 	lockChangeBillingParameters          sync.RWMutex
 	lockChangeCentralCNAMErecords        sync.RWMutex
+	lockChangeCloudAccount               sync.RWMutex
 	lockCountByRegionAndInstanceType     sync.RWMutex
 	lockCountByStatus                    sync.RWMutex
 	lockDelete                           sync.RWMutex
@@ -560,6 +578,50 @@ func (mock *CentralServiceMock) ChangeCentralCNAMErecordsCalls() []struct {
 	mock.lockChangeCentralCNAMErecords.RLock()
 	calls = mock.calls.ChangeCentralCNAMErecords
 	mock.lockChangeCentralCNAMErecords.RUnlock()
+	return calls
+}
+
+// ChangeCloudAccount calls ChangeCloudAccountFunc.
+func (mock *CentralServiceMock) ChangeCloudAccount(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string) *serviceError.ServiceError {
+	if mock.ChangeCloudAccountFunc == nil {
+		panic("CentralServiceMock.ChangeCloudAccountFunc: method is nil but CentralService.ChangeCloudAccount was just called")
+	}
+	callInfo := struct {
+		Ctx            context.Context
+		CentralID      string
+		CloudAccountID string
+		CloudProvider  string
+	}{
+		Ctx:            ctx,
+		CentralID:      centralID,
+		CloudAccountID: cloudAccountID,
+		CloudProvider:  cloudProvider,
+	}
+	mock.lockChangeCloudAccount.Lock()
+	mock.calls.ChangeCloudAccount = append(mock.calls.ChangeCloudAccount, callInfo)
+	mock.lockChangeCloudAccount.Unlock()
+	return mock.ChangeCloudAccountFunc(ctx, centralID, cloudAccountID, cloudProvider)
+}
+
+// ChangeCloudAccountCalls gets all the calls that were made to ChangeCloudAccount.
+// Check the length with:
+//
+//	len(mockedCentralService.ChangeCloudAccountCalls())
+func (mock *CentralServiceMock) ChangeCloudAccountCalls() []struct {
+	Ctx            context.Context
+	CentralID      string
+	CloudAccountID string
+	CloudProvider  string
+} {
+	var calls []struct {
+		Ctx            context.Context
+		CentralID      string
+		CloudAccountID string
+		CloudProvider  string
+	}
+	mock.lockChangeCloudAccount.RLock()
+	calls = mock.calls.ChangeCloudAccount
+	mock.lockChangeCloudAccount.RUnlock()
 	return calls
 }
 
