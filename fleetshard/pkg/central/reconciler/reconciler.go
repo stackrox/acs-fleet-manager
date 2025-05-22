@@ -405,6 +405,10 @@ func getAuthProviderConfig(remoteCentral private.ManagedCentral) *declarativecon
 				Path: "is_org_admin",
 				Name: "rh_is_org_admin",
 			},
+			{
+				Path: "deprecated_sub",
+				Name: "userid",
+			},
 		},
 		OIDCConfig: &declarativeconfig.OIDCConfig{
 			Issuer:                    remoteCentral.Spec.Auth.Issuer,
