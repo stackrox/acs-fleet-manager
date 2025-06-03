@@ -6,6 +6,7 @@ import (
 
 	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/golang/glog"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,6 +49,7 @@ func createClientOrDie() ctrlClient.Client {
 	scheme := runtime.NewScheme()
 	utilRuntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilRuntime.Must(argoCd.AddToScheme(scheme))
+	utilRuntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 
 	k8sClient, err := ctrlClient.New(config, ctrlClient.Options{
 		Scheme: scheme,
@@ -64,7 +66,10 @@ func (i *selfManagedOperatorInstaller) install(ctx context.Context) error {
 	if err := i.ensureNamespace(ctx, operatorNamespace); err != nil {
 		return err
 	}
-	return i.ensureNamespace(ctx, argoCdNamespace)
+	if err := i.ensureNamespace(ctx, argoCdNamespace); err != nil {
+		return err
+	}
+	return i.ensureSubscription(ctx)
 }
 
 func (i *selfManagedOperatorInstaller) ensureNamespace(ctx context.Context, name string) error {
@@ -72,11 +77,7 @@ func (i *selfManagedOperatorInstaller) ensureNamespace(ctx context.Context, name
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			glog.Infof("Namespace %q not found. Creating...", name)
-			namespace = &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: name,
-				},
-			}
+			namespace = newNamespace(name)
 			if err := i.k8sClient.Create(ctx, namespace); err != nil {
 				return fmt.Errorf("creating namespace %q: %w", name, err)
 			}
@@ -102,10 +103,51 @@ func (i *selfManagedOperatorInstaller) ensureNamespace(ctx context.Context, name
 	return nil
 }
 
+func newNamespace(name string) *corev1.Namespace {
+	return &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+}
+
 func (i *selfManagedOperatorInstaller) getNamespace(ctx context.Context, name string) (*corev1.Namespace, error) {
 	var namespace corev1.Namespace
 	if err := i.k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: name}, &namespace); err != nil {
 		return nil, fmt.Errorf("getting namespace %q: %w", name, err)
 	}
 	return &namespace, nil
+}
+
+func (i *selfManagedOperatorInstaller) ensureSubscription(ctx context.Context) error {
+	var subscription operatorsv1alpha1.Subscription
+	if err := i.k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: operatorSubscriptionName, Namespace: operatorNamespace}, &subscription); err != nil {
+		if apiErrors.IsNotFound(err) {
+			glog.Info("Openshift Gitops Subscription not found. Creating...")
+			if err := i.k8sClient.Create(ctx, newSubscription()); err != nil {
+				return fmt.Errorf("creating openshift gitops subscription: %w", err)
+			}
+			glog.Info("Openshift Gitops Subscription created.")
+			return nil
+		}
+		return fmt.Errorf("getting openshift gitops subscription: %w", err)
+	}
+	glog.Info("Openshift Gitops Subscription already exists. No update needed.")
+	return nil
+}
+
+func newSubscription() *operatorsv1alpha1.Subscription {
+	return &operatorsv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      operatorSubscriptionName,
+			Namespace: operatorNamespace,
+		},
+		Spec: &operatorsv1alpha1.SubscriptionSpec{
+			Channel:                "latest",
+			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
+			Package:                "openshift-gitops-operator",
+			CatalogSource:          "redhat-operators",
+			CatalogSourceNamespace: "openshift-marketplace",
+		},
+	}
 }

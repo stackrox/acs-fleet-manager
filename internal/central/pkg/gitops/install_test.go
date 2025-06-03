@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -20,6 +21,7 @@ func newTestInstaller(initObjs ...ctrlClient.Object) *selfManagedOperatorInstall
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = argoCd.AddToScheme(scheme)
+	_ = operatorsv1alpha1.AddToScheme(scheme)
 
 	fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjs...).Build()
 	return &selfManagedOperatorInstaller{
@@ -138,6 +140,43 @@ func TestEnsureNamespace_Exists_WithOtherLabels(t *testing.T) {
 	assert.Len(t, updatedNs.Labels, 2, "Should have two labels")
 }
 
+func TestEnsureSubscription_DoesNotExist(t *testing.T) {
+	ctx := context.Background()
+	installer := newTestInstaller()
+
+	err := installer.ensureSubscription(ctx)
+	require.NoError(t, err)
+
+	createdSub := &operatorsv1alpha1.Subscription{}
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: operatorSubscriptionName, Namespace: operatorNamespace}, createdSub)
+	require.NoError(t, err, "Subscription should have been created")
+
+	assert.Equal(t, operatorSubscriptionName, createdSub.Name)
+	assert.Equal(t, operatorNamespace, createdSub.Namespace)
+	require.NotNil(t, createdSub.Spec, "Created subscription spec should not be nil")
+}
+
+func TestEnsureSubscription_Exists(t *testing.T) {
+	ctx := context.Background()
+	existingSub := newSubscription()    // Use the helper to create a valid existing subscription
+	existingSub.Spec.Channel = "stable" // Modify slightly to see if it's overwritten (it shouldn't be by current logic)
+
+	installer := newTestInstaller(existingSub)
+
+	err := installer.ensureSubscription(ctx)
+	require.NoError(t, err)
+
+	// Verify Subscription still exists and was not modified
+	currentSub := &operatorsv1alpha1.Subscription{}
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: operatorSubscriptionName, Namespace: operatorNamespace}, currentSub)
+	require.NoError(t, err, "Subscription should still exist")
+
+	// The current ensureSubscription logic does not update an existing subscription.
+	// It only checks for existence and creates if not found.
+	assert.Equal(t, existingSub.Spec.Channel, currentSub.Spec.Channel, "Existing subscription channel should not have changed")
+	assert.Equal(t, existingSub.Spec.Package, currentSub.Spec.Package)
+}
+
 func TestInstall(t *testing.T) {
 	ctx := context.Background()
 	installer := newTestInstaller()
@@ -156,4 +195,8 @@ func TestInstall(t *testing.T) {
 	require.NoError(t, err, "argoCDNamespace should have been created")
 	require.NotNil(t, argoNs.Labels, "argoCDNamespace labels map should be initialized")
 	assert.Equal(t, managedByArgoCdLabelValue, argoNs.Labels[managedByArgoCdLabelKey], "argoCDNamespace managed-by label incorrect")
+
+	sub := &operatorsv1alpha1.Subscription{}
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: operatorSubscriptionName, Namespace: operatorNamespace}, sub)
+	require.NoError(t, err, "Subscription should have been created by install()")
 }
