@@ -12,8 +12,8 @@ import (
 func newInstallCommand() *cobra.Command {
 	installCmd := &cobra.Command{
 		Use:   "install",
-		Short: "Installs a self-managed gitops operator.",
-		Long:  "A command that installs ArgoCD aka openshift-gitops-operator in a self-managed way",
+		Short: "Installs the gitops operator.",
+		Long:  "A command that installs ArgoCD aka openshift-gitops-operator",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			timeoutDuration, err := cmd.Flags().GetDuration("timeout")
 			if err != nil {
@@ -21,7 +21,7 @@ func newInstallCommand() *cobra.Command {
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration)
 			defer cancel()
-			return gitops.InstallSelfManagedGitopsOperator(ctx)
+			return gitops.InstallGitopsOperator(ctx)
 		},
 	}
 	installCmd.Flags().DurationP("timeout", "t", 5*time.Minute, "Timeout for the install operation (e.g., 30s, 1m, 2h30m), defaults to 5 minutes")

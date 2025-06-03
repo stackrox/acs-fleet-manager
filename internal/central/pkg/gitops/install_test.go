@@ -17,14 +17,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func newTestInstaller(initObjs ...ctrlClient.Object) *selfManagedOperatorInstaller {
+func newTestInstaller(initObjs ...ctrlClient.Object) *operatorInstaller {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = argoCd.AddToScheme(scheme)
 	_ = operatorsv1alpha1.AddToScheme(scheme)
 
 	fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjs...).Build()
-	return &selfManagedOperatorInstaller{
+	return &operatorInstaller{
 		k8sClient: fakeClient,
 	}
 }
