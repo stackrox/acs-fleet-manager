@@ -1,12 +1,14 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:1.23.6-4 AS build
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.23.6-4 AS build
 USER root
 RUN mkdir /src
 WORKDIR /src
 COPY . ./
 
-RUN make binary
+ARG TARGETARCH
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295 as standard
+RUN make binary GOARCH=${TARGETARCH}
+
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295 AS standard
 
 ENV KUBECTL_VERSION=v1.28.1
 
