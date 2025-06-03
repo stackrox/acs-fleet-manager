@@ -8,6 +8,7 @@ import (
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilRuntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -17,7 +18,7 @@ import (
 
 const (
 	operatorNamespace         = "openshift-gitops-operator"
-	argoCDNamespace           = "openshift-gitops"
+	argoCdNamespace           = "openshift-gitops"
 	operatorSubscriptionName  = "openshift-gitops-operator"
 	applicationName           = "rhacs-gitops"
 	managedByArgoCdLabelKey   = "argocd.argoproj.io/managed-by"
@@ -63,7 +64,7 @@ func (i *selfManagedOperatorInstaller) install(ctx context.Context) error {
 	if err := i.ensureNamespace(ctx, operatorNamespace); err != nil {
 		return err
 	}
-	return i.ensureNamespace(ctx, argoCDNamespace)
+	return i.ensureNamespace(ctx, argoCdNamespace)
 }
 
 func (i *selfManagedOperatorInstaller) ensureNamespace(ctx context.Context, name string) error {
@@ -71,8 +72,13 @@ func (i *selfManagedOperatorInstaller) ensureNamespace(ctx context.Context, name
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			glog.Infof("Namespace %q not found. Creating...", name)
+			namespace = &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: name,
+				},
+			}
 			if err := i.k8sClient.Create(ctx, namespace); err != nil {
-				return fmt.Errorf("creating namespace %q: %w", namespace.Name, err)
+				return fmt.Errorf("creating namespace %q: %w", name, err)
 			}
 			glog.Infof("Namespace %q created.", name)
 		} else {
