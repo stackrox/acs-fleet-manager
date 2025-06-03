@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
@@ -12,12 +13,14 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config" // Renamed to avoid conflict with ctrl.GetConfig
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/golang/glog"
+	configv1 "github.com/openshift/api/config/v1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilRuntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,12 +32,14 @@ const (
 	operatorSubscriptionName         = "openshift-gitops-operator"
 	managedByArgoCdLabelKey          = "argocd.argoproj.io/managed-by"
 	managedByArgoCdLabelValue        = operatorNamespace
-	argoCdRepositoryName             = "acscs-manifests-repo"
-	argoCdRepositoryURL              = "https://github.com/stackrox/acscs-manifests"
 	awsSecretsManagerMaxBackoffDelay = 5 * time.Second // pragma: allowlist secret
 	awsSecretsManagerMaxAttempts     = 3
 	awsRepositorySecretID            = "gitops" // pragma: allowlist secret
 	bootstrapAppName                 = "rhacs-bootstrap"
+	bootstrapAppPath                 = "bootstrap"
+	bootstrapAppRepositoryName       = "acscs-manifests-repo"
+	bootstrapAppRepositoryURL        = "https://github.com/stackrox/acscs-manifests"
+	crdPollInterval                  = 5 * time.Second
 )
 
 // InstallGitopsOperator installs an instance of openshift-gitops operator
@@ -60,6 +65,7 @@ func createK8sClientOrDie() ctrlClient.Client {
 	utilRuntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilRuntime.Must(argoCd.AddToScheme(scheme))
 	utilRuntime.Must(operatorsv1alpha1.AddToScheme(scheme))
+	utilRuntime.Must(configv1.AddToScheme(scheme))
 
 	k8sClient, err := ctrlClient.New(config, ctrlClient.Options{
 		Scheme: scheme,
@@ -101,7 +107,13 @@ func (i *operatorInstaller) install(ctx context.Context) error {
 	if err := i.ensureSubscription(ctx); err != nil {
 		return err
 	}
-	return i.ensureRepositorySecret(ctx)
+	if err := i.ensureRepositorySecret(ctx); err != nil {
+		return err
+	}
+	if err := i.waitForApplicationCRD(ctx); err != nil {
+		return err
+	}
+	return i.ensureBootstrapApplication(ctx)
 }
 
 func (i *operatorInstaller) ensureNamespace(ctx context.Context, name string) error {
@@ -185,26 +197,26 @@ func newSubscription() *operatorsv1alpha1.Subscription {
 }
 
 func (i *operatorInstaller) ensureRepositorySecret(ctx context.Context) error {
-	glog.Infof("Ensuring repository secret '%s/%s' by fetching from AWS secret %q", argoCdNamespace, argoCdRepositoryName, awsRepositorySecretID)
+	glog.Infof("Ensuring repository secret '%s/%s' by fetching from AWS secret %q", argoCdNamespace, bootstrapAppRepositoryName, awsRepositorySecretID)
 	foundK8sSecret := &corev1.Secret{}
 
-	if err := i.k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, foundK8sSecret); err != nil {
+	if err := i.k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: bootstrapAppRepositoryName, Namespace: argoCdNamespace}, foundK8sSecret); err != nil {
 		if apiErrors.IsNotFound(err) {
-			glog.Infof("Kubernetes secret '%s/%s' not found. Creating...", argoCdNamespace, argoCdRepositoryName)
+			glog.Infof("Kubernetes secret '%s/%s' not found. Creating...", argoCdNamespace, bootstrapAppRepositoryName)
 			awsSecretValue, err := i.fetchSecretValueFromAWS(ctx)
 			if err != nil {
 				return err
 			}
 			if errCreate := i.k8sClient.Create(ctx, i.newRepositorySecret(awsSecretValue)); errCreate != nil {
-				glog.Errorf("Failed to create Kubernetes secret '%s/%s': %v", argoCdNamespace, argoCdRepositoryName, errCreate)
-				return fmt.Errorf("creating kubernetes secret '%s/%s': %w", argoCdNamespace, argoCdRepositoryName, errCreate)
+				glog.Errorf("Failed to create Kubernetes secret '%s/%s': %v", argoCdNamespace, bootstrapAppRepositoryName, errCreate)
+				return fmt.Errorf("creating kubernetes secret '%s/%s': %w", argoCdNamespace, bootstrapAppRepositoryName, errCreate)
 			}
-			glog.Infof("Successfully created Kubernetes secret '%s/%s'.", argoCdNamespace, argoCdRepositoryName)
+			glog.Infof("Successfully created Kubernetes secret '%s/%s'.", argoCdNamespace, bootstrapAppRepositoryName)
 			return nil
 		}
 		// Other error fetching the secret
-		glog.Errorf("Failed to get Kubernetes secret '%s/%s': %v", argoCdNamespace, argoCdRepositoryName, err)
-		return fmt.Errorf("getting kubernetes secret '%s/%s': %w", argoCdNamespace, argoCdRepositoryName, err)
+		glog.Errorf("Failed to get Kubernetes secret '%s/%s': %v", argoCdNamespace, bootstrapAppRepositoryName, err)
+		return fmt.Errorf("getting kubernetes secret '%s/%s': %w", argoCdNamespace, bootstrapAppRepositoryName, err)
 	}
 	awsSecretValue, err := i.fetchSecretValueFromAWS(ctx)
 	if err != nil {
@@ -212,18 +224,18 @@ func (i *operatorInstaller) ensureRepositorySecret(ctx context.Context) error {
 	}
 
 	if i.secretNeedsUpdate(foundK8sSecret, awsSecretValue) {
-		glog.Infof("Kubernetes secret '%s/%s' exists but needs update.", argoCdNamespace, argoCdRepositoryName)
+		glog.Infof("Kubernetes secret '%s/%s' exists but needs update.", argoCdNamespace, bootstrapAppRepositoryName)
 		newRepositorySecret := i.newRepositorySecret(awsSecretValue)
 		foundK8sSecret.StringData = newRepositorySecret.StringData
 		foundK8sSecret.Type = newRepositorySecret.Type
 
 		if errUpdate := i.k8sClient.Update(ctx, foundK8sSecret); errUpdate != nil {
-			glog.Errorf("Failed to update Kubernetes secret '%s/%s': %v", argoCdNamespace, argoCdRepositoryName, errUpdate)
-			return fmt.Errorf("updating kubernetes secret '%s/%s': %w", argoCdNamespace, argoCdRepositoryName, errUpdate)
+			glog.Errorf("Failed to update Kubernetes secret '%s/%s': %v", argoCdNamespace, bootstrapAppRepositoryName, errUpdate)
+			return fmt.Errorf("updating kubernetes secret '%s/%s': %w", argoCdNamespace, bootstrapAppRepositoryName, errUpdate)
 		}
-		glog.Infof("Successfully updated Kubernetes secret '%s/%s'.", argoCdNamespace, argoCdRepositoryName)
+		glog.Infof("Successfully updated Kubernetes secret '%s/%s'.", argoCdNamespace, bootstrapAppRepositoryName)
 	} else {
-		glog.Infof("Kubernetes secret '%s/%s' already exists and is up-to-date.", argoCdNamespace, argoCdRepositoryName)
+		glog.Infof("Kubernetes secret '%s/%s' already exists and is up-to-date.", argoCdNamespace, bootstrapAppRepositoryName)
 	}
 
 	return nil
@@ -238,7 +250,7 @@ func (i *operatorInstaller) secretNeedsUpdate(foundSecret *corev1.Secret, awsRep
 		return true
 	}
 	urlBytes, ok := foundSecret.Data["url"]
-	if !ok || string(urlBytes) != argoCdRepositoryURL {
+	if !ok || string(urlBytes) != bootstrapAppRepositoryURL {
 		return true
 	}
 	passwordBytes, ok := foundSecret.Data["password"]
@@ -248,7 +260,7 @@ func (i *operatorInstaller) secretNeedsUpdate(foundSecret *corev1.Secret, awsRep
 func (i *operatorInstaller) newRepositorySecret(awsRepositorySecret awsRepositorySecret) *corev1.Secret {
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      argoCdRepositoryName,
+			Name:      bootstrapAppRepositoryName,
 			Namespace: argoCdNamespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/managed-by":   "acsfleetctl",
@@ -257,7 +269,7 @@ func (i *operatorInstaller) newRepositorySecret(awsRepositorySecret awsRepositor
 		},
 		Type: corev1.SecretTypeOpaque,
 		StringData: map[string]string{
-			"url":      argoCdRepositoryURL,
+			"url":      bootstrapAppRepositoryURL,
 			"username": "not-used",
 			"password": awsRepositorySecret.GithubToken,
 		},
@@ -289,4 +301,121 @@ func (i *operatorInstaller) fetchSecretValueFromAWS(ctx context.Context) (awsRep
 		return secret, fmt.Errorf("unmarshalling JSON from AWS secret %q: %w", awsRepositorySecretID, err)
 	}
 	return secret, nil
+}
+
+func (i *operatorInstaller) waitForApplicationCRD(ctx context.Context) error {
+	glog.Info("Waiting for ArgoCD Application CRD to become available...")
+	err := wait.PollUntilContextCancel(ctx, crdPollInterval, true, func(ctx context.Context) (bool, error) {
+		appList := &argoCd.ApplicationList{}
+		err := i.k8sClient.List(ctx, appList, ctrlClient.InNamespace(argoCdNamespace), ctrlClient.Limit(1))
+		if err != nil {
+			if runtime.IsNotRegisteredError(err) || apiErrors.IsNotFound(err) {
+				glog.V(2).Infof("Application CRD not yet available, retrying: %v", err)
+				return false, nil
+			}
+			glog.Errorf("Error listing Applications while waiting for CRD: %v", err)
+			return false, fmt.Errorf("listing Applications while waiting for CRD: %w", err)
+		}
+		glog.Info("ArgoCD Application CRD is available.")
+		return true, nil
+	})
+	if err != nil {
+		return fmt.Errorf("waiting for ArgoCD Application CRD to become available: %w", err)
+	}
+	return nil
+}
+
+// newBootstrapApplication creates the definition of the bootstrap ArgoCD Application.
+func (i *operatorInstaller) newBootstrapApplication(clusterName string) *argoCd.Application {
+	return &argoCd.Application{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      bootstrapAppName,
+			Namespace: argoCdNamespace,
+		},
+		Spec: argoCd.ApplicationSpec{
+			Project: "default",
+			Source: &argoCd.ApplicationSource{
+				RepoURL:        bootstrapAppRepositoryURL,
+				Path:           bootstrapAppPath,
+				TargetRevision: "HEAD",
+				Helm: &argoCd.ApplicationSourceHelm{
+					ValueFiles: []string{
+						"values-" + clusterName + ".yaml",
+					},
+				},
+			},
+			Destination: argoCd.ApplicationDestination{
+				Server:    "https://kubernetes.default.svc",
+				Namespace: argoCdNamespace,
+			},
+			SyncPolicy: &argoCd.SyncPolicy{
+				Automated: &argoCd.SyncPolicyAutomated{
+					Prune:      true,
+					SelfHeal:   true,
+					AllowEmpty: true,
+				},
+			},
+		},
+	}
+}
+
+func (i *operatorInstaller) ensureBootstrapApplication(ctx context.Context) error {
+	glog.Infof("Ensuring bootstrap ArgoCD application %q in namespace %q", bootstrapAppName, argoCdNamespace)
+
+	app := &argoCd.Application{}
+	err := i.k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: bootstrapAppName, Namespace: argoCdNamespace}, app)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			glog.Infof("Bootstrap application %q not found. Creating...", bootstrapAppName)
+			clusterName, err := i.resolveClusterName(ctx)
+			if err != nil {
+				return fmt.Errorf("error resolving cluster name: %w", err)
+			}
+			bootstrapApp := i.newBootstrapApplication(clusterName)
+			if errCreate := i.k8sClient.Create(ctx, bootstrapApp); errCreate != nil {
+				glog.Errorf("Failed to create bootstrap application %q: %v", bootstrapAppName, errCreate)
+				return fmt.Errorf("creating bootstrap application %q: %w", bootstrapAppName, errCreate)
+			}
+			glog.Infof("Bootstrap application %q created successfully.", bootstrapAppName)
+			return nil
+		}
+		glog.Errorf("Failed to get bootstrap application %q: %v", bootstrapAppName, err)
+		return fmt.Errorf("getting bootstrap application %q: %w", bootstrapAppName, err)
+	}
+
+	glog.Infof("Bootstrap application %q already exists. Skipping creation.", bootstrapAppName)
+	return nil
+}
+
+func (i *operatorInstaller) resolveClusterName(ctx context.Context) (string, error) {
+	infra := &configv1.Infrastructure{}
+	if err := i.k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: "cluster"}, infra); err != nil {
+		return "", fmt.Errorf("getting infrastructure: %w", err)
+	}
+	if infra.Status.InfrastructureName == "" {
+		return "", fmt.Errorf("infrastructure name is empty the in status of CR")
+	}
+	return trimSuffixIfExists(infra.Status.InfrastructureName), nil
+}
+
+func trimSuffixIfExists(str string) string {
+	if str == "" {
+		return ""
+	}
+	lastDash := strings.LastIndex(str, "-")
+	if lastDash == -1 {
+		return str // No dash found, return as is
+	}
+	// If the dash is the last character, or if it's the only character.
+	if lastDash == len(str)-1 || lastDash == 0 {
+		// Handle cases like "cluster-" or "-"
+		// For "cluster-", we want "cluster". For "-", we want "".
+		processed := str[:lastDash]
+		return processed
+	}
+
+	// Check if the part after the last dash looks like a typical ROSA/OSD suffix (e.g., 3 or 6 random chars)
+	// This is a heuristic. A more robust check might involve regex or specific length checks.
+	// For simplicity, we'll just take everything before the last dash if a dash exists and is not at the end.
+	return str[:lastDash]
 }

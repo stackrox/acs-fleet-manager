@@ -259,10 +259,10 @@ func TestEnsureRepositorySecret_K8sSecretDoesNotExist_CreateSuccess(t *testing.T
 	require.NoError(t, err)
 
 	createdK8sSecret := &corev1.Secret{}
-	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, createdK8sSecret)
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: bootstrapAppRepositoryName, Namespace: argoCdNamespace}, createdK8sSecret)
 	require.NoError(t, err, "Kubernetes secret should have been created")
 
-	assert.Equal(t, argoCdRepositoryURL, createdK8sSecret.StringData["url"])
+	assert.Equal(t, bootstrapAppRepositoryURL, createdK8sSecret.StringData["url"])
 	assert.Equal(t, "not-used", createdK8sSecret.StringData["username"])
 	assert.Equal(t, "test-token-123", createdK8sSecret.StringData["password"])
 	assert.Equal(t, "acsfleetctl", createdK8sSecret.Labels["app.kubernetes.io/managed-by"])
@@ -279,7 +279,7 @@ func TestEnsureRepositorySecret_K8sSecretExists_UpToDate(t *testing.T) {
 
 	initialK8sSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      argoCdRepositoryName,
+			Name:      bootstrapAppRepositoryName,
 			Namespace: argoCdNamespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/managed-by":   "acsfleetctl",
@@ -288,7 +288,7 @@ func TestEnsureRepositorySecret_K8sSecretExists_UpToDate(t *testing.T) {
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"url":      []byte(argoCdRepositoryURL),
+			"url":      []byte(bootstrapAppRepositoryURL),
 			"username": []byte("not-used"),
 			"password": []byte("current-token"),
 		},
@@ -303,7 +303,7 @@ func TestEnsureRepositorySecret_K8sSecretExists_UpToDate(t *testing.T) {
 	require.NoError(t, err)
 
 	currentK8sSecret := &corev1.Secret{}
-	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, currentK8sSecret)
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: bootstrapAppRepositoryName, Namespace: argoCdNamespace}, currentK8sSecret)
 	require.NoError(t, err)
 	assert.Equal(t, initialK8sSecret.Data["password"], currentK8sSecret.Data["password"])
 	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
@@ -318,7 +318,7 @@ func TestEnsureRepositorySecret_K8sSecretExists_NeedsUpdate_TokenDiffers(t *test
 
 	initialK8sSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      argoCdRepositoryName,
+			Name:      bootstrapAppRepositoryName,
 			Namespace: argoCdNamespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/managed-by":   "acsfleetctl",
@@ -327,7 +327,7 @@ func TestEnsureRepositorySecret_K8sSecretExists_NeedsUpdate_TokenDiffers(t *test
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"url":      []byte(argoCdRepositoryURL),
+			"url":      []byte(bootstrapAppRepositoryURL),
 			"username": []byte("not-used"),
 			"password": []byte("old-stale-token"), // Old token
 		},
@@ -342,7 +342,7 @@ func TestEnsureRepositorySecret_K8sSecretExists_NeedsUpdate_TokenDiffers(t *test
 	require.NoError(t, err)
 
 	updatedK8sSecret := &corev1.Secret{}
-	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, updatedK8sSecret)
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: bootstrapAppRepositoryName, Namespace: argoCdNamespace}, updatedK8sSecret)
 	require.NoError(t, err)
 	assert.Equal(t, "new-token-from-aws", updatedK8sSecret.StringData["password"])
 	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
@@ -356,7 +356,7 @@ func TestEnsureRepositorySecret_K8sSecretExists_NeedsUpdate_URLDiffers(t *testin
 	awsSecretJSON, _ := json.Marshal(awsSecretData)
 
 	initialK8sSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: argoCdRepositoryName, Namespace: argoCdNamespace},
+		ObjectMeta: metav1.ObjectMeta{Name: bootstrapAppRepositoryName, Namespace: argoCdNamespace},
 		Data: map[string][]byte{
 			"url":      []byte("https://github.com/some/other-repo"), // Different URL
 			"password": []byte("same-token"),
@@ -372,9 +372,9 @@ func TestEnsureRepositorySecret_K8sSecretExists_NeedsUpdate_URLDiffers(t *testin
 	require.NoError(t, err)
 
 	updatedK8sSecret := &corev1.Secret{}
-	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, updatedK8sSecret)
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: bootstrapAppRepositoryName, Namespace: argoCdNamespace}, updatedK8sSecret)
 	require.NoError(t, err)
-	assert.Equal(t, argoCdRepositoryURL, updatedK8sSecret.StringData["url"]) // Should be updated to the constant
+	assert.Equal(t, bootstrapAppRepositoryURL, updatedK8sSecret.StringData["url"]) // Should be updated to the constant
 	assert.Equal(t, "same-token", updatedK8sSecret.StringData["password"])
 	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
 }
@@ -388,7 +388,7 @@ func TestEnsureRepositorySecret_K8sSecretExists_OwnedByESO_NoUpdate(t *testing.T
 
 	initialK8sSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      argoCdRepositoryName,
+			Name:      bootstrapAppRepositoryName,
 			Namespace: argoCdNamespace,
 			OwnerReferences: []metav1.OwnerReference{
 				{
@@ -400,7 +400,7 @@ func TestEnsureRepositorySecret_K8sSecretExists_OwnedByESO_NoUpdate(t *testing.T
 			},
 		},
 		Data: map[string][]byte{
-			"url":      []byte(argoCdRepositoryURL),
+			"url":      []byte(bootstrapAppRepositoryURL),
 			"password": []byte("token-managed-by-eso"),
 		},
 	}
@@ -415,7 +415,7 @@ func TestEnsureRepositorySecret_K8sSecretExists_OwnedByESO_NoUpdate(t *testing.T
 	require.NoError(t, err)
 
 	currentK8sSecret := &corev1.Secret{}
-	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, currentK8sSecret)
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: bootstrapAppRepositoryName, Namespace: argoCdNamespace}, currentK8sSecret)
 	require.NoError(t, err)
 	// Assert that the secret was NOT updated because it's owned by ESO
 	assert.Equal(t, "token-managed-by-eso", string(currentK8sSecret.Data["password"]))
@@ -454,7 +454,7 @@ func TestInstall(t *testing.T) {
 	require.NoError(t, err, "Subscription should have been created by install()")
 
 	repoSecret := &corev1.Secret{}
-	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, repoSecret)
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: bootstrapAppRepositoryName, Namespace: argoCdNamespace}, repoSecret)
 	require.NoError(t, err, "Repository secret should have been created by install()")
 	assert.Equal(t, "install-token", repoSecret.StringData["password"])
 
