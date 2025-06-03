@@ -2,9 +2,13 @@ package gitops
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"testing"
 
 	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,15 +21,30 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func newTestInstaller(initObjs ...ctrlClient.Object) *operatorInstaller {
+// newTestInstallerWithAWSMock creates an installer with a fake K8s client and a mocked AWS SM client
+func newTestInstallerWithAWSMock(secretsManagerClient *secretsManagerClientMock, initK8sObjs ...ctrlClient.Object) *operatorInstaller {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = argoCd.AddToScheme(scheme)
 	_ = operatorsv1alpha1.AddToScheme(scheme)
 
-	fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjs...).Build()
+	fakeK8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initK8sObjs...).Build()
 	return &operatorInstaller{
-		k8sClient: fakeClient,
+		k8sClient:               fakeK8sClient,
+		awsSecretsManagerClient: secretsManagerClient,
+	}
+}
+
+// newTestInstaller is the original helper, retained for tests not needing AWS mock
+func newTestInstaller(initK8sObjs ...ctrlClient.Object) *operatorInstaller {
+	scheme := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = argoCd.AddToScheme(scheme)
+	_ = operatorsv1alpha1.AddToScheme(scheme)
+
+	fakeK8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initK8sObjs...).Build()
+	return &operatorInstaller{
+		k8sClient: fakeK8sClient,
 	}
 }
 
@@ -158,15 +177,14 @@ func TestEnsureSubscription_DoesNotExist(t *testing.T) {
 
 func TestEnsureSubscription_Exists(t *testing.T) {
 	ctx := context.Background()
-	existingSub := newSubscription()    // Use the helper to create a valid existing subscription
-	existingSub.Spec.Channel = "stable" // Modify slightly to see if it's overwritten (it shouldn't be by current logic)
+	existingSub := newSubscription()
+	existingSub.Spec.Channel = "stable"
 
 	installer := newTestInstaller(existingSub)
 
 	err := installer.ensureSubscription(ctx)
 	require.NoError(t, err)
 
-	// Verify Subscription still exists and was not modified
 	currentSub := &operatorsv1alpha1.Subscription{}
 	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: operatorSubscriptionName, Namespace: operatorNamespace}, currentSub)
 	require.NoError(t, err, "Subscription should still exist")
@@ -177,9 +195,244 @@ func TestEnsureSubscription_Exists(t *testing.T) {
 	assert.Equal(t, existingSub.Spec.Package, currentSub.Spec.Package)
 }
 
+func TestEnsureRepositorySecret_AWSFetchFails(t *testing.T) {
+	ctx := context.Background()
+	mockAwsSMClient := &secretsManagerClientMock{}
+	installer := newTestInstallerWithAWSMock(mockAwsSMClient)
+
+	expectedError := errors.New("aws error")
+	mockAwsSMClient.GetSecretValueFunc = func(ctxMoq context.Context, paramsMoq *secretsmanager.GetSecretValueInput, optFnsMoq ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error) {
+		return nil, expectedError
+	}
+
+	err := installer.ensureRepositorySecret(ctx)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "aws GetSecretValue")
+	assert.Contains(t, err.Error(), expectedError.Error())
+	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
+}
+
+func TestEnsureRepositorySecret_AWSSecretStringNil(t *testing.T) {
+	ctx := context.Background()
+	mockAwsSMClient := &secretsManagerClientMock{}
+	installer := newTestInstallerWithAWSMock(mockAwsSMClient)
+
+	mockAwsSMClient.GetSecretValueFunc = func(ctxMoq context.Context, paramsMoq *secretsmanager.GetSecretValueInput, optFnsMoq ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error) {
+		return &secretsmanager.GetSecretValueOutput{SecretBinary: []byte("some binary data")}, nil
+	}
+
+	err := installer.ensureRepositorySecret(ctx)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "does not contain a SecretString")
+	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
+}
+
+func TestEnsureRepositorySecret_AWSSecretUnmarshalFails(t *testing.T) {
+	ctx := context.Background()
+	mockAwsSMClient := &secretsManagerClientMock{}
+	installer := newTestInstallerWithAWSMock(mockAwsSMClient)
+
+	invalidJSONString := "this is not json"
+	mockAwsSMClient.GetSecretValueFunc = func(ctxMoq context.Context, paramsMoq *secretsmanager.GetSecretValueInput, optFnsMoq ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error) {
+		return &secretsmanager.GetSecretValueOutput{SecretString: aws.String(invalidJSONString)}, nil
+	}
+
+	err := installer.ensureRepositorySecret(ctx)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unmarshalling JSON from AWS secret")
+	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
+}
+
+func TestEnsureRepositorySecret_K8sSecretDoesNotExist_CreateSuccess(t *testing.T) {
+	ctx := context.Background()
+	mockAwsSMClient := &secretsManagerClientMock{}
+	installer := newTestInstallerWithAWSMock(mockAwsSMClient) // No initial K8s objects
+
+	awsSecretData := awsRepositorySecret{GithubToken: "test-token-123"} // pragma: allowlist secret
+	awsSecretJSON, _ := json.Marshal(awsSecretData)
+
+	mockAwsSMClient.GetSecretValueFunc = func(ctxMoq context.Context, paramsMoq *secretsmanager.GetSecretValueInput, optFnsMoq ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error) {
+		return &secretsmanager.GetSecretValueOutput{SecretString: aws.String(string(awsSecretJSON))}, nil
+	}
+
+	err := installer.ensureRepositorySecret(ctx)
+	require.NoError(t, err)
+
+	createdK8sSecret := &corev1.Secret{}
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, createdK8sSecret)
+	require.NoError(t, err, "Kubernetes secret should have been created")
+
+	assert.Equal(t, argoCdRepositoryURL, createdK8sSecret.StringData["url"])
+	assert.Equal(t, "not-used", createdK8sSecret.StringData["username"])
+	assert.Equal(t, "test-token-123", createdK8sSecret.StringData["password"])
+	assert.Equal(t, "acsfleetctl", createdK8sSecret.Labels["app.kubernetes.io/managed-by"])
+	assert.Equal(t, "repository", createdK8sSecret.Labels["argocd.argoproj.io/secret-type"])
+	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
+}
+
+func TestEnsureRepositorySecret_K8sSecretExists_UpToDate(t *testing.T) {
+	ctx := context.Background()
+	mockAwsSMClient := &secretsManagerClientMock{}
+
+	awsSecretData := awsRepositorySecret{GithubToken: "current-token"} // pragma: allowlist secret
+	awsSecretJSON, _ := json.Marshal(awsSecretData)
+
+	initialK8sSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      argoCdRepositoryName,
+			Namespace: argoCdNamespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/managed-by":   "acsfleetctl",
+				"argocd.argoproj.io/secret-type": "repository",
+			},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"url":      []byte(argoCdRepositoryURL),
+			"username": []byte("not-used"),
+			"password": []byte("current-token"),
+		},
+	}
+	installer := newTestInstallerWithAWSMock(mockAwsSMClient, initialK8sSecret)
+
+	mockAwsSMClient.GetSecretValueFunc = func(ctxMoq context.Context, paramsMoq *secretsmanager.GetSecretValueInput, optFnsMoq ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error) {
+		return &secretsmanager.GetSecretValueOutput{SecretString: aws.String(string(awsSecretJSON))}, nil
+	}
+
+	err := installer.ensureRepositorySecret(ctx)
+	require.NoError(t, err)
+
+	currentK8sSecret := &corev1.Secret{}
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, currentK8sSecret)
+	require.NoError(t, err)
+	assert.Equal(t, initialK8sSecret.Data["password"], currentK8sSecret.Data["password"])
+	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
+}
+
+func TestEnsureRepositorySecret_K8sSecretExists_NeedsUpdate_TokenDiffers(t *testing.T) {
+	ctx := context.Background()
+	mockAwsSMClient := &secretsManagerClientMock{}
+
+	awsSecretData := awsRepositorySecret{GithubToken: "new-token-from-aws"} // pragma: allowlist secret
+	awsSecretJSON, _ := json.Marshal(awsSecretData)
+
+	initialK8sSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      argoCdRepositoryName,
+			Namespace: argoCdNamespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/managed-by":   "acsfleetctl",
+				"argocd.argoproj.io/secret-type": "repository",
+			},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"url":      []byte(argoCdRepositoryURL),
+			"username": []byte("not-used"),
+			"password": []byte("old-stale-token"), // Old token
+		},
+	}
+	installer := newTestInstallerWithAWSMock(mockAwsSMClient, initialK8sSecret)
+
+	mockAwsSMClient.GetSecretValueFunc = func(ctxMoq context.Context, paramsMoq *secretsmanager.GetSecretValueInput, optFnsMoq ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error) {
+		return &secretsmanager.GetSecretValueOutput{SecretString: aws.String(string(awsSecretJSON))}, nil
+	}
+
+	err := installer.ensureRepositorySecret(ctx)
+	require.NoError(t, err)
+
+	updatedK8sSecret := &corev1.Secret{}
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, updatedK8sSecret)
+	require.NoError(t, err)
+	assert.Equal(t, "new-token-from-aws", updatedK8sSecret.StringData["password"])
+	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
+}
+
+func TestEnsureRepositorySecret_K8sSecretExists_NeedsUpdate_URLDiffers(t *testing.T) {
+	ctx := context.Background()
+	mockAwsSMClient := &secretsManagerClientMock{}
+
+	awsSecretData := awsRepositorySecret{GithubToken: "same-token"} // pragma: allowlist secret
+	awsSecretJSON, _ := json.Marshal(awsSecretData)
+
+	initialK8sSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: argoCdRepositoryName, Namespace: argoCdNamespace},
+		Data: map[string][]byte{
+			"url":      []byte("https://github.com/some/other-repo"), // Different URL
+			"password": []byte("same-token"),
+		},
+	}
+	installer := newTestInstallerWithAWSMock(mockAwsSMClient, initialK8sSecret)
+
+	mockAwsSMClient.GetSecretValueFunc = func(ctxMoq context.Context, paramsMoq *secretsmanager.GetSecretValueInput, optFnsMoq ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error) {
+		return &secretsmanager.GetSecretValueOutput{SecretString: aws.String(string(awsSecretJSON))}, nil
+	}
+
+	err := installer.ensureRepositorySecret(ctx)
+	require.NoError(t, err)
+
+	updatedK8sSecret := &corev1.Secret{}
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, updatedK8sSecret)
+	require.NoError(t, err)
+	assert.Equal(t, argoCdRepositoryURL, updatedK8sSecret.StringData["url"]) // Should be updated to the constant
+	assert.Equal(t, "same-token", updatedK8sSecret.StringData["password"])
+	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
+}
+
+func TestEnsureRepositorySecret_K8sSecretExists_OwnedByESO_NoUpdate(t *testing.T) {
+	ctx := context.Background()
+	mockAwsSMClient := &secretsManagerClientMock{}
+
+	awsSecretData := awsRepositorySecret{GithubToken: "new-aws-token"} // pragma: allowlist secret
+	awsSecretJSON, _ := json.Marshal(awsSecretData)
+
+	initialK8sSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      argoCdRepositoryName,
+			Namespace: argoCdNamespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: "external-secrets.io/v1beta1",
+					Kind:       "ExternalSecret",
+					Name:       "some-eso-secret",
+					UID:        types.UID("some-uid"),
+				},
+			},
+		},
+		Data: map[string][]byte{
+			"url":      []byte(argoCdRepositoryURL),
+			"password": []byte("token-managed-by-eso"),
+		},
+	}
+	installer := newTestInstallerWithAWSMock(mockAwsSMClient, initialK8sSecret)
+
+	// AWS fetch will happen, but update should be skipped
+	mockAwsSMClient.GetSecretValueFunc = func(ctxMoq context.Context, paramsMoq *secretsmanager.GetSecretValueInput, optFnsMoq ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error) {
+		return &secretsmanager.GetSecretValueOutput{SecretString: aws.String(string(awsSecretJSON))}, nil
+	}
+
+	err := installer.ensureRepositorySecret(ctx)
+	require.NoError(t, err)
+
+	currentK8sSecret := &corev1.Secret{}
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, currentK8sSecret)
+	require.NoError(t, err)
+	// Assert that the secret was NOT updated because it's owned by ESO
+	assert.Equal(t, "token-managed-by-eso", string(currentK8sSecret.Data["password"]))
+	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
+}
+
 func TestInstall(t *testing.T) {
 	ctx := context.Background()
-	installer := newTestInstaller()
+
+	mockAwsSMClient := &secretsManagerClientMock{}
+	installer := newTestInstallerWithAWSMock(mockAwsSMClient)
+
+	awsSecretData := awsRepositorySecret{GithubToken: "install-token"} // pragma: allowlist secret
+	awsSecretJSON, _ := json.Marshal(awsSecretData)
+	mockAwsSMClient.GetSecretValueFunc = func(ctxMoq context.Context, paramsMoq *secretsmanager.GetSecretValueInput, optFnsMoq ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error) {
+		return &secretsmanager.GetSecretValueOutput{SecretString: aws.String(string(awsSecretJSON))}, nil
+	}
 
 	err := installer.install(ctx)
 	require.NoError(t, err)
@@ -199,4 +452,11 @@ func TestInstall(t *testing.T) {
 	sub := &operatorsv1alpha1.Subscription{}
 	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: operatorSubscriptionName, Namespace: operatorNamespace}, sub)
 	require.NoError(t, err, "Subscription should have been created by install()")
+
+	repoSecret := &corev1.Secret{}
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: argoCdRepositoryName, Namespace: argoCdNamespace}, repoSecret)
+	require.NoError(t, err, "Repository secret should have been created by install()")
+	assert.Equal(t, "install-token", repoSecret.StringData["password"])
+
+	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
 }

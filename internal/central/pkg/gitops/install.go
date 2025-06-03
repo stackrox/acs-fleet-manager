@@ -27,7 +27,6 @@ const (
 	operatorNamespace                = "openshift-gitops-operator"
 	argoCdNamespace                  = "openshift-gitops"
 	operatorSubscriptionName         = "openshift-gitops-operator"
-	applicationName                  = "rhacs-gitops"
 	managedByArgoCdLabelKey          = "argocd.argoproj.io/managed-by"
 	managedByArgoCdLabelValue        = operatorNamespace
 	argoCdRepositoryName             = "acscs-manifests-repo"
@@ -35,9 +34,10 @@ const (
 	awsSecretsManagerMaxBackoffDelay = 5 * time.Second // pragma: allowlist secret
 	awsSecretsManagerMaxAttempts     = 3
 	awsRepositorySecretID            = "gitops" // pragma: allowlist secret
+	bootstrapAppName                 = "rhacs-bootstrap"
 )
 
-// InstallGitopsOperator installs a self-managed instance of openshift-gitops operator
+// InstallGitopsOperator installs an instance of openshift-gitops operator
 func InstallGitopsOperator(ctx context.Context) error {
 	installer := &operatorInstaller{
 		k8sClient:               createK8sClientOrDie(),
@@ -48,7 +48,7 @@ func InstallGitopsOperator(ctx context.Context) error {
 
 type operatorInstaller struct {
 	k8sClient               ctrlClient.Client
-	awsSecretsManagerClient *secretsmanager.Client
+	awsSecretsManagerClient secretsManagerClient
 }
 
 func createK8sClientOrDie() ctrlClient.Client {
@@ -72,7 +72,12 @@ func createK8sClientOrDie() ctrlClient.Client {
 	return k8sClient
 }
 
-func createAwsSecretsManagerClientOrDie(ctx context.Context) *secretsmanager.Client {
+//go:generate moq -rm -out secrets_manager_client_moq.go . secretsManagerClient
+type secretsManagerClient interface {
+	GetSecretValue(ctx context.Context, params *secretsmanager.GetSecretValueInput, optFns ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error)
+}
+
+func createAwsSecretsManagerClientOrDie(ctx context.Context) secretsManagerClient {
 	retryerWithBackoff := retry.AddWithMaxBackoffDelay(retry.NewStandard(), awsSecretsManagerMaxBackoffDelay)
 	awsRetryer := func() aws.Retryer {
 		return retry.AddWithMaxAttempts(retryerWithBackoff, awsSecretsManagerMaxAttempts)
