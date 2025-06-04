@@ -69,6 +69,7 @@ func createK8sClientOrDie() ctrlClient.Client {
 	utilRuntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilRuntime.Must(argoCd.AddToScheme(scheme))
 	utilRuntime.Must(operatorsv1alpha1.AddToScheme(scheme))
+	utilRuntime.Must(operatorsv1.AddToScheme(scheme))
 	utilRuntime.Must(configv1.AddToScheme(scheme))
 
 	k8sClient, err := ctrlClient.New(config, ctrlClient.Options{

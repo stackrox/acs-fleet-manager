@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	configv1 "github.com/openshift/api/config/v1"
+	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,6 +30,7 @@ func newTestInstallerWithAWSMock(secretsManagerClient *secretsManagerClientMock,
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = argoCd.AddToScheme(scheme)
 	_ = operatorsv1alpha1.AddToScheme(scheme)
+	_ = operatorsv1.AddToScheme(scheme)
 	_ = configv1.AddToScheme(scheme)
 
 	fakeK8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initK8sObjs...).Build()
@@ -44,6 +46,7 @@ func newTestInstaller(initK8sObjs ...ctrlClient.Object) *operatorInstaller {
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = argoCd.AddToScheme(scheme)
 	_ = operatorsv1alpha1.AddToScheme(scheme)
+	_ = operatorsv1.AddToScheme(scheme)
 	_ = configv1.AddToScheme(scheme)
 
 	fakeK8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initK8sObjs...).Build()
