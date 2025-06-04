@@ -47,17 +47,47 @@ const (
 )
 
 // InstallGitopsOperator installs an instance of openshift-gitops operator
-func InstallGitopsOperator(ctx context.Context) error {
+func InstallGitopsOperator(ctx context.Context, optionsFunc ...InstallOptionsFunc) error {
+	opts := &InstallOptions{}
+	for _, fn := range optionsFunc {
+		fn(opts)
+	}
+
 	installer := &operatorInstaller{
 		k8sClient:               createK8sClientOrDie(),
 		awsSecretsManagerClient: createAwsSecretsManagerClientOrDie(ctx),
+		opts:                    *opts,
 	}
 	return installer.install(ctx)
+}
+
+// InstallOptions options for installing the gitops operator
+type InstallOptions struct {
+	ClusterName                string
+	BootstrapAppTargetRevision string
+}
+
+// InstallOptionsFunc install option function
+type InstallOptionsFunc func(*InstallOptions)
+
+// WithClusterName sets for cluster name in InstallOptions
+func WithClusterName(clusterName string) InstallOptionsFunc {
+	return func(o *InstallOptions) {
+		o.ClusterName = clusterName
+	}
+}
+
+// WithBootstrapAppTargetRevision sets bootstrap app target revision in InstallOptions
+func WithBootstrapAppTargetRevision(revision string) InstallOptionsFunc {
+	return func(o *InstallOptions) {
+		o.BootstrapAppTargetRevision = revision
+	}
 }
 
 type operatorInstaller struct {
 	k8sClient               ctrlClient.Client
 	awsSecretsManagerClient secretsManagerClient
+	opts                    InstallOptions
 }
 
 func createK8sClientOrDie() ctrlClient.Client {
@@ -383,8 +413,7 @@ func (i *operatorInstaller) waitForApplicationCRD(ctx context.Context) error {
 	return nil
 }
 
-// newBootstrapApplication creates the definition of the bootstrap ArgoCD Application.
-func (i *operatorInstaller) newBootstrapApplication(clusterName string) *argoCd.Application {
+func newBootstrapApplication(clusterName string, bootstrapAppTargetRevision string) *argoCd.Application {
 	return &argoCd.Application{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      bootstrapAppName,
@@ -395,7 +424,7 @@ func (i *operatorInstaller) newBootstrapApplication(clusterName string) *argoCd.
 			Source: &argoCd.ApplicationSource{
 				RepoURL:        bootstrapAppRepositoryURL,
 				Path:           bootstrapAppPath,
-				TargetRevision: "HEAD",
+				TargetRevision: bootstrapAppTargetRevision,
 				Helm: &argoCd.ApplicationSourceHelm{
 					ValueFiles: []string{
 						"values-" + clusterName + ".yaml",
@@ -425,11 +454,11 @@ func (i *operatorInstaller) ensureBootstrapApplication(ctx context.Context) erro
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			glog.Infof("Bootstrap application %q not found. Creating...", bootstrapAppName)
-			clusterName, err := i.resolveClusterName(ctx)
+			clusterName, err := i.getClusterName(ctx)
 			if err != nil {
 				return fmt.Errorf("error resolving cluster name: %w", err)
 			}
-			bootstrapApp := i.newBootstrapApplication(clusterName)
+			bootstrapApp := newBootstrapApplication(clusterName, i.getBootstrapAppTargetRevision())
 			if errCreate := i.k8sClient.Create(ctx, bootstrapApp); errCreate != nil {
 				glog.Errorf("Failed to create bootstrap application %q: %v", bootstrapAppName, errCreate)
 				return fmt.Errorf("creating bootstrap application %q: %w", bootstrapAppName, errCreate)
@@ -476,4 +505,18 @@ func trimSuffixIfExists(str string) string {
 	// This is a heuristic. A more robust check might involve regex or specific length checks.
 	// For simplicity, we'll just take everything before the last dash if a dash exists and is not at the end.
 	return str[:lastDash]
+}
+
+func (i *operatorInstaller) getClusterName(ctx context.Context) (string, error) {
+	if i.opts.ClusterName == "" {
+		return i.resolveClusterName(ctx)
+	}
+	return i.opts.ClusterName, nil
+}
+
+func (i *operatorInstaller) getBootstrapAppTargetRevision() string {
+	if i.opts.BootstrapAppTargetRevision == "" {
+		return "HEAD"
+	}
+	return i.opts.BootstrapAppTargetRevision
 }

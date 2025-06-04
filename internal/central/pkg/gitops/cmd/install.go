@@ -21,9 +21,21 @@ func newInstallCommand() *cobra.Command {
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration)
 			defer cancel()
-			return gitops.InstallGitopsOperator(ctx)
+			clusterName, err := cmd.Flags().GetString("cluster-name")
+			if err != nil {
+				return fmt.Errorf("failed to parse 'cluster-name' flag: %w", err)
+			}
+			bootstrapRev, err := cmd.Flags().GetString("bootstrap-revision")
+			if err != nil {
+				return fmt.Errorf("failed to parse 'bootstrap-revision' flag: %w", err)
+			}
+			return gitops.InstallGitopsOperator(ctx,
+				gitops.WithClusterName(clusterName),
+				gitops.WithBootstrapAppTargetRevision(bootstrapRev))
 		},
 	}
-	installCmd.Flags().DurationP("timeout", "t", 5*time.Minute, "Timeout for the install operation (e.g., 30s, 1m, 2h30m), defaults to 5 minutes")
+	installCmd.Flags().DurationP("timeout", "t", 5*time.Minute, "Timeout for the install operation (e.g., 30s, 1m, 2h30m), defaults to 5 minutes.")
+	installCmd.Flags().String("cluster-name", "", "Optional cluster name. If not specified, the cluster name will attempt to resolve automatically.")
+	installCmd.Flags().String("bootstrap-revision", "HEAD", "Bootstrap app target revision.")
 	return installCmd
 }
