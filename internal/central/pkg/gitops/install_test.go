@@ -9,10 +9,12 @@ import (
 	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	configv1 "github.com/openshift/api/config/v1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,6 +29,7 @@ func newTestInstallerWithAWSMock(secretsManagerClient *secretsManagerClientMock,
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = argoCd.AddToScheme(scheme)
 	_ = operatorsv1alpha1.AddToScheme(scheme)
+	_ = configv1.AddToScheme(scheme)
 
 	fakeK8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initK8sObjs...).Build()
 	return &operatorInstaller{
@@ -41,6 +44,7 @@ func newTestInstaller(initK8sObjs ...ctrlClient.Object) *operatorInstaller {
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = argoCd.AddToScheme(scheme)
 	_ = operatorsv1alpha1.AddToScheme(scheme)
+	_ = configv1.AddToScheme(scheme)
 
 	fakeK8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initK8sObjs...).Build()
 	return &operatorInstaller{
@@ -424,9 +428,14 @@ func TestEnsureRepositorySecret_K8sSecretExists_OwnedByESO_NoUpdate(t *testing.T
 
 func TestInstall(t *testing.T) {
 	ctx := context.Background()
+	infraName := "my-cluster-abcdef"
 
+	initialInfra := &configv1.Infrastructure{
+		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+		Status:     configv1.InfrastructureStatus{InfrastructureName: infraName},
+	}
 	mockAwsSMClient := &secretsManagerClientMock{}
-	installer := newTestInstallerWithAWSMock(mockAwsSMClient)
+	installer := newTestInstallerWithAWSMock(mockAwsSMClient, initialInfra)
 
 	awsSecretData := awsRepositorySecret{GithubToken: "install-token"} // pragma: allowlist secret
 	awsSecretJSON, _ := json.Marshal(awsSecretData)
@@ -459,4 +468,146 @@ func TestInstall(t *testing.T) {
 	assert.Equal(t, "install-token", repoSecret.StringData["password"])
 
 	require.Len(t, mockAwsSMClient.GetSecretValueCalls(), 1)
+}
+
+// MockK8sClientForCreateFailure is a wrapper to simulate create failures.
+type MockK8sClientForCreateFailure struct {
+	ctrlClient.Client
+	shouldCreateFail bool
+	createError      error
+}
+
+func (m *MockK8sClientForCreateFailure) Create(ctx context.Context, obj ctrlClient.Object, opts ...ctrlClient.CreateOption) error {
+	if app, ok := obj.(*argoCd.Application); ok && app.Name == bootstrapAppName && m.shouldCreateFail {
+		return m.createError
+	}
+	return m.Client.Create(ctx, obj, opts...)
+}
+
+func TestProcessInfraName(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{"with suffix", "mycluster-abc-123xyz", "mycluster-abc"},
+		{"single segment after dash", "mycluster-xyz", "mycluster"},
+		{"no dash", "mycluster", "mycluster"},
+		{"empty string", "", ""},
+		{"only dash", "-", ""},
+		{"ends with dash", "mycluster-", "mycluster"},
+		{"multiple dashes internal", "my-internal-cluster-suffix", "my-internal-cluster"},
+		{"short name with dash", "a-b", "a"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, trimSuffixIfExists(tt.input))
+		})
+	}
+}
+
+func TestEnsureBootstrapApplication_DoesNotExist_WithHelmValue(t *testing.T) {
+	ctx := context.Background()
+	infraName := "my-cluster-abcdef"
+
+	initialInfra := &configv1.Infrastructure{
+		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+		Status:     configv1.InfrastructureStatus{InfrastructureName: infraName},
+	}
+	installer := newTestInstaller(initialInfra)
+
+	err := installer.ensureBootstrapApplication(ctx)
+	require.NoError(t, err)
+
+	createdApp := &argoCd.Application{}
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: bootstrapAppName, Namespace: argoCdNamespace}, createdApp)
+	require.NoError(t, err, "Bootstrap application should have been created")
+
+	assert.Equal(t, bootstrapAppName, createdApp.Name)
+	assert.Equal(t, argoCdNamespace, createdApp.Namespace)
+}
+
+func TestEnsureBootstrapApplication_GetInfraFails(t *testing.T) {
+	ctx := context.Background()
+	installer := newTestInstaller() // No Infrastructure object pre-populated
+
+	err := installer.ensureBootstrapApplication(ctx)
+	require.Error(t, err)
+	assert.True(t, apiErrors.IsNotFound(err))
+}
+
+func TestEnsureBootstrapApplication_InfraStatusEmpty(t *testing.T) {
+	ctx := context.Background()
+	initialInfra := &configv1.Infrastructure{
+		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+		Status:     configv1.InfrastructureStatus{InfrastructureName: ""},
+	}
+	installer := newTestInstaller(initialInfra)
+
+	err := installer.ensureBootstrapApplication(ctx)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "infrastructure name is empty the in status of CR")
+}
+
+func TestEnsureBootstrapApplication_Exists(t *testing.T) {
+	ctx := context.Background()
+	initialInfra := &configv1.Infrastructure{
+		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+		Status:     configv1.InfrastructureStatus{InfrastructureName: "some-cluster-name-123"},
+	}
+	existingApp := &argoCd.Application{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      bootstrapAppName,
+			Namespace: argoCdNamespace,
+			Labels:    map[string]string{"existing-label": "true"},
+		},
+		Spec: argoCd.ApplicationSpec{
+			Project: "custom-project",
+			Source: &argoCd.ApplicationSource{
+				RepoURL: bootstrapAppRepositoryURL,
+				Path:    "old/path",
+			},
+			Destination: argoCd.ApplicationDestination{Server: "https://kubernetes.default.svc", Namespace: "other-ns"},
+		},
+	}
+	installer := newTestInstaller(initialInfra, existingApp)
+
+	err := installer.ensureBootstrapApplication(ctx)
+	require.NoError(t, err) // Should skip creation and not error
+
+	currentApp := &argoCd.Application{}
+	err = installer.k8sClient.Get(ctx, types.NamespacedName{Name: bootstrapAppName, Namespace: argoCdNamespace}, currentApp)
+	require.NoError(t, err)
+	assert.Equal(t, bootstrapAppName, currentApp.Name)
+	assert.Equal(t, argoCdNamespace, currentApp.Namespace)
+	assert.Equal(t, "custom-project", currentApp.Spec.Project, "Existing app project should not change")
+	assert.Equal(t, "old/path", currentApp.Spec.Source.Path, "Existing app source path should not change")
+	assert.Equal(t, "true", currentApp.Labels["existing-label"], "Existing app labels should persist")
+}
+
+func TestEnsureBootstrapApplication_AppCreateFails(t *testing.T) {
+	ctx := context.Background()
+	scheme := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = argoCd.AddToScheme(scheme)
+	_ = configv1.AddToScheme(scheme)
+
+	initialInfra := &configv1.Infrastructure{
+		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+		Status:     configv1.InfrastructureStatus{InfrastructureName: "create-fail-cluster-infra"},
+	}
+	expectedCreateError := errors.New("K8S API error: failed to create application")
+
+	mockK8sCreateFailClient := &MockK8sClientForCreateFailure{
+		Client:           fake.NewClientBuilder().WithScheme(scheme).WithObjects(initialInfra).Build(),
+		shouldCreateFail: true,
+		createError:      expectedCreateError,
+	}
+	installer := &operatorInstaller{k8sClient: mockK8sCreateFailClient}
+
+	err := installer.ensureBootstrapApplication(ctx)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "creating bootstrap application")
+	assert.ErrorIs(t, err, expectedCreateError)
 }
