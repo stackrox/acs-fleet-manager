@@ -14,9 +14,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/golang/glog"
 	configv1 "github.com/openshift/api/config/v1"
+	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilRuntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -31,6 +33,7 @@ const (
 	operatorNamespace                = "openshift-gitops-operator"
 	argoCdNamespace                  = "openshift-gitops"
 	operatorSubscriptionName         = "openshift-gitops-operator"
+	operatorGroupName                = "openshift-gitops-operator"
 	managedByArgoCdLabelKey          = "argocd.argoproj.io/managed-by"
 	managedByArgoCdLabelValue        = operatorNamespace
 	awsSecretsManagerMaxBackoffDelay = 5 * time.Second // pragma: allowlist secret
@@ -103,6 +106,9 @@ func (i *operatorInstaller) install(ctx context.Context) error {
 		return err
 	}
 	if err := i.ensureNamespace(ctx, argoCdNamespace); err != nil {
+		return err
+	}
+	if err := i.ensureOperatorGroup(ctx); err != nil {
 		return err
 	}
 	if err := i.ensureSubscription(ctx); err != nil {
@@ -192,6 +198,32 @@ func (i *operatorInstaller) ensureSubscription(ctx context.Context) error {
 	}
 	glog.Info("Openshift Gitops Subscription already exists. No update needed.")
 	return nil
+}
+
+func (i *operatorInstaller) ensureOperatorGroup(ctx context.Context) error {
+	var operatorGroup operatorsv1.OperatorGroup
+	if err := i.k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: operatorGroupName, Namespace: operatorNamespace}, &operatorGroup); err != nil {
+		if apiErrors.IsNotFound(err) {
+			glog.Info("Openshift Gitops OperatorGroup not found. Creating...")
+			if err := i.k8sClient.Create(ctx, newOperatorGroup()); err != nil {
+				return fmt.Errorf("creating openshift gitops operator group: %w", err)
+			}
+			glog.Info("Openshift Gitops OperatorGroup created.")
+			return nil
+		}
+		return fmt.Errorf("getting openshift gitops operator group: %w", err)
+	}
+	glog.Info("Openshift Gitops OperatorGroup already exists. No update needed.")
+	return nil
+}
+
+func newOperatorGroup() *operatorsv1.OperatorGroup {
+	return &operatorsv1.OperatorGroup{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      operatorGroupName,
+			Namespace: operatorNamespace,
+		},
+	}
 }
 
 func newSubscription() *operatorsv1alpha1.Subscription {
@@ -334,7 +366,7 @@ func (i *operatorInstaller) waitForApplicationCRD(ctx context.Context) error {
 		appList := &argoCd.ApplicationList{}
 		err := i.k8sClient.List(ctx, appList, ctrlClient.InNamespace(argoCdNamespace), ctrlClient.Limit(1))
 		if err != nil {
-			if runtime.IsNotRegisteredError(err) || apiErrors.IsNotFound(err) {
+			if meta.IsNoMatchError(err) || runtime.IsNotRegisteredError(err) || apiErrors.IsNotFound(err) {
 				glog.V(2).Infof("Application CRD not yet available, retrying: %v", err)
 				return false, nil
 			}
