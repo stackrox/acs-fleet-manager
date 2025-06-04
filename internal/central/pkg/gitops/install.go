@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	k8sretry "k8s.io/client-go/util/retry"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -440,6 +441,14 @@ func newBootstrapApplication(clusterName string, bootstrapAppTargetRevision stri
 					Prune:      true,
 					SelfHeal:   true,
 					AllowEmpty: true,
+				},
+				Retry: &argoCd.RetryStrategy{
+					Limit: -1, // number of failed sync attempt retries; unlimited number of attempts if less than 0
+					Backoff: &argoCd.Backoff{
+						Duration:    "5s",             // the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
+						Factor:      ptr.To(int64(2)), // a factor to multiply the base duration after each failed retry
+						MaxDuration: "3m",             // the maximum amount of time allowed for the backoff strategy
+					},
 				},
 			},
 		},
