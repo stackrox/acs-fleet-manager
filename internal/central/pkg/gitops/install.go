@@ -10,7 +10,7 @@ import (
 	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config" // Renamed to avoid conflict with ctrl.GetConfig
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/golang/glog"
 	configv1 "github.com/openshift/api/config/v1"
@@ -22,6 +22,7 @@ import (
 	utilRuntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	k8sretry "k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -139,10 +140,23 @@ func (i *operatorInstaller) ensureNamespace(ctx context.Context, name string) er
 		glog.Infof("Label '%s=%s' already exists on namespace '%s'. No update needed.", managedByArgoCdLabelKey, managedByArgoCdLabelValue, name)
 		return nil // No change needed
 	}
-	namespace.Labels[managedByArgoCdLabelKey] = managedByArgoCdLabelValue
 	glog.Infof("Setting '%s=%s' label for namespace %q", managedByArgoCdLabelKey, managedByArgoCdLabelValue, name)
-	if err := i.k8sClient.Update(ctx, namespace); err != nil {
-		return fmt.Errorf("failed to update namespace '%s': %w", name, err)
+	updateErr := k8sretry.RetryOnConflict(k8sretry.DefaultRetry, func() error {
+		currentNs := &corev1.Namespace{}
+		if err := i.k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: name}, currentNs); err != nil {
+			glog.Errorf("Failed to re-fetch namespace %q for update: %v", name, err)
+			return fmt.Errorf("failed to re-fetch namespace %q for update: %w", name, err)
+		}
+		if currentNs.Labels == nil {
+			currentNs.Labels = make(map[string]string)
+		}
+		currentNs.Labels[managedByArgoCdLabelKey] = managedByArgoCdLabelValue
+		glog.V(2).Infof("Attempting to update namespace %q (ResourceVersion: %s)", name, currentNs.ResourceVersion)
+		return i.k8sClient.Update(ctx, currentNs)
+	})
+	if updateErr != nil {
+		glog.Errorf("Failed to update labels for namespace %q after retries: %v", name, updateErr)
+		return fmt.Errorf("updating labels for namespace %q: %w", name, updateErr)
 	}
 	return nil
 }
@@ -226,12 +240,23 @@ func (i *operatorInstaller) ensureRepositorySecret(ctx context.Context) error {
 	if i.secretNeedsUpdate(foundK8sSecret, awsSecretValue) {
 		glog.Infof("Kubernetes secret '%s/%s' exists but needs update.", argoCdNamespace, bootstrapAppRepositoryName)
 		newRepositorySecret := i.newRepositorySecret(awsSecretValue)
-		foundK8sSecret.StringData = newRepositorySecret.StringData
-		foundK8sSecret.Type = newRepositorySecret.Type
+		updateErr := k8sretry.RetryOnConflict(k8sretry.DefaultRetry, func() error {
+			currentSecret := &corev1.Secret{}
+			if err := i.k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: bootstrapAppRepositoryName, Namespace: argoCdNamespace}, currentSecret); err != nil {
+				glog.Errorf("Failed to re-fetch secret '%s/%s' for update: %v", argoCdNamespace, bootstrapAppRepositoryName, err)
+				return fmt.Errorf("failed to re-fetch secret '%s/%s' for update: %w", argoCdNamespace, bootstrapAppRepositoryName, err)
+			}
+			currentSecret.Labels = newRepositorySecret.Labels
+			currentSecret.StringData = newRepositorySecret.StringData
+			currentSecret.Type = newRepositorySecret.Type
+			glog.V(2).Infof("Attempting to update secret '%s/%s' (ResourceVersion: %s)",
+				argoCdNamespace, bootstrapAppRepositoryName, currentSecret.ResourceVersion)
+			return i.k8sClient.Update(ctx, currentSecret)
+		})
 
-		if errUpdate := i.k8sClient.Update(ctx, foundK8sSecret); errUpdate != nil {
-			glog.Errorf("Failed to update Kubernetes secret '%s/%s': %v", argoCdNamespace, bootstrapAppRepositoryName, errUpdate)
-			return fmt.Errorf("updating kubernetes secret '%s/%s': %w", argoCdNamespace, bootstrapAppRepositoryName, errUpdate)
+		if updateErr != nil {
+			glog.Errorf("Failed to update Kubernetes secret '%s/%s': %v", argoCdNamespace, bootstrapAppRepositoryName, updateErr)
+			return fmt.Errorf("updating kubernetes secret '%s/%s': %w", argoCdNamespace, bootstrapAppRepositoryName, updateErr)
 		}
 		glog.Infof("Successfully updated Kubernetes secret '%s/%s'.", argoCdNamespace, bootstrapAppRepositoryName)
 	} else {
