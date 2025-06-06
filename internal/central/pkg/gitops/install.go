@@ -424,13 +424,8 @@ func newBootstrapApplication(clusterName string, bootstrapAppTargetRevision stri
 			Project: "default",
 			Source: &argoCd.ApplicationSource{
 				RepoURL:        bootstrapAppRepositoryURL,
-				Path:           bootstrapAppPath,
+				Path:           bootstrapAppPath + "/" + clusterName,
 				TargetRevision: bootstrapAppTargetRevision,
-				Helm: &argoCd.ApplicationSourceHelm{
-					ValueFiles: []string{
-						"values-" + clusterName + ".yaml",
-					},
-				},
 			},
 			Destination: argoCd.ApplicationDestination{
 				Server:    "https://kubernetes.default.svc",
