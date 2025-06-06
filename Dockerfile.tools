@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:1.23.6-2 AS build
+FROM registry.access.redhat.com/ubi8/go-toolset:1.23.6-4 AS build
 USER root
 RUN mkdir /src
 WORKDIR /src
@@ -6,7 +6,7 @@ COPY . ./
 
 RUN make binary
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1255 as standard
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295 as standard
 
 ENV KUBECTL_VERSION=v1.28.1
 

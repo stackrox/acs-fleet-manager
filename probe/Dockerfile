@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.23.6-2 AS build
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.23.6-4 AS build
 USER root
 ENV GOFLAGS="-mod=mod"
 
@@ -13,7 +13,7 @@ ARG TARGETARCH
 
 RUN make probe GOOS=linux GOARCH=${TARGETARCH}
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1255 as standard
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295 as standard
 
 RUN microdnf install shadow-utils
 

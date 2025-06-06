@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:1.23.6-2 AS build
+FROM registry.access.redhat.com/ubi8/go-toolset:1.23.6-4 AS build
 USER root
 ENV GOFLAGS="-mod=mod"
 
@@ -10,7 +10,7 @@ COPY . ./
 
 RUN make emailsender
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1179 as standard
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295 as standard
 
 RUN microdnf install shadow-utils
 

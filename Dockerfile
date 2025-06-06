@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.23.6-2 AS build
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.23.6-4 AS build
 
 USER root
 RUN mkdir /src /rds_ca
@@ -26,7 +26,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/go/.cache/ \
     make fleet-manager fleetshard-sync GOOS=linux GOARCH=${TARGETARCH}
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1255 AS standard
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295 AS standard
 
 RUN microdnf install shadow-utils
 
