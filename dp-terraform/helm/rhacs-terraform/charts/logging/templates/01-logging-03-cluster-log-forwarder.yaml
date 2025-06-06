@@ -45,5 +45,5 @@ spec:
           # It's worth keeping create and delete for audit purposes.
           # In a month, patch called ~40k times more than create.
           - level: None
-            userGroups: ["system:serviceaccount:openshift-package-operator:package-operator"]
+            users: ["system:serviceaccount:openshift-package-operator:package-operator"]
             verbs: ["patch", "update", "watch", "get"]
