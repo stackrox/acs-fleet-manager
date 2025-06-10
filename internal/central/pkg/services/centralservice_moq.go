@@ -37,7 +37,7 @@ var _ CentralService = &CentralServiceMock{}
 //			ChangeCentralCNAMErecordsFunc: func(centralRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
 //				panic("mock out the ChangeCentralCNAMErecords method")
 //			},
-//			ChangeSubscriptionFunc: func(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string, subscription_id string) *serviceError.ServiceError {
+//			ChangeSubscriptionFunc: func(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string, subscriptionID string) *serviceError.ServiceError {
 //				panic("mock out the ChangeSubscription method")
 //			},
 //			CountByRegionAndInstanceTypeFunc: func() ([]CentralRegionCount, error) {
@@ -132,7 +132,7 @@ type CentralServiceMock struct {
 	ChangeCentralCNAMErecordsFunc func(centralRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
 
 	// ChangeSubscriptionFunc mocks the ChangeSubscription method.
-	ChangeSubscriptionFunc func(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string, subscription_id string) *serviceError.ServiceError
+	ChangeSubscriptionFunc func(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string, subscriptionID string) *serviceError.ServiceError
 
 	// CountByRegionAndInstanceTypeFunc mocks the CountByRegionAndInstanceType method.
 	CountByRegionAndInstanceTypeFunc func() ([]CentralRegionCount, error)
@@ -254,8 +254,8 @@ type CentralServiceMock struct {
 			CloudAccountID string
 			// CloudProvider is the cloudProvider argument value.
 			CloudProvider string
-			// Subscription_id is the subscription_id argument value.
-			Subscription_id string
+			// SubscriptionID is the subscriptionID argument value.
+			SubscriptionID string
 		}
 		// CountByRegionAndInstanceType holds details about calls to the CountByRegionAndInstanceType method.
 		CountByRegionAndInstanceType []struct {
@@ -584,27 +584,27 @@ func (mock *CentralServiceMock) ChangeCentralCNAMErecordsCalls() []struct {
 }
 
 // ChangeSubscription calls ChangeSubscriptionFunc.
-func (mock *CentralServiceMock) ChangeSubscription(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string, subscription_id string) *serviceError.ServiceError {
+func (mock *CentralServiceMock) ChangeSubscription(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string, subscriptionID string) *serviceError.ServiceError {
 	if mock.ChangeSubscriptionFunc == nil {
 		panic("CentralServiceMock.ChangeSubscriptionFunc: method is nil but CentralService.ChangeSubscription was just called")
 	}
 	callInfo := struct {
-		Ctx             context.Context
-		CentralID       string
-		CloudAccountID  string
-		CloudProvider   string
-		Subscription_id string
+		Ctx            context.Context
+		CentralID      string
+		CloudAccountID string
+		CloudProvider  string
+		SubscriptionID string
 	}{
-		Ctx:             ctx,
-		CentralID:       centralID,
-		CloudAccountID:  cloudAccountID,
-		CloudProvider:   cloudProvider,
-		Subscription_id: subscription_id,
+		Ctx:            ctx,
+		CentralID:      centralID,
+		CloudAccountID: cloudAccountID,
+		CloudProvider:  cloudProvider,
+		SubscriptionID: subscriptionID,
 	}
 	mock.lockChangeSubscription.Lock()
 	mock.calls.ChangeSubscription = append(mock.calls.ChangeSubscription, callInfo)
 	mock.lockChangeSubscription.Unlock()
-	return mock.ChangeSubscriptionFunc(ctx, centralID, cloudAccountID, cloudProvider, subscription_id)
+	return mock.ChangeSubscriptionFunc(ctx, centralID, cloudAccountID, cloudProvider, subscriptionID)
 }
 
 // ChangeSubscriptionCalls gets all the calls that were made to ChangeSubscription.
@@ -612,18 +612,18 @@ func (mock *CentralServiceMock) ChangeSubscription(ctx context.Context, centralI
 //
 //	len(mockedCentralService.ChangeSubscriptionCalls())
 func (mock *CentralServiceMock) ChangeSubscriptionCalls() []struct {
-	Ctx             context.Context
-	CentralID       string
-	CloudAccountID  string
-	CloudProvider   string
-	Subscription_id string
+	Ctx            context.Context
+	CentralID      string
+	CloudAccountID string
+	CloudProvider  string
+	SubscriptionID string
 } {
 	var calls []struct {
-		Ctx             context.Context
-		CentralID       string
-		CloudAccountID  string
-		CloudProvider   string
-		Subscription_id string
+		Ctx            context.Context
+		CentralID      string
+		CloudAccountID string
+		CloudProvider  string
+		SubscriptionID string
 	}
 	mock.lockChangeSubscription.RLock()
 	calls = mock.calls.ChangeSubscription
