@@ -118,6 +118,7 @@ type CentralService interface {
 	ResetCentralSecretBackup(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 	ChangeBillingParameters(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *errors.ServiceError
 	AssignCluster(ctx context.Context, centralID string, clusterID string) *errors.ServiceError
+	ChangeSubscription(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string, subscriptionID string) *errors.ServiceError
 }
 
 var _ CentralService = &centralService{}
@@ -1141,5 +1142,25 @@ func (k *centralService) ChangeBillingParameters(ctx context.Context, centralID 
 	} else {
 		glog.Infof("Central %q has no change in billing parameters")
 	}
+	return nil
+}
+
+// ChangeSubscription implements CentralService.
+func (k *centralService) ChangeSubscription(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string, subscriptionID string) *errors.ServiceError {
+	centralRequest, svcErr := k.GetByID(centralID)
+	if svcErr != nil {
+		return svcErr
+	}
+
+	centralRequest.CloudProvider = cloudProvider
+	centralRequest.CloudAccountID = cloudAccountID
+	centralRequest.SubscriptionID = subscriptionID
+
+	if svcErr = k.UpdateIgnoreNils(centralRequest); svcErr != nil {
+		glog.Errorf("Failed to update central %q record with subscription_id %q and updated cloud account %q: %v", centralID, subscriptionID, cloudAccountID, svcErr)
+		return svcErr
+	}
+
+	glog.Infof("Central %q cloud account parameters have been changed to %q with id %q", centralID, cloudProvider, cloudAccountID)
 	return nil
 }
