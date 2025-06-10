@@ -353,12 +353,12 @@ func (a *DefaultApiService) ChangeBillingParameters(ctx _context.Context, id str
 }
 
 /*
-ChangeCloudAccountParameters Change central cloud account parameters
+ChangeSubscriptionParameters Change central subscription and cloud account parameters
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
-  - @param centralCloudAccountChangeRequest Change cloud account parameters
+  - @param centralSubscriptionChangeRequest Change subscription parameters
 */
-func (a *DefaultApiService) ChangeCloudAccountParameters(ctx _context.Context, id string, centralCloudAccountChangeRequest CentralCloudAccountChangeRequest) (*_nethttp.Response, error) {
+func (a *DefaultApiService) ChangeSubscriptionParameters(ctx _context.Context, id string, centralSubscriptionChangeRequest CentralSubscriptionChangeRequest) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
@@ -368,7 +368,7 @@ func (a *DefaultApiService) ChangeCloudAccountParameters(ctx _context.Context, i
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/centrals/{id}/cloud-account"
+	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/centrals/{id}/subscription"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -393,7 +393,7 @@ func (a *DefaultApiService) ChangeCloudAccountParameters(ctx _context.Context, i
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &centralCloudAccountChangeRequest
+	localVarPostBody = &centralSubscriptionChangeRequest
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, err

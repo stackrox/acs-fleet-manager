@@ -423,22 +423,22 @@ paths:
             application/json:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
-  '/api/rhacs/v1/admin/centrals/{id}/cloud-account':
+  '/api/rhacs/v1/admin/centrals/{id}/subscription':
     patch:
-      summary: Change central cloud account parameters
-      operationId: changeCloudAccountParameters
+      summary: Change central subscription and cloud account parameters
+      operationId: changeSubscriptionParameters
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       requestBody:
-        description: Change cloud account parameters
+        description: Change subscription parameters
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CentralCloudAccountChangeRequest"
+              $ref: "#/components/schemas/CentralSubscriptionChangeRequest"
         required: true
       responses:
         "200":
-          description: Cloud Account parameters changed
+          description: Subscription parameters changed
         "401":
           description: Auth token is invalid
           content:
@@ -802,12 +802,14 @@ components:
           enum:
           - RHACS
 
-    CentralCloudAccountChangeRequest:
+    CentralSubscriptionChangeRequest:
       type: object
       properties:
         cloud_account_id:
           type: string
         cloud_provider:
+          type: string
+        subscription_id:
           type: string
 
     CentralAssignClusterRequest:

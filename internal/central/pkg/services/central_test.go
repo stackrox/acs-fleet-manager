@@ -303,13 +303,14 @@ func Test_centralService_ChangeBillingParameters(t *testing.T) {
 	require.Len(t, deleteQuotaCalls, 0)
 }
 
-func Test_centralService_ChangeCloudAccount(t *testing.T) {
+func Test_centralService_ChangeSubscription(t *testing.T) {
 	service := &centralService{
 		connectionFactory: db.NewMockConnectionFactory(nil),
 	}
 	central := buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {
 		centralRequest.CloudProvider = ""
 		centralRequest.CloudAccountID = ""
+		centralRequest.SubscriptionID = "original_subscription_id"
 	})
 
 	catcher := mocket.Catcher.Reset()
@@ -320,11 +321,11 @@ func Test_centralService_ChangeCloudAccount(t *testing.T) {
 		WithReply(converters.ConvertCentralRequest(central))
 	q1 := catcher.NewMock().WithQuery(`UPDATE "central_requests" ` +
 		`SET "updated_at"=$1,"deleted_at"=$2,"region"=$3,"cluster_id"=$4,` +
-		`"cloud_provider"=$5,"cloud_account_id"=$6,"name"=$7,"owner"=$8 ` +
-		`WHERE status not IN ($9,$10) AND "central_requests"."deleted_at" IS NULL AND "id" = $11`).
+		`"cloud_provider"=$5,"cloud_account_id"=$6,"name"=$7,"subscription_id"=$8,"owner"=$9 ` +
+		`WHERE status not IN ($10,$11) AND "central_requests"."deleted_at" IS NULL AND "id" = $12`).
 		OneTime()
 
-	svcErr := service.ChangeCloudAccount(context.Background(), central.ID, "aws_account_id", "aws")
+	svcErr := service.ChangeSubscription(context.Background(), central.ID, "aws_account_id", "aws", "new_subscription_id")
 	assert.Nil(t, svcErr)
 
 	assert.True(t, q0.Triggered)

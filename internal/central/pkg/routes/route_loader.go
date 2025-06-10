@@ -233,8 +233,8 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string) er
 	adminCentralsRouter.HandleFunc("/{id}/billing", adminCentralHandler.PatchBillingParameters).
 		Name(logger.NewLogEvent("admin-billing", "[admin] change central billing parameters").ToString()).
 		Methods(http.MethodPatch)
-	adminCentralsRouter.HandleFunc("/{id}/cloud-account", adminCentralHandler.PatchCloudAccountParameters).
-		Name(logger.NewLogEvent("admin-cloud-account", "[admin] change central cloud account parameters").ToString()).
+	adminCentralsRouter.HandleFunc("/{id}/subscription", adminCentralHandler.PatchSubscriptionParameters).
+		Name(logger.NewLogEvent("admin-subscription", "[admin] change central subscription parameters").ToString()).
 		Methods(http.MethodPatch)
 
 	if features.ClusterMigration.Enabled() {
