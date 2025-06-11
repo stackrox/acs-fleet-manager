@@ -546,9 +546,9 @@ image/build/probe:
 image/build/fleet-manager-tools: GOOS=linux
 image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
 image/build/fleet-manager-tools: fleet-manager fleetshard-sync acsfleetctl
-	$(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.tools .
+	$(DOCKER) build -t $(IMAGE_REF) -f tools.Dockerfile .
 	$(DOCKER) tag $(IMAGE_REF) fleet-manager-tools:$(image_tag)
-.PHONY: image/build/multi-target/fleet-manager-tools
+.PHONY: image/build/fleet-manager-tools
 
 image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
 image/push/fleet-manager-tools: image/build/fleet-manager-tools
