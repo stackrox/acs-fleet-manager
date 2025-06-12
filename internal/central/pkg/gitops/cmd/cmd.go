@@ -15,7 +15,6 @@ func NewGitOpsCommand() *cobra.Command {
 	}
 	cmd.AddCommand(
 		newValidateCommand(),
-		newInstallCommand(),
 	)
 
 	return cmd

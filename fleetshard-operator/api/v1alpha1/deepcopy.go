@@ -1,0 +1,92 @@
+package v1alpha1
+
+import "k8s.io/apimachinery/pkg/runtime"
+
+// DeepCopyInto is a deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *GitopsInstallation) DeepCopyInto(out *GitopsInstallation) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	out.Status = in.Status
+}
+
+// DeepCopy is a deepcopy function, copying the receiver, creating a new GitopsInstallation.
+func (in *GitopsInstallation) DeepCopy() *GitopsInstallation {
+	if in == nil {
+		return nil
+	}
+	out := new(GitopsInstallation)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyObject is a deepcopy function, copying the receiver, creating a new runtime.Object.
+func (in *GitopsInstallation) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+// DeepCopyInto is a deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *GitopsInstallationList) DeepCopyInto(out *GitopsInstallationList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]GitopsInstallation, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+// DeepCopy is a deepcopy function, copying the receiver, creating a new GitopsInstallationList.
+func (in *GitopsInstallationList) DeepCopy() *GitopsInstallationList {
+	if in == nil {
+		return nil
+	}
+	out := new(GitopsInstallationList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyObject is a deepcopy function, copying the receiver, creating a new runtime.Object.
+func (in *GitopsInstallationList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+// DeepCopyInto is a deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *GitopsInstallationSpec) DeepCopyInto(out *GitopsInstallationSpec) {
+	*out = *in
+}
+
+// DeepCopy is a deepcopy function, copying the receiver, creating a new GitopsInstallationSpec.
+func (in *GitopsInstallationSpec) DeepCopy() *GitopsInstallationSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(GitopsInstallationSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is a deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *GitopsInstallationStatus) DeepCopyInto(out *GitopsInstallationStatus) {
+	*out = *in
+}
+
+// DeepCopy is a deepcopy function, copying the receiver, creating a new GitopsInstallationStatus.
+func (in *GitopsInstallationStatus) DeepCopy() *GitopsInstallationStatus {
+	if in == nil {
+		return nil
+	}
+	out := new(GitopsInstallationStatus)
+	in.DeepCopyInto(out)
+	return out
+}
