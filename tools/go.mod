@@ -20,7 +20,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/magiconair/properties v1.8.7 // indirect
+	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
