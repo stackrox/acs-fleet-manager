@@ -244,7 +244,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20230307190834-24139beb5833 // indirect
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
@@ -259,7 +258,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	honnef.co/go/tools v0.4.6 // indirect
 	k8s.io/apiextensions-apiserver v0.32.4 // indirect
 	k8s.io/apiserver v0.32.4 // indirect
 	k8s.io/cli-runtime v0.32.4 // indirect
@@ -286,7 +284,7 @@ replace (
 	github.com/heroku/docker-registry-client => github.com/stackrox/docker-registry-client v0.0.0-20230411213734-d75b95d65d28
 	github.com/operator-framework/helm-operator-plugins => github.com/stackrox/helm-operator v0.0.12-0.20221003092512-fbf71229411f
 	github.com/stackrox/rox => github.com/stackrox/stackrox v0.0.0-20241218141528-2037522bc808 // v4.6.1
-	go.uber.org/zap => github.com/stackrox/zap v1.15.1-0.20230918235618-2bd149903d0e
+	go.uber.org/zap => github.com/stackrox/zap v1.27.0
 )
 
 // ArgoCD replacements
