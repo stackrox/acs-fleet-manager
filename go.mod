@@ -1,11 +1,11 @@
 module github.com/stackrox/acs-fleet-manager
 
-go 1.23.0
+go 1.24.4
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/antihax/optional v1.0.0
-	github.com/argoproj/argo-cd/v2 v2.14.13
+	github.com/argoproj/argo-cd/v2 v2.14.14
 	github.com/aws/aws-sdk-go v1.55.7
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.9
