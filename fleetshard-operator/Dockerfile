@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295 AS build-helm
 ENV HOME=/opt/helm
-COPY dp-terraform/helm/rhacs-terraform  ${HOME}/rhacs-terraform
+COPY ../dp-terraform/helm/rhacs-terraform  ${HOME}/rhacs-terraform
 WORKDIR ${HOME}
 
 RUN microdnf install gzip tar && \
@@ -33,7 +33,7 @@ RUN go env -w GOCACHE=/go/.cache; \
 COPY go.*  ./
 RUN --mount=type=cache,target=/go/pkg/mod/ \
       go mod download
-COPY . ./
+COPY .. ./
 
 ARG TARGETARCH
 
@@ -46,7 +46,7 @@ FROM registry.redhat.io/openshift4/ose-helm-operator:v4.15.0-202503310336.p0.g52
 
 ENV HOME=/opt/helm
 ENV ADDON_NAME=acs-fleetshard
-COPY dp-terraform/helm/watches.yaml ${HOME}/watches.yaml
+COPY ../dp-terraform/helm/watches.yaml ${HOME}/watches.yaml
 COPY --from=build-helm ${HOME}/rhacs-terraform ${HOME}/rhacs-terraform
 COPY --from=build-go /src/fleetshard-operator/bin /usr/local/bin/
 WORKDIR ${HOME}

@@ -25,7 +25,7 @@ spec:
   - name: output-image
     value: quay.io/redhat-user-workloads/acscs-rhacs-tenant/acscs-main/acs-fleetshard-operator:{{revision}}
   - name: dockerfile
-    value: fleetshard-operator.Dockerfile
+    value: fleetshard-operator/Dockerfile
   - name: path-context
     value: .
   pipelineRef:

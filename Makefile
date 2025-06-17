@@ -607,13 +607,13 @@ image/push/internal: docker/login/internal
 
 image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
 image/build/fleetshard-operator:
-	$(DOCKER) buildx build -t $(IMAGE_REF) --build-arg IMAGE_TAG=$(image_tag) --load -f fleetshard-operator.Dockerfile .
+	$(DOCKER) buildx build -t $(IMAGE_REF) --build-arg IMAGE_TAG=$(image_tag) --load -f fleetshard-operator/Dockerfile .
 .PHONY: image/build/fleetshard-operator
 
 # push the image to the OpenShift internal registry
 image/push/fleetshard-operator/internal: IMAGE_TAG ?= $(image_tag)
 image/push/fleetshard-operator/internal: docker/login/internal
-	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/fleetshard-operator:$(IMAGE_TAG)" --platform linux/amd64 --push -f fleetshard-operator.Dockerfile .
+	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/fleetshard-operator:$(IMAGE_TAG)" --platform linux/amd64 --push -f fleetshard-operator/Dockerfile .
 .PHONY: image/push/fleetshard-operator/internal
 
 # Touch all necessary secret files for fleet manager to start up
