@@ -46,6 +46,7 @@ const (
 	managedByArgoCdLabelKey   = "argocd.argoproj.io/managed-by"
 	managedByArgoCdLabelValue = GitopsOperatorNamespace
 
+	tokenKey                   = "github-token"
 	bootstrapAppName           = "rhacs-bootstrap"
 	bootstrapAppPath           = "bootstrap"
 	bootstrapAppRepositoryName = "acscs-manifests-repo"
@@ -279,9 +280,9 @@ func (r *ReconcileGitopsInstallation) ensureRepositorySecret(ctx context.Context
 		glog.Errorf("Failed to get source secret '%s/%s': %v", r.SourceNamespace, sourceRepositorySecretName, err)
 		return fmt.Errorf("getting source secret: %w", err)
 	}
-	tokenBytes, ok := sourceSecret.Data["token"]
+	tokenBytes, ok := sourceSecret.Data[tokenKey]
 	if !ok || len(tokenBytes) == 0 {
-		return fmt.Errorf("source secret '%s/%s' does not contain a non-empty key '%s'", r.SourceNamespace, sourceRepositorySecretName, "token")
+		return fmt.Errorf("source secret '%s/%s' does not contain a non-empty key '%s'", r.SourceNamespace, sourceRepositorySecretName, tokenKey)
 	}
 
 	desiredSecret := newRepositorySecret(tokenBytes)

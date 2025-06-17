@@ -211,14 +211,14 @@ func TestEnsureRepositorySecret_SourceSecretMissingKey(t *testing.T) {
 			Namespace: managerNamespace,
 		},
 		Data: map[string][]byte{
-			"some-other-key": []byte("some-value"), // Does not contain the required 'token' key
+			"some-other-key": []byte("some-value"), // Does not contain the required 'github-token' key
 		},
 	}
 	reconciler := newTestReconciler(sourceSecret)
 
 	err := reconciler.ensureRepositorySecret(ctx)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "does not contain a non-empty key 'token'")
+	assert.Contains(t, err.Error(), "does not contain a non-empty key 'github-token'")
 }
 
 func TestEnsureRepositorySecret_DestinationDoesNotExist(t *testing.T) {
@@ -231,7 +231,7 @@ func TestEnsureRepositorySecret_DestinationDoesNotExist(t *testing.T) {
 			Namespace: managerNamespace,
 		},
 		Data: map[string][]byte{
-			"token": []byte(token),
+			tokenKey: []byte(token),
 		},
 	}
 	reconciler := newTestReconciler(sourceSecret)
@@ -257,7 +257,7 @@ func TestEnsureRepositorySecret_DestinationExists_NeedsUpdate(t *testing.T) {
 
 	sourceSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: bootstrapAppRepositoryName, Namespace: managerNamespace},
-		Data:       map[string][]byte{"token": []byte(newToken)},
+		Data:       map[string][]byte{tokenKey: []byte(newToken)},
 	}
 
 	// Destination secret exists with an old token
@@ -283,7 +283,7 @@ func TestEnsureRepositorySecret_DestinationExists_IsUpToDate(t *testing.T) {
 
 	sourceSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: bootstrapAppRepositoryName, Namespace: managerNamespace},
-		Data:       map[string][]byte{"token": token},
+		Data:       map[string][]byte{tokenKey: token},
 	}
 
 	// Destination secret already exists and is identical to what would be created
@@ -316,7 +316,7 @@ func TestReconcile(t *testing.T) {
 	}
 	sourceSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: bootstrapAppRepositoryName, Namespace: managerNamespace},
-		Data:       map[string][]byte{"token": []byte("install-token")},
+		Data:       map[string][]byte{tokenKey: []byte("install-token")},
 	}
 	reconciler := newTestReconciler(initialGitopsInstallation, sourceSecret)
 
