@@ -31,7 +31,7 @@ ENV KUBECTL_VERSION=v1.28.1
 
 COPY --from=build /src/fleet-manager /src/fleetshard-sync /src/acsfleetctl /usr/local/bin/
 
-RUN microdnf install tar gzip unzip
+RUN microdnf install tar gzip
 
 # Install kubeval
 RUN curl -LO https://github.com/instrumenta/kubeval/releases/download/v0.16.1/kubeval-linux-amd64.tar.gz
@@ -48,17 +48,6 @@ RUN curl -o /usr/bin/kubectl -LO "https://dl.k8s.io/release/$KUBECTL_VERSION/bin
 RUN chmod +x /usr/bin/kubectl
 RUN curl -LO "https://dl.k8s.io/$KUBECTL_VERSION/bin/linux/amd64/kubectl.sha256"
 RUN echo "$(cat kubectl.sha256)  /usr/bin/kubectl" | sha256sum --check
-
-ARG AWSCLI_VERSION="2.27.33"
-# pragma: allowlist nextline secret
-ARG AWSCLI_SHA256="668f844010d306a4c62d571c55fede42cabced880f21263dd04191a2d7bd7dbb"
-
-# Install the AWS CLI
-RUN \
-  curl -L -o "awscliv2.zip" "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWSCLI_VERSION}.zip" && \
-  echo "${AWSCLI_SHA256}" awscliv2.zip | sha256sum -c - && \
-  unzip awscliv2.zip && ./aws/install && \
-  rm -rf awscliv2.zip aws/
 
 LABEL name="fleet-manager-tools" \
       vendor="Red Hat" \

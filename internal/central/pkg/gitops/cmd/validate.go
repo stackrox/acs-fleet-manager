@@ -9,6 +9,21 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/gitops"
 )
 
+// NewGitOpsCommand creates a new gitops command.
+func NewGitOpsCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:              "gitops",
+		Short:            "Perform actions like validation on the gitops config.",
+		Long:             "Perform actions like validation on the gitops config.",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {},
+	}
+	cmd.AddCommand(
+		newValidateCommand(),
+	)
+
+	return cmd
+}
+
 func newValidateCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "validate",
