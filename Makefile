@@ -278,6 +278,10 @@ fleetshard-sync:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
 .PHONY: fleetshard-sync
 
+fleetshard-operator:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o fleetshard-operator/bin/fleetshard-operator ./fleetshard-operator
+.PHONY: fleetshard-operator
+
 probe:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0 $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
 .PHONY: probe
@@ -290,7 +294,7 @@ emailsender:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o emailsender/bin/emailsender ./emailsender/cmd/app
 .PHONY: emailsender
 
-binary: fleet-manager fleetshard-sync probe acsfleetctl emailsender
+binary: fleet-manager fleetshard-sync probe acsfleetctl emailsender fleetshard-operator
 .PHONY: binary
 
 clean:
@@ -546,9 +550,9 @@ image/build/probe:
 image/build/fleet-manager-tools: GOOS=linux
 image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
 image/build/fleet-manager-tools: fleet-manager fleetshard-sync acsfleetctl
-	$(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.tools .
+	$(DOCKER) build -t $(IMAGE_REF) -f tools.Dockerfile .
 	$(DOCKER) tag $(IMAGE_REF) fleet-manager-tools:$(image_tag)
-.PHONY: image/build/multi-target/fleet-manager-tools
+.PHONY: image/build/fleet-manager-tools
 
 image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
 image/push/fleet-manager-tools: image/build/fleet-manager-tools
@@ -556,6 +560,11 @@ image/push/fleet-manager-tools: image/build/fleet-manager-tools
 	@echo
 	@echo "Image fleet-manager-tools was pushed as $(IMAGE_REF)."
 .PHONY: image/push/fleet-manager-tools
+
+image/push/fleet-manager-tools/internal: IMAGE_TAG ?= $(image_tag)
+image/push/fleet-manager-tools/internal: docker/login/internal
+	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/fleet-manager-tools:$(IMAGE_TAG)" --platform linux/amd64 --push -f tools.Dockerfile .
+.PHONY: image/push/fleet-manager-tools/internal
 
 image/build/emailsender: GOOS=linux
 image/build/emailsender: IMAGE_REF="$(external_image_registry)/$(emailsender_image_repository):$(image_tag)"
@@ -598,13 +607,13 @@ image/push/internal: docker/login/internal
 
 image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
 image/build/fleetshard-operator:
-	$(DOCKER) buildx build -t $(IMAGE_REF) --build-arg IMAGE_TAG=$(image_tag) --load ${PROJECT_PATH}/dp-terraform/helm
+	$(DOCKER) buildx build -t $(IMAGE_REF) --build-arg IMAGE_TAG=$(image_tag) --load -f fleetshard-operator/Dockerfile .
 .PHONY: image/build/fleetshard-operator
 
 # push the image to the OpenShift internal registry
 image/push/fleetshard-operator/internal: IMAGE_TAG ?= $(image_tag)
 image/push/fleetshard-operator/internal: docker/login/internal
-	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/fleetshard-operator:$(IMAGE_TAG)" --platform linux/amd64 --push ${PROJECT_PATH}/dp-terraform/helm
+	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/fleetshard-operator:$(IMAGE_TAG)" --platform linux/amd64 --push -f fleetshard-operator/Dockerfile .
 .PHONY: image/push/fleetshard-operator/internal
 
 # Touch all necessary secret files for fleet manager to start up
