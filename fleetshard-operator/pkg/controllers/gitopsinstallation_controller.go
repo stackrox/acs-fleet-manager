@@ -54,16 +54,16 @@ const (
 	crdPollInterval            = 5 * time.Second
 )
 
-var _ reconcile.Reconciler = &ReconcileGitopsInstallation{}
+var _ reconcile.Reconciler = &GitopsInstallationReconciler{}
 
-// ReconcileGitopsInstallation gitops installation reconciler
-type ReconcileGitopsInstallation struct {
+// GitopsInstallationReconciler gitops installation reconciler
+type GitopsInstallationReconciler struct {
 	Client          ctrlClient.Client
 	SourceNamespace string
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ReconcileGitopsInstallation) SetupWithManager(mgr ctrl.Manager) error {
+func (r *GitopsInstallationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if err := mgr.Add(manager.RunnableFunc(r.createDefaultGitopsInstallation)); err != nil {
 		return fmt.Errorf("failed to add the default GitopsInstallation func: %v", err)
 	}
@@ -78,7 +78,7 @@ func (r *ReconcileGitopsInstallation) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *ReconcileGitopsInstallation) mapGitopsInstallation(_ context.Context, _ ctrlClient.Object) []reconcile.Request {
+func (r *GitopsInstallationReconciler) mapGitopsInstallation(_ context.Context, _ ctrlClient.Object) []reconcile.Request {
 	return []reconcile.Request{
 		{
 			NamespacedName: types.NamespacedName{
@@ -89,7 +89,7 @@ func (r *ReconcileGitopsInstallation) mapGitopsInstallation(_ context.Context, _
 	}
 }
 
-func (r *ReconcileGitopsInstallation) predicateFuncs(matchesResource func(namespace, name string) bool) predicate.Funcs {
+func (r *GitopsInstallationReconciler) predicateFuncs(matchesResource func(namespace, name string) bool) predicate.Funcs {
 	return predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			return matchesResource(e.ObjectNew.GetNamespace(), e.ObjectNew.GetName()) &&
@@ -104,15 +104,17 @@ func (r *ReconcileGitopsInstallation) predicateFuncs(matchesResource func(namesp
 	}
 }
 
-func (r *ReconcileGitopsInstallation) matchesSourceRepositorySecret(namespace, name string) bool {
+func (r *GitopsInstallationReconciler) matchesSourceRepositorySecret(namespace, name string) bool {
 	return namespace == r.SourceNamespace && bootstrapAppRepositoryName == name
 }
 
-func (r *ReconcileGitopsInstallation) matchesDestinationRepositorySecret(namespace, name string) bool {
+func (r *GitopsInstallationReconciler) matchesDestinationRepositorySecret(namespace, name string) bool {
 	return namespace == ArgoCdNamespace && bootstrapAppRepositoryName == name
 }
 
-func (r *ReconcileGitopsInstallation) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+// Reconcile is part of the main kubernetes reconciliation loop which aims to
+// move the current state of the cluster closer to the desired state.
+func (r *GitopsInstallationReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	glog.Infof("Reconciling GitopsInstallation %s/%s", request.Namespace, request.Name)
 
 	instance := &v1alpha1.GitopsInstallation{}
@@ -145,33 +147,34 @@ func (r *ReconcileGitopsInstallation) Reconcile(ctx context.Context, request rec
 	if err := r.ensureBootstrapApplication(ctx, instance.Spec); err != nil {
 		return reconcile.Result{}, err
 	}
+	glog.Infof("Reconciled GitopsInstallation %s/%s", request.Namespace, request.Name)
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileGitopsInstallation) ensureNamespace(ctx context.Context, name string) error {
+func (r *GitopsInstallationReconciler) ensureNamespace(ctx context.Context, name string) error {
 	namespace, err := r.getNamespace(ctx, name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			glog.Infof("Namespace %q not found. Creating...", name)
+			glog.V(5).Infof("Namespace %q not found. Creating...", name)
 			namespace = newNamespace(name)
 			if err := r.Client.Create(ctx, namespace); err != nil {
 				return fmt.Errorf("creating namespace %q: %w", name, err)
 			}
-			glog.Infof("Namespace %q created.", name)
+			glog.V(5).Infof("Namespace %q created.", name)
 		} else {
 			return fmt.Errorf("getting namespace %q: %w", namespace, err)
 		}
 	} else {
-		glog.Infof("Namespace %q found.", name)
+		glog.V(10).Infof("Namespace %q found.", name)
 	}
 	if namespace.Labels == nil {
 		namespace.Labels = make(map[string]string)
 	}
 	if currentValue, ok := namespace.Labels[managedByArgoCdLabelKey]; ok && currentValue == managedByArgoCdLabelValue {
-		glog.Infof("Label '%s=%s' already exists on namespace '%s'. No update needed.", managedByArgoCdLabelKey, managedByArgoCdLabelValue, name)
+		glog.V(10).Infof("Label '%s=%s' already exists on namespace '%s'. No update needed.", managedByArgoCdLabelKey, managedByArgoCdLabelValue, name)
 		return nil // No change needed
 	}
-	glog.Infof("Setting '%s=%s' label for namespace %q", managedByArgoCdLabelKey, managedByArgoCdLabelValue, name)
+	glog.V(5).Infof("Setting '%s=%s' label for namespace %q", managedByArgoCdLabelKey, managedByArgoCdLabelValue, name)
 	updateErr := k8sretry.RetryOnConflict(k8sretry.DefaultRetry, func() error {
 		currentNs := &corev1.Namespace{}
 		if err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: name}, currentNs); err != nil {
@@ -182,7 +185,7 @@ func (r *ReconcileGitopsInstallation) ensureNamespace(ctx context.Context, name 
 			currentNs.Labels = make(map[string]string)
 		}
 		currentNs.Labels[managedByArgoCdLabelKey] = managedByArgoCdLabelValue
-		glog.V(2).Infof("Attempting to update namespace %q (ResourceVersion: %s)", name, currentNs.ResourceVersion)
+		glog.V(10).Infof("Attempting to update namespace %q (ResourceVersion: %s)", name, currentNs.ResourceVersion)
 		return r.Client.Update(ctx, currentNs)
 	})
 	if updateErr != nil {
@@ -200,7 +203,7 @@ func newNamespace(name string) *corev1.Namespace {
 	}
 }
 
-func (r *ReconcileGitopsInstallation) getNamespace(ctx context.Context, name string) (*corev1.Namespace, error) {
+func (r *GitopsInstallationReconciler) getNamespace(ctx context.Context, name string) (*corev1.Namespace, error) {
 	var namespace corev1.Namespace
 	if err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: name}, &namespace); err != nil {
 		return nil, fmt.Errorf("getting namespace %q: %w", name, err)
@@ -208,37 +211,37 @@ func (r *ReconcileGitopsInstallation) getNamespace(ctx context.Context, name str
 	return &namespace, nil
 }
 
-func (r *ReconcileGitopsInstallation) ensureSubscription(ctx context.Context) error {
+func (r *GitopsInstallationReconciler) ensureSubscription(ctx context.Context) error {
 	var subscription operatorsv1alpha1.Subscription
 	if err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: operatorSubscriptionName, Namespace: GitopsOperatorNamespace}, &subscription); err != nil {
 		if apiErrors.IsNotFound(err) {
-			glog.Info("Openshift Gitops Subscription not found. Creating...")
+			glog.V(5).Info("Openshift Gitops Subscription not found. Creating...")
 			if err := r.Client.Create(ctx, newSubscription()); err != nil {
 				return fmt.Errorf("creating openshift gitops subscription: %w", err)
 			}
-			glog.Info("Openshift Gitops Subscription created.")
+			glog.V(5).Info("Openshift Gitops Subscription created.")
 			return nil
 		}
 		return fmt.Errorf("getting openshift gitops subscription: %w", err)
 	}
-	glog.Info("Openshift Gitops Subscription already exists. No update needed.")
+	glog.V(10).Info("Openshift Gitops Subscription already exists. No update needed.")
 	return nil
 }
 
-func (r *ReconcileGitopsInstallation) ensureOperatorGroup(ctx context.Context) error {
+func (r *GitopsInstallationReconciler) ensureOperatorGroup(ctx context.Context) error {
 	var operatorGroup operatorsv1.OperatorGroup
 	if err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: operatorGroupName, Namespace: GitopsOperatorNamespace}, &operatorGroup); err != nil {
 		if apiErrors.IsNotFound(err) {
-			glog.Info("Openshift Gitops OperatorGroup not found. Creating...")
+			glog.V(5).Info("Openshift Gitops OperatorGroup not found. Creating...")
 			if err := r.Client.Create(ctx, newOperatorGroup()); err != nil {
 				return fmt.Errorf("creating openshift gitops operator group: %w", err)
 			}
-			glog.Info("Openshift Gitops OperatorGroup created.")
+			glog.V(5).Info("Openshift Gitops OperatorGroup created.")
 			return nil
 		}
 		return fmt.Errorf("getting openshift gitops operator group: %w", err)
 	}
-	glog.Info("Openshift Gitops OperatorGroup already exists. No update needed.")
+	glog.V(10).Info("Openshift Gitops OperatorGroup already exists. No update needed.")
 	return nil
 }
 
@@ -267,8 +270,8 @@ func newSubscription() *operatorsv1alpha1.Subscription {
 	}
 }
 
-func (r *ReconcileGitopsInstallation) ensureRepositorySecret(ctx context.Context) error {
-	glog.Infof("Ensuring repository secret '%s/%s' by copying from source secret", ArgoCdNamespace, bootstrapAppRepositoryName)
+func (r *GitopsInstallationReconciler) ensureRepositorySecret(ctx context.Context) error {
+	glog.V(10).Infof("Ensuring repository secret '%s/%s' by copying from source secret", ArgoCdNamespace, bootstrapAppRepositoryName)
 	sourceSecret := &corev1.Secret{}
 	sourceRepositorySecretName := bootstrapAppRepositoryName // pragma: allowlist secret
 	err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: sourceRepositorySecretName, Namespace: r.SourceNamespace}, sourceSecret)
@@ -291,22 +294,22 @@ func (r *ReconcileGitopsInstallation) ensureRepositorySecret(ctx context.Context
 	err = r.Client.Get(ctx, ctrlClient.ObjectKey{Name: bootstrapAppRepositoryName, Namespace: ArgoCdNamespace}, foundSecret)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			glog.Infof("Destination repository secret '%s/%s' not found. Creating...", ArgoCdNamespace, bootstrapAppRepositoryName)
+			glog.V(5).Infof("Destination repository secret '%s/%s' not found. Creating...", ArgoCdNamespace, bootstrapAppRepositoryName)
 			if createErr := r.Client.Create(ctx, desiredSecret); createErr != nil {
 				return fmt.Errorf("creating destination secret: %w", createErr)
 			}
-			glog.Infof("Destination secret created successfully.")
+			glog.V(5).Infof("Destination secret created successfully.")
 			return nil
 		}
 		return fmt.Errorf("getting destination secret: %w", err)
 	}
 
 	if !repositorySecretNeedsUpdate(foundSecret, desiredSecret) {
-		glog.Infof("Destination repository secret '%s/%s' is already up-to-date.", ArgoCdNamespace, bootstrapAppRepositoryName)
+		glog.V(10).Infof("Destination repository secret '%s/%s' is already up-to-date.", ArgoCdNamespace, bootstrapAppRepositoryName)
 		return nil
 	}
 
-	glog.Infof("Destination repository secret '%s/%s' needs update. Attempting update...", ArgoCdNamespace, bootstrapAppRepositoryName)
+	glog.V(10).Infof("Destination repository secret '%s/%s' needs update. Attempting update...", ArgoCdNamespace, bootstrapAppRepositoryName)
 	updateErr := k8sretry.RetryOnConflict(k8sretry.DefaultRetry, func() error {
 		currentSecret := &corev1.Secret{}
 		getErr := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: bootstrapAppRepositoryName, Namespace: ArgoCdNamespace}, currentSecret)
@@ -323,7 +326,7 @@ func (r *ReconcileGitopsInstallation) ensureRepositorySecret(ctx context.Context
 		return fmt.Errorf("updating destination secret after retries: %w", updateErr)
 	}
 
-	glog.Infof("Destination repository secret '%s/%s' updated successfully.", ArgoCdNamespace, bootstrapAppRepositoryName)
+	glog.V(10).Infof("Destination repository secret '%s/%s' updated successfully.", ArgoCdNamespace, bootstrapAppRepositoryName)
 	return nil
 }
 
@@ -346,26 +349,25 @@ func newRepositorySecret(token []byte) *corev1.Secret {
 		// Data must be used here instead of StringData for comparison in needsUpdate
 		Data: map[string][]byte{
 			"url":      []byte(bootstrapAppRepositoryURL),
-			"username": []byte("not-used"),
 			"password": token,
 		},
 	}
 }
 
-func (r *ReconcileGitopsInstallation) waitForApplicationCRD(ctx context.Context) error {
-	glog.Info("Waiting for ArgoCD Application CRD to become available...")
+func (r *GitopsInstallationReconciler) waitForApplicationCRD(ctx context.Context) error {
+	glog.V(10).Info("Waiting for ArgoCD Application CRD to become available...")
 	err := wait.PollUntilContextCancel(ctx, crdPollInterval, true, func(ctx context.Context) (bool, error) {
 		appList := &argoCd.ApplicationList{}
 		err := r.Client.List(ctx, appList, ctrlClient.InNamespace(ArgoCdNamespace), ctrlClient.Limit(1))
 		if err != nil {
 			if meta.IsNoMatchError(err) || runtime.IsNotRegisteredError(err) || apiErrors.IsNotFound(err) {
-				glog.V(2).Infof("Application CRD not yet available, retrying: %v", err)
+				glog.V(10).Infof("Application CRD not yet available, retrying: %v", err)
 				return false, nil
 			}
 			glog.Errorf("Error listing Applications while waiting for CRD: %v", err)
 			return false, fmt.Errorf("listing Applications while waiting for CRD: %w", err)
 		}
-		glog.Info("ArgoCD Application CRD is available.")
+		glog.V(10).Info("ArgoCD Application CRD is available.")
 		return true, nil
 	})
 	if err != nil {
@@ -410,31 +412,31 @@ func newBootstrapApplication(spec v1alpha1.GitopsInstallationSpec) *argoCd.Appli
 	}
 }
 
-func (r *ReconcileGitopsInstallation) ensureBootstrapApplication(ctx context.Context, spec v1alpha1.GitopsInstallationSpec) error {
-	glog.Infof("Ensuring bootstrap ArgoCD application %q in namespace %q", bootstrapAppName, ArgoCdNamespace)
+func (r *GitopsInstallationReconciler) ensureBootstrapApplication(ctx context.Context, spec v1alpha1.GitopsInstallationSpec) error {
+	glog.V(10).Infof("Ensuring bootstrap ArgoCD application %q in namespace %q", bootstrapAppName, ArgoCdNamespace)
 
 	app := &argoCd.Application{}
 	err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: bootstrapAppName, Namespace: ArgoCdNamespace}, app)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			glog.Infof("Bootstrap application %q not found. Creating...", bootstrapAppName)
+			glog.V(5).Infof("Bootstrap application %q not found. Creating...", bootstrapAppName)
 			bootstrapApp := newBootstrapApplication(spec)
 			if errCreate := r.Client.Create(ctx, bootstrapApp); errCreate != nil {
 				glog.Errorf("Failed to create bootstrap application %q: %v", bootstrapAppName, errCreate)
 				return fmt.Errorf("creating bootstrap application %q: %w", bootstrapAppName, errCreate)
 			}
-			glog.Infof("Bootstrap application %q created successfully.", bootstrapAppName)
+			glog.V(10).Infof("Bootstrap application %q created successfully.", bootstrapAppName)
 			return nil
 		}
 		glog.Errorf("Failed to get bootstrap application %q: %v", bootstrapAppName, err)
 		return fmt.Errorf("getting bootstrap application %q: %w", bootstrapAppName, err)
 	}
 
-	glog.Infof("Bootstrap application %q already exists. Skipping creation.", bootstrapAppName)
+	glog.V(10).Infof("Bootstrap application %q already exists. Skipping creation.", bootstrapAppName)
 	return nil
 }
 
-func (r *ReconcileGitopsInstallation) resolveClusterName(ctx context.Context) (string, error) {
+func (r *GitopsInstallationReconciler) resolveClusterName(ctx context.Context) (string, error) {
 	infra := &configv1.Infrastructure{}
 	if err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: "cluster"}, infra); err != nil {
 		return "", fmt.Errorf("getting infrastructure: %w", err)
@@ -445,6 +447,9 @@ func (r *ReconcileGitopsInstallation) resolveClusterName(ctx context.Context) (s
 	return trimSuffixIfExists(infra.Status.InfrastructureName), nil
 }
 
+// trimSuffixIfExists returns the cluster name without an autogenerated suffix.
+// If there's no suffix, returns the given string as is.
+// Example: for the infrastructure name like "acs-dev-dp-01-ocjtq" it will return acs-dev-dp-01.
 func trimSuffixIfExists(str string) string {
 	if str == "" {
 		return ""
@@ -467,7 +472,7 @@ func trimSuffixIfExists(str string) string {
 	return str[:lastDash]
 }
 
-func (r *ReconcileGitopsInstallation) createDefaultGitopsInstallation(ctx context.Context) error {
+func (r *GitopsInstallationReconciler) createDefaultGitopsInstallation(ctx context.Context) error {
 	clusterName, err := r.resolveClusterName(ctx)
 	if err != nil {
 		return fmt.Errorf("error resolving cluster name: %w", err)

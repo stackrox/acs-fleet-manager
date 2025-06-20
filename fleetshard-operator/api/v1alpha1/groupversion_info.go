@@ -1,3 +1,6 @@
+// Package v1alpha1 contains API Schema definitions for the fleetshard v1alpha1 API group
+// +kubebuilder:object:generate=true
+// +groupName=cloud.stackrox.io
 package v1alpha1
 
 import (

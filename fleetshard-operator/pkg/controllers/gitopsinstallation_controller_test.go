@@ -28,7 +28,7 @@ const (
 )
 
 // newTestReconciler is the original helper, retained for tests not needing AWS mock
-func newTestReconciler(initK8sObjs ...ctrlClient.Object) *ReconcileGitopsInstallation {
+func newTestReconciler(initK8sObjs ...ctrlClient.Object) *GitopsInstallationReconciler {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = v1alpha1.AddToScheme(scheme)
@@ -38,7 +38,7 @@ func newTestReconciler(initK8sObjs ...ctrlClient.Object) *ReconcileGitopsInstall
 	_ = configv1.AddToScheme(scheme)
 
 	fakeK8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initK8sObjs...).Build()
-	return &ReconcileGitopsInstallation{
+	return &GitopsInstallationReconciler{
 		Client:          fakeK8sClient,
 		SourceNamespace: managerNamespace,
 	}
@@ -343,6 +343,12 @@ func TestReconcile(t *testing.T) {
 	err = reconciler.Client.Get(ctx, types.NamespacedName{Name: bootstrapAppRepositoryName, Namespace: ArgoCdNamespace}, repoSecret)
 	require.NoError(t, err, "Repository secret should have been created by Reconcile()")
 	assert.Equal(t, "install-token", string(repoSecret.Data["password"]))
+
+	bootstrapApp := &argoCd.Application{}
+	err = reconciler.Client.Get(ctx, types.NamespacedName{Name: bootstrapAppName, Namespace: ArgoCdNamespace}, bootstrapApp)
+	require.NoError(t, err)
+	assert.Equal(t, bootstrapAppName, bootstrapApp.Name)
+	assert.Equal(t, ArgoCdNamespace, bootstrapApp.Namespace)
 }
 
 func TestCreateInitialInstallation(t *testing.T) {
@@ -517,7 +523,7 @@ func TestEnsureBootstrapApplication_AppCreateFails(t *testing.T) {
 		shouldCreateFail: true,
 		createError:      expectedCreateError,
 	}
-	reconciler := &ReconcileGitopsInstallation{Client: mockK8sCreateFailClient}
+	reconciler := &GitopsInstallationReconciler{Client: mockK8sCreateFailClient}
 
 	err := reconciler.ensureBootstrapApplication(ctx, v1alpha1.GitopsInstallationSpec{})
 	require.Error(t, err)

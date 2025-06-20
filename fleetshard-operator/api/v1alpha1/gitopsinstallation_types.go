@@ -4,6 +4,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
+
 // GitopsInstallation is the Schema for the gitopsinstallations API
 type GitopsInstallation struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -23,6 +26,8 @@ type GitopsInstallationSpec struct {
 
 // GitopsInstallationStatus defines the observed state of GitopsInstallation
 type GitopsInstallationStatus struct{}
+
+//+kubebuilder:object:root=true
 
 type GitopsInstallationList struct {
 	metav1.TypeMeta `json:",inline"`

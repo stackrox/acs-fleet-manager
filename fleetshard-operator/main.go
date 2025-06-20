@@ -83,10 +83,11 @@ func main() {
 		glog.Fatalf("unable to start manager: %v", err)
 	}
 
-	if err = (&controllers.ReconcileGitopsInstallation{
+	reconciler := &controllers.GitopsInstallationReconciler{
 		Client:          mgr.GetClient(),
 		SourceNamespace: sourceNamespace,
-	}).SetupWithManager(mgr); err != nil {
+	}
+	if err = reconciler.SetupWithManager(mgr); err != nil {
 		glog.Fatalf("unable to create GitopsInstallation controller")
 	}
 
