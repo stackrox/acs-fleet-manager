@@ -493,16 +493,16 @@ func TestEnsureBootstrapApplication_Exists(t *testing.T) {
 	reconciler := newTestReconciler(initialInfra, existingApp)
 
 	err := reconciler.ensureBootstrapApplication(ctx, v1alpha1.GitopsInstallationSpec{})
-	require.NoError(t, err) // Should skip creation and not error
+	require.NoError(t, err)
 
 	currentApp := &argoCd.Application{}
 	err = reconciler.Client.Get(ctx, types.NamespacedName{Name: bootstrapAppName, Namespace: ArgoCdNamespace}, currentApp)
 	require.NoError(t, err)
 	assert.Equal(t, bootstrapAppName, currentApp.Name)
 	assert.Equal(t, ArgoCdNamespace, currentApp.Namespace)
-	assert.Equal(t, "custom-project", currentApp.Spec.Project, "Existing app project should not change")
-	assert.Equal(t, "old/path", currentApp.Spec.Source.Path, "Existing app source path should not change")
-	assert.Equal(t, "true", currentApp.Labels["existing-label"], "Existing app labels should persist")
+	assert.Equal(t, "default", currentApp.Spec.Project, "Existing app project should change")
+	assert.Equal(t, "bootstrap/", currentApp.Spec.Source.Path, "Existing app source path should change")
+	assert.Equal(t, "", currentApp.Labels["existing-label"], "Existing app labels should not persist")
 }
 
 func TestEnsureBootstrapApplication_AppCreateFails(t *testing.T) {

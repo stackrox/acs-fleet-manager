@@ -75,6 +75,9 @@ func (r *GitopsInstallationReconciler) SetupWithManager(mgr ctrl.Manager) error 
 		Watches(&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(r.mapGitopsInstallation),
 			builder.WithPredicates(r.predicateFuncs(r.matchesDestinationRepositorySecret))).
+		Watches(&argoCd.Application{},
+			handler.EnqueueRequestsFromMapFunc(r.mapGitopsInstallation),
+			builder.WithPredicates(r.predicateFuncs(r.matchesBootstrapApp))).
 		Complete(r)
 }
 
@@ -112,11 +115,15 @@ func (r *GitopsInstallationReconciler) matchesDestinationRepositorySecret(namesp
 	return namespace == ArgoCdNamespace && bootstrapAppRepositoryName == name
 }
 
+func (r *GitopsInstallationReconciler) matchesBootstrapApp(namespace, name string) bool {
+	return namespace == ArgoCdNamespace && bootstrapAppName == name
+
+}
+
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *GitopsInstallationReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	glog.Infof("Reconciling GitopsInstallation %s/%s", request.Namespace, request.Name)
-
 	instance := &v1alpha1.GitopsInstallation{}
 	err := r.Client.Get(ctx, ctrlClient.ObjectKey{Namespace: request.Namespace, Name: request.Name}, instance)
 	if err != nil {
@@ -125,7 +132,6 @@ func (r *GitopsInstallationReconciler) Reconcile(ctx context.Context, request re
 		}
 		return reconcile.Result{}, err
 	}
-
 	if err := r.ensureNamespace(ctx, GitopsOperatorNamespace); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -414,14 +420,14 @@ func newBootstrapApplication(spec v1alpha1.GitopsInstallationSpec) *argoCd.Appli
 
 func (r *GitopsInstallationReconciler) ensureBootstrapApplication(ctx context.Context, spec v1alpha1.GitopsInstallationSpec) error {
 	glog.V(10).Infof("Ensuring bootstrap ArgoCD application %q in namespace %q", bootstrapAppName, ArgoCdNamespace)
+	foundApp := &argoCd.Application{}
+	desiredApp := newBootstrapApplication(spec)
 
-	app := &argoCd.Application{}
-	err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: bootstrapAppName, Namespace: ArgoCdNamespace}, app)
+	err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: bootstrapAppName, Namespace: ArgoCdNamespace}, foundApp)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			glog.V(5).Infof("Bootstrap application %q not found. Creating...", bootstrapAppName)
-			bootstrapApp := newBootstrapApplication(spec)
-			if errCreate := r.Client.Create(ctx, bootstrapApp); errCreate != nil {
+			if errCreate := r.Client.Create(ctx, desiredApp); errCreate != nil {
 				glog.Errorf("Failed to create bootstrap application %q: %v", bootstrapAppName, errCreate)
 				return fmt.Errorf("creating bootstrap application %q: %w", bootstrapAppName, errCreate)
 			}
@@ -432,8 +438,34 @@ func (r *GitopsInstallationReconciler) ensureBootstrapApplication(ctx context.Co
 		return fmt.Errorf("getting bootstrap application %q: %w", bootstrapAppName, err)
 	}
 
-	glog.V(10).Infof("Bootstrap application %q already exists. Skipping creation.", bootstrapAppName)
+	if !bootstrapApplicationNeedsUpdate(foundApp, desiredApp) {
+		glog.V(10).Infof("Bootstrap Application '%s/%s' is already up-to-date.", ArgoCdNamespace, bootstrapAppName)
+		return nil
+	}
+
+	glog.V(10).Infof("Bootstrap Application '%s/%s' needs update. Attempting update...", ArgoCdNamespace, bootstrapAppName)
+	updateErr := k8sretry.RetryOnConflict(k8sretry.DefaultRetry, func() error {
+		currentApp := &argoCd.Application{}
+		getErr := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: bootstrapAppName, Namespace: ArgoCdNamespace}, currentApp)
+		if getErr != nil {
+			return fmt.Errorf("getting bootstrap application: %w", getErr)
+		}
+		currentApp.Spec = desiredApp.Spec
+		currentApp.Labels = desiredApp.Labels
+		return r.Client.Update(ctx, currentApp)
+	})
+
+	if updateErr != nil {
+		return fmt.Errorf("updating destination secret after retries: %w", updateErr)
+	}
+
+	glog.V(10).Infof("Bootstrap application '%s/%s' already exists updated successfully.", ArgoCdNamespace, bootstrapAppName)
 	return nil
+}
+
+func bootstrapApplicationNeedsUpdate(current, desired *argoCd.Application) bool {
+	return !reflect.DeepEqual(current.Spec, desired.Spec) ||
+		!reflect.DeepEqual(current.Labels, desired.Labels)
 }
 
 func (r *GitopsInstallationReconciler) resolveClusterName(ctx context.Context) (string, error) {
