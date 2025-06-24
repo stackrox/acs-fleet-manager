@@ -1,3 +1,6 @@
+# DEPRECATED: Use fleetshard-operator/Dockerfile instead.
+# This file is used in Openshift CI only until it's changed in the openshift/release repo.
+# Can't change both in one go.
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295 AS build
 ENV HOME=/opt/helm
 COPY rhacs-terraform  ${HOME}/rhacs-terraform
