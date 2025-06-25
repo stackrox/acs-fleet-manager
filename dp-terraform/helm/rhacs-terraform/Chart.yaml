@@ -28,9 +28,6 @@ dependencies:
   - name: cloudwatch
     version: "0.1.0"
     condition: cloudwatch.enabled
-  - name: logging
-    version: "0.1.0"
-    condition: logging.enabled
   - name: audit-logs
     version: "0.1.0"
     condition: audit-logs.enabled

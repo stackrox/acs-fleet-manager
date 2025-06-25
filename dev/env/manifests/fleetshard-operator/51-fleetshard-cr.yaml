@@ -41,8 +41,6 @@ spec:
     replicas: 1
   cloudwatch:
     enabled: false
-  logging:
-    enabled: false
   audit-logs:
     enabled: false
   secured-cluster:
