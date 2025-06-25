@@ -111,19 +111,6 @@ cloudwatch:
   nodeSelector:
     node-role.kubernetes.io/acscs-infra: ""
 
-# See available parameters in charts/logging/values.yaml
-# - enabled flag is used to completely enable/disable logging sub-chart
-logging:
-  enabled: true
-  groupPrefix: ""
-  tolerations:
-    - key: node-role.kubernetes.io/acscs-infra
-      operator: Exists
-      effect: NoSchedule
-    - key: node-role.kubernetes.io/infra
-      operator: Exists
-      effect: NoSchedule
-
 # See available parameters in charts/audit-logs/values.yaml
 # - enabled flag is used to completely enable/disable logging sub-chart
 audit-logs:
