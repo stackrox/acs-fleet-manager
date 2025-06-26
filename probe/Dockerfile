@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.23.9-2.1749483526 AS build
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.23.9-2.1750813114 AS build
 USER root
 ENV GOFLAGS="-mod=mod"
 
