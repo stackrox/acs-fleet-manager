@@ -4,6 +4,7 @@ package quota
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/golang/glog"
@@ -235,8 +236,12 @@ func (q amsQuotaService) DeleteQuota(subscriptionID string) *errors.ServiceError
 		return nil
 	}
 
-	_, err := q.amsClient.DeleteSubscription(subscriptionID)
+	status, err := q.amsClient.DeleteSubscription(subscriptionID)
 	if err != nil {
+		if status == http.StatusNotFound {
+			glog.Infof("quota for subscription: %v not found, asuming it's already deleted", subscriptionID)
+			return nil
+		}
 		return errors.GeneralError("failed to delete the quota: %v", err)
 	}
 	return nil
