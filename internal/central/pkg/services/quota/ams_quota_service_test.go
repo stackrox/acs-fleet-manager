@@ -741,6 +741,20 @@ func Test_Delete_Quota(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "failed to delete a quota by id with 404 status",
+			args: args{
+				subscriptionID: "1223",
+			},
+			fields: fields{
+				ocmClient: &ocmClientMock.ClientMock{
+					DeleteSubscriptionFunc: func(id string) (int, error) {
+						return 404, serviceErrors.GeneralError("failed to delete subscription")
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
