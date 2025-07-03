@@ -72,12 +72,6 @@ func (r *GitopsInstallationReconciler) SetupWithManager(mgr ctrl.Manager) error 
 		Watches(&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(r.mapGitopsInstallation),
 			builder.WithPredicates(r.predicateFuncs(r.matchesSourceRepositorySecret))).
-		Watches(&corev1.Secret{},
-			handler.EnqueueRequestsFromMapFunc(r.mapGitopsInstallation),
-			builder.WithPredicates(r.predicateFuncs(r.matchesDestinationRepositorySecret))).
-		Watches(&argoCd.Application{},
-			handler.EnqueueRequestsFromMapFunc(r.mapGitopsInstallation),
-			builder.WithPredicates(r.predicateFuncs(r.matchesBootstrapApp))).
 		Complete(r)
 }
 
@@ -109,15 +103,6 @@ func (r *GitopsInstallationReconciler) predicateFuncs(matchesResource func(names
 
 func (r *GitopsInstallationReconciler) matchesSourceRepositorySecret(namespace, name string) bool {
 	return namespace == r.SourceNamespace && bootstrapAppRepositoryName == name
-}
-
-func (r *GitopsInstallationReconciler) matchesDestinationRepositorySecret(namespace, name string) bool {
-	return namespace == ArgoCdNamespace && bootstrapAppRepositoryName == name
-}
-
-func (r *GitopsInstallationReconciler) matchesBootstrapApp(namespace, name string) bool {
-	return namespace == ArgoCdNamespace && bootstrapAppName == name
-
 }
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
