@@ -67,11 +67,7 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 			errs = append(errs, errors.Wrapf(err, "failed to present managed central for central %s", central.ID))
 			continue
 		}
-		if isExternalDnsEnabled(managedCentral) {
-			// If external-dns is enabled, we do not need to create CNAME records here. ExternalDNS will take care of it.
-			// Also, assume routes created by ExternalDNS (set RoutesCreated=true). Otherwise the Central will not read the Ready state.
-			central.RoutesCreated = true
-		} else if k.centralConfig.EnableCentralExternalDomain {
+		if k.centralConfig.EnableCentralExternalDomain && !isExternalDnsEnabled(managedCentral) {
 			if central.RoutesCreationID == "" {
 				glog.Infof("creating CNAME records for central %s", central.ID)
 
