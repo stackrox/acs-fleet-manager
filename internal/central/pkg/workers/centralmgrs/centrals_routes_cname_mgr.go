@@ -4,8 +4,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/externaldns"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
@@ -67,7 +67,7 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 			errs = append(errs, errors.Wrapf(err, "failed to present managed central for central %s", central.ID))
 			continue
 		}
-		if k.centralConfig.EnableCentralExternalDomain && !isExternalDnsEnabled(managedCentral) {
+		if k.centralConfig.EnableCentralExternalDomain && !externaldns.IsEnabled(managedCentral) {
 			if central.RoutesCreationID == "" {
 				glog.Infof("creating CNAME records for central %s", central.ID)
 
@@ -109,9 +109,4 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 	}
 
 	return errs
-}
-
-func isExternalDnsEnabled(managedCentral private.ManagedCentral) bool {
-	isEnabled, ok := managedCentral.Spec.TenantResourcesValues["externalDnsEnabled"].(bool)
-	return ok && isEnabled
 }
