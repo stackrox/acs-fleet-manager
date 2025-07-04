@@ -4,6 +4,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/services"
@@ -66,11 +67,10 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 			errs = append(errs, errors.Wrapf(err, "failed to present managed central for central %s", central.ID))
 			continue
 		}
-		if isExternalDnsEnabled, ok := managedCentral.Spec.TenantResourcesValues["externalDnsEnabled"].(bool); ok && isExternalDnsEnabled {
+		if isExternalDnsEnabled(managedCentral) {
 			// If external-dns is enabled, we do not need to create CNAME records here. ExternalDNS will take care of it.
 			// Also, assume routes created by ExternalDNS (set RoutesCreated=true). Otherwise the Central will not read the Ready state.
 			central.RoutesCreated = true
-			continue
 		} else if k.centralConfig.EnableCentralExternalDomain {
 			if central.RoutesCreationID == "" {
 				glog.Infof("creating CNAME records for central %s", central.ID)
@@ -113,4 +113,9 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 	}
 
 	return errs
+}
+
+func isExternalDnsEnabled(managedCentral private.ManagedCentral) bool {
+	isEnabled, ok := managedCentral.Spec.TenantResourcesValues["externalDnsEnabled"].(bool)
+	return ok && isEnabled
 }
