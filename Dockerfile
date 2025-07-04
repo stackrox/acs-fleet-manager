@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.23.6-4 AS build
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.23.9-2.1751403850 AS build
 
 USER root
 RUN mkdir /src /rds_ca
