@@ -15,6 +15,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/externaldns"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/rhsso"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
@@ -137,13 +139,14 @@ type centralService struct {
 	iamConfig                *iam.IAMConfig
 	rhSSODynamicClientsAPI   *dynamicClientAPI.AcsTenantsApiService
 	telemetry                *Telemetry
+	managedCentralPresenter  *presenters.ManagedCentralPresenter
 }
 
 // NewCentralService ...
 func NewCentralService(connectionFactory *db.ConnectionFactory, clusterService ClusterService,
 	iamConfig *iam.IAMConfig, centralConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
 	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory,
-	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, telemetry *Telemetry) CentralService {
+	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, telemetry *Telemetry, managedCentralPresenter *presenters.ManagedCentralPresenter) CentralService {
 	return &centralService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
@@ -157,6 +160,7 @@ func NewCentralService(connectionFactory *db.ConnectionFactory, clusterService C
 		amsClient:                amsClient,
 		rhSSODynamicClientsAPI:   dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm),
 		telemetry:                telemetry,
+		managedCentralPresenter:  managedCentralPresenter,
 	}
 }
 
@@ -597,8 +601,12 @@ func (k *centralService) Delete(centralRequest *dbapi.CentralRequest, force bool
 		if err != nil {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 		}
+		managedCentral, err := k.managedCentralPresenter.PresentManagedCentral(centralRequest)
+		if err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to present managed central")
+		}
 		// Only delete the routes when they are set
-		if routes != nil && k.centralConfig.EnableCentralExternalDomain {
+		if routes != nil && k.centralConfig.EnableCentralExternalDomain && !externaldns.IsEnabled(managedCentral) {
 			_, err := k.ChangeCentralCNAMErecords(centralRequest, CentralRoutesActionDelete)
 			if err != nil {
 				if force {
