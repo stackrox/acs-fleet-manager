@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
@@ -15,14 +16,15 @@ const centralDNSWorkerType = "central_dns"
 // CentralRoutesCNAMEManager ...
 type CentralRoutesCNAMEManager struct {
 	workers.BaseWorker
-	centralService services.CentralService
-	centralConfig  *config.CentralConfig
+	centralService          services.CentralService
+	centralConfig           *config.CentralConfig
+	managedCentralPresenter *presenters.ManagedCentralPresenter
 }
 
 var _ workers.Worker = &CentralRoutesCNAMEManager{}
 
 // NewCentralCNAMEManager ...
-func NewCentralCNAMEManager(centralService services.CentralService, centralConfig *config.CentralConfig) *CentralRoutesCNAMEManager {
+func NewCentralCNAMEManager(centralService services.CentralService, centralConfig *config.CentralConfig, managedCentralPresenter *presenters.ManagedCentralPresenter) *CentralRoutesCNAMEManager {
 	metrics.InitReconcilerMetricsForType(centralDNSWorkerType)
 	return &CentralRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
@@ -30,8 +32,9 @@ func NewCentralCNAMEManager(centralService services.CentralService, centralConfi
 			WorkerType: centralDNSWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
-		centralService: centralService,
-		centralConfig:  centralConfig,
+		centralService:          centralService,
+		centralConfig:           centralConfig,
+		managedCentralPresenter: managedCentralPresenter,
 	}
 }
 
@@ -58,7 +61,17 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 	}
 
 	for _, central := range centrals {
-		if k.centralConfig.EnableCentralExternalDomain {
+		managedCentral, err := k.managedCentralPresenter.PresentManagedCentral(central)
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "failed to present managed central for central %s", central.ID))
+			continue
+		}
+		if isExternalDnsEnabled, ok := managedCentral.Spec.TenantResourcesValues["externalDnsEnabled"].(bool); ok && isExternalDnsEnabled {
+			// If external-dns is enabled, we do not need to create CNAME records here. ExternalDNS will take care of it.
+			// Also, assume routes created by ExternalDNS (set RoutesCreated=true). Otherwise the Central will not read the Ready state.
+			central.RoutesCreated = true
+			continue
+		} else if k.centralConfig.EnableCentralExternalDomain {
 			if central.RoutesCreationID == "" {
 				glog.Infof("creating CNAME records for central %s", central.ID)
 
