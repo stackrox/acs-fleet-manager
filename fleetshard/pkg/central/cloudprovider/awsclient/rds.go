@@ -63,10 +63,10 @@ const (
 
 // RDS is an AWS RDS client that provisions and deprovisions databases for ACS instances.
 type RDS struct {
-	dbSecurityGroup      string
-	dbSubnetGroup        string
-	performanceInsights  bool
-	dataplaneClusterName string
+	dbSecurityGroup     string
+	dbSubnetGroup       string
+	performanceInsights bool
+	sharedTags          map[string]string
 
 	rdsClient rdsiface.RDSAPI
 }
@@ -181,16 +181,15 @@ func (r *RDS) ensureDBClusterCreated(clusterID, acsInstanceID, masterPassword st
 	glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
 
 	input := &createCentralDBClusterInput{
-		clusterID:            clusterID,
-		acsInstanceID:        acsInstanceID,
-		dbPassword:           masterPassword, // pragma: allowlist secret
-		securityGroup:        r.dbSecurityGroup,
-		subnetGroup:          r.dbSubnetGroup,
-		dataplaneClusterName: r.dataplaneClusterName,
-		isTestInstance:       isTestInstance,
+		clusterID:      clusterID,
+		acsInstanceID:  acsInstanceID,
+		dbPassword:     masterPassword, // pragma: allowlist secret
+		securityGroup:  r.dbSecurityGroup,
+		subnetGroup:    r.dbSubnetGroup,
+		isTestInstance: isTestInstance,
 	}
 
-	rdsCreateDBClusterInput := newCreateCentralDBClusterInput(input)
+	rdsCreateDBClusterInput := r.newCreateCentralDBClusterInput(input)
 
 	if finalSnapshotID != "" {
 		glog.Infof("Restoring DB cluster: %s from snasphot: %s", clusterID, finalSnapshotID)
@@ -254,14 +253,13 @@ func (r *RDS) ensureDBInstanceCreated(instanceID, clusterID, acsInstanceID strin
 
 	glog.Infof("Initiating provisioning of RDS database instance %s.", instanceID)
 	input := &createCentralDBInstanceInput{
-		clusterID:            clusterID,
-		instanceID:           instanceID,
-		acsInstanceID:        acsInstanceID,
-		dataplaneClusterName: r.dataplaneClusterName,
-		performanceInsights:  r.performanceInsights,
-		isTestInstance:       isTestInstance,
+		clusterID:           clusterID,
+		instanceID:          instanceID,
+		acsInstanceID:       acsInstanceID,
+		performanceInsights: r.performanceInsights,
+		isTestInstance:      isTestInstance,
 	}
-	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(input))
+	_, err = r.rdsClient.CreateDBInstance(r.newCreateCentralDBInstanceInput(input))
 	if err != nil {
 		return fmt.Errorf("creating DB instance: %w", err)
 	}
@@ -421,11 +419,13 @@ func NewRDSClient(config *config.Config) (*RDS, error) {
 	}
 
 	return &RDS{
-		rdsClient:            rdsClient,
-		dbSecurityGroup:      config.ManagedDB.SecurityGroup,
-		dbSubnetGroup:        config.ManagedDB.SubnetGroup,
-		performanceInsights:  config.ManagedDB.PerformanceInsights,
-		dataplaneClusterName: config.ClusterName,
+		rdsClient:           rdsClient,
+		dbSecurityGroup:     config.ManagedDB.SecurityGroup,
+		dbSubnetGroup:       config.ManagedDB.SubnetGroup,
+		performanceInsights: config.ManagedDB.PerformanceInsights,
+		sharedTags: map[string]string{
+			dataplaneClusterNameKey: config.ClusterName,
+		},
 	}, nil
 }
 
@@ -442,16 +442,15 @@ func getFailoverInstanceID(databaseID string) string {
 }
 
 type createCentralDBClusterInput struct {
-	clusterID            string
-	acsInstanceID        string
-	dbPassword           string
-	securityGroup        string
-	subnetGroup          string
-	dataplaneClusterName string
-	isTestInstance       bool
+	clusterID      string
+	acsInstanceID  string
+	dbPassword     string
+	securityGroup  string
+	subnetGroup    string
+	isTestInstance bool
 }
 
-func newCreateCentralDBClusterInput(input *createCentralDBClusterInput) *rds.CreateDBClusterInput {
+func (r *RDS) newCreateCentralDBClusterInput(input *createCentralDBClusterInput) *rds.CreateDBClusterInput {
 	awsInput := &rds.CreateDBClusterInput{
 		DBClusterIdentifier: aws.String(input.clusterID),
 		Engine:              aws.String(dbEngine),
@@ -466,20 +465,7 @@ func newCreateCentralDBClusterInput(input *createCentralDBClusterInput) *rds.Cre
 		},
 		BackupRetentionPeriod: aws.Int64(dbBackupRetentionPeriod),
 		StorageEncrypted:      aws.Bool(true),
-		Tags: []*rds.Tag{
-			{
-				Key:   aws.String(dataplaneClusterNameKey),
-				Value: aws.String(input.dataplaneClusterName),
-			},
-			{
-				Key:   aws.String(instanceTypeTagKey),
-				Value: aws.String(getInstanceType(input.isTestInstance)),
-			},
-			{
-				Key:   aws.String(acsInstanceIDKey),
-				Value: aws.String(input.acsInstanceID),
-			},
-		},
+		Tags:                  r.getDesiredTags(input.acsInstanceID, input.isTestInstance),
 	}
 
 	// do not export DB logs of internal instances (e.g. Probes)
@@ -488,6 +474,26 @@ func newCreateCentralDBClusterInput(input *createCentralDBClusterInput) *rds.Cre
 	}
 
 	return awsInput
+}
+
+func (r *RDS) getDesiredTags(acsInstanceID string, isTestInstance bool) []*rds.Tag {
+	tags := make([]*rds.Tag, 0, len(r.sharedTags)+2)
+	for key, value := range r.sharedTags {
+		tags = append(tags, &rds.Tag{
+			Key:   aws.String(key),
+			Value: aws.String(value),
+		})
+	}
+
+	tags = append(tags, &rds.Tag{
+		Key:   aws.String(instanceTypeTagKey),
+		Value: aws.String(getInstanceType(isTestInstance)),
+	}, &rds.Tag{
+		Key:   aws.String(acsInstanceIDKey),
+		Value: aws.String(acsInstanceID),
+	})
+
+	return tags
 }
 
 func newRestoreCentralDBClusterInput(snapshotID string, input *rds.CreateDBClusterInput) *rds.RestoreDBClusterFromSnapshotInput {
@@ -508,15 +514,14 @@ func newRestoreCentralDBClusterInput(snapshotID string, input *rds.CreateDBClust
 }
 
 type createCentralDBInstanceInput struct {
-	clusterID            string
-	instanceID           string
-	acsInstanceID        string
-	dataplaneClusterName string
-	performanceInsights  bool
-	isTestInstance       bool
+	clusterID           string
+	instanceID          string
+	acsInstanceID       string
+	performanceInsights bool
+	isTestInstance      bool
 }
 
-func newCreateCentralDBInstanceInput(input *createCentralDBInstanceInput) *rds.CreateDBInstanceInput {
+func (r *RDS) newCreateCentralDBInstanceInput(input *createCentralDBInstanceInput) *rds.CreateDBInstanceInput {
 	return &rds.CreateDBInstanceInput{
 		DBInstanceClass:           aws.String(dbInstanceClass),
 		DBClusterIdentifier:       aws.String(input.clusterID),
@@ -528,20 +533,7 @@ func newCreateCentralDBInstanceInput(input *createCentralDBInstanceInput) *rds.C
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
 		AutoMinorVersionUpgrade:   aws.Bool(dbAutoVersionUpgrade),
 
-		Tags: []*rds.Tag{
-			{
-				Key:   aws.String(dataplaneClusterNameKey),
-				Value: aws.String(input.dataplaneClusterName),
-			},
-			{
-				Key:   aws.String(instanceTypeTagKey),
-				Value: aws.String(getInstanceType(input.isTestInstance)),
-			},
-			{
-				Key:   aws.String(acsInstanceIDKey),
-				Value: aws.String(input.acsInstanceID),
-			},
-		},
+		Tags: r.getDesiredTags(input.acsInstanceID, input.isTestInstance),
 	}
 }
 

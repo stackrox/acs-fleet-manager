@@ -265,11 +265,11 @@ func TestRestoreIfFinalSnapshotExists(t *testing.T) {
 	}
 	// create function should not be called for restore operations
 
-	rds := RDS{
+	rdsDBClient := RDS{
 		rdsClient: &mockRDSClient,
 	}
 
-	err := rds.ensureDBClusterCreated(clusterID, tenantID, "testpassword1234", false)
+	err := rdsDBClient.ensureDBClusterCreated(clusterID, tenantID, "testpassword1234", false)
 
 	require.NoError(t, err)
 	require.NotNil(t, describeSnapshotInput)
