@@ -1,11 +1,11 @@
 package gitops
 
 import (
+	"fmt"
 	"strings"
 	"text/template"
 
-	"helm.sh/helm/v3/pkg/chartutil"
-
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 )
@@ -35,7 +35,7 @@ func RenderTenantResourceValues(params CentralParams, config Config) (map[string
 		if err := yaml.Unmarshal([]byte(rendered), &patchValues); err != nil {
 			return nil, errors.Wrap(err, "failed to unmarshal override patch")
 		}
-		values = chartutil.CoalesceTables(patchValues, values)
+		values = coalesceTables(patchValues, values, "")
 	}
 	return values, nil
 }
@@ -99,4 +99,46 @@ func renderPatchTemplate(patchTemplate string, ctx CentralParams) (string, error
 		return "", errors.Wrap(err, "failed to render patch template")
 	}
 	return writer.String(), nil
+}
+
+// see: helm.sh/helm/v3/pkg/chartutil.CoalesceTables
+func coalesceTables(dst, src map[string]interface{}, prefix string) map[string]interface{} {
+	if src == nil {
+		return dst
+	}
+	if dst == nil {
+		return src
+	}
+	// Because dest has higher precedence than src, dest values override src values.
+	for key, val := range src {
+		fullKey := concatPrefix(prefix, key)
+		switch dv, ok := dst[key]; {
+		case ok && dv == nil:
+			delete(dst, key)
+		case !ok:
+			dst[key] = val
+		case isTable(val):
+			if isTable(dv) {
+				coalesceTables(dv.(map[string]interface{}), val.(map[string]interface{}), fullKey)
+			} else {
+				glog.V(5).Infof("cannot overwrite table with non table for %s (%v)", fullKey, val)
+			}
+		case isTable(dv) && val != nil:
+			glog.V(5).Infof("destination for %s is a table. Ignoring non-table value (%v)", fullKey, val)
+		}
+	}
+	return dst
+}
+
+// isTable is a special-purpose function to see if the present thing matches the definition of a YAML table.
+func isTable(v interface{}) bool {
+	_, ok := v.(map[string]interface{})
+	return ok
+}
+
+func concatPrefix(a, b string) string {
+	if a == "" {
+		return b
+	}
+	return fmt.Sprintf("%s.%s", a, b)
 }

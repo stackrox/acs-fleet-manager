@@ -7,7 +7,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
-	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,7 +24,6 @@ type TenantCleanup struct {
 
 // TenantCleanupOptions defines configuration options for the TenantCleanup logic
 type TenantCleanupOptions struct {
-	Chart                 *chart.Chart
 	ArgoReconcilerOptions ArgoReconcilerOptions
 }
 
