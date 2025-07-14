@@ -323,3 +323,73 @@ func TestHelmTemplate_SecuredCluster_ImagePullSecret(t *testing.T) {
 		})
 	}
 }
+
+func TestHelmTemplate_FleetshardSyncDeployment_ManagedDBTags(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		values     map[string]string
+		wantEnvs   map[string]string
+		wantNoEnvs []string
+	}{
+		{
+			name: "should not add env vars if managedDB is disabled",
+			values: map[string]string{
+				"secured-cluster.enabled":                      "false",
+				"fleetshardSync.managedDB.enabled":             "false",
+				"fleetshardSync.managedDB.sharedTags[0].key":   "tag1",
+				"fleetshardSync.managedDB.sharedTags[0].value": "value1",
+			},
+			wantNoEnvs: []string{"MANAGED_DB_TAGS_0_KEY", "MANAGED_DB_TAGS_0_VALUE"},
+		},
+		{
+			name: "should add env vars if managedDB is enabled",
+			values: map[string]string{
+				"secured-cluster.enabled":                      "false",
+				"fleetshardSync.managedDB.enabled":             "true",
+				"fleetshardSync.managedDB.subnetGroup":         "dummy-subnet-group",
+				"fleetshardSync.managedDB.securityGroup":       "dummy-security-group",
+				"fleetshardSync.managedDB.sharedTags[0].key":   "tag1",
+				"fleetshardSync.managedDB.sharedTags[0].value": "value1",
+				"fleetshardSync.managedDB.sharedTags[1].key":   "tag2",
+				"fleetshardSync.managedDB.sharedTags[1].value": "value2",
+			},
+			wantEnvs: map[string]string{
+				"MANAGED_DB_TAGS_0_KEY":   "tag1",
+				"MANAGED_DB_TAGS_0_VALUE": "value1",
+				"MANAGED_DB_TAGS_1_KEY":   "tag2",
+				"MANAGED_DB_TAGS_1_VALUE": "value2",
+			},
+		},
+		{
+			name: "should not add env vars if managedDB is enabled but no tags are provided",
+			values: map[string]string{
+				"secured-cluster.enabled":                "false",
+				"fleetshardSync.managedDB.enabled":       "true",
+				"fleetshardSync.managedDB.subnetGroup":   "dummy-subnet-group",
+				"fleetshardSync.managedDB.securityGroup": "dummy-security-group",
+			},
+			wantNoEnvs: []string{"MANAGED_DB_TAGS_0_KEY", "MANAGED_DB_TAGS_0_VALUE"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			deployment := unmarshalFleetshardSyncDeployment(t, tt.values)
+			container := deployment.Spec.Template.Spec.Containers[0]
+			envVars := container.Env
+
+			for _, name := range tt.wantNoEnvs {
+				envVar := findEnvVar(name, envVars)
+				require.Nil(t, envVar, "env var %s should not be present", name)
+			}
+
+			for name, value := range tt.wantEnvs {
+				envVar := findEnvVar(name, envVars)
+				require.NotNil(t, envVar, "env var %s should be present", name)
+				require.Equal(t, value, envVar.Value)
+			}
+		})
+	}
+}
