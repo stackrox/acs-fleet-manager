@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
 	github.com/aws/aws-sdk-go-v2/service/ses v1.29.9
 	github.com/bxcodec/faker/v3 v3.8.1
-	github.com/caarlos0/env/v6 v6.10.1
+	github.com/caarlos0/env/v11 v11.3.1
 	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.34.0

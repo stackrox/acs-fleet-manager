@@ -8,7 +8,7 @@ import (
 
 	"github.com/stackrox/rox/pkg/errorhelpers"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v11"
 	"github.com/pkg/errors"
 )
 

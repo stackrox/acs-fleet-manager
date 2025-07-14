@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v11"
 	"github.com/pkg/errors"
 	"github.com/stackrox/rox/pkg/errorhelpers"
 )
