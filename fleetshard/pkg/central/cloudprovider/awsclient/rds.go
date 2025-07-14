@@ -49,11 +49,10 @@ const (
 	dbInstancePromotionTier = 2 // a tier of 2 (or higher) ensures that readers and writers can scale independently
 	dbCACertificateType     = "rds-ca-rsa4096-g1"
 
-	dataplaneClusterNameKey = "DataplaneClusterName"
-	instanceTypeTagKey      = "ACSInstanceType"
-	acsInstanceIDKey        = "ACSInstanceID"
-	regularInstaceTagValue  = "regular"
-	testInstanceTagValue    = "test"
+	instanceTypeTagKey     = "ACSInstanceType"
+	acsInstanceIDKey       = "ACSInstanceID"
+	regularInstaceTagValue = "regular"
+	testInstanceTagValue   = "test"
 
 	// The Aurora Serverless v2 DB instance configuration in ACUs (Aurora Capacity Units)
 	// 1 ACU = 1 vCPU + 2GB RAM
@@ -66,7 +65,7 @@ type RDS struct {
 	dbSecurityGroup     string
 	dbSubnetGroup       string
 	performanceInsights bool
-	sharedTags          map[string]string
+	sharedTags          []config.ManagedDBTag
 
 	rdsClient rdsiface.RDSAPI
 }
@@ -423,9 +422,6 @@ func NewRDSClient(config *config.Config) (*RDS, error) {
 		dbSecurityGroup:     config.ManagedDB.SecurityGroup,
 		dbSubnetGroup:       config.ManagedDB.SubnetGroup,
 		performanceInsights: config.ManagedDB.PerformanceInsights,
-		sharedTags: map[string]string{
-			dataplaneClusterNameKey: config.ClusterName,
-		},
 	}, nil
 }
 
@@ -478,10 +474,10 @@ func (r *RDS) newCreateCentralDBClusterInput(input *createCentralDBClusterInput)
 
 func (r *RDS) getDesiredTags(acsInstanceID string, isTestInstance bool) []*rds.Tag {
 	tags := make([]*rds.Tag, 0, len(r.sharedTags)+2)
-	for key, value := range r.sharedTags {
+	for _, tag := range r.sharedTags {
 		tags = append(tags, &rds.Tag{
-			Key:   aws.String(key),
-			Value: aws.String(value),
+			Key:   aws.String(tag.Key),
+			Value: aws.String(tag.Value),
 		})
 	}
 

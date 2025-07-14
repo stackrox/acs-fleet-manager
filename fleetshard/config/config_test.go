@@ -41,3 +41,15 @@ func TestSingleton_Failure_WhenManagedDBEnabledAndManagedDbSecurityGroupNotSet(t
 	assert.Error(t, err, "MANAGED_DB_ENABLED == true and MANAGED_DB_SECURITY_GROUP unset in the environment")
 	assert.Nil(t, cfg)
 }
+
+func TestSingleton_ManagedDBTags(t *testing.T) {
+	t.Setenv("CLUSTER_ID", "some-value")
+	t.Setenv("MANAGED_DB_TAGS_0_KEY", "DataplaneClusterName")
+	t.Setenv("MANAGED_DB_TAGS_0_VALUE", "acs-dev-dp-01")
+
+	cfg, err := GetConfig()
+	require.NoError(t, err)
+	require.Len(t, cfg.ManagedDB.Tags, 1)
+	assert.Equal(t, cfg.ManagedDB.Tags[0].Key, "DataplaneClusterName")
+	assert.Equal(t, cfg.ManagedDB.Tags[0].Value, "acs-dev-dp-01")
+}
