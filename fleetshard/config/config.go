@@ -53,7 +53,7 @@ type ManagedDB struct {
 	SecurityGroup       string         `env:"MANAGED_DB_SECURITY_GROUP"`
 	SubnetGroup         string         `env:"MANAGED_DB_SUBNET_GROUP"`
 	PerformanceInsights bool           `env:"MANAGED_DB_PERFORMANCE_INSIGHTS" envDefault:"false"`
-	Tags                []ManagedDBTag `envPrefix:"MANAGED_DB_TAGS"`
+	SharedTags          []ManagedDBTag `envPrefix:"MANAGED_DB_TAGS"`
 }
 
 // ManagedDBTag configures shared managed DB tags

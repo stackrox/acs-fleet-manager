@@ -49,7 +49,7 @@ func TestSingleton_ManagedDBTags(t *testing.T) {
 
 	cfg, err := GetConfig()
 	require.NoError(t, err)
-	require.Len(t, cfg.ManagedDB.Tags, 1)
-	assert.Equal(t, cfg.ManagedDB.Tags[0].Key, "DataplaneClusterName")
-	assert.Equal(t, cfg.ManagedDB.Tags[0].Value, "acs-dev-dp-01")
+	require.Len(t, cfg.ManagedDB.SharedTags, 1)
+	assert.Equal(t, cfg.ManagedDB.SharedTags[0].Key, "DataplaneClusterName")
+	assert.Equal(t, cfg.ManagedDB.SharedTags[0].Value, "acs-dev-dp-01")
 }

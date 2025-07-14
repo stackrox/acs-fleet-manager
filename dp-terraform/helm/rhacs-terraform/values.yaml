@@ -31,6 +31,8 @@ fleetshardSync:
     subnetGroup: ""
     securityGroup: ""
     performanceInsights: true
+    tags:
+      - key:
   secretEncryption:
     type: kms # local or kms
     keyID: ""

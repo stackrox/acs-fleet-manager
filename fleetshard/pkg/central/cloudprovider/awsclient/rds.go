@@ -422,6 +422,7 @@ func NewRDSClient(config *config.Config) (*RDS, error) {
 		dbSecurityGroup:     config.ManagedDB.SecurityGroup,
 		dbSubnetGroup:       config.ManagedDB.SubnetGroup,
 		performanceInsights: config.ManagedDB.PerformanceInsights,
+		sharedTags:          config.ManagedDB.SharedTags,
 	}, nil
 }
 
