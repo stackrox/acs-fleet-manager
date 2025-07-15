@@ -16,7 +16,7 @@ type Config struct {
 	FleetManagerEndpoint    string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
 	MetricsAddress          string        `env:"METRICS_ADDRESS" envDefault:":7070"`
 	RHSSOClientID           string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
-	ProbeName               string        `env:"PROBE_NAME" envDefault:"${HOSTNAME}" envExpand:"true"`
+	ProbeName               string        `env:"PROBE_NAME,true" envDefault:"${HOSTNAME}"`
 	ProbeHTTPRequestTimeout time.Duration `env:"PROBE_HTTP_REQUEST_TIMEOUT" envDefault:"5s"`
 	ProbePollPeriod         time.Duration `env:"PROBE_POLL_PERIOD" envDefault:"5s"`
 	ProbeRunTimeout         time.Duration `env:"PROBE_RUN_TIMEOUT" envDefault:"35m"`
