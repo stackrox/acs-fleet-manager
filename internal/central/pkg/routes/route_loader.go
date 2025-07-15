@@ -171,7 +171,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string) er
 
 	// /agent-clusters/{id}
 	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
-	dataPlaneCentralHandler := handlers.NewDataPlaneCentralHandler(s.DataPlaneCentralService, s.Central, s.ManagedCentralPresenter, s.GitopsProvider)
+	dataPlaneCentralHandler := handlers.NewDataPlaneCentralHandler(s.DataPlaneCentralService, s.Central, s.ClusterService, s.ManagedCentralPresenter, s.GitopsProvider)
 	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix(routes.PrivateAPIPrefix).Subrouter()
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).
 		Name(logger.NewLogEvent("get-dataplane-cluster-config", "get dataplane cluster config by id").ToString()).
