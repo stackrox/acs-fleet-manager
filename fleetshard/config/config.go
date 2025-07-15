@@ -8,7 +8,7 @@ import (
 
 	"github.com/stackrox/rox/pkg/errorhelpers"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v11"
 	"github.com/pkg/errors"
 )
 
@@ -49,10 +49,17 @@ type Config struct {
 
 // ManagedDB for configuring managed DB specific parameters
 type ManagedDB struct {
-	Enabled             bool   `env:"MANAGED_DB_ENABLED" envDefault:"false"`
-	SecurityGroup       string `env:"MANAGED_DB_SECURITY_GROUP"`
-	SubnetGroup         string `env:"MANAGED_DB_SUBNET_GROUP"`
-	PerformanceInsights bool   `env:"MANAGED_DB_PERFORMANCE_INSIGHTS" envDefault:"false"`
+	Enabled             bool           `env:"MANAGED_DB_ENABLED" envDefault:"false"`
+	SecurityGroup       string         `env:"MANAGED_DB_SECURITY_GROUP"`
+	SubnetGroup         string         `env:"MANAGED_DB_SUBNET_GROUP"`
+	PerformanceInsights bool           `env:"MANAGED_DB_PERFORMANCE_INSIGHTS" envDefault:"false"`
+	SharedTags          []ManagedDBTag `envPrefix:"MANAGED_DB_TAGS"`
+}
+
+// ManagedDBTag configures shared managed DB tags
+type ManagedDBTag struct {
+	Key   string `env:"KEY"`
+	Value string `env:"VALUE"`
 }
 
 // AuditLogging defines the parameter of the audit logging target.

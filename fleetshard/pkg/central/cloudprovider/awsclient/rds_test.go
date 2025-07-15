@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/google/uuid"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/rox/pkg/random"
 	"github.com/stretchr/testify/assert"
@@ -265,11 +266,11 @@ func TestRestoreIfFinalSnapshotExists(t *testing.T) {
 	}
 	// create function should not be called for restore operations
 
-	rds := RDS{
+	rdsDBClient := RDS{
 		rdsClient: &mockRDSClient,
 	}
 
-	err := rds.ensureDBClusterCreated(clusterID, tenantID, "testpassword1234", false)
+	err := rdsDBClient.ensureDBClusterCreated(clusterID, tenantID, "testpassword1234", false)
 
 	require.NoError(t, err)
 	require.NotNil(t, describeSnapshotInput)
@@ -277,6 +278,29 @@ func TestRestoreIfFinalSnapshotExists(t *testing.T) {
 	assert.Equal(t, *describeSnapshotInput.DBClusterIdentifier, clusterID)
 	assert.Equal(t, *restoreInput.SnapshotIdentifier, *finalSnapshotID)
 	assert.False(t, createCalled)
+}
+
+func TestRDSTags(t *testing.T) {
+	cfg := &config.Config{
+		ManagedDB: config.ManagedDB{
+			SharedTags: []config.ManagedDBTag{
+				{
+					Key:   "DataplaneClusterName",
+					Value: "acs-dev-dp-01",
+				},
+			},
+		},
+	}
+	rdsDBClient, err := NewRDSClient(cfg)
+	require.NoError(t, err)
+	tags := rdsDBClient.getDesiredTags("veryrandomid", false)
+	require.Len(t, tags, 3)
+	require.Equal(t, *tags[0].Key, "DataplaneClusterName")
+	require.Equal(t, *tags[0].Value, "acs-dev-dp-01")
+	require.Equal(t, *tags[1].Key, instanceTypeTagKey)
+	require.Equal(t, *tags[1].Value, regularInstaceTagValue)
+	require.Equal(t, *tags[2].Key, acsInstanceIDKey)
+	require.Equal(t, *tags[2].Value, "veryrandomid")
 }
 
 func randomNonFinalSnapshotsID(clusterID string) *string {

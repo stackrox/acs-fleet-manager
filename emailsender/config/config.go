@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v11"
 	"gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"

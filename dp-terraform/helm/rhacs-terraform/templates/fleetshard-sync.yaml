@@ -77,6 +77,12 @@ spec:
           value: {{ required "fleetshardSync.managedDB.securityGroup is required when fleetshardSync.managedDB.enabled = true" .Values.fleetshardSync.managedDB.securityGroup }}
         - name: MANAGED_DB_PERFORMANCE_INSIGHTS
           value: {{ .Values.fleetshardSync.managedDB.performanceInsights | quote }}
+        {{- range $i, $tag := .Values.fleetshardSync.managedDB.sharedTags }}
+        - name: MANAGED_DB_TAGS_{{ $i }}_KEY
+          value: {{ $tag.key | quote }}
+        - name: MANAGED_DB_TAGS_{{ $i }}_VALUE
+          value: {{ $tag.value | quote }}
+        {{- end }}
         - name: SECRET_ENCRYPTION_TYPE
           value: {{ .Values.fleetshardSync.secretEncryption.type | quote }}
         - name: SECRET_ENCRYPTION_KEY_ID
