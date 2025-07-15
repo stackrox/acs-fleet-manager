@@ -34,6 +34,7 @@ func NewDataPlaneCentralHandler(
 	return &dataPlaneCentralHandler{
 		service:              service,
 		centralService:       centralService,
+		clusterService:       clusterService,
 		presenter:            presenter,
 		gitopsConfigProvider: gitopsConfigProvider,
 	}
