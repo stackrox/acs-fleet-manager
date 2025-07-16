@@ -9,7 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	route53Types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/central/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
@@ -794,7 +795,8 @@ func (k *centralService) ChangeCentralCNAMErecords(centralRequest *dbapi.Central
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 	}
 
-	domainRecordBatch := buildCentralClusterCNAMESRecordBatch(routes, string(action))
+	changeAction, err := centralRoutesActionToRoute53ChangeAction(action)
+	domainRecordBatch := buildCentralClusterCNAMESRecordBatch(routes, changeAction)
 
 	// Create AWS client with the region of this Central Cluster
 	awsConfig := aws.Config{
@@ -830,9 +832,10 @@ func (k *centralService) GetCNAMERecordStatus(centralRequest *dbapi.CentralReque
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to CNAME record status")
 	}
 
+	status := string(changeOutput.ChangeInfo.Status)
 	return &CNameRecordStatus{
 		ID:     changeOutput.ChangeInfo.Id,
-		Status: changeOutput.ChangeInfo.Status,
+		Status: &status,
 	}, nil
 }
 
@@ -1016,30 +1019,29 @@ func (k *centralService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralReques
 	return filteredResults, nil
 }
 
-func buildCentralClusterCNAMESRecordBatch(routes []dbapi.DataPlaneCentralRoute, action string) *route53.ChangeBatch {
-	var changes []*route53.Change
+func buildCentralClusterCNAMESRecordBatch(routes []dbapi.DataPlaneCentralRoute, action route53Types.ChangeAction) *route53Types.ChangeBatch {
+	var changes []route53Types.Change
 	for _, r := range routes {
 		c := buildResourceRecordChange(r.Domain, r.Router, action)
 		changes = append(changes, c)
 	}
-	recordChangeBatch := &route53.ChangeBatch{
+	recordChangeBatch := &route53Types.ChangeBatch{
 		Changes: changes,
 	}
 
 	return recordChangeBatch
 }
 
-func buildResourceRecordChange(recordName string, clusterIngress string, action string) *route53.Change {
-	recordType := "CNAME"
+func buildResourceRecordChange(recordName string, clusterIngress string, action route53Types.ChangeAction) route53Types.Change {
 	recordTTL := int64(300)
 
-	resourceRecordChange := &route53.Change{
-		Action: &action,
-		ResourceRecordSet: &route53.ResourceRecordSet{
+	resourceRecordChange := route53Types.Change{
+		Action: action,
+		ResourceRecordSet: &route53Types.ResourceRecordSet{
 			Name: &recordName,
-			Type: &recordType,
+			Type: route53Types.RRTypeCname,
 			TTL:  &recordTTL,
-			ResourceRecords: []*route53.ResourceRecord{
+			ResourceRecords: []route53Types.ResourceRecord{
 				{
 					Value: &clusterIngress,
 				},
@@ -1171,4 +1173,14 @@ func (k *centralService) ChangeSubscription(ctx context.Context, centralID strin
 
 	glog.Infof("Central %q cloud account parameters have been changed to %q with id %q", centralID, cloudProvider, cloudAccountID)
 	return nil
+}
+
+func centralRoutesActionToRoute53ChangeAction(a CentralRoutesAction) (route53Types.ChangeAction, error) {
+	changeAction := route53Types.ChangeAction(a)
+	switch changeAction {
+	case route53Types.ChangeActionCreate, route53Types.ChangeActionUpsert, route53Types.ChangeAction(CentralRoutesActionDelete):
+		return changeAction, nil
+	default:
+		return "", fmt.Errorf("invalid CentralChangeAction: %q, cannot convert to Route53 action", changeAction)
+	}
 }

@@ -4,7 +4,8 @@
 package aws
 
 import (
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"sync"
 )
 
@@ -18,7 +19,7 @@ var _ Client = &ClientMock{}
 //
 //		// make and configure a mocked Client
 //		mockedClient := &ClientMock{
-//			ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+//			ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *types.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
 //				panic("mock out the ChangeResourceRecordSets method")
 //			},
 //			GetChangeFunc: func(changeID string) (*route53.GetChangeOutput, error) {
@@ -35,7 +36,7 @@ var _ Client = &ClientMock{}
 //	}
 type ClientMock struct {
 	// ChangeResourceRecordSetsFunc mocks the ChangeResourceRecordSets method.
-	ChangeResourceRecordSetsFunc func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
+	ChangeResourceRecordSetsFunc func(dnsName string, recordChangeBatch *types.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
 
 	// GetChangeFunc mocks the GetChange method.
 	GetChangeFunc func(changeID string) (*route53.GetChangeOutput, error)
@@ -50,7 +51,7 @@ type ClientMock struct {
 			// DnsName is the dnsName argument value.
 			DnsName string
 			// RecordChangeBatch is the recordChangeBatch argument value.
-			RecordChangeBatch *route53.ChangeBatch
+			RecordChangeBatch *types.ChangeBatch
 		}
 		// GetChange holds details about calls to the GetChange method.
 		GetChange []struct {
@@ -69,13 +70,13 @@ type ClientMock struct {
 }
 
 // ChangeResourceRecordSets calls ChangeResourceRecordSetsFunc.
-func (mock *ClientMock) ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+func (mock *ClientMock) ChangeResourceRecordSets(dnsName string, recordChangeBatch *types.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
 	if mock.ChangeResourceRecordSetsFunc == nil {
 		panic("ClientMock.ChangeResourceRecordSetsFunc: method is nil but Client.ChangeResourceRecordSets was just called")
 	}
 	callInfo := struct {
 		DnsName           string
-		RecordChangeBatch *route53.ChangeBatch
+		RecordChangeBatch *types.ChangeBatch
 	}{
 		DnsName:           dnsName,
 		RecordChangeBatch: recordChangeBatch,
@@ -92,11 +93,11 @@ func (mock *ClientMock) ChangeResourceRecordSets(dnsName string, recordChangeBat
 //	len(mockedClient.ChangeResourceRecordSetsCalls())
 func (mock *ClientMock) ChangeResourceRecordSetsCalls() []struct {
 	DnsName           string
-	RecordChangeBatch *route53.ChangeBatch
+	RecordChangeBatch *types.ChangeBatch
 } {
 	var calls []struct {
 		DnsName           string
-		RecordChangeBatch *route53.ChangeBatch
+		RecordChangeBatch *types.ChangeBatch
 	}
 	mock.lockChangeResourceRecordSets.RLock()
 	calls = mock.calls.ChangeResourceRecordSets

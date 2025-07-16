@@ -82,13 +82,13 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 				case changeOutput == nil:
 					glog.Infof("creating CNAME records failed with nil result")
 					continue
-				case changeOutput.ChangeInfo == nil || changeOutput.ChangeInfo.Id == nil || changeOutput.ChangeInfo.Status == nil:
+				case changeOutput.ChangeInfo == nil || changeOutput.ChangeInfo.Id == nil || changeOutput.ChangeInfo.Status == "":
 					glog.Infof("creating CNAME records failed with nil info")
 					continue
 				}
 
 				central.RoutesCreationID = *changeOutput.ChangeInfo.Id
-				central.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
+				central.RoutesCreated = changeOutput.ChangeInfo.Status == "INSYNC"
 			} else {
 				recordStatus, err := k.centralService.GetCNAMERecordStatus(central)
 				if err != nil {
