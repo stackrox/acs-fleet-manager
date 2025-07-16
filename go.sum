@@ -123,6 +123,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.4 h1:CXV68E2
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.4/go.mod h1:/xFi9KtvBXP97ppCz1TAEvU1Uf66qvid89rbem3wCzQ=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.17 h1:t0E6FzREdtCsiLIoLCWsYliNsRBgyGD/MCK571qk4MI=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.17/go.mod h1:ygpklyoaypuyDvOM5ujWGrYWpAK3h7ugnmKCU/76Ys4=
+github.com/aws/aws-sdk-go-v2/service/kms v1.41.2 h1:zJeUxFP7+XP52u23vrp4zMcVhShTWbNO8dHV6xCSvFo=
+github.com/aws/aws-sdk-go-v2/service/kms v1.41.2/go.mod h1:Pqd9k4TuespkireN206cK2QBsaBTL6X+VPAez5Qcijk=
 github.com/aws/aws-sdk-go-v2/service/rds v1.99.1 h1:eiDDf+cf2fAxOF5XaGLlrdCZPsnr5BTcPW55UK92sY4=
 github.com/aws/aws-sdk-go-v2/service/rds v1.99.1/go.mod h1:Xe+NMlf/DY/XTXSevASAjGRika9Qt2LnuCDLtos03ms=
 github.com/aws/aws-sdk-go-v2/service/ses v1.29.9 h1:MIiyk/qQEBO+AI1WHRQDSZft9w2XGAenB58lhzVrByg=

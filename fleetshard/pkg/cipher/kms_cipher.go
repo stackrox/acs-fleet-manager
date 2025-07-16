@@ -1,15 +1,17 @@
 package cipher
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/kms"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 )
 
 type kmsCipher struct {
 	keyID      string
-	kms        *kms.KMS
+	kms        *kms.Client
 	dateKeyLen int
 }
 
@@ -17,17 +19,17 @@ type kmsCipher struct {
 // The implementation uses the KMS keyID to generate KMS data keys and encrypt data using
 // those data keys. This is necessary because encrypting via KMS API caps plaintext length to 4096 bytes
 func NewKMSCipher(keyID string) (Cipher, error) {
-	sess, err := session.NewSession()
+	cfg, err := awsConfig.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		return nil, fmt.Errorf("unable to create session for KMS client %w", err)
+		return nil, fmt.Errorf("unable to load AWS config for KMS client %w", err)
 	}
 
 	kmsCipher := kmsCipher{
 		keyID: keyID,
-		kms:   kms.New(sess),
+		kms:   kms.NewFromConfig(cfg),
 	}
 
-	dataKeyOut, err := kmsCipher.kms.GenerateDataKey(kmsCipher.dateKeyInput())
+	dataKeyOut, err := kmsCipher.kms.GenerateDataKey(context.TODO(), kmsCipher.dateKeyInput())
 	if err != nil {
 		return nil, fmt.Errorf("intializing KMS data key length: %w", err)
 	}
@@ -38,13 +40,13 @@ func NewKMSCipher(keyID string) (Cipher, error) {
 }
 
 func (k kmsCipher) dateKeyInput() *kms.GenerateDataKeyInput {
-	keySpec := kms.DataKeySpecAes256
-	return &kms.GenerateDataKeyInput{KeyId: &k.keyID, KeySpec: &keySpec}
+	keySpec := types.DataKeySpecAes256
+	return &kms.GenerateDataKeyInput{KeyId: &k.keyID, KeySpec: keySpec}
 }
 
 func (k kmsCipher) Encrypt(plaintext []byte) ([]byte, error) {
 
-	dataKeyOut, err := k.kms.GenerateDataKey(k.dateKeyInput())
+	dataKeyOut, err := k.kms.GenerateDataKey(context.TODO(), k.dateKeyInput())
 	if err != nil {
 		return nil, fmt.Errorf("creating KMS data key")
 	}
@@ -68,7 +70,7 @@ func (k kmsCipher) Decrypt(ciphertext []byte) ([]byte, error) {
 	keyIndex := len(ciphertext) - k.dateKeyLen
 	cipher, encryptedKey := ciphertext[:keyIndex], ciphertext[keyIndex:]
 
-	decryptOut, err := k.kms.Decrypt(&kms.DecryptInput{
+	decryptOut, err := k.kms.Decrypt(context.TODO(), &kms.DecryptInput{
 		KeyId:          &k.keyID,
 		CiphertextBlob: encryptedKey,
 	})
@@ -92,28 +94,28 @@ func (k kmsCipher) Decrypt(ciphertext []byte) ([]byte, error) {
 // KMSDataKeyGenerator implements KeyGenerator using AWS KMS
 type KMSDataKeyGenerator struct {
 	keyID          string
-	kms            *kms.KMS
-	kmsDataKeySpec string
+	kms            *kms.Client
+	kmsDataKeySpec types.DataKeySpec
 }
 
 // NewKMSDataKeyGenerator initiates a AWS KMS session and
 // returns a new instance of KMSDataKeyGenerator
-func NewKMSDataKeyGenerator(keyID, keySpec string) (*KMSDataKeyGenerator, error) {
-	sess, err := session.NewSession()
+func NewKMSDataKeyGenerator(keyID string, keySpec types.DataKeySpec) (*KMSDataKeyGenerator, error) {
+	cfg, err := awsConfig.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		return nil, fmt.Errorf("unable to create session for KMS client %w", err)
+		return nil, fmt.Errorf("unable to load AWS config for KMS client %w", err)
 	}
 
 	return &KMSDataKeyGenerator{
 		keyID:          keyID,
-		kms:            kms.New(sess),
+		kms:            kms.NewFromConfig(cfg),
 		kmsDataKeySpec: keySpec,
 	}, nil
 }
 
 // Generate generates a KMS data key with the KMSDataKeyGenerator configuration
 func (g KMSDataKeyGenerator) Generate() ([]byte, error) {
-	dateKeyOut, err := g.kms.GenerateDataKey(&kms.GenerateDataKeyInput{KeyId: &g.keyID, KeySpec: &g.kmsDataKeySpec})
+	dateKeyOut, err := g.kms.GenerateDataKey(context.TODO(), &kms.GenerateDataKeyInput{KeyId: &g.keyID, KeySpec: g.kmsDataKeySpec})
 	if err != nil {
 		return nil, fmt.Errorf("generating kms data key: %w", err)
 	}

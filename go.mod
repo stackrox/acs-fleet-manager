@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go v1.55.7
 	github.com/aws/aws-sdk-go-v2 v1.36.5
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
+	github.com/aws/aws-sdk-go-v2/service/kms v1.41.2
 	github.com/aws/aws-sdk-go-v2/service/rds v1.99.1
 	github.com/aws/aws-sdk-go-v2/service/ses v1.29.9
 	github.com/aws/smithy-go v1.22.4

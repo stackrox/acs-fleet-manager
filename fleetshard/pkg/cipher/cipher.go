@@ -4,7 +4,7 @@ package cipher
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 )
 
@@ -40,7 +40,7 @@ func NewKeyGenerator(config *config.Config) (KeyGenerator, error) {
 	}
 
 	if encryptionType == "kms" {
-		return NewKMSDataKeyGenerator(config.SecretEncryption.KeyID, kms.DataKeySpecAes256)
+		return NewKMSDataKeyGenerator(config.SecretEncryption.KeyID, types.DataKeySpecAes256)
 	}
 
 	return nil, fmt.Errorf("no KeyGenerator implementation for SecretEncryption.Type: %s", encryptionType)
