@@ -7,10 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -28,7 +27,7 @@ var (
 	routeService          *k8s.RouteService
 	dnsEnabled            bool
 	routesEnabled         bool
-	route53Client         *route53.Route53
+	route53Client         *route53.Client
 	waitTimeout           = testutil.GetWaitTimeout()
 	extendedWaitTimeout   = testutil.GetWaitTimeout() * 3
 	dpCloudProvider       = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
@@ -69,14 +68,20 @@ var _ = BeforeSuite(func() {
 	dnsEnabled, accessKey, secretKey = testutil.DNSConfiguration(routesEnabled)
 
 	if dnsEnabled {
-		creds := credentials.NewStaticCredentials(
+		creds := aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(
 			accessKey,
 			secretKey,
-			"")
-		sess, err := session.NewSession(aws.NewConfig().WithCredentials(creds))
+			""))
+
+		_, err := creds.Retrieve(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		route53Client = route53.New(sess)
+		cfg := aws.Config{
+			Credentials: creds,
+		}
+		Expect(err).ToNot(HaveOccurred())
+
+		route53Client = route53.NewFromConfig(cfg)
 	}
 
 	if val := os.Getenv("FLEET_MANAGER_ENDPOINT"); val != "" {

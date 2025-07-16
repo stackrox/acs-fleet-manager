@@ -1,22 +1,27 @@
 package dns
 
 import (
-	"github.com/aws/aws-sdk-go/service/route53"
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/services"
 )
 
 // CleanupCentralRequestRecords deletes all route53 resoruces associated with the centralRequest
-func CleanupCentralRequestRecords(route53Client *route53.Route53, centralRequest public.CentralRequest) {
+func CleanupCentralRequestRecords(route53Client *route53.Client, centralRequest public.CentralRequest) {
 	dnsLoader := NewRecordsLoader(route53Client, centralRequest)
 	recordSets := dnsLoader.LoadDNSRecords()
 
-	action := string(services.CentralRoutesActionDelete)
-	changes := []*route53.Change{}
+	action, err := services.CentralRoutesActionToRoute53ChangeAction(services.CentralRoutesActionDelete)
+	Expect(err).ToNot(HaveOccurred())
+
+	changes := []types.Change{}
 	for _, rs := range recordSets {
-		c := &route53.Change{
-			Action:            &action,
+		c := types.Change{
+			Action:            action,
 			ResourceRecordSet: rs,
 		}
 		changes = append(changes, c)
@@ -26,9 +31,9 @@ func CleanupCentralRequestRecords(route53Client *route53.Route53, centralRequest
 		return
 	}
 
-	_, err := route53Client.ChangeResourceRecordSets(&route53.ChangeResourceRecordSetsInput{
+	_, err = route53Client.ChangeResourceRecordSets(context.Background(), &route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: dnsLoader.rhacsZone.Name,
-		ChangeBatch:  &route53.ChangeBatch{Changes: changes},
+		ChangeBatch:  &types.ChangeBatch{Changes: changes},
 	})
 
 	Expect(err).ToNot(HaveOccurred())

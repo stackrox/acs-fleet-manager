@@ -795,7 +795,7 @@ func (k *centralService) ChangeCentralCNAMErecords(centralRequest *dbapi.Central
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 	}
 
-	changeAction, err := centralRoutesActionToRoute53ChangeAction(action)
+	changeAction, err := CentralRoutesActionToRoute53ChangeAction(action)
 	domainRecordBatch := buildCentralClusterCNAMESRecordBatch(routes, changeAction)
 
 	// Create AWS client with the region of this Central Cluster
@@ -1175,7 +1175,8 @@ func (k *centralService) ChangeSubscription(ctx context.Context, centralID strin
 	return nil
 }
 
-func centralRoutesActionToRoute53ChangeAction(a CentralRoutesAction) (route53Types.ChangeAction, error) {
+// CentralRoutesActionToRoute53ChangeAction converts a CentralRoutesAction to a route53 types ChangeAction
+func CentralRoutesActionToRoute53ChangeAction(a CentralRoutesAction) (route53Types.ChangeAction, error) {
 	changeAction := route53Types.ChangeAction(a)
 	switch changeAction {
 	case route53Types.ChangeActionCreate, route53Types.ChangeActionUpsert, route53Types.ChangeAction(CentralRoutesActionDelete):
