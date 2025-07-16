@@ -75,9 +75,9 @@ var _ = BeforeSuite(func() {
 
 		_, err := creds.Retrieve(context.Background())
 		Expect(err).ToNot(HaveOccurred())
-
 		cfg := aws.Config{
 			Credentials: creds,
+			Region:      getEnvDefault("AWS_REGION", "us-east-1"),
 		}
 		Expect(err).ToNot(HaveOccurred())
 

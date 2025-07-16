@@ -74,9 +74,18 @@ var _ = BeforeSuite(func() {
 
 		cfg := aws.Config{
 			Credentials: creds,
+			Region:      getEnvDefault("AWS_REGION", "us-east-1"),
 		}
 		Expect(err).ToNot(HaveOccurred())
 
 		route53Client = route53.NewFromConfig(cfg)
 	}
 })
+
+func getEnvDefault(key, defaultValue string) string {
+	value, ok := os.LookupEnv(key)
+	if !ok {
+		return defaultValue
+	}
+	return value
+}
