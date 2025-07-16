@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/rds"
+	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/google/uuid"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
@@ -36,17 +36,13 @@ func newTestRDS() (*RDS, error) {
 	}, nil
 }
 
-func newTestRDSClient() (*rds.RDS, error) {
-	cfg := &aws.Config{
-		Region: aws.String(os.Getenv("AWS_REGION")),
-	}
-
-	sess, err := session.NewSession(cfg)
+func newTestRDSClient() (*rds.Client, error) {
+	cfg, err := awsConfig.LoadDefaultConfig(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("unable to create session, %w", err)
 	}
 
-	return rds.New(sess), nil
+	return rds.NewFromConfig(cfg), nil
 }
 
 func waitForClusterToBeDeleted(ctx context.Context, rdsClient *RDS, clusterID string) (bool, error) {
@@ -76,16 +72,13 @@ func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID 
 	for {
 		select {
 		case <-ticker.C:
-			snapshotOut, err := rdsClient.rdsClient.DescribeDBClusterSnapshots(&rds.DescribeDBClusterSnapshotsInput{
+			snapshotOut, err := rdsClient.rdsClient.DescribeDBClusterSnapshots(ctx, &rds.DescribeDBClusterSnapshotsInput{
 				DBClusterIdentifier: &clusterID,
 			})
 
 			if err != nil {
-				if awsErr, ok := err.(awserr.Error); ok {
-					if awsErr.Code() != rds.ErrCodeDBClusterSnapshotNotFoundFault {
-						return false, "", err
-					}
-
+				var snapshotNotFound *types.DBSnapshotNotFoundFault
+				if errors.As(err, &snapshotNotFound) {
 					continue
 				}
 			}
@@ -172,7 +165,7 @@ func TestRDSProvisioning(t *testing.T) {
 
 	if snapshotExists {
 		defer func() {
-			_, err := rdsClient.rdsClient.DeleteDBClusterSnapshot(
+			_, err := rdsClient.rdsClient.DeleteDBClusterSnapshot(ctx,
 				&rds.DeleteDBClusterSnapshotInput{DBClusterSnapshotIdentifier: &snapshotID},
 			)
 
@@ -193,10 +186,9 @@ func TestGetDBConnection(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = rdsClient.GetDBConnection("test-" + uuid.New().String())
-	var awsErr awserr.Error
-	require.ErrorAs(t, err, &awsErr)
-	assert.Equal(t, awsErr.Code(), rds.ErrCodeDBClusterNotFoundFault)
-	require.ErrorIs(t, err, cloudprovider.ErrDBNotFound)
+
+	var clusterNotFoundFault *types.DBClusterNotFoundFault
+	require.ErrorAs(t, err, &clusterNotFoundFault)
 }
 
 func TestGetAccountQuotas(t *testing.T) {
@@ -230,16 +222,16 @@ func TestRestoreIfFinalSnapshotExists(t *testing.T) {
 	finalSnapshotID := getFinalSnapshotID(clusterID)
 
 	// Mocking describe cluster to return not found, which triggers creation
-	mockRDSClient.DescribeDBClustersFunc = func(describeDBClustersInput *rds.DescribeDBClustersInput) (*rds.DescribeDBClustersOutput, error) {
-		return nil, awserr.New(rds.ErrCodeDBClusterNotFoundFault, "db cluster not found", errors.New("db cluster not found"))
+	mockRDSClient.DescribeDBClustersFunc = func(ctx context.Context, describeDBClustersInput *rds.DescribeDBClustersInput, optFns ...func(*rds.Options)) (*rds.DescribeDBClustersOutput, error) {
+		return nil, &types.DBClusterNotFoundFault{Message: aws.String("db cluster not found")}
 	}
 
 	// Mocking describe snapshots to return a valid final snapshot and catch input
 	var describeSnapshotInput *rds.DescribeDBClusterSnapshotsInput
-	mockRDSClient.DescribeDBClusterSnapshotsFunc = func(describeDBClusterSnapshotsInput *rds.DescribeDBClusterSnapshotsInput) (*rds.DescribeDBClusterSnapshotsOutput, error) {
+	mockRDSClient.DescribeDBClusterSnapshotsFunc = func(ctx context.Context, describeDBClusterSnapshotsInput *rds.DescribeDBClusterSnapshotsInput, optFns ...func(*rds.Options)) (*rds.DescribeDBClusterSnapshotsOutput, error) {
 		describeSnapshotInput = describeDBClusterSnapshotsInput
 		return &rds.DescribeDBClusterSnapshotsOutput{
-			DBClusterSnapshots: []*rds.DBClusterSnapshot{
+			DBClusterSnapshots: []types.DBClusterSnapshot{
 				// using multiple snapshots to make sure we find the final in the mid of available snapshots
 				{DBClusterSnapshotIdentifier: randomNonFinalSnapshotsID(clusterID)},
 				{DBClusterSnapshotIdentifier: randomNonFinalSnapshotsID(clusterID)},
@@ -253,14 +245,14 @@ func TestRestoreIfFinalSnapshotExists(t *testing.T) {
 
 	// Mocking cluster restore function to catch input
 	var restoreInput *rds.RestoreDBClusterFromSnapshotInput
-	mockRDSClient.RestoreDBClusterFromSnapshotFunc = func(restoreDBClusterFromSnapshotInput *rds.RestoreDBClusterFromSnapshotInput) (*rds.RestoreDBClusterFromSnapshotOutput, error) {
+	mockRDSClient.RestoreDBClusterFromSnapshotFunc = func(ctx context.Context, restoreDBClusterFromSnapshotInput *rds.RestoreDBClusterFromSnapshotInput, optFns ...func(*rds.Options)) (*rds.RestoreDBClusterFromSnapshotOutput, error) {
 		restoreInput = restoreDBClusterFromSnapshotInput
 		return &rds.RestoreDBClusterFromSnapshotOutput{}, nil
 	}
 
 	// Mocking create function to make sure it was not called
 	var createCalled bool
-	mockRDSClient.CreateDBClusterFunc = func(createDBClusterInput *rds.CreateDBClusterInput) (*rds.CreateDBClusterOutput, error) {
+	mockRDSClient.CreateDBClusterFunc = func(ctx context.Context, createDBClusterInput *rds.CreateDBClusterInput, optFns ...func(*rds.Options)) (*rds.CreateDBClusterOutput, error) {
 		createCalled = true
 		return nil, nil
 	}

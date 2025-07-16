@@ -12,8 +12,7 @@ import (
 
 	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/smithy-go"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -282,9 +281,11 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 	)
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	var awsErr awserr.Error
+	var awsErr *smithy.OperationError
 	require.ErrorAs(t, err, &awsErr)
-	assert.Equal(t, stscreds.ErrCodeWebIdentity, awsErr.Code())
+	assert.Equal(t, awsErr.ServiceID, "RDS")
+	assert.Equal(t, awsErr.OperationName, "DescribeDBClusters")
+	assert.Contains(t, awsErr.Unwrap().Error(), "/var/run/secrets/tokens/aws-token: no such file")
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {
