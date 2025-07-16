@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,7 +38,7 @@ func TestKMSDataKeyGenerator(t *testing.T) {
 
 	keyID := os.Getenv("SECRET_ENCRYPTION_KEY_ID")
 	require.NotEmpty(t, keyID, "SECRET_ENCRYPTION_KEY_ID not set")
-	generator, err := NewKMSDataKeyGenerator(keyID, kms.DataKeySpecAes256)
+	generator, err := NewKMSDataKeyGenerator(keyID, types.DataKeySpecAes256)
 	require.NoError(t, err)
 
 	key, err := generator.Generate()
