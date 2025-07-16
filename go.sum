@@ -127,6 +127,8 @@ github.com/aws/aws-sdk-go-v2/service/kms v1.41.2 h1:zJeUxFP7+XP52u23vrp4zMcVhShT
 github.com/aws/aws-sdk-go-v2/service/kms v1.41.2/go.mod h1:Pqd9k4TuespkireN206cK2QBsaBTL6X+VPAez5Qcijk=
 github.com/aws/aws-sdk-go-v2/service/rds v1.99.1 h1:eiDDf+cf2fAxOF5XaGLlrdCZPsnr5BTcPW55UK92sY4=
 github.com/aws/aws-sdk-go-v2/service/rds v1.99.1/go.mod h1:Xe+NMlf/DY/XTXSevASAjGRika9Qt2LnuCDLtos03ms=
+github.com/aws/aws-sdk-go-v2/service/route53 v1.53.0 h1:UglIEyurCqfzZkjNdYAuXUGFu/FNWMKP5eorzggvXe8=
+github.com/aws/aws-sdk-go-v2/service/route53 v1.53.0/go.mod h1:wi1naoiPnCQG3cyjsivwPON1ZmQt/EJGxFqXzubBTAw=
 github.com/aws/aws-sdk-go-v2/service/ses v1.29.9 h1:MIiyk/qQEBO+AI1WHRQDSZft9w2XGAenB58lhzVrByg=
 github.com/aws/aws-sdk-go-v2/service/ses v1.29.9/go.mod h1:TPNs3cjA3xDkDpSlPajkTr0VrSw8U9dh8sE+n77QjgE=
 github.com/aws/aws-sdk-go-v2/service/sso v1.25.5 h1:AIRJ3lfb2w/1/8wOOSqYb9fUKGwQbtysJ2H1MofRUPg=

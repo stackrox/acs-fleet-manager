@@ -5,7 +5,7 @@ package services
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/stackrox/acs-fleet-manager/internal/central/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"

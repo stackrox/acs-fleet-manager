@@ -2,17 +2,16 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 
 	errors "github.com/zgalor/weberr"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/client"
-	awscredentials "github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/aws/aws-sdk-go/service/route53/route53iface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 )
 
 // Client ...
@@ -21,7 +20,7 @@ import (
 type Client interface {
 	// route53
 	ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error)
-	ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
+	ChangeResourceRecordSets(dnsName string, recordChangeBatch *types.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
 	GetChange(changeID string) (*route53.GetChangeOutput, error)
 }
 
@@ -43,10 +42,6 @@ func NewDefaultClientFactory() *DefaultClientFactory {
 	return &DefaultClientFactory{}
 }
 
-type awsClient struct {
-	route53Client route53iface.Route53API
-}
-
 // Config contains the AWS settings
 type Config struct {
 	// AccessKeyID is the AWS access key identifier.
@@ -55,22 +50,32 @@ type Config struct {
 	SecretAccessKey string
 }
 
-func newClient(credentials Config, region string) (Client, error) {
-	cfg := &aws.Config{
-		Credentials: awscredentials.NewStaticCredentials(
-			credentials.AccessKeyID,
-			credentials.SecretAccessKey,
-			""),
-		Region:  aws.String(region),
-		Retryer: client.DefaultRetryer{NumMaxRetries: 2},
+func newClient(creds Config, region string) (Client, error) {
+	credentialsCache := aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(
+		creds.AccessKeyID,
+		creds.SecretAccessKey,
+		""))
+
+	if _, err := credentialsCache.Retrieve(context.Background()); err != nil {
+		// retrieve credentials early to fail if they are not set properly, we do this to mimic
+		// the behaviour of config.LoadDefaultConfig of AWS SDK V2 / session.NewSession of AWS SDK V1
+		// while keeping the logic to set credentials statically
+		return nil, err
 	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("creating new session: %w", err)
+
+	cfg := aws.Config{
+		Credentials: credentialsCache,
+		Region:      region,
+		Retryer:     func() aws.Retryer { return retry.AddWithMaxAttempts(retry.NewStandard(), 2) },
 	}
+
 	return &awsClient{
-		route53Client: route53.New(sess),
+		route53Client: route53.NewFromConfig(cfg),
 	}, nil
+}
+
+type awsClient struct {
+	route53Client *route53.Client
 }
 
 // GetChange ...
@@ -79,9 +84,9 @@ func (client *awsClient) GetChange(changeID string) (*route53.GetChangeOutput, e
 		Id: &changeID,
 	}
 
-	change, err := client.route53Client.GetChange(changeInput)
+	change, err := client.route53Client.GetChange(context.TODO(), changeInput)
 	if err != nil {
-		return nil, wrapAWSError(err, "Failed to get Change.")
+		return nil, errors.Wrapf(err, "failed to get DNS Change")
 	}
 
 	return change, nil
@@ -89,21 +94,21 @@ func (client *awsClient) GetChange(changeID string) (*route53.GetChangeOutput, e
 
 // ListHostedZonesByNameInput ...
 func (client *awsClient) ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
-	maxItems := "1"
 	requestInput := &route53.ListHostedZonesByNameInput{
 		DNSName:  &dnsName,
-		MaxItems: &maxItems,
+		MaxItems: aws.Int32(1),
 	}
 
-	zone, err := client.route53Client.ListHostedZonesByName(requestInput)
+	zone, err := client.route53Client.ListHostedZonesByName(context.TODO(), requestInput)
 	if err != nil {
-		return nil, wrapAWSError(err, "Failed to get DNS zone.")
+		return nil, errors.Wrapf(err, "failed to get DNS zone")
 	}
+
 	return zone, nil
 }
 
 // ChangeResourceRecordSets ...
-func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBatch *types.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
 	zones, err := client.ListHostedZonesByNameInput(dnsName)
 	if err != nil {
 		return nil, err
@@ -119,20 +124,10 @@ func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBa
 		ChangeBatch:  recordChangeBatch,
 	}
 
-	recordSetsOutput, err := client.route53Client.ChangeResourceRecordSets(recordChanges)
+	recordSetsOutput, err := client.route53Client.ChangeResourceRecordSets(context.TODO(), recordChanges)
 
-	err = wrapAWSError(err, "Failed to get DNS zone.")
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to change resource record sets")
 	}
 	return recordSetsOutput, nil
-}
-
-func wrapAWSError(err error, msg string) error {
-	switch err.(type) {
-	case awserr.RequestFailure:
-		return errors.BadRequest.UserWrapf(err, msg) //nolint:wrapcheck
-	default:
-		return err
-	}
 }
