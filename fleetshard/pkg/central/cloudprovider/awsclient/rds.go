@@ -8,11 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/rds"
-	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/rds"
+	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
@@ -24,7 +23,19 @@ import (
 //
 //go:generate moq -out rds_client_moq.go . RDSClient
 type RDSClient interface {
-	rdsiface.RDSAPI
+	DescribeDBClusterSnapshots(ctx context.Context, params *rds.DescribeDBClusterSnapshotsInput, optFns ...func(*rds.Options)) (*rds.DescribeDBClusterSnapshotsOutput, error)
+	DescribeAccountAttributes(ctx context.Context, params *rds.DescribeAccountAttributesInput, optFns ...func(*rds.Options)) (*rds.DescribeAccountAttributesOutput, error)
+	DescribeDBInstances(ctx context.Context, params *rds.DescribeDBInstancesInput, optFns ...func(*rds.Options)) (*rds.DescribeDBInstancesOutput, error)
+	DescribeDBClusters(ctx context.Context, params *rds.DescribeDBClustersInput, optFns ...func(*rds.Options)) (*rds.DescribeDBClustersOutput, error)
+
+	CreateDBCluster(ctx context.Context, params *rds.CreateDBClusterInput, optFns ...func(*rds.Options)) (*rds.CreateDBClusterOutput, error)
+	CreateDBInstance(ctx context.Context, params *rds.CreateDBInstanceInput, optFns ...func(*rds.Options)) (*rds.CreateDBInstanceOutput, error)
+
+	RestoreDBClusterFromSnapshot(ctx context.Context, params *rds.RestoreDBClusterFromSnapshotInput, optFns ...func(*rds.Options)) (*rds.RestoreDBClusterFromSnapshotOutput, error)
+
+	DeleteDBInstance(ctx context.Context, params *rds.DeleteDBInstanceInput, optFns ...func(*rds.Options)) (*rds.DeleteDBInstanceOutput, error)
+	DeleteDBCluster(ctx context.Context, params *rds.DeleteDBClusterInput, optFns ...func(*rds.Options)) (*rds.DeleteDBClusterOutput, error)
+	DeleteDBClusterSnapshot(ctx context.Context, params *rds.DeleteDBClusterSnapshotInput, optFns ...func(*rds.Options)) (*rds.DeleteDBClusterSnapshotOutput, error)
 }
 
 const (
@@ -66,8 +77,7 @@ type RDS struct {
 	dbSubnetGroup       string
 	performanceInsights bool
 	sharedTags          []config.ManagedDBTag
-
-	rdsClient rdsiface.RDSAPI
+	rdsClient           RDSClient
 }
 
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
@@ -117,11 +127,9 @@ func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) 
 	dbCluster, err := r.describeDBCluster(getClusterID(databaseID))
 
 	if err != nil {
-		var awsErr awserr.Error
+		var awsErr *types.DBClusterNotFoundFault
 		if errors.As(err, &awsErr) {
-			if awsErr.Code() == rds.ErrCodeDBClusterNotFoundFault {
-				err = errors.Join(cloudprovider.ErrDBNotFound, err)
-			}
+			err = errors.Join(cloudprovider.ErrDBNotFound, err)
 		}
 
 		return postgres.DBConnection{}, err
@@ -138,7 +146,7 @@ func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) 
 // GetAccountQuotas returns database-related service quotas for the AWS region on which
 // the instance of fleetshard-sync runs
 func (r *RDS) GetAccountQuotas(ctx context.Context) (cloudprovider.AccountQuotas, error) {
-	accountAttributes, err := r.rdsClient.DescribeAccountAttributesWithContext(ctx, &rds.DescribeAccountAttributesInput{})
+	accountAttributes, err := r.rdsClient.DescribeAccountAttributes(ctx, &rds.DescribeAccountAttributesInput{})
 	if err != nil {
 		return nil, fmt.Errorf("getting account quotas: %w", err)
 	}
@@ -199,7 +207,7 @@ func (r *RDS) ensureDBClusterCreated(clusterID, acsInstanceID, masterPassword st
 }
 
 func (r *RDS) restoreDBClusterFromSnapshot(snapshotID string, clusterInput *rds.CreateDBClusterInput) error {
-	_, err := r.rdsClient.RestoreDBClusterFromSnapshot(newRestoreCentralDBClusterInput(snapshotID, clusterInput))
+	_, err := r.rdsClient.RestoreDBClusterFromSnapshot(context.TODO(), newRestoreCentralDBClusterInput(snapshotID, clusterInput))
 	if err != nil {
 		return fmt.Errorf("restoring DB cluster: %w", err)
 	}
@@ -208,7 +216,7 @@ func (r *RDS) restoreDBClusterFromSnapshot(snapshotID string, clusterInput *rds.
 }
 
 func (r *RDS) createDBCluster(clusterInput *rds.CreateDBClusterInput) error {
-	_, err := r.rdsClient.CreateDBCluster(clusterInput)
+	_, err := r.rdsClient.CreateDBCluster(context.TODO(), clusterInput)
 	if err != nil {
 		return fmt.Errorf("creating DB cluster: %w", err)
 	}
@@ -217,7 +225,7 @@ func (r *RDS) createDBCluster(clusterInput *rds.CreateDBClusterInput) error {
 }
 
 func (r *RDS) getFinalSnapshotIDIfExists(clusterID string) (string, error) {
-	snapshotsOut, err := r.rdsClient.DescribeDBClusterSnapshots(&rds.DescribeDBClusterSnapshotsInput{
+	snapshotsOut, err := r.rdsClient.DescribeDBClusterSnapshots(context.TODO(), &rds.DescribeDBClusterSnapshotsInput{
 		DBClusterIdentifier: &clusterID,
 	})
 
@@ -258,7 +266,7 @@ func (r *RDS) ensureDBInstanceCreated(instanceID, clusterID, acsInstanceID strin
 		performanceInsights: r.performanceInsights,
 		isTestInstance:      isTestInstance,
 	}
-	_, err = r.rdsClient.CreateDBInstance(r.newCreateCentralDBInstanceInput(input))
+	_, err = r.rdsClient.CreateDBInstance(context.TODO(), r.newCreateCentralDBInstanceInput(input))
 	if err != nil {
 		return fmt.Errorf("creating DB instance: %w", err)
 	}
@@ -277,7 +285,7 @@ func (r *RDS) ensureInstanceDeleted(instanceID string) error {
 
 	if instanceStatus != dbDeletingStatus {
 		glog.Infof("Initiating deprovisioning of RDS database instance %s.", instanceID)
-		_, err := r.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
+		_, err := r.rdsClient.DeleteDBInstance(context.TODO(), newDeleteCentralDBInstanceInput(instanceID, true))
 		if err != nil {
 			return fmt.Errorf("deleting DB instance: %w", err)
 		}
@@ -301,15 +309,14 @@ func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) err
 
 	if clusterStatus != dbDeletingStatus {
 		glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
-		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, skipFinalSnapshot))
+		_, err := r.rdsClient.DeleteDBCluster(context.TODO(), newDeleteCentralDBClusterInput(clusterID, skipFinalSnapshot))
 		if err != nil {
-			if awsErr, ok := err.(awserr.Error); ok {
+			var alreadyExists *types.DBClusterSnapshotAlreadyExistsFault
+			if errors.As(err, &alreadyExists) {
 				// This assumes that if a final snapshot exists, a deletion for the RDS cluster was already triggered
 				// and we can move on with deprovisioning,
-				if awsErr.Code() == rds.ErrCodeDBClusterSnapshotAlreadyExistsFault {
-					glog.Infof("Final DB backup is in progress for DB cluster: %s", clusterID)
-					return nil
-				}
+				glog.Infof("Final DB backup is in progress for DB cluster: %s", clusterID)
+				return nil
 			}
 			return fmt.Errorf("deleting DB cluster: %w", err)
 
@@ -322,12 +329,9 @@ func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) err
 func (r *RDS) clusterStatus(clusterID string) (bool, string, error) {
 	dbCluster, err := r.describeDBCluster(clusterID)
 	if err != nil {
-		var aerr awserr.Error
-		if errors.As(err, &aerr) {
-			switch aerr.Code() {
-			case rds.ErrCodeDBClusterNotFoundFault:
-				return false, "", nil
-			}
+		var clusterNotFound *types.DBClusterNotFoundFault
+		if errors.As(err, &clusterNotFound) {
+			return false, "", nil
 		}
 		return false, "", err
 	}
@@ -338,12 +342,9 @@ func (r *RDS) clusterStatus(clusterID string) (bool, string, error) {
 func (r *RDS) instanceStatus(instanceID string) (bool, string, error) {
 	dbInstance, err := r.describeDBInstance(instanceID)
 	if err != nil {
-		var aerr awserr.Error
-		if errors.As(err, &aerr) {
-			switch aerr.Code() {
-			case rds.ErrCodeDBInstanceNotFoundFault:
-				return false, "", nil
-			}
+		var instanceNotFound *types.DBInstanceNotFoundFault
+		if errors.As(err, &instanceNotFound) {
+			return false, "", nil
 		}
 		return false, "", err
 	}
@@ -351,8 +352,8 @@ func (r *RDS) instanceStatus(instanceID string) (bool, string, error) {
 	return true, *dbInstance.DBInstanceStatus, nil
 }
 
-func (r *RDS) describeDBInstance(instanceID string) (*rds.DBInstance, error) {
-	result, err := r.rdsClient.DescribeDBInstances(
+func (r *RDS) describeDBInstance(instanceID string) (*types.DBInstance, error) {
+	result, err := r.rdsClient.DescribeDBInstances(context.TODO(),
 		&rds.DescribeDBInstancesInput{
 			DBInstanceIdentifier: aws.String(instanceID),
 		})
@@ -365,11 +366,11 @@ func (r *RDS) describeDBInstance(instanceID string) (*rds.DBInstance, error) {
 		return nil, fmt.Errorf("unexpected number of DB instances: %d", len(result.DBInstances))
 	}
 
-	return result.DBInstances[0], nil
+	return &result.DBInstances[0], nil
 }
 
-func (r *RDS) describeDBCluster(clusterID string) (*rds.DBCluster, error) {
-	result, err := r.rdsClient.DescribeDBClusters(&rds.DescribeDBClustersInput{
+func (r *RDS) describeDBCluster(clusterID string) (*types.DBCluster, error) {
+	result, err := r.rdsClient.DescribeDBClusters(context.TODO(), &rds.DescribeDBClustersInput{
 		DBClusterIdentifier: aws.String(clusterID),
 	})
 	if err != nil {
@@ -381,7 +382,7 @@ func (r *RDS) describeDBCluster(clusterID string) (*rds.DBCluster, error) {
 		return nil, fmt.Errorf("unexpected number of DB clusters: %d", len(result.DBClusters))
 	}
 
-	return result.DBClusters[0], nil
+	return &result.DBClusters[0], nil
 }
 
 func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID string) error {
@@ -454,38 +455,38 @@ func (r *RDS) newCreateCentralDBClusterInput(input *createCentralDBClusterInput)
 		EngineVersion:       aws.String(dbEngineVersion),
 		MasterUsername:      aws.String(dbUser),
 		MasterUserPassword:  aws.String(input.dbPassword),
-		VpcSecurityGroupIds: aws.StringSlice([]string{input.securityGroup}),
+		VpcSecurityGroupIds: []string{input.securityGroup},
 		DBSubnetGroupName:   aws.String(input.subnetGroup),
-		ServerlessV2ScalingConfiguration: &rds.ServerlessV2ScalingConfiguration{
+		ServerlessV2ScalingConfiguration: &types.ServerlessV2ScalingConfiguration{
 			MinCapacity: aws.Float64(dbMinCapacityACU),
 			MaxCapacity: aws.Float64(dbMaxCapacityACU),
 		},
-		BackupRetentionPeriod: aws.Int64(dbBackupRetentionPeriod),
+		BackupRetentionPeriod: aws.Int32(dbBackupRetentionPeriod),
 		StorageEncrypted:      aws.Bool(true),
 		Tags:                  r.getDesiredTags(input.acsInstanceID, input.isTestInstance),
 	}
 
 	// do not export DB logs of internal instances (e.g. Probes)
 	if !input.isTestInstance {
-		awsInput.EnableCloudwatchLogsExports = aws.StringSlice([]string{"postgresql"})
+		awsInput.EnableCloudwatchLogsExports = []string{"postgresql"}
 	}
 
 	return awsInput
 }
 
-func (r *RDS) getDesiredTags(acsInstanceID string, isTestInstance bool) []*rds.Tag {
-	tags := make([]*rds.Tag, 0, len(r.sharedTags)+2)
+func (r *RDS) getDesiredTags(acsInstanceID string, isTestInstance bool) []types.Tag {
+	tags := make([]types.Tag, 0, len(r.sharedTags)+2)
 	for _, tag := range r.sharedTags {
-		tags = append(tags, &rds.Tag{
+		tags = append(tags, types.Tag{
 			Key:   aws.String(tag.Key),
 			Value: aws.String(tag.Value),
 		})
 	}
 
-	tags = append(tags, &rds.Tag{
+	tags = append(tags, types.Tag{
 		Key:   aws.String(instanceTypeTagKey),
 		Value: aws.String(getInstanceType(isTestInstance)),
-	}, &rds.Tag{
+	}, types.Tag{
 		Key:   aws.String(acsInstanceIDKey),
 		Value: aws.String(acsInstanceID),
 	})
@@ -526,7 +527,7 @@ func (r *RDS) newCreateCentralDBInstanceInput(input *createCentralDBInstanceInpu
 		Engine:                    aws.String(dbEngine),
 		PubliclyAccessible:        aws.Bool(false),
 		EnablePerformanceInsights: aws.Bool(input.performanceInsights),
-		PromotionTier:             aws.Int64(dbInstancePromotionTier),
+		PromotionTier:             aws.Int32(dbInstancePromotionTier),
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
 		AutoMinorVersionUpgrade:   aws.Bool(dbAutoVersionUpgrade),
 
@@ -554,13 +555,13 @@ func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *r
 	return input
 }
 
-func newRdsClient() (*rds.RDS, error) {
-	sess, err := session.NewSession()
+func newRdsClient() (*rds.Client, error) {
+	cfg, err := awsConfig.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		return nil, fmt.Errorf("unable to create session for RDS client: %w", err)
+		return nil, fmt.Errorf("unable to load AWS SDK config: %w", err)
 	}
 
-	return rds.New(sess), nil
+	return rds.NewFromConfig(cfg), nil
 }
 
 func getFinalSnapshotID(clusterID string) *string {
