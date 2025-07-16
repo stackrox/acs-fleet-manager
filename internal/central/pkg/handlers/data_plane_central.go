@@ -18,6 +18,7 @@ import (
 type dataPlaneCentralHandler struct {
 	service              services.DataPlaneCentralService
 	centralService       services.CentralService
+	clusterService       services.ClusterService
 	presenter            *presenters.ManagedCentralPresenter
 	gitopsConfigProvider gitops.ConfigProvider
 }
@@ -26,12 +27,14 @@ type dataPlaneCentralHandler struct {
 func NewDataPlaneCentralHandler(
 	service services.DataPlaneCentralService,
 	centralService services.CentralService,
+	clusterService services.ClusterService,
 	presenter *presenters.ManagedCentralPresenter,
 	gitopsConfigProvider gitops.ConfigProvider,
 ) *dataPlaneCentralHandler {
 	return &dataPlaneCentralHandler{
 		service:              service,
 		centralService:       centralService,
+		clusterService:       clusterService,
 		presenter:            presenter,
 		gitopsConfigProvider: gitopsConfigProvider,
 	}
@@ -67,6 +70,17 @@ func (h *dataPlaneCentralHandler) GetAll(w http.ResponseWriter, r *http.Request)
 			centralRequests, err := h.service.ListByClusterID(clusterID)
 			if err != nil {
 				return nil, err
+			}
+
+			if len(centralRequests) == 0 {
+				cluster, err := h.clusterService.FindClusterByID(clusterID)
+				if err != nil {
+					return nil, err
+				}
+
+				if cluster == nil {
+					return nil, errors.NotFound("cluster does not exist")
+				}
 			}
 
 			managedCentralList := private.ManagedCentralList{
