@@ -5,7 +5,9 @@ import (
 	"crypto/tls"
 	"flag"
 
+	argoCdOperatorv1beta1 "github.com/argoproj-labs/argocd-operator/api/v1beta1"
 	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+
 	"github.com/go-logr/glogr"
 	"github.com/golang/glog"
 	configv1 "github.com/openshift/api/config/v1"
@@ -111,6 +113,7 @@ func init() {
 	utilRuntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilRuntime.Must(v1alpha1.AddToScheme(scheme))
 	utilRuntime.Must(argoCd.AddToScheme(scheme))
+	utilRuntime.Must(argoCdOperatorv1beta1.AddToScheme(scheme))
 	utilRuntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 	utilRuntime.Must(operatorsv1.AddToScheme(scheme))
 	utilRuntime.Must(configv1.AddToScheme(scheme))
