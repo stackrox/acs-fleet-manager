@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	argoCdOperatorv1beta1 "github.com/argoproj-labs/argocd-operator/api/v1beta1"
 	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/golang/glog"
 	configv1 "github.com/openshift/api/config/v1"
@@ -135,6 +136,9 @@ func (r *GitopsInstallationReconciler) Reconcile(ctx context.Context, request re
 	if err := r.waitForApplicationCRD(ctx); err != nil {
 		return reconcile.Result{}, err
 	}
+	if err := r.ensureArgoCD(ctx); err != nil {
+		return reconcile.Result{}, err
+	}
 	if err := r.ensureBootstrapApplication(ctx, instance.Spec); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -203,11 +207,13 @@ func (r *GitopsInstallationReconciler) getNamespace(ctx context.Context, name st
 }
 
 func (r *GitopsInstallationReconciler) ensureSubscription(ctx context.Context) error {
-	var subscription operatorsv1alpha1.Subscription
-	if err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: operatorSubscriptionName, Namespace: GitopsOperatorNamespace}, &subscription); err != nil {
+	desiredSubscription := newSubscription()
+	foundSubscription := &operatorsv1alpha1.Subscription{}
+	err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: operatorSubscriptionName, Namespace: GitopsOperatorNamespace}, foundSubscription)
+	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			glog.V(5).Info("Openshift Gitops Subscription not found. Creating...")
-			if err := r.Client.Create(ctx, newSubscription()); err != nil {
+			if err := r.Client.Create(ctx, desiredSubscription); err != nil {
 				return fmt.Errorf("creating openshift gitops subscription: %w", err)
 			}
 			glog.V(5).Info("Openshift Gitops Subscription created.")
@@ -215,8 +221,33 @@ func (r *GitopsInstallationReconciler) ensureSubscription(ctx context.Context) e
 		}
 		return fmt.Errorf("getting openshift gitops subscription: %w", err)
 	}
-	glog.V(10).Info("Openshift Gitops Subscription already exists. No update needed.")
+
+	if !subscriptionNeedsUpdate(foundSubscription, desiredSubscription) {
+		glog.V(10).Info("Openshift Gitops Subscription already exists. No update needed.")
+		return nil
+	}
+
+	glog.V(10).Infof("Openshift Gitops Subscription '%s/%s' needs update. Attempting update...", GitopsOperatorNamespace, operatorSubscriptionName)
+	updateErr := k8sretry.RetryOnConflict(k8sretry.DefaultRetry, func() error {
+		currentSubscription := &operatorsv1alpha1.Subscription{}
+		getErr := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: operatorSubscriptionName, Namespace: GitopsOperatorNamespace}, currentSubscription)
+		if getErr != nil {
+			return fmt.Errorf("getting openshift gitops subscription for update: %w", getErr)
+		}
+		currentSubscription.Spec = desiredSubscription.Spec
+		return r.Client.Update(ctx, currentSubscription)
+	})
+
+	if updateErr != nil {
+		return fmt.Errorf("updating openshift gitops subscription after retries: %w", updateErr)
+	}
+
+	glog.V(10).Infof("Openshift Gitops Subscription '%s/%s' updated successfully.", GitopsOperatorNamespace, operatorSubscriptionName)
 	return nil
+}
+
+func subscriptionNeedsUpdate(current, desired *operatorsv1alpha1.Subscription) bool {
+	return !reflect.DeepEqual(current.Spec, desired.Spec)
 }
 
 func (r *GitopsInstallationReconciler) ensureOperatorGroup(ctx context.Context) error {
@@ -257,6 +288,11 @@ func newSubscription() *operatorsv1alpha1.Subscription {
 			Package:                "openshift-gitops-operator",
 			CatalogSource:          "redhat-operators",
 			CatalogSourceNamespace: "openshift-marketplace",
+			Config: &operatorsv1alpha1.SubscriptionConfig{
+				Env: []corev1.EnvVar{
+					{Name: "DISABLE_DEFAULT_ARGOCD_INSTANCE", Value: "true"},
+				},
+			},
 		},
 	}
 }
@@ -511,4 +547,31 @@ func (r *GitopsInstallationReconciler) createDefaultGitopsInstallation(ctx conte
 		return fmt.Errorf("error creating gitops installation: %w", err)
 	}
 	return nil
+}
+
+func (r *GitopsInstallationReconciler) ensureArgoCD(ctx context.Context) error {
+	var argoCD argoCdOperatorv1beta1.ArgoCD
+	if err := r.Client.Get(ctx, ctrlClient.ObjectKey{Name: gitopsInstallationName, Namespace: ArgoCdNamespace}, &argoCD); err != nil {
+		if apiErrors.IsNotFound(err) {
+			glog.V(5).Infof("ArgoCD instance '%s/%s' not found. Creating...", ArgoCdNamespace, gitopsInstallationName)
+			if err := r.Client.Create(ctx, newArgoCD()); err != nil {
+				return fmt.Errorf("creating ArgoCD instance: %w", err)
+			}
+			glog.V(5).Infof("ArgoCD instance '%s/%s' created.", ArgoCdNamespace, gitopsInstallationName)
+			return nil
+		}
+		return fmt.Errorf("getting ArgoCD instance: %w", err)
+	}
+	glog.V(10).Infof("ArgoCD instance '%s/%s' already exists. No update needed.", ArgoCdNamespace, gitopsInstallationName)
+	return nil
+}
+
+func newArgoCD() *argoCdOperatorv1beta1.ArgoCD {
+	return &argoCdOperatorv1beta1.ArgoCD{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      gitopsInstallationName,
+			Namespace: ArgoCdNamespace,
+		},
+		Spec: argoCdOperatorv1beta1.ArgoCDSpec{},
+	}
 }

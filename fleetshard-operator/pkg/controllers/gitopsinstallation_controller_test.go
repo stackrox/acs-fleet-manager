@@ -5,7 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	argoCdOperatorv1beta1 "github.com/argoproj-labs/argocd-operator/api/v1beta1"
 	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+
 	configv1 "github.com/openshift/api/config/v1"
 	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -33,6 +35,7 @@ func newTestReconciler(initK8sObjs ...ctrlClient.Object) *GitopsInstallationReco
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = v1alpha1.AddToScheme(scheme)
 	_ = argoCd.AddToScheme(scheme)
+	_ = argoCdOperatorv1beta1.AddToScheme(scheme)
 	_ = operatorsv1alpha1.AddToScheme(scheme)
 	_ = operatorsv1.AddToScheme(scheme)
 	_ = configv1.AddToScheme(scheme)
@@ -184,11 +187,7 @@ func TestEnsureSubscription_Exists(t *testing.T) {
 	currentSub := &operatorsv1alpha1.Subscription{}
 	err = reconciler.Client.Get(ctx, types.NamespacedName{Name: operatorSubscriptionName, Namespace: GitopsOperatorNamespace}, currentSub)
 	require.NoError(t, err, "Subscription should still exist")
-
-	// The current ensureSubscription logic does not update an existing subscription.
-	// It only checks for existence and creates if not found.
-	assert.Equal(t, existingSub.Spec.Channel, currentSub.Spec.Channel, "Existing subscription channel should not have changed")
-	assert.Equal(t, existingSub.Spec.Package, currentSub.Spec.Package)
+	assert.Equal(t, "latest", currentSub.Spec.Channel, "Existing subscription channel should have changed")
 }
 
 func TestEnsureRepositorySecret_SourceNotFound(t *testing.T) {
