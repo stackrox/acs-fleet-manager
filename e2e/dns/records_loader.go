@@ -2,27 +2,29 @@
 package dns
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/url"
 	"sort"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 )
 
 // RecordsLoader loads DNS records from Route53
 type RecordsLoader struct {
-	route53Client      *route53.Route53
-	rhacsZone          *route53.HostedZone
+	route53Client      *route53.Client
+	rhacsZone          *types.HostedZone
 	CentralDomainNames []string
-	LastResult         []*route53.ResourceRecordSet
+	LastResult         []*types.ResourceRecordSet
 }
 
 // NewRecordsLoader creates a new instance of RecordsLoader
-func NewRecordsLoader(route53Client *route53.Route53, central public.CentralRequest) *RecordsLoader {
+func NewRecordsLoader(route53Client *route53.Client, central public.CentralRequest) *RecordsLoader {
 	rhacsZone, err := getHostedZone(route53Client, central)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -34,18 +36,18 @@ func NewRecordsLoader(route53Client *route53.Route53, central public.CentralRequ
 }
 
 // LoadDNSRecords loads DNS records from Route53
-func (loader *RecordsLoader) LoadDNSRecords() []*route53.ResourceRecordSet {
+func (loader *RecordsLoader) LoadDNSRecords() []*types.ResourceRecordSet {
 	if len(loader.CentralDomainNames) == 0 {
-		return []*route53.ResourceRecordSet{}
+		return []*types.ResourceRecordSet{}
 	}
 	idx := 0
 	loadingRecords := true
 	nextRecord := &loader.CentralDomainNames[idx]
-	result := make([]*route53.ResourceRecordSet, 0, len(loader.CentralDomainNames))
+	result := make([]*types.ResourceRecordSet, 0, len(loader.CentralDomainNames))
 
 loading:
 	for loadingRecords {
-		output, err := loader.route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
+		output, err := loader.route53Client.ListResourceRecordSets(context.Background(), &route53.ListResourceRecordSetsInput{
 			HostedZoneId:    loader.rhacsZone.Id,
 			StartRecordName: nextRecord,
 		})
@@ -53,32 +55,33 @@ loading:
 
 		for _, recordSet := range output.ResourceRecordSets {
 			if *recordSet.Name == loader.CentralDomainNames[idx] {
-				result = append(result, recordSet)
+				result = append(result, &recordSet)
 				idx++
 				if idx == len(loader.CentralDomainNames) {
 					break loading
 				}
 			}
 		}
-		loadingRecords = *output.IsTruncated
+		loadingRecords = output.IsTruncated
 		nextRecord = output.NextRecordName
 	}
 	loader.LastResult = result
 	return result
 }
 
-func getHostedZone(route53Client *route53.Route53, central public.CentralRequest) (*route53.HostedZone, error) {
-	hostedZones, err := route53Client.ListHostedZones(&route53.ListHostedZonesInput{})
+func getHostedZone(route53Client *route53.Client, central public.CentralRequest) (*types.HostedZone, error) {
+	hostedZones, err := route53Client.ListHostedZones(context.Background(), &route53.ListHostedZonesInput{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list hosted zones: %w", err)
 	}
 
-	var rhacsZone *route53.HostedZone
+	var rhacsZone *types.HostedZone
 	for _, zone := range hostedZones.HostedZones {
 		// Omit the . at the end of hosted zone name
 		name := removeLastChar(*zone.Name)
 		if strings.Contains(central.CentralUIURL, name) {
-			rhacsZone = zone
+			z := zone
+			rhacsZone = &z
 			break
 		}
 	}

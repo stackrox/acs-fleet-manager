@@ -1,13 +1,13 @@
 package multicluster
 
 import (
+	"context"
 	"os"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/e2e/testutil"
@@ -21,7 +21,7 @@ var (
 	cluster2KubeClient ctrlClient.Client
 
 	fleetManagerEndpoint = "http://localhost:8000"
-	route53Client        *route53.Route53
+	route53Client        *route53.Client
 	dnsEnabled           bool
 )
 
@@ -64,13 +64,28 @@ var _ = BeforeSuite(func() {
 	dnsEnabled, accessKey, secretKey = testutil.DNSConfiguration(routesEnabled)
 
 	if dnsEnabled {
-		creds := credentials.NewStaticCredentials(
+		creds := aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(
 			accessKey,
 			secretKey,
-			"")
-		sess, err := session.NewSession(aws.NewConfig().WithCredentials(creds))
+			""))
+
+		_, err := creds.Retrieve(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		route53Client = route53.New(sess)
+		cfg := aws.Config{
+			Credentials: creds,
+			Region:      getEnvDefault("AWS_REGION", "us-east-1"),
+		}
+		Expect(err).ToNot(HaveOccurred())
+
+		route53Client = route53.NewFromConfig(cfg)
 	}
 })
+
+func getEnvDefault(key, defaultValue string) string {
+	value, ok := os.LookupEnv(key)
+	if !ok {
+		return defaultValue
+	}
+	return value
+}

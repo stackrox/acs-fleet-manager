@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -46,7 +46,7 @@ func AssertCentralRequestDeprovisioning(ctx context.Context, client *fleetmanage
 
 // AssertDNSMatchesRouter asserts that every domain in centralDomainNames is in recordSets and targets
 // the correct hostname given by the routeIngress
-func AssertDNSMatchesRouter(centralDomainNames []string, recordSets []*route53.ResourceRecordSet, routeIngress *openshiftRouteV1.RouteIngress) {
+func AssertDNSMatchesRouter(centralDomainNames []string, recordSets []*types.ResourceRecordSet, routeIngress *openshiftRouteV1.RouteIngress) {
 	for idx, domain := range centralDomainNames {
 		recordSet := recordSets[idx]
 		Expect(recordSet.ResourceRecords).To(HaveLen(1))
