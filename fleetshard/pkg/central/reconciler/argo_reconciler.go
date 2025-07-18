@@ -230,11 +230,15 @@ func (r *argoReconciler) getArgoCdAppObjectKey(tenantNamespace string) ctrlClien
 // This is to rename the central CR when creating the tenant on a fresh cluster.
 // So that after the ROSA migration the CR name is not affected by the display name of the tenant
 func (r *argoReconciler) overrideCentralStaticCRName(values map[string]interface{}) {
-	if !isOSD(r.argoOpts.ClusterName) {
-		if _, exists := values["centralStaticCRName"]; !exists {
-			values["centralStaticCRName"] = true
-		}
+	if isOSD(r.argoOpts.ClusterName) {
+		return
 	}
+
+	if _, exists := values["centralStaticCRName"]; exists {
+		return
+	}
+
+	values["centralStaticCRName"] = true
 }
 
 var osdClusters = []string{"acs-int-us-01", "acs-stage-dp-02", "acs-stage-eu-02", "acs-prod-dp-01", "acs-prod-eu-01"}
