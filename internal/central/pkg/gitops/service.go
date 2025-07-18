@@ -24,7 +24,7 @@ func RenderTenantResourceValues(params CentralParams, config Config) (map[string
 	}
 
 	for _, override := range config.TenantResources.Overrides {
-		if !shouldApplyOverride(override.InstanceIDs, params) {
+		if !shouldApplyOverride(override, params) {
 			continue
 		}
 		rendered, err := renderPatchTemplate(override.Values, params)
@@ -77,8 +77,8 @@ type CentralParams struct {
 }
 
 // shouldApplyOverride returns true if the given Central override should be applied to the given Central instance.
-func shouldApplyOverride(instanceIDs []string, ctx CentralParams) bool {
-	for _, d := range instanceIDs {
+func shouldApplyOverride(override TenantResourceOverride, ctx CentralParams) bool {
+	for _, d := range override.InstanceIDs {
 		if d == "*" {
 			return true
 		}
@@ -86,6 +86,17 @@ func shouldApplyOverride(instanceIDs []string, ctx CentralParams) bool {
 			return true
 		}
 	}
+
+	for _, d := range override.ClusterIDs {
+		if d == "*" {
+			return true
+		}
+
+		if d == ctx.ClusterID {
+			return true
+		}
+	}
+
 	return false
 }
 

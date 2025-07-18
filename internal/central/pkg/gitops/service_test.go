@@ -137,6 +137,27 @@ func TestRenderTenantResourceValues(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, map[string]interface{}{"foo": "central-1"}, got)
 			},
+		}, {
+			name: "overrides with clusterID",
+			params: CentralParams{
+				ID:        "central-1",
+				ClusterID: "test-cluster-id",
+			},
+			config: Config{
+				TenantResources: TenantResourceConfig{
+					Default: `{"foo": "bar"}`,
+					Overrides: []TenantResourceOverride{
+						{
+							ClusterIDs: []string{"test-cluster-id"},
+							Values:     `{"foo": "override"}`,
+						},
+					},
+				},
+			},
+			assert: func(t *testing.T, got map[string]interface{}, err error) {
+				require.NoError(t, err)
+				assert.Equal(t, map[string]interface{}{"foo": "override"}, got)
+			},
 		},
 	}
 	for _, tt := range tests {
