@@ -92,6 +92,7 @@ type TenantResourceConfig struct {
 // will be applied on top of the default tenant resource values configuration.
 type TenantResourceOverride struct {
 	InstanceIDs []string `json:"instanceIds"`
+	ClusterIDs  []string `json:"clusterIds`
 	Values      string   `json:"values"`
 }
 
