@@ -1,9 +1,10 @@
 package reconciler
 
 import (
+	"testing"
+
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestSourceGetRepoURL(t *testing.T) {
@@ -49,4 +50,67 @@ func TestGetSourceTargetRevision(t *testing.T) {
 			},
 		},
 	}))
+}
+
+// TODO(ROX-30167): Remove this special case once all tenants are on ROSA
+// This is to rename the central CR when creating the tenant on a fresh cluster.
+// So that after the ROSA migration the CR name is not affected by the display name of the tenant
+func TestOverrideCentralStaticCRName(t *testing.T) {
+	tests := []struct {
+		clusterName string
+		values      map[string]interface{}
+		expected    map[string]interface{}
+	}{
+		{
+			clusterName: "acs-int-us-01",
+			values:      map[string]interface{}{},
+			expected:    map[string]interface{}{},
+		},
+		{
+			clusterName: "acs-stage-dp-02",
+			values:      map[string]interface{}{},
+			expected:    map[string]interface{}{},
+		},
+		{
+			clusterName: "acs-stage-eu-02",
+			values:      map[string]interface{}{},
+			expected:    map[string]interface{}{},
+		},
+		{
+			clusterName: "acs-prod-dp-01",
+			values:      map[string]interface{}{},
+			expected:    map[string]interface{}{},
+		},
+		{
+			clusterName: "acs-prod-eu-01",
+			values:      map[string]interface{}{},
+			expected:    map[string]interface{}{},
+		},
+		{
+			clusterName: "acs-int-us-02",
+			values:      map[string]interface{}{},
+			expected: map[string]interface{}{
+				"centralStaticCRName": true,
+			},
+		},
+		{
+			clusterName: "acs-int-us-02",
+			values: map[string]interface{}{
+				"centralStaticCRName": false,
+			},
+			expected: map[string]interface{}{
+				"centralStaticCRName": false,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		reconciler := argoReconciler{argoOpts: ArgoReconcilerOptions{
+			ClusterName: tc.clusterName,
+		}}
+
+		val := tc.values
+		reconciler.overrideCentralStaticCRName(val)
+		assert.Equal(t, tc.expected, tc.values)
+	}
 }
