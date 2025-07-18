@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
@@ -111,6 +112,15 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 		delete(values, "centralDbSecretName")
 		delete(values, "centralDbConnectionString")
 		delete(values, "additionalCAs")
+	}
+
+	// TODO(ROX-30167): Remove this special case once all tenants are on ROSA
+	// This is to rename the central CR when creating the tenant on a fresh cluster.
+	// So that after the ROSA migration the CR name is not affected by the display name of the tenant
+	if !isOSD(r.argoOpts.ClusterName) {
+		if _, exists := values["centralStaticCRName"]; !exists {
+			values["centralStaticCRName"] = true
+		}
 	}
 
 	valuesBytes, err := json.Marshal(values)
@@ -221,4 +231,13 @@ func (r *argoReconciler) getArgoCdAppObjectKey(tenantNamespace string) ctrlClien
 		Namespace: r.getArgoCdAppNamespace(),
 		Name:      tenantNamespace,
 	}
+}
+
+// TODO(ROX-30167): Remove this special case once all tenants are on ROSA
+// This is to rename the central CR when creating the tenant on a fresh cluster.
+// So that after the ROSA migration the CR name is not affected by the display name of the tenant
+var osdClusters = []string{"acs-int-us-01", "acs-stage-dp-02", "acs-stage-eu-02", "acs-prod-dp-01", "acs-prod-eu-01"}
+
+func isOSD(clusterName string) bool {
+	return slices.Contains(osdClusters, clusterName)
 }
