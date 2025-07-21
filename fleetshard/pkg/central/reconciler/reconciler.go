@@ -646,16 +646,21 @@ func (r *CentralReconciler) ensureSecretHasOwnerReference(ctx context.Context, s
 		return nil
 	}
 
-	centralCR := &unstructured.Unstructured{}
-	centralCR.SetGroupVersionKind(k8s.CentralGVK)
+	centralCRList := &unstructured.UnstructuredList{}
+	centralCRList.SetGroupVersionKind(k8s.CentralGVK)
 
-	objectKey := ctrlClient.ObjectKey{Namespace: namespace, Name: remoteCentral.Metadata.Name}
-	if err := r.client.Get(ctx, objectKey, centralCR); err != nil {
+	if err := r.client.List(ctx, centralCRList, &ctrlClient.ListOptions{Namespace: namespace}); err != nil {
 		return fmt.Errorf("getting current central CR from k8s: %w", err)
 	}
 
+	if len(centralCRList.Items) == 0 {
+		return fmt.Errorf("no central CR found in namespaces: %q", namespace)
+	}
+
+	centralCR := centralCRList.Items[0]
+
 	secret.OwnerReferences = []metav1.OwnerReference{
-		*metav1.NewControllerRef(centralCR, k8s.CentralGVK),
+		*metav1.NewControllerRef(&centralCR, k8s.CentralGVK),
 	}
 
 	if err := r.client.Update(ctx, secret); err != nil {
