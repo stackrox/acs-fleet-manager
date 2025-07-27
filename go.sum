@@ -725,8 +725,12 @@ github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQb2IpWsCzug=
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
-github.com/openshift-online/ocm-sdk-go v0.1.456 h1:N9AmVv8H+FSlld88iCsafy+8Lhykz/1XUrmVhww/BYM=
-github.com/openshift-online/ocm-sdk-go v0.1.456/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
+github.com/openshift-online/ocm-api-model/clientapi v0.0.426 h1:qWqs2rOwGFR+mpcclTs+Sr06lpVfc+3kixE1+VIg4Ro=
+github.com/openshift-online/ocm-api-model/clientapi v0.0.426/go.mod h1:fZwy5HY2URG9nrExvQeXrDU/08TGqZ16f8oymVEN5lo=
+github.com/openshift-online/ocm-api-model/model v0.0.426 h1:aZZ0PuknD9V+RUFsP692lC6U3TDD8Grhuwjai07fDmY=
+github.com/openshift-online/ocm-api-model/model v0.0.426/go.mod h1:PQIoq6P8Vlb7goOdRMLK8nJY+B7HH0RTqYAa4kyidTE=
+github.com/openshift-online/ocm-sdk-go v0.1.473 h1:m/NWIBCzhC/8PototMQ7x8MQXCeSLjW7q0qR7bPGXKk=
+github.com/openshift-online/ocm-sdk-go v0.1.473/go.mod h1:5Gw/YZE+c5FAPaBtO1w/asd9qbs2ljQwg7fpVq51UW4=
 github.com/openshift/addon-operator/apis v0.0.0-20231110045543-dd01f2f5c184 h1:P93o33VcHaOTjOTm6/UojtJdr1qLc2U7vPMBno39rdc=
 github.com/openshift/addon-operator/apis v0.0.0-20231110045543-dd01f2f5c184/go.mod h1:JS2tbakhIZRgBiULsIUSHGsdz7G/Vylvg1mqI1TlXzs=
 github.com/openshift/api v0.0.0-20250320115527-3aa9dd5b9002 h1:AP8WxjiCyGlyhRlDG83cuk789Gy96IdYNuTO/sAMwl0=
