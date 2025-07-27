@@ -864,8 +864,8 @@ github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAh
 github.com/vmihailenco/tagparser/v2 v2.0.0/go.mod h1:Wri+At7QHww0WTrCBeu4J6bNtoV6mEfg5OIWRZA9qds=
 github.com/weppos/publicsuffix-go v0.13.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
 github.com/weppos/publicsuffix-go v0.30.2-0.20230730094716-a20f9abcc222/go.mod h1:s41lQh6dIsDWIC1OWh7ChWJXLH0zkJ9KHZVqA7vHyuQ=
-github.com/weppos/publicsuffix-go v0.30.3-0.20240411085455-21202160c2ed h1:2SVbw+/Q/si5J66tuM12841RSkH/3Q4TQpiUkUctBgY=
-github.com/weppos/publicsuffix-go v0.30.3-0.20240411085455-21202160c2ed/go.mod h1:L9gKhYxnlc2z0fQFyL/6Y9YLnObLkmErfCYMuwgXIX8=
+github.com/weppos/publicsuffix-go v0.40.2 h1:LlnoSH0Eqbsi3ReXZWBKCK5lHyzf3sc1JEHH1cnlfho=
+github.com/weppos/publicsuffix-go v0.40.2/go.mod h1:XsLZnULC3EJ1Gvk9GVjuCTZ8QUu9ufE4TZpOizDShko=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 github.com/xanzy/ssh-agent v0.3.3 h1:+/15pJfg/RsTxqYcX6fHqOXZwwMP+2VyYWJeWM2qQFM=
