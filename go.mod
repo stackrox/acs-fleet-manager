@@ -17,7 +17,7 @@ require (
 	github.com/aws/smithy-go v1.22.4
 	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/coreos/go-oidc/v3 v3.14.1
+	github.com/coreos/go-oidc/v3 v3.15.0
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.34.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
