@@ -62,7 +62,7 @@ jobs:
       - name: Install oc
         uses: redhat-actions/oc-installer@v1
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set cluster credentials
         run: |
           set -eo pipefail
