@@ -49,11 +49,16 @@ type Config struct {
 
 // ManagedDB for configuring managed DB specific parameters
 type ManagedDB struct {
-	Enabled             bool           `env:"MANAGED_DB_ENABLED" envDefault:"false"`
-	SecurityGroup       string         `env:"MANAGED_DB_SECURITY_GROUP"`
-	SubnetGroup         string         `env:"MANAGED_DB_SUBNET_GROUP"`
-	PerformanceInsights bool           `env:"MANAGED_DB_PERFORMANCE_INSIGHTS" envDefault:"false"`
-	SharedTags          []ManagedDBTag `envPrefix:"MANAGED_DB_TAGS"`
+	Enabled               bool           `env:"MANAGED_DB_ENABLED" envDefault:"false"`
+	SecurityGroup         string         `env:"MANAGED_DB_SECURITY_GROUP"`
+	SubnetGroup           string         `env:"MANAGED_DB_SUBNET_GROUP"`
+	PerformanceInsights   bool           `env:"MANAGED_DB_PERFORMANCE_INSIGHTS" envDefault:"false"`
+	EngineVersion         string         `env:"MANAGED_DB_ENGINE_VERSION" envDefault:"13.9"`        // See AWS RDS release calendar: https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-release-calendar.html
+	AutoVersionUpgrade    bool           `env:"MANAGED_DB_AUTO_VERSION_UPGRADE" envDefault:"false"` // minor version upgrades only. Disable until figure out the strategy. s\See: ROX-16099
+	BackupRetentionPeriod int            `env:"MANAGED_DB_BACKUP_RETENTION_PERIOD" envDefault:"30"` // days
+	MinCapacityACU        float32        `env:"MANAGED_DB_MIN_CAPACITY_ACU" envDefault:"0.5"`       // Aurora Capacity Unit (ACU). 1 ACU = 1 vCPU + 2GB RAM
+	MaxCapacityACU        float32        `env:"MANAGED_DB_MAX_CAPACITY_ACU" envDefault:"16"`
+	SharedTags            []ManagedDBTag `envPrefix:"MANAGED_DB_TAGS"`
 }
 
 // ManagedDBTag configures shared managed DB tags

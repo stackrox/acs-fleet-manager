@@ -290,7 +290,7 @@ func TestRDSTags(t *testing.T) {
 	require.Equal(t, *tags[0].Key, "DataplaneClusterName")
 	require.Equal(t, *tags[0].Value, "acs-dev-dp-01")
 	require.Equal(t, *tags[1].Key, instanceTypeTagKey)
-	require.Equal(t, *tags[1].Value, regularInstaceTagValue)
+	require.Equal(t, *tags[1].Value, regularInstanceTagValue)
 	require.Equal(t, *tags[2].Key, acsInstanceIDKey)
 	require.Equal(t, *tags[2].Value, "veryrandomid")
 }
