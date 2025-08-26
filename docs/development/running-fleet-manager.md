@@ -40,6 +40,37 @@ make binary && ./fleet-manager serve \
    2>&1 | tee fleet-manager-serve.log
 ```
 
+## Debug Logging Configuration
+
+Both fleet-manager and fleetshard-sync support configurable debug logging levels using the `GLOG_V` environment variable:
+
+- `GLOG_V=0` - Basic error and warning messages (default)
+- `GLOG_V=1` - Include informational messages
+- `GLOG_V=2` - Include important debug messages (recommended for troubleshooting)
+- `GLOG_V=3` - Include detailed debug messages
+- `GLOG_V=4` and higher - Include verbose trace information
+
+**Examples:**
+
+For local development with enhanced debugging:
+```bash
+export GLOG_V=2
+make binary && ./fleet-manager serve --dataplane-cluster-config-file=...
+```
+
+For e2e tests with debug logging:
+```bash
+GLOG_V=3 make test/e2e
+```
+
+The debug logging added includes detailed information about:
+- Central reconciliation flow and decision points
+- Secret restoration and validation
+- Namespace and resource management
+- ArgoCD application deployment
+- Pod termination and cleanup processes
+- Hash computation and change detection
+
 ## Running containerized fleet-manager and fleetshard-sync on a test cluster
 
 A test cluster can be either local or remote. Recommended local clusters are _colima_ for macOS and _kind_ for linux. The easiest way to provision a remote OpenShift cluster is to use StackRox Infra and the infractl tool.

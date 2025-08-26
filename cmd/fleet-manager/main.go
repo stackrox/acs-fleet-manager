@@ -3,6 +3,7 @@ package main
 
 import (
 	"flag"
+	"os"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/migrate"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/serve"
@@ -24,6 +25,16 @@ func main() {
 	// Always log to stderr by default
 	if err := flag.Set("logtostderr", "true"); err != nil {
 		glog.Infof("Unable to set logtostderr to true")
+	}
+
+	// Configure glog verbosity level from environment variable
+	// This allows debug logging to be enabled in e2e tests and development
+	if verbosity := os.Getenv("GLOG_V"); verbosity != "" {
+		if err := flag.Set("v", verbosity); err != nil {
+			glog.Infof("Unable to set glog verbosity to %s: %v", verbosity, err)
+		} else {
+			glog.Infof("Set glog verbosity level to %s", verbosity)
+		}
 	}
 
 	env, err := environments.New(environments.GetEnvironmentStrFromEnv(),

@@ -35,6 +35,16 @@ func main() {
 		glog.Info("Unable to set logtostderr to true")
 	}
 
+	// Configure glog verbosity level from environment variable
+	// This allows debug logging to be enabled in e2e tests and development
+	if verbosity := os.Getenv("GLOG_V"); verbosity != "" {
+		if err := flag.Set("v", verbosity); err != nil {
+			glog.Infof("Unable to set glog verbosity to %s: %v", verbosity, err)
+		} else {
+			glog.Infof("Set glog verbosity level to %s", verbosity)
+		}
+	}
+
 	config, err := config.GetConfig()
 	if err != nil {
 		glog.Fatalf("Failed to load configuration: %v", err)
