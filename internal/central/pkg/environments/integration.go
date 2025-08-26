@@ -36,7 +36,6 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"enable-deny-list":                   "true",
 		"enable-instance-limit-control":      "true",
 		"max-allowed-instances":              "1",
-		"enable-central-external-domain":     "false",
 		"cluster-compute-machine-type":       "m5.xlarge",
 		"allow-evaluator-instance":           "true",
 		"quota-type":                         "quota-management-list",

@@ -318,16 +318,11 @@ func (k *centralService) AcceptCentralRequest(centralRequest *dbapi.CentralReque
 	centralRequest.Namespace = namespace
 
 	// Set host.
-	if k.centralConfig.EnableCentralExternalDomain {
-		// the host should use the external domain name rather than the cluster domain
-		centralRequest.Host = k.centralConfig.CentralDomainName
-	} else {
-		clusterDNS, err := k.clusterService.GetClusterDNS(centralRequest.ClusterID)
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
-		}
-		centralRequest.Host = clusterDNS
+	clusterDNS, err := k.clusterService.GetClusterDNS(centralRequest.ClusterID)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
 	}
+	centralRequest.Host = clusterDNS
 
 	// UpdateIgnoreNils the fields of the CentralRequest record in the database.
 	updatedCentralRequest := &dbapi.CentralRequest{

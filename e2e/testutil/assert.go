@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -42,18 +41,6 @@ func AssertCentralRequestProvisioning(ctx context.Context, client *fleetmanager.
 // AssertCentralRequestDeprovisioning gets the central requests from the client by ID and asserts the deprovisioning status
 func AssertCentralRequestDeprovisioning(ctx context.Context, client *fleetmanager.Client, id string) func() error {
 	return AssertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusDeprovision.String())
-}
-
-// AssertDNSMatchesRouter asserts that every domain in centralDomainNames is in recordSets and targets
-// the correct hostname given by the routeIngress
-func AssertDNSMatchesRouter(centralDomainNames []string, recordSets []*types.ResourceRecordSet, routeIngress *openshiftRouteV1.RouteIngress) {
-	for idx, domain := range centralDomainNames {
-		recordSet := recordSets[idx]
-		Expect(recordSet.ResourceRecords).To(HaveLen(1))
-		record := recordSet.ResourceRecords[0]
-		Expect(*recordSet.Name).To(Equal(domain))
-		Expect(*record.Value).To(Equal(routeIngress.RouterCanonicalHostname)) // TODO use route specific ingress instead of comparing with reencryptIngress for all cases
-	}
 }
 
 // AssertReencryptIngressRouteExist asserts that the reencrypt RouteIngress for a CentralRequest is created
