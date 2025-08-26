@@ -52,7 +52,7 @@ func TestInjections(t *testing.T) {
 
 	var workerList []workers.Worker
 	env.MustResolve(&workerList)
-	Expect(workerList).To(HaveLen(10))
+	Expect(workerList).To(HaveLen(9))
 }
 
 func createServicesCommand(env *environments.Env) *cobra.Command {
