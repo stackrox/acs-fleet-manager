@@ -40,7 +40,6 @@ type Central struct {
 	InstanceType   string               `json:"instance_type,omitempty"`
 	QuotaType      string               `json:"quota_type,omitempty"`
 	Routes         []CentralAllOfRoutes `json:"routes,omitempty"`
-	RoutesCreated  bool                 `json:"routes_created,omitempty"`
 	ClusterId      string               `json:"cluster_id,omitempty"`
 	Namespace      string               `json:"namespace,omitempty"`
 	Traits         []string             `json:"traits,omitempty"`

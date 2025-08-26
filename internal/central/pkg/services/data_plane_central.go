@@ -124,12 +124,6 @@ func (s *dataPlaneCentralService) ListByClusterID(clusterID string) (dbapi.Centr
 }
 
 func (s *dataPlaneCentralService) setCentralClusterReady(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
-	if !centralRequest.RoutesCreated {
-		logger.Logger.V(10).Infof("routes for central %s are not created", centralRequest.ID)
-		return nil
-	}
-	logger.Logger.Infof("routes for central %s are created", centralRequest.ID)
-
 	// only send metrics data if the current central request is in "provisioning" status as this is the only case we want to report
 	shouldSendMetric, err := s.checkCentralRequestCurrentStatus(centralRequest, constants.CentralRequestStatusProvisioning)
 	if err != nil {

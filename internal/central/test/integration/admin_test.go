@@ -39,34 +39,30 @@ func TestAssignCluster(t *testing.T) {
 
 	centrals := []*dbapi.CentralRequest{
 		{
-			MultiAZ:          clusters[0].MultiAZ,
-			Owner:            "assigclusteruser1",
-			Region:           clusters[0].Region,
-			CloudProvider:    clusters[0].CloudProvider,
-			Name:             "assign-cluster-central",
-			OrganisationID:   orgID,
-			Status:           constants2.CentralRequestStatusReady.String(),
-			InstanceType:     clusters[0].SupportedInstanceType,
-			ClusterID:        clusters[0].ClusterID,
-			Meta:             api.Meta{ID: api.NewID()},
-			RoutesCreated:    true,
-			Routes:           dummyRoutesJSON,
-			RoutesCreationID: "dummy-route-creation-id",
+			MultiAZ:        clusters[0].MultiAZ,
+			Owner:          "assigclusteruser1",
+			Region:         clusters[0].Region,
+			CloudProvider:  clusters[0].CloudProvider,
+			Name:           "assign-cluster-central",
+			OrganisationID: orgID,
+			Status:         constants2.CentralRequestStatusReady.String(),
+			InstanceType:   clusters[0].SupportedInstanceType,
+			ClusterID:      clusters[0].ClusterID,
+			Meta:           api.Meta{ID: api.NewID()},
+			Routes:         dummyRoutesJSON,
 		},
 		{
-			MultiAZ:          clusters[0].MultiAZ,
-			Owner:            "assigclusteruser2",
-			Region:           clusters[0].Region,
-			CloudProvider:    clusters[0].CloudProvider,
-			Name:             "assign-cluster-central-2",
-			OrganisationID:   orgID,
-			Status:           constants2.CentralRequestStatusReady.String(),
-			InstanceType:     clusters[0].SupportedInstanceType,
-			ClusterID:        clusters[0].ClusterID,
-			Meta:             api.Meta{ID: api.NewID()},
-			RoutesCreated:    true,
-			Routes:           dummyRoutesJSON,
-			RoutesCreationID: "dummy-route-creation-id",
+			MultiAZ:        clusters[0].MultiAZ,
+			Owner:          "assigclusteruser2",
+			Region:         clusters[0].Region,
+			CloudProvider:  clusters[0].CloudProvider,
+			Name:           "assign-cluster-central-2",
+			OrganisationID: orgID,
+			Status:         constants2.CentralRequestStatusReady.String(),
+			InstanceType:   clusters[0].SupportedInstanceType,
+			ClusterID:      clusters[0].ClusterID,
+			Meta:           api.Meta{ID: api.NewID()},
+			Routes:         dummyRoutesJSON,
 		},
 	}
 
@@ -92,9 +88,7 @@ func TestAssignCluster(t *testing.T) {
 	}
 
 	require.Equal(t, "new-cluster-1234", cr.ClusterID, "ClusterID was not set properly.")
-	require.False(t, cr.RoutesCreated, "RoutesCreated should be reset to false.")
 	require.Nil(t, cr.Routes, "Stored Routes content should be nil.")
-	require.Empty(t, cr.RoutesCreationID, "Stored RoutesCreationID should be reset to empty string")
 	require.Equal(t, constants2.CentralRequestStatusProvisioning.String(), cr.Status, "Status should change from ready to provisioning.")
 	require.True(t, cr.EnteredProvisioningAt.Valid, "EnteredProvisioning time should be valid")
 	// can't require only Before here as this might introduce a timing flake when this test runs through faster then

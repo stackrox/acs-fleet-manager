@@ -95,6 +95,9 @@ should_skip_image_build() {
     if [[ "$CLUSTER_TYPE" == "openshift-ci" ]]; then
         return 0
     fi
+    if [[ "$DEVCONTAINER" == "true" ]]; then
+        return 1
+    fi    
     if is_running_inside_docker; then
         return 0
     fi

@@ -57,12 +57,6 @@ make ocm/setup OCM_OFFLINE_TOKEN=<your-retrieved-ocm-offline-token>
 Fleet Manager interacts with AWS to provide the following functionalities:
 * To be able to create and manage Data Plane clusters in a specific AWS account
   by passing the needed credentials to OpenShift Cluster Management
-* To create [AWS's Route53](https://aws.amazon.com/route53/) DNS records in a
-  specific AWS account. These records are DNS records that point to some
-  routes related to Central instances that are created.
-  > NOTE: The domain name used for these records can be configured by setting
-    the domain name to be used for Central instances. This can be done
-    through the `--central-domain-name` Fleet Manager binary CLI flag
 For both functionalities, the same underlying AWS account is used.
 
 In order for the Fleet Manager to be able to start, create the following files:
@@ -70,8 +64,6 @@ In order for the Fleet Manager to be able to start, create the following files:
 touch secrets/aws.accountid
 touch secrets/aws.accesskey
 touch secrets/aws.secretaccesskey
-touch secrets/aws.route53accesskey
-touch secrets/aws.route53secretaccesskey
 ```
 
 If you need any of those functionalities keep reading. Otherwise, this section
@@ -84,8 +76,6 @@ IAM user credentials to the control plane by running:
 AWS_ACCOUNT_ID=<aws-account-id> \
 AWS_ACCESS_KEY=<aws-iam-user-access-key> \
 AWS_SECRET_ACCESS_KEY=<aws-iam-user-secret-access-key> \
-ROUTE53_ACCESS_KEY=<aws-iam-user-for-route-53-access-key> \
-ROUTE53_SECRET_ACCESS_KEY=<aws-iam-user-for-route-53-secret-access-key> \
 make aws/setup
 ```
 > NOTE: If you are in Red Hat, the following [documentation](./getting-credentials-and-accounts.md#aws)

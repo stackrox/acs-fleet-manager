@@ -152,16 +152,24 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 	remoteCentralName := remoteCentral.Metadata.Name
 
+	glog.V(2).Infof("[DEBUG] Starting reconcile for central %s/%s (ID: %s, Status: %s)", remoteCentralNamespace, remoteCentralName, remoteCentral.Id, remoteCentral.RequestStatus)
+
 	// Only allow to start reconcile function once
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
+		glog.V(2).Infof("[DEBUG] Reconciler busy for central %s/%s, returning ErrBusy", remoteCentralNamespace, remoteCentralName)
 		return nil, ErrBusy
 	}
-	defer atomic.StoreInt32(r.status, FreeStatus)
+	defer func() {
+		atomic.StoreInt32(r.status, FreeStatus)
+		glog.V(2).Infof("[DEBUG] Reconciler status reset to FreeStatus for central %s/%s", remoteCentralNamespace, remoteCentralName)
+	}()
 
 	centralHash, err := r.computeCentralHash(remoteCentral)
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed to compute central hash for %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
 		return nil, errors.Wrap(err, "computing central hash")
 	}
+	glog.V(3).Infof("[DEBUG] Computed central hash for %s/%s: %x", remoteCentralNamespace, remoteCentralName, centralHash)
 
 	shouldUpdateCentralHash := false
 	defer func() {
@@ -174,10 +182,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}()
 
 	changed := r.centralChanged(centralHash)
+	glog.V(2).Infof("[DEBUG] Central %s/%s changed since last reconcile: %t", remoteCentralNamespace, remoteCentralName, changed)
 
 	needsReconcile := r.needsReconcileFunc(changed, remoteCentral, remoteCentral.Metadata.SecretsStored)
+	glog.V(2).Infof("[DEBUG] Central %s/%s needs reconcile: %t (changed: %t, secrets stored: %v)", remoteCentralNamespace, remoteCentralName, needsReconcile, changed, remoteCentral.Metadata.SecretsStored)
 
 	if !needsReconcile && isRemoteCentralReady(&remoteCentral) {
+		glog.V(2).Infof("[DEBUG] Central %s/%s doesn't need reconcile and is ready, returning ErrCentralNotChanged", remoteCentralNamespace, remoteCentralName)
 		shouldUpdateCentralHash = true
 		return nil, ErrCentralNotChanged
 	}
@@ -185,120 +196,180 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	glog.Infof("Start reconcile central %s/%s", remoteCentralNamespace, remoteCentralName)
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
+		glog.V(2).Infof("[DEBUG] Central %s/%s has deletion timestamp: %s, starting deletion reconcile", remoteCentralNamespace, remoteCentralName, remoteCentral.Metadata.DeletionTimestamp)
 		status, err := r.reconcileInstanceDeletion(ctx, remoteCentral)
+		if err != nil {
+			glog.Errorf("[DEBUG] Failed to reconcile deletion for central %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
+		} else {
+			glog.V(2).Infof("[DEBUG] Successfully reconciled deletion for central %s/%s, status: %+v", remoteCentralNamespace, remoteCentralName, status)
+		}
 		shouldUpdateCentralHash = err == nil
 		return status, err
 	}
 
 	ns := r.getDesiredNamespace(remoteCentral)
+	glog.V(2).Infof("[DEBUG] Reconciling namespace %s for central %s/%s", ns.Name, remoteCentralNamespace, remoteCentralName)
 	if err := r.namespaceReconciler.reconcile(ctx, ns); err != nil {
+		glog.Errorf("[DEBUG] Failed to reconcile namespace %s for central %s/%s: %v", ns.Name, remoteCentralNamespace, remoteCentralName, err)
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
+	glog.V(2).Infof("[DEBUG] Successfully reconciled namespace %s for central %s/%s", ns.Name, remoteCentralNamespace, remoteCentralName)
 
 	if len(r.tenantImagePullSecret) > 0 {
+		glog.V(2).Infof("[DEBUG] Ensuring image pull secret %s configured for central %s/%s", tenantImagePullSecretName, remoteCentralNamespace, remoteCentralName)
 		err = r.ensureImagePullSecretConfigured(ctx, remoteCentralNamespace, tenantImagePullSecretName, r.tenantImagePullSecret)
 		if err != nil {
+			glog.Errorf("[DEBUG] Failed to ensure image pull secret for central %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
 			return nil, err
 		}
+		glog.V(2).Infof("[DEBUG] Successfully ensured image pull secret for central %s/%s", remoteCentralNamespace, remoteCentralName)
+	} else {
+		glog.V(3).Infof("[DEBUG] No tenant image pull secret configured for central %s/%s", remoteCentralNamespace, remoteCentralName)
 	}
 
+	glog.V(2).Infof("[DEBUG] Restoring central secrets for %s/%s", remoteCentralNamespace, remoteCentralName)
 	err = r.restoreCentralSecretsFunc(ctx, remoteCentral)
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed to restore central secrets for %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
 		return nil, err
 	}
+	glog.V(2).Infof("[DEBUG] Successfully restored central secrets for %s/%s", remoteCentralNamespace, remoteCentralName)
 
+	glog.V(2).Infof("[DEBUG] Ensuring encryption key secret exists for central %s/%s", remoteCentralNamespace, remoteCentralName)
 	err = r.ensureEncryptionKeySecretExists(ctx, remoteCentralNamespace)
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed to ensure encryption key secret for central %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
 		return nil, err
 	}
+	glog.V(2).Infof("[DEBUG] Successfully ensured encryption key secret for central %s/%s", remoteCentralNamespace, remoteCentralName)
 
 	centralDBConnectionString := ""
 	if r.managedDBEnabled {
+		glog.V(2).Infof("[DEBUG] Getting Central DB connection string for %s/%s (managed DB enabled)", remoteCentralNamespace, remoteCentralName)
 		centralDBConnectionString, err = r.managedDbReconciler.getCentralDBConnectionString(ctx, remoteCentral)
 		if err != nil {
+			glog.Errorf("[DEBUG] Failed to get Central DB connection string for %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
 			return nil, fmt.Errorf("getting Central DB connection string: %w", err)
 		}
+		glog.V(2).Infof("[DEBUG] Successfully obtained Central DB connection string for %s/%s", remoteCentralNamespace, remoteCentralName)
+	} else {
+		glog.V(3).Infof("[DEBUG] Managed DB not enabled for central %s/%s", remoteCentralNamespace, remoteCentralName)
 	}
 
+	glog.V(2).Infof("[DEBUG] Ensuring ArgoCD application exists for central %s/%s", remoteCentralNamespace, remoteCentralName)
 	if err := r.argoReconciler.ensureApplicationExists(ctx, remoteCentral, centralDBConnectionString); err != nil {
+		glog.Errorf("[DEBUG] Failed to ensure ArgoCD application for central %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
 		return nil, errors.Wrapf(err, "unable to install ArgoCD application for central %s/%s", remoteCentralNamespace, remoteCentralName)
 	}
+	glog.V(2).Infof("[DEBUG] Successfully ensured ArgoCD application for central %s/%s", remoteCentralNamespace, remoteCentralName)
 
+	glog.V(2).Infof("[DEBUG] Reconciling declarative configuration data for central %s/%s", remoteCentralNamespace, remoteCentralName)
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
+		glog.Errorf("[DEBUG] Failed to reconcile declarative configuration data for central %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
 		return nil, err
 	}
+	glog.V(2).Infof("[DEBUG] Successfully reconciled declarative configuration data for central %s/%s", remoteCentralNamespace, remoteCentralName)
 
 	// Check whether deployment is ready.
+	glog.V(2).Infof("[DEBUG] Checking if Central deployment is ready for %s/%s", remoteCentralNamespace, remoteCentralName)
 	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentralNamespace)
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed to check Central deployment readiness for %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
 		return nil, err
 	}
+	glog.V(2).Infof("[DEBUG] Central deployment ready status for %s/%s: %t", remoteCentralNamespace, remoteCentralName, centralDeploymentReady)
 
+	glog.V(2).Infof("[DEBUG] Ensuring TLS secret has owner reference for central %s/%s", remoteCentralNamespace, remoteCentralName)
 	if err = r.ensureSecretHasOwnerReference(ctx, k8s.CentralTLSSecretName, remoteCentral); err != nil {
+		glog.Errorf("[DEBUG] Failed to ensure TLS secret owner reference for central %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
 		return nil, err
 	}
+	glog.V(2).Infof("[DEBUG] Successfully ensured TLS secret owner reference for central %s/%s", remoteCentralNamespace, remoteCentralName)
 
 	if !centralDeploymentReady {
+		glog.V(2).Infof("[DEBUG] Central deployment not ready for %s/%s", remoteCentralNamespace, remoteCentralName)
 		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
+			glog.V(2).Infof("[DEBUG] Central %s/%s is provisioning and no changes detected, returning ErrCentralNotChanged", remoteCentralNamespace, remoteCentralName)
 			return nil, ErrCentralNotChanged
 		}
+		glog.V(2).Infof("[DEBUG] Central %s/%s deployment not ready, returning installing status", remoteCentralNamespace, remoteCentralName)
 		return installingStatus(), nil
 	}
 
+	glog.V(2).Infof("[DEBUG] Collecting reconciliation status for central %s/%s", remoteCentralNamespace, remoteCentralName)
 	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed to collect reconciliation status for central %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
 		return nil, err
 	}
 
 	shouldUpdateCentralHash = true
+	glog.V(2).Infof("[DEBUG] Successfully collected reconciliation status for central %s/%s, updating central hash", remoteCentralNamespace, remoteCentralName)
 
 	logStatus := *status
 	logStatus.Secrets = obscureSecrets(status.Secrets)
 	glog.Infof("Returning central status %+v", logStatus)
+	glog.V(2).Infof("[DEBUG] Completed reconcile for central %s/%s successfully", remoteCentralNamespace, remoteCentralName)
 
 	return status, nil
 }
 
 func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	glog.V(2).Infof("[DEBUG] Starting secret restoration for central %s/%s, stored secrets: %v", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, remoteCentral.Metadata.SecretsStored)
 	restoreSecrets := []string{}
 	for _, secretName := range remoteCentral.Metadata.SecretsStored { // pragma: allowlist secret
+		glog.V(3).Infof("[DEBUG] Checking if secret %s exists for central %s/%s", secretName, remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		exists, err := checkSecretExists(ctx, r.client, remoteCentral.Metadata.Namespace, secretName)
 		if err != nil {
+			glog.Errorf("[DEBUG] Failed to check if secret %s exists for central %s/%s: %v", secretName, remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, err)
 			return err
 		}
 
 		if !exists {
+			glog.V(2).Infof("[DEBUG] Secret %s does not exist for central %s/%s, adding to restore list", secretName, remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 			restoreSecrets = append(restoreSecrets, secretName)
+		} else {
+			glog.V(3).Infof("[DEBUG] Secret %s already exists for central %s/%s", secretName, remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		}
 	}
 
 	if len(restoreSecrets) == 0 {
-		// nothing to restore
+		glog.V(2).Infof("[DEBUG] No secrets need restoration for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		return nil
 	}
 
 	glog.Info(fmt.Sprintf("Restore secret for tenant: %s/%s", remoteCentral.Id, remoteCentral.Metadata.Namespace), restoreSecrets)
+	glog.V(2).Infof("[DEBUG] Fetching central data from fleet manager for secret restoration, central ID: %s", remoteCentral.Id)
 	central, _, err := r.fleetmanagerClient.PrivateAPI().GetCentral(ctx, remoteCentral.Id)
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed to load secrets for central %s from fleet manager: %v", remoteCentral.Id, err)
 		return fmt.Errorf("loading secrets for central %s: %w", remoteCentral.Id, err)
 	}
+	glog.V(2).Infof("[DEBUG] Successfully fetched central data for secret restoration, central ID: %s", remoteCentral.Id)
 
+	glog.V(2).Infof("[DEBUG] Decrypting %d secrets for central %s", len(central.Metadata.Secrets), central.Id)
 	decryptedSecrets, err := r.decryptSecrets(central.Metadata.Secrets)
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed to decrypt secrets for central %s: %v", central.Id, err)
 		return fmt.Errorf("decrypting secrets for central %s: %w", central.Id, err)
 	}
+	glog.V(2).Infof("[DEBUG] Successfully decrypted %d secrets for central %s", len(decryptedSecrets), central.Id)
 
 	for _, secretName := range restoreSecrets { // pragma: allowlist secret
+		glog.V(2).Infof("[DEBUG] Restoring secret %s for central %s", secretName, central.Id)
 		secretToRestore, secretFound := decryptedSecrets[secretName]
 		if !secretFound {
+			glog.Errorf("[DEBUG] Secret %s not found in decrypted secret map for central %s", secretName, central.Id)
 			return fmt.Errorf("finding secret %s in decrypted secret map", secretName)
 		}
 
 		if err := r.client.Create(ctx, secretToRestore); err != nil {
+			glog.Errorf("[DEBUG] Failed to recreate secret %s for central %s: %v", secretName, central.Id, err)
 			return fmt.Errorf("recreating secret %s for central %s: %w", secretName, central.Id, err)
 		}
-
+		glog.V(2).Infof("[DEBUG] Successfully restored secret %s for central %s", secretName, central.Id)
 	}
+	glog.V(2).Infof("[DEBUG] Completed secret restoration for central %s/%s, restored %d secrets", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, len(restoreSecrets))
 
 	return nil
 }
@@ -307,13 +378,17 @@ func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remot
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
+	glog.V(2).Infof("[DEBUG] Starting instance deletion reconciliation for central %s/%s", remoteCentralNamespace, remoteCentralName)
 	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral)
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed to ensure central deleted for %s/%s: %v", remoteCentralNamespace, remoteCentralName, err)
 		return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
 	}
 	if deleted {
+		glog.V(2).Infof("[DEBUG] Central %s/%s successfully deleted", remoteCentralNamespace, remoteCentralName)
 		return deletedStatus(), nil
 	}
+	glog.V(2).Infof("[DEBUG] Central %s/%s deletion still in progress", remoteCentralNamespace, remoteCentralName)
 	return nil, ErrDeletionInProgress
 }
 
@@ -481,33 +556,48 @@ func stringMapNeedsUpdating(desired, actual map[string]string) bool {
 }
 
 func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
+	glog.V(3).Infof("[DEBUG] Starting status collection for central %s/%s (status: %s, ready: %t)", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, remoteCentral.RequestStatus, isRemoteCentralReady(remoteCentral))
 	status := readyStatus()
+
 	// Do not report routes statuses if:
 	// 1. Routes are not used on the cluster
 	// 2. Central request is in status "Ready" - assuming that routes are already reported and saved
 	if r.useRoutes && !isRemoteCentralReady(remoteCentral) {
+		glog.V(2).Infof("[DEBUG] Collecting routes statuses for central %s/%s (routes enabled: %t, central ready: %t)", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, r.useRoutes, isRemoteCentralReady(remoteCentral))
 		var err error
 		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentral)
 		if err != nil {
+			glog.Errorf("[DEBUG] Failed to get routes statuses for central %s/%s: %v", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, err)
 			return nil, err
 		}
+		glog.V(2).Infof("[DEBUG] Successfully collected %d routes for central %s/%s", len(status.Routes), remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
+	} else {
+		glog.V(3).Infof("[DEBUG] Skipping routes collection for central %s/%s (routes enabled: %t, central ready: %t)", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, r.useRoutes, isRemoteCentralReady(remoteCentral))
 	}
 
 	// Only report secrets if Central is ready, to ensure we're not trying to get secrets before they are created.
 	if isRemoteCentralReady(remoteCentral) {
+		glog.V(2).Infof("[DEBUG] Collecting secrets for central %s/%s (central is ready)", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		encSecrets, err := r.collectSecretsEncrypted(ctx, remoteCentral)
 		if err != nil {
+			glog.Errorf("[DEBUG] Failed to collect encrypted secrets for central %s/%s: %v", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, err)
 			return nil, err
 		}
 
 		// Only report secrets if data hash differs to make sure we don't produce huge amount of data
 		// if no update is required on the fleet-manager DB
 		if encSecrets.sha256Sum != remoteCentral.Metadata.SecretDataSha256Sum { // pragma: allowlist secret
+			glog.V(2).Infof("[DEBUG] Secret hash changed for central %s/%s, updating secrets in status (old hash: %s, new hash: %s)", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, remoteCentral.Metadata.SecretDataSha256Sum, encSecrets.sha256Sum)
 			status.Secrets = encSecrets.secrets               // pragma: allowlist secret
 			status.SecretDataSha256Sum = encSecrets.sha256Sum // pragma: allowlist secret
+		} else {
+			glog.V(3).Infof("[DEBUG] Secret hash unchanged for central %s/%s, not updating secrets in status", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		}
+	} else {
+		glog.V(3).Infof("[DEBUG] Skipping secrets collection for central %s/%s (central not ready)", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	}
 
+	glog.V(3).Infof("[DEBUG] Status collection completed for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	return status, nil
 }
 
@@ -712,34 +802,49 @@ func getRouteStatus(ingress openshiftRouteV1.RouteIngress) private.DataPlaneCent
 }
 
 func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
+	glog.V(2).Infof("[DEBUG] Starting central deletion process for %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	globalDeleted := true
 
+	glog.V(2).Infof("[DEBUG] Deleting K8s resources for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	k8sResourcesDeleted, err := r.tenantCleanup.DeleteK8sResources(ctx, remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed to delete K8s resources for central %s/%s: %v", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, err)
 		return false, err
 	}
+	glog.V(2).Infof("[DEBUG] K8s resources deleted status for central %s/%s: %t", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, k8sResourcesDeleted)
 	globalDeleted = globalDeleted && k8sResourcesDeleted
 
+	glog.V(2).Infof("[DEBUG] Ensuring instance pods terminated for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	podsTerminated, err := r.ensureInstancePodsTerminated(ctx, remoteCentral)
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed to ensure pods terminated for central %s/%s: %v", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, err)
 		return false, err
 	}
+	glog.V(2).Infof("[DEBUG] Pods terminated status for central %s/%s: %t", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, podsTerminated)
 	globalDeleted = globalDeleted && podsTerminated
 
 	if r.managedDBEnabled {
+		glog.V(2).Infof("[DEBUG] Ensuring managed DB deleted for central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		dbDeleted, err := r.managedDbReconciler.ensureDeleted(ctx, remoteCentral)
 		if err != nil {
+			glog.Errorf("[DEBUG] Failed to ensure managed DB deleted for central %s/%s: %v", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, err)
 			return false, err
 		}
+		glog.V(2).Infof("[DEBUG] Managed DB deleted status for central %s/%s: %t", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, dbDeleted)
 		globalDeleted = globalDeleted && dbDeleted
+	} else {
+		glog.V(3).Infof("[DEBUG] Managed DB not enabled for central %s/%s, skipping DB deletion", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	}
 
+	glog.V(2).Infof("[DEBUG] Central deletion process completed for %s/%s, global deleted status: %t", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, globalDeleted)
 	return globalDeleted, nil
 }
 
 // centralChanged compares the given central to the last central reconciled using a hash
 func (r *CentralReconciler) centralChanged(currentHash [16]byte) bool {
-	return !bytes.Equal(r.lastCentralHash[:], currentHash[:])
+	changed := !bytes.Equal(r.lastCentralHash[:], currentHash[:])
+	glog.V(3).Infof("[DEBUG] Central hash comparison - current: %x, last: %x, changed: %t", currentHash, r.lastCentralHash, changed)
+	return changed
 }
 
 func (r *CentralReconciler) setLastCentralHash(currentHash [16]byte) {
@@ -747,10 +852,13 @@ func (r *CentralReconciler) setLastCentralHash(currentHash [16]byte) {
 }
 
 func (r *CentralReconciler) computeCentralHash(central private.ManagedCentral) ([16]byte, error) {
+	glog.V(3).Infof("[DEBUG] Computing hash for central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
 	hash, err := util.MD5SumFromJSONStruct(&central)
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed to calculate MD5 hash for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
 		return [16]byte{}, fmt.Errorf("calculating MD5 from JSON: %w", err)
 	}
+	glog.V(3).Infof("[DEBUG] Computed hash %x for central %s/%s", hash, central.Metadata.Namespace, central.Metadata.Name)
 	return hash, nil
 }
 
@@ -869,7 +977,10 @@ func generateDBPassword() (string, error) {
 func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
 	namespace := remoteCentral.Metadata.Namespace
 	name := remoteCentral.Metadata.Name
+	glog.V(2).Infof("[DEBUG] Starting pod termination check for central %s/%s", namespace, name)
+
 	err := wait.PollUntilContextCancel(ctx, centralDeletePollInterval, true, func(ctx context.Context) (bool, error) {
+		glog.V(3).Infof("[DEBUG] Polling for pod termination in namespace %s for central %s", namespace, name)
 		pods := &corev1.PodList{}
 		labelKey := "app.kubernetes.io/part-of"
 		labelValue := "stackrox-central-services"
@@ -880,8 +991,11 @@ func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, re
 		)
 
 		if err != nil {
+			glog.Errorf("[DEBUG] Failed to list instance pods for central %s/%s: %v", namespace, name, err)
 			return false, fmt.Errorf("listing instance pods: %w", err)
 		}
+
+		glog.V(3).Infof("[DEBUG] Found %d pods with label %s=%s in namespace %s", len(pods.Items), labelKey, labelValue, namespace)
 
 		// Make sure that the returned pods are central service pods in the correct namespace
 		var filteredPods []corev1.Pod
@@ -896,6 +1010,7 @@ func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, re
 		}
 
 		if len(filteredPods) == 0 {
+			glog.V(2).Infof("[DEBUG] No central service pods found in namespace %s for central %s, termination complete", namespace, name)
 			return true, nil
 		}
 
@@ -905,13 +1020,16 @@ func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, re
 		}
 
 		glog.Infof("Waiting for pods to terminate: %s", podNames)
+		glog.V(2).Infof("[DEBUG] Still waiting for %d pods to terminate in namespace %s for central %s", len(filteredPods), namespace, name)
 		return false, nil
 	})
 
 	if err != nil {
+		glog.Errorf("[DEBUG] Failed while waiting for pods to terminate for central %s/%s: %v", namespace, name, err)
 		return false, fmt.Errorf("waiting for pods to terminate: %w", err)
 	}
 	glog.Infof("All pods terminated for tenant %s in namespace %s.", name, namespace)
+	glog.V(2).Infof("[DEBUG] Pod termination completed successfully for central %s/%s", namespace, name)
 	return true, nil
 }
 
@@ -954,22 +1072,30 @@ func getNamespaceAnnotations(c private.ManagedCentral) map[string]string {
 }
 
 func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.ManagedCentral, storedSecrets []string) bool {
+	glog.V(3).Infof("[DEBUG] Evaluating if reconcile needed for central %s/%s (changed: %t, stored secrets: %v)", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, changed, storedSecrets)
+
 	if !r.areSecretsStoredFunc(storedSecrets) {
+		glog.V(2).Infof("[DEBUG] Central %s/%s needs reconcile: secrets not properly stored", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		return true
 	}
 
 	if changed {
+		glog.V(2).Infof("[DEBUG] Central %s/%s needs reconcile: central configuration changed", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		return true
 	}
 
-	if r.clock.Now().Sub(r.lastCentralHashTime) > time.Minute*15 {
+	timeSinceLastHash := r.clock.Now().Sub(r.lastCentralHashTime)
+	if timeSinceLastHash > time.Minute*15 {
+		glog.V(2).Infof("[DEBUG] Central %s/%s needs reconcile: time since last hash (%v) > 15 minutes", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name, timeSinceLastHash)
 		return true
 	}
 
 	if force, ok := remoteCentral.Spec.TenantResourcesValues["forceReconcile"].(bool); ok && force {
+		glog.V(2).Infof("[DEBUG] Central %s/%s needs reconcile: forceReconcile flag set to true", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 		return true
 	}
 
+	glog.V(3).Infof("[DEBUG] Central %s/%s does not need reconcile", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	return false
 }
 
