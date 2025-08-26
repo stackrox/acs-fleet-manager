@@ -14,7 +14,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/externaldns"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/rhsso"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -576,22 +575,6 @@ func (k *centralService) DeprovisionExpiredCentrals() *errors.ServiceError {
 // but do not interrupt the deletion flow.
 func (k *centralService) Delete(centralRequest *dbapi.CentralRequest, force bool) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
-
-	// if the we don't have the clusterID we can only delete the row from the database
-	if centralRequest.ClusterID != "" {
-		routes, err := centralRequest.GetRoutes()
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
-		}
-		managedCentral, err := k.managedCentralPresenter.PresentManagedCentral(centralRequest)
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to present managed central")
-		}
-		// Only delete the routes when they are set
-		if routes != nil && k.centralConfig.EnableCentralExternalDomain && !externaldns.IsEnabled(managedCentral) {
-			glog.Infof("Skipping CNAME record deletion for Central tenant %q - managed by external DNS", centralRequest.ID)
-		}
-	}
 
 	logStateChange("delete request", centralRequest.ID, nil)
 	// soft delete the central request
