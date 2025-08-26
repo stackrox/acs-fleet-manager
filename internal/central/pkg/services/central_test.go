@@ -237,7 +237,7 @@ func Test_centralService_RestoreExpiredCentrals(t *testing.T) {
 		func(s string, nv []driver.NamedValue) {
 			expiredAt, _ := (nv[11].Value).(*time.Time)
 			assert.Nil(t, expiredAt)
-			assert.Equal(t, "test-id", nv[13].Value)
+			assert.Equal(t, "test-id", nv[12].Value)
 			expiredChecked = true
 		})
 	svcErr := centralService.Restore(context.Background(), "test-id")
