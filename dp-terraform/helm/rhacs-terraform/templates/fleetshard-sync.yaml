@@ -46,7 +46,7 @@ spec:
         command:
         - /usr/local/bin/fleetshard-sync
         args:
-        - '--v=10'
+        - '-v=10'
         env:
         - name: OCM_TOKEN
           value: {{ .Values.fleetshardSync.ocmToken }}
