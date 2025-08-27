@@ -25,25 +25,13 @@ import (
 )
 
 func main() {
-	// This is needed to make `glog` believe that the flags have already been parsed, otherwise
-	// every log messages is prefixed by an error message stating the flags haven't been
-	// parsed.
-	_ = flag.CommandLine.Parse([]string{})
-
 	// Always log to stderr by default, required for glog.
 	if err := flag.Set("logtostderr", "true"); err != nil {
 		glog.Info("Unable to set logtostderr to true")
 	}
 
-	// Configure glog verbosity level from environment variable
-	// This allows debug logging to be enabled in e2e tests and development
-	if verbosity := os.Getenv("GLOG_V"); verbosity != "" {
-		if err := flag.Set("v", verbosity); err != nil {
-			glog.Infof("Unable to set glog verbosity to %s: %v", verbosity, err)
-		} else {
-			glog.Infof("Set glog verbosity level to %s", verbosity)
-		}
-	}
+	flag.Parse()
+	defer glog.Flush()
 
 	config, err := config.GetConfig()
 	if err != nil {

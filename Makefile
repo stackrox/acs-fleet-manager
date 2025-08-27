@@ -364,7 +364,6 @@ test/cluster/cleanup:
 test/e2e: $(GINKGO_BIN)
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	RUN_E2E=true \
-	GLOG_V=3 \
 	GITOPS_CONFIG_PATH=$(GITOPS_CONFIG_FILE) \
 	$(GINKGO_BIN) -r $(GINKGO_FLAGS) \
 		--randomize-suites \
@@ -380,7 +379,6 @@ test/e2e: $(GINKGO_BIN)
 test/e2e/multicluster: $(GINKGO_BIN)
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	GITOPS_CONFIG_PATH=$(GITOPS_CONFIG_FILE) \
-	GLOG_V=3 \
 	RUN_MULTICLUSTER_E2E=true \
 	$(GINKGO_BIN) -r $(GINKGO_FLAGS) \
 		--randomize-suites \

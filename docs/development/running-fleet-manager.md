@@ -42,25 +42,24 @@ make binary && ./fleet-manager serve \
 
 ## Debug Logging Configuration
 
-Both fleet-manager and fleetshard-sync support configurable debug logging levels using the `GLOG_V` environment variable:
+Both fleet-manager and fleetshard-sync support configurable debug logging levels using standard glog flags:
 
-- `GLOG_V=0` - Basic error and warning messages (default)
-- `GLOG_V=1` - Include informational messages
-- `GLOG_V=2` - Include important debug messages (recommended for troubleshooting)
-- `GLOG_V=3` - Include detailed debug messages
-- `GLOG_V=4` and higher - Include verbose trace information
+- `-v=0` - Basic error and warning messages (default)
+- `-v=1` - Include informational messages
+- `-v=2` - Include important debug messages (recommended for troubleshooting)
+- `-v=3` - Include detailed debug messages
+- `-v=4` and higher - Include verbose trace information
 
 **Examples:**
 
 For local development with enhanced debugging:
 ```bash
-export GLOG_V=2
-make binary && ./fleet-manager serve --dataplane-cluster-config-file=...
+make binary && ./fleet-manager serve -v=2 --dataplane-cluster-config-file=...
 ```
 
-For e2e tests with debug logging:
+For fleetshard-sync with debug logging:
 ```bash
-GLOG_V=3 make test/e2e
+./fleetshard -v=3
 ```
 
 The debug logging added includes detailed information about:
