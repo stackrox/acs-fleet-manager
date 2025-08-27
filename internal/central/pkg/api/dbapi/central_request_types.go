@@ -68,9 +68,6 @@ type CentralRequest struct {
 	QuotaType string `json:"quota_type"`
 	// Routes routes mapping for the central instance. It is an array and each item in the array contains a domain value and the corresponding route url.
 	Routes api.JSON `json:"routes"`
-	// RoutesCreated if the routes mapping have been created in the DNS provider like Route53. Use a separate field to make it easier to query.
-	// Deprecated: This field is no longer used and will be removed in future releases.
-	RoutesCreated bool `json:"routes_created"`
 	// Namespace is the namespace of the provisioned central instance.
 	// We store this in the database to ensure that old centrals whose namespace contained "owner-<central-id>" information will continue to work.
 

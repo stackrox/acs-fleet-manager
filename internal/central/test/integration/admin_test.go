@@ -49,7 +49,6 @@ func TestAssignCluster(t *testing.T) {
 			InstanceType:   clusters[0].SupportedInstanceType,
 			ClusterID:      clusters[0].ClusterID,
 			Meta:           api.Meta{ID: api.NewID()},
-			RoutesCreated:  true,
 			Routes:         dummyRoutesJSON,
 		},
 		{
@@ -63,7 +62,6 @@ func TestAssignCluster(t *testing.T) {
 			InstanceType:   clusters[0].SupportedInstanceType,
 			ClusterID:      clusters[0].ClusterID,
 			Meta:           api.Meta{ID: api.NewID()},
-			RoutesCreated:  true,
 			Routes:         dummyRoutesJSON,
 		},
 	}
@@ -90,7 +88,6 @@ func TestAssignCluster(t *testing.T) {
 	}
 
 	require.Equal(t, "new-cluster-1234", cr.ClusterID, "ClusterID was not set properly.")
-	require.False(t, cr.RoutesCreated, "RoutesCreated should be reset to false.")
 	require.Nil(t, cr.Routes, "Stored Routes content should be nil.")
 	require.Equal(t, constants2.CentralRequestStatusProvisioning.String(), cr.Status, "Status should change from ready to provisioning.")
 	require.True(t, cr.EnteredProvisioningAt.Valid, "EnteredProvisioning time should be valid")

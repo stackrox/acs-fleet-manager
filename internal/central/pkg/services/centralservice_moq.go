@@ -69,9 +69,6 @@ var _ CentralService = &CentralServiceMock{}
 //			ListByStatusFunc: func(status ...constants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListByStatus method")
 //			},
-//			ListCentralsWithRoutesNotCreatedFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
-//				panic("mock out the ListCentralsWithRoutesNotCreated method")
-//			},
 //			ListCentralsWithoutAuthConfigFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListCentralsWithoutAuthConfig method")
 //			},
@@ -156,9 +153,6 @@ type CentralServiceMock struct {
 
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status ...constants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
-
-	// ListCentralsWithRoutesNotCreatedFunc mocks the ListCentralsWithRoutesNotCreated method.
-	ListCentralsWithRoutesNotCreatedFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
 
 	// ListCentralsWithoutAuthConfigFunc mocks the ListCentralsWithoutAuthConfig method.
 	ListCentralsWithoutAuthConfigFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
@@ -294,9 +288,6 @@ type CentralServiceMock struct {
 			// Status is the status argument value.
 			Status []constants.CentralStatus
 		}
-		// ListCentralsWithRoutesNotCreated holds details about calls to the ListCentralsWithRoutesNotCreated method.
-		ListCentralsWithRoutesNotCreated []struct {
-		}
 		// ListCentralsWithoutAuthConfig holds details about calls to the ListCentralsWithoutAuthConfig method.
 		ListCentralsWithoutAuthConfig []struct {
 		}
@@ -367,33 +358,32 @@ type CentralServiceMock struct {
 			CentralRequest *dbapi.CentralRequest
 		}
 	}
-	lockAcceptCentralRequest             sync.RWMutex
-	lockAssignCluster                    sync.RWMutex
-	lockChangeBillingParameters          sync.RWMutex
-	lockChangeSubscription               sync.RWMutex
-	lockCountByRegionAndInstanceType     sync.RWMutex
-	lockCountByStatus                    sync.RWMutex
-	lockDelete                           sync.RWMutex
-	lockDeprovisionCentralForUsers       sync.RWMutex
-	lockDeprovisionExpiredCentrals       sync.RWMutex
-	lockDetectInstanceType               sync.RWMutex
-	lockGet                              sync.RWMutex
-	lockGetByID                          sync.RWMutex
-	lockHasAvailableCapacityInRegion     sync.RWMutex
-	lockList                             sync.RWMutex
-	lockListByStatus                     sync.RWMutex
-	lockListCentralsWithRoutesNotCreated sync.RWMutex
-	lockListCentralsWithoutAuthConfig    sync.RWMutex
-	lockPrepareCentralRequest            sync.RWMutex
-	lockRegisterCentralDeprovisionJob    sync.RWMutex
-	lockRegisterCentralJob               sync.RWMutex
-	lockResetCentralSecretBackup         sync.RWMutex
-	lockRestore                          sync.RWMutex
-	lockRotateCentralRHSSOClient         sync.RWMutex
-	lockUpdateIgnoreNils                 sync.RWMutex
-	lockUpdateStatus                     sync.RWMutex
-	lockUpdates                          sync.RWMutex
-	lockVerifyAndUpdateCentralAdmin      sync.RWMutex
+	lockAcceptCentralRequest          sync.RWMutex
+	lockAssignCluster                 sync.RWMutex
+	lockChangeBillingParameters       sync.RWMutex
+	lockChangeSubscription            sync.RWMutex
+	lockCountByRegionAndInstanceType  sync.RWMutex
+	lockCountByStatus                 sync.RWMutex
+	lockDelete                        sync.RWMutex
+	lockDeprovisionCentralForUsers    sync.RWMutex
+	lockDeprovisionExpiredCentrals    sync.RWMutex
+	lockDetectInstanceType            sync.RWMutex
+	lockGet                           sync.RWMutex
+	lockGetByID                       sync.RWMutex
+	lockHasAvailableCapacityInRegion  sync.RWMutex
+	lockList                          sync.RWMutex
+	lockListByStatus                  sync.RWMutex
+	lockListCentralsWithoutAuthConfig sync.RWMutex
+	lockPrepareCentralRequest         sync.RWMutex
+	lockRegisterCentralDeprovisionJob sync.RWMutex
+	lockRegisterCentralJob            sync.RWMutex
+	lockResetCentralSecretBackup      sync.RWMutex
+	lockRestore                       sync.RWMutex
+	lockRotateCentralRHSSOClient      sync.RWMutex
+	lockUpdateIgnoreNils              sync.RWMutex
+	lockUpdateStatus                  sync.RWMutex
+	lockUpdates                       sync.RWMutex
+	lockVerifyAndUpdateCentralAdmin   sync.RWMutex
 }
 
 // AcceptCentralRequest calls AcceptCentralRequestFunc.
@@ -919,33 +909,6 @@ func (mock *CentralServiceMock) ListByStatusCalls() []struct {
 	mock.lockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
 	mock.lockListByStatus.RUnlock()
-	return calls
-}
-
-// ListCentralsWithRoutesNotCreated calls ListCentralsWithRoutesNotCreatedFunc.
-func (mock *CentralServiceMock) ListCentralsWithRoutesNotCreated() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
-	if mock.ListCentralsWithRoutesNotCreatedFunc == nil {
-		panic("CentralServiceMock.ListCentralsWithRoutesNotCreatedFunc: method is nil but CentralService.ListCentralsWithRoutesNotCreated was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockListCentralsWithRoutesNotCreated.Lock()
-	mock.calls.ListCentralsWithRoutesNotCreated = append(mock.calls.ListCentralsWithRoutesNotCreated, callInfo)
-	mock.lockListCentralsWithRoutesNotCreated.Unlock()
-	return mock.ListCentralsWithRoutesNotCreatedFunc()
-}
-
-// ListCentralsWithRoutesNotCreatedCalls gets all the calls that were made to ListCentralsWithRoutesNotCreated.
-// Check the length with:
-//
-//	len(mockedCentralService.ListCentralsWithRoutesNotCreatedCalls())
-func (mock *CentralServiceMock) ListCentralsWithRoutesNotCreatedCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockListCentralsWithRoutesNotCreated.RLock()
-	calls = mock.calls.ListCentralsWithRoutesNotCreated
-	mock.lockListCentralsWithRoutesNotCreated.RUnlock()
 	return calls
 }
 

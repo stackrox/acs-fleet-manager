@@ -89,7 +89,6 @@ type CentralService interface {
 	DeprovisionExpiredCentrals() *errors.ServiceError
 	CountByStatus(status []constants.CentralStatus) ([]CentralStatusCount, error)
 	CountByRegionAndInstanceType() ([]CentralRegionCount, error)
-	ListCentralsWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateCentralAdmin(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 	Restore(ctx context.Context, id string) *errors.ServiceError
@@ -758,7 +757,6 @@ func (k *centralService) Restore(ctx context.Context, id string) *errors.Service
 	columnsToReset := []string{
 		"Routes",
 		"Status",
-		"RoutesCreated",
 		"DeletedAt",
 		"DeletionTimestamp",
 		"ClientID",
@@ -813,7 +811,6 @@ func (k *centralService) AssignCluster(ctx context.Context, centralID string, cl
 	}
 
 	central.ClusterID = clusterID
-	central.RoutesCreated = false
 	central.Routes = nil
 	central.Status = constants.CentralRequestStatusProvisioning.String()
 	now := time.Now()
@@ -821,7 +818,6 @@ func (k *centralService) AssignCluster(ctx context.Context, centralID string, cl
 
 	return k.Updates(central, map[string]interface{}{
 		"cluster_id":              central.ClusterID,
-		"routes_created":          central.RoutesCreated,
 		"routes":                  central.Routes,
 		"status":                  central.Status,
 		"entered_provisioning_at": central.EnteredProvisioningAt,
@@ -876,16 +872,6 @@ func (k *centralService) CountByStatus(status []constants.CentralStatus) ([]Cent
 		}
 	}
 
-	return results, nil
-}
-
-// ListCentralsWithRoutesNotCreated ...
-func (k *centralService) ListCentralsWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError) {
-	dbConn := k.connectionFactory.New()
-	var results []*dbapi.CentralRequest
-	if err := dbConn.Where("routes IS NOT NULL").Where("routes_created = ?", "no").Find(&results).Error; err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list central requests")
-	}
 	return results, nil
 }
 
@@ -949,7 +935,6 @@ func convertCentralRequestToString(req *dbapi.CentralRequest) string {
 		"placement_id":            req.PlacementID,
 		"instance_type":           req.InstanceType,
 		"qouta_type":              req.QuotaType,
-		"routes_created":          req.RoutesCreated,
 		"namespace":               req.Namespace,
 		"deletion_timestamp":      req.DeletionTimestamp,
 		"internal":                req.Internal,
