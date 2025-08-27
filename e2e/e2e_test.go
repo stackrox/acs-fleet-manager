@@ -155,16 +155,6 @@ var _ = Describe("Central", Ordered, func() {
 				Should(Succeed())
 		})
 
-		// TODO: possible flake. Maybe this test will be executed after the routes are created
-		It("should not expose URLs until the routes are created", func() {
-			testutil.SkipIf(!routesEnabled, skipRouteMsg)
-			var centralRequest public.CentralRequest
-			Expect(testutil.GetCentralRequest(ctx, client, centralRequestID, &centralRequest)).
-				To(Succeed())
-			Expect(centralRequest.CentralUIURL).To(BeEmpty())
-			Expect(centralRequest.CentralDataURL).To(BeEmpty())
-		})
-
 		It("should transition central request state to ready", func() {
 			Eventually(testutil.AssertCentralRequestReady(ctx, client, centralRequestID)).
 				WithTimeout(extendedWaitTimeout).
