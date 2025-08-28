@@ -275,7 +275,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			},
 			want: result{
 				wantErr: true,
-				reason:  "region us-east is not supported for aws, supported regions are: [us-east-1]",
+				reason:  "Region 'us-east' is not supported for aws. Available regions: [us-east-1]",
 			},
 		},
 		{
@@ -308,7 +308,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			},
 			want: result{
 				wantErr: true,
-				reason:  "instance type 'eval' not supported for region 'us-east'",
+				reason:  "Instance type 'eval' is not supported in region 'us-east'",
 			},
 		},
 	}
