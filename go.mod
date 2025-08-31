@@ -38,7 +38,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
-	github.com/openshift-online/ocm-sdk-go v0.1.456
+	github.com/openshift-online/ocm-sdk-go v0.1.477
 	github.com/openshift/addon-operator/apis v0.0.0-20231110045543-dd01f2f5c184
 	github.com/openshift/api v0.0.0-20250320115527-3aa9dd5b9002
 	github.com/operator-framework/api v0.31.0
@@ -225,6 +225,8 @@ require (
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
+	github.com/openshift-online/ocm-api-model/clientapi v0.0.432-0.20250828221234-d914d24fd262 // indirect
+	github.com/openshift-online/ocm-api-model/model v0.0.432-0.20250828221234-d914d24fd262 // indirect
 	github.com/openshift/client-go v0.0.0-20250324153519-f0faeb0f2f2e // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
