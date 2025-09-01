@@ -31,7 +31,7 @@ func ValidCentralClusterName(value *string, field string) handlers.Validate {
 			return errors.MalformedCentralClusterName("%s is invalid: %v", field, errs)
 		}
 		if !ValidCentralClusterNameRegexp.MatchString(*value) {
-			return errors.MalformedCentralClusterName("%s does not match %s", field, ValidCentralClusterNameRegexp.String())
+			return errors.MalformedCentralClusterName("%s must use lowercase letters, numbers, and hyphens only (max 32 characters)", field)
 		}
 		return nil
 	}
@@ -68,7 +68,7 @@ func ValidateCloudProvider(centralService *services.CentralService, centralReque
 		// Validation for Cloud Provider
 		provider, providerSupported := supportedProviders.GetByName(centralRequest.CloudProvider)
 		if !providerSupported {
-			return errors.ProviderNotSupported("provider %s is not supported, supported providers are: %s", centralRequest.CloudProvider, supportedProviders)
+			return errors.ProviderNotSupported("Cloud provider '%s' is not supported. Available providers: %s", centralRequest.CloudProvider, supportedProviders)
 		}
 
 		// Set Cloud Region default if not received in the request
@@ -80,14 +80,14 @@ func ValidateCloudProvider(centralService *services.CentralService, centralReque
 		// Validation for Cloud Region
 		regionSupported := provider.IsRegionSupported(centralRequest.Region)
 		if !regionSupported {
-			return errors.RegionNotSupported("region %s is not supported for %s, supported regions are: %s", centralRequest.Region, centralRequest.CloudProvider, provider.Regions)
+			return errors.RegionNotSupported("Region '%s' is not supported for %s. Available regions: %s", centralRequest.Region, centralRequest.CloudProvider, provider.Regions)
 		}
 
 		// Validate Region/InstanceType
 		instanceType := (*centralService).DetectInstanceType(centralRequest)
 		region, _ := provider.Regions.GetByName(centralRequest.Region)
 		if !region.IsInstanceTypeSupported(config.InstanceType(instanceType)) {
-			return errors.InstanceTypeNotSupported("instance type '%s' not supported for region '%s'", instanceType.String(), region.Name)
+			return errors.InstanceTypeNotSupported("Instance type '%s' is not supported in region '%s'", instanceType.String(), region.Name)
 		}
 		return nil
 	}

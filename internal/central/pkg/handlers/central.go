@@ -127,7 +127,7 @@ func (h centralHandler) List(w http.ResponseWriter, r *http.Request) {
 			listArgs := coreServices.NewListArguments(r.URL.Query())
 
 			if err := listArgs.Validate(); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list central requests: %s", err.Error())
+				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Invalid search or filter parameters: %s", err.Error())
 			}
 
 			centralRequests, paging, err := h.service.List(ctx, listArgs)
