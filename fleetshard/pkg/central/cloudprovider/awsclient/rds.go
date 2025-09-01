@@ -70,7 +70,8 @@ type RDS struct {
 	performanceInsights   bool
 	engineVersion         string
 	autoVersionUpgrade    bool
-	backupRetentionPeriod int
+	backupRetentionPeriod int32
+	clusterParameterGroup string
 	minCapacityACU        float32
 	maxCapacityACU        float32
 	sharedTags            []config.ManagedDBTag
@@ -423,6 +424,7 @@ func NewRDSClient(config *config.Config) (*RDS, error) {
 		engineVersion:         config.ManagedDB.EngineVersion,
 		autoVersionUpgrade:    config.ManagedDB.AutoVersionUpgrade,
 		backupRetentionPeriod: config.ManagedDB.BackupRetentionPeriod,
+		clusterParameterGroup: config.ManagedDB.ClusterParameterGroup,
 		minCapacityACU:        config.ManagedDB.MinCapacityACU,
 		maxCapacityACU:        config.ManagedDB.MaxCapacityACU,
 		sharedTags:            config.ManagedDB.SharedTags,
@@ -463,9 +465,14 @@ func (r *RDS) newCreateCentralDBClusterInput(input *createCentralDBClusterInput)
 			MinCapacity: aws.Float64(float64(r.minCapacityACU)),
 			MaxCapacity: aws.Float64(float64(r.maxCapacityACU)),
 		},
-		BackupRetentionPeriod: aws.Int32(int32(r.backupRetentionPeriod)),
+		BackupRetentionPeriod: aws.Int32(r.backupRetentionPeriod),
 		StorageEncrypted:      aws.Bool(true),
 		Tags:                  r.getDesiredTags(input.acsInstanceID, input.isTestInstance),
+	}
+	if r.clusterParameterGroup != "" {
+		awsInput.DBClusterParameterGroupName = aws.String(r.clusterParameterGroup)
+	} else {
+		glog.Infof("No custom DB cluster parameter group specified, using default for engine version %s", r.engineVersion)
 	}
 
 	// do not export DB logs of internal instances (e.g. Probes)
