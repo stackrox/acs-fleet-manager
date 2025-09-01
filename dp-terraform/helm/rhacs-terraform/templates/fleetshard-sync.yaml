@@ -77,6 +77,18 @@ spec:
           value: {{ required "fleetshardSync.managedDB.securityGroup is required when fleetshardSync.managedDB.enabled = true" .Values.fleetshardSync.managedDB.securityGroup }}
         - name: MANAGED_DB_PERFORMANCE_INSIGHTS
           value: {{ .Values.fleetshardSync.managedDB.performanceInsights | quote }}
+        - name: MANAGED_DB_ENGINE_VERSION
+          value: {{ .Values.fleetshardSync.managedDB.engineVersion | quote }}
+        - name: MANAGED_DB_AUTO_VERSION_UPGRADE
+          value: {{ .Values.fleetshardSync.managedDB.autoVersionUpgrade | quote }}
+        - name: MANAGED_DB_BACKUP_RETENTION_PERIOD
+          value: {{ .Values.fleetshardSync.managedDB.backupRetentionPeriod }}
+        - name: MANAGED_DB_CLUSTER_PARAMETER_GROUP
+          value: {{ .Values.fleetshardSync.managedDB.clusterParameterGroup | quote }}
+        - name: MANAGED_DB_MIN_CAPACITY_ACU
+          value: {{ .Values.fleetshardSync.managedDB.minCapacityACU }}
+        - name: MANAGED_DB_MAX_CAPACITY_ACU
+          value: {{ .Values.fleetshardSync.managedDB.maxCapacityACU }}
         {{- range $i, $tag := .Values.fleetshardSync.managedDB.sharedTags }}
         - name: MANAGED_DB_TAGS_{{ $i }}_KEY
           value: {{ $tag.key | quote }}

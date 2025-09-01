@@ -65,17 +65,8 @@ const (
 
 // RDS is an AWS RDS client that provisions and deprovisions databases for ACS instances.
 type RDS struct {
-	dbSecurityGroup       string
-	dbSubnetGroup         string
-	performanceInsights   bool
-	engineVersion         string
-	autoVersionUpgrade    bool
-	backupRetentionPeriod int32
-	clusterParameterGroup string
-	minCapacityACU        float32
-	maxCapacityACU        float32
-	sharedTags            []config.ManagedDBTag
-	rdsClient             RDSClient
+	rdsClient RDSClient
+	config    *config.ManagedDB
 }
 
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
@@ -189,8 +180,8 @@ func (r *RDS) ensureDBClusterCreated(clusterID, acsInstanceID, masterPassword st
 		clusterID:      clusterID,
 		acsInstanceID:  acsInstanceID,
 		dbPassword:     masterPassword, // pragma: allowlist secret
-		securityGroup:  r.dbSecurityGroup,
-		subnetGroup:    r.dbSubnetGroup,
+		securityGroup:  r.config.SecurityGroup,
+		subnetGroup:    r.config.SubnetGroup,
 		isTestInstance: isTestInstance,
 	}
 
@@ -261,7 +252,7 @@ func (r *RDS) ensureDBInstanceCreated(instanceID, clusterID, acsInstanceID strin
 		clusterID:           clusterID,
 		instanceID:          instanceID,
 		acsInstanceID:       acsInstanceID,
-		performanceInsights: r.performanceInsights,
+		performanceInsights: r.config.PerformanceInsights,
 		isTestInstance:      isTestInstance,
 	}
 	_, err = r.rdsClient.CreateDBInstance(context.TODO(), r.newCreateCentralDBInstanceInput(input))
@@ -417,17 +408,8 @@ func NewRDSClient(config *config.Config) (*RDS, error) {
 	}
 
 	return &RDS{
-		rdsClient:             rdsClient,
-		dbSecurityGroup:       config.ManagedDB.SecurityGroup,
-		dbSubnetGroup:         config.ManagedDB.SubnetGroup,
-		performanceInsights:   config.ManagedDB.PerformanceInsights,
-		engineVersion:         config.ManagedDB.EngineVersion,
-		autoVersionUpgrade:    config.ManagedDB.AutoVersionUpgrade,
-		backupRetentionPeriod: config.ManagedDB.BackupRetentionPeriod,
-		clusterParameterGroup: config.ManagedDB.ClusterParameterGroup,
-		minCapacityACU:        config.ManagedDB.MinCapacityACU,
-		maxCapacityACU:        config.ManagedDB.MaxCapacityACU,
-		sharedTags:            config.ManagedDB.SharedTags,
+		rdsClient: rdsClient,
+		config:    &config.ManagedDB,
 	}, nil
 }
 
@@ -456,23 +438,23 @@ func (r *RDS) newCreateCentralDBClusterInput(input *createCentralDBClusterInput)
 	awsInput := &rds.CreateDBClusterInput{
 		DBClusterIdentifier: aws.String(input.clusterID),
 		Engine:              aws.String(dbEngine),
-		EngineVersion:       aws.String(r.engineVersion),
+		EngineVersion:       aws.String(r.config.EngineVersion),
 		MasterUsername:      aws.String(dbUser),
 		MasterUserPassword:  aws.String(input.dbPassword),
 		VpcSecurityGroupIds: []string{input.securityGroup},
 		DBSubnetGroupName:   aws.String(input.subnetGroup),
 		ServerlessV2ScalingConfiguration: &types.ServerlessV2ScalingConfiguration{
-			MinCapacity: aws.Float64(float64(r.minCapacityACU)),
-			MaxCapacity: aws.Float64(float64(r.maxCapacityACU)),
+			MinCapacity: aws.Float64(float64(r.config.MinCapacityACU)),
+			MaxCapacity: aws.Float64(float64(r.config.MaxCapacityACU)),
 		},
-		BackupRetentionPeriod: aws.Int32(r.backupRetentionPeriod),
+		BackupRetentionPeriod: aws.Int32(r.config.BackupRetentionPeriod),
 		StorageEncrypted:      aws.Bool(true),
 		Tags:                  r.getDesiredTags(input.acsInstanceID, input.isTestInstance),
 	}
-	if r.clusterParameterGroup != "" {
-		awsInput.DBClusterParameterGroupName = aws.String(r.clusterParameterGroup)
+	if r.config.ClusterParameterGroup != "" {
+		awsInput.DBClusterParameterGroupName = aws.String(r.config.ClusterParameterGroup)
 	} else {
-		glog.Infof("No custom DB cluster parameter group specified, using default for engine version %s", r.engineVersion)
+		glog.Infof("No custom DB cluster parameter group specified, using default for engine version %s", r.config.EngineVersion)
 	}
 
 	// do not export DB logs of internal instances (e.g. Probes)
@@ -484,8 +466,8 @@ func (r *RDS) newCreateCentralDBClusterInput(input *createCentralDBClusterInput)
 }
 
 func (r *RDS) getDesiredTags(acsInstanceID string, isTestInstance bool) []types.Tag {
-	tags := make([]types.Tag, 0, len(r.sharedTags)+2)
-	for _, tag := range r.sharedTags {
+	tags := make([]types.Tag, 0, len(r.config.SharedTags)+2)
+	for _, tag := range r.config.SharedTags {
 		tags = append(tags, types.Tag{
 			Key:   aws.String(tag.Key),
 			Value: aws.String(tag.Value),
@@ -538,7 +520,7 @@ func (r *RDS) newCreateCentralDBInstanceInput(input *createCentralDBInstanceInpu
 		EnablePerformanceInsights: aws.Bool(input.performanceInsights),
 		PromotionTier:             aws.Int32(dbInstancePromotionTier),
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
-		AutoMinorVersionUpgrade:   aws.Bool(r.autoVersionUpgrade),
+		AutoMinorVersionUpgrade:   aws.Bool(r.config.AutoVersionUpgrade),
 
 		Tags: r.getDesiredTags(input.acsInstanceID, input.isTestInstance),
 	}
