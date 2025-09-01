@@ -29,13 +29,6 @@ func newTestRDS() (*RDS, error) {
 		return nil, fmt.Errorf("unable to create RDS client: %w", err)
 	}
 
-	cfg := &config.Config{
-		ManagedDB: config.ManagedDB{
-			SecurityGroup: os.Getenv("MANAGED_DB_SECURITY_GROUP"),
-			SubnetGroup:   os.Getenv("MANAGED_DB_SUBNET_GROUP"),
-		},
-	}
-
 	return &RDS{
 		rdsClient:             rdsClient,
 		backupRetentionPeriod: int32(1),
