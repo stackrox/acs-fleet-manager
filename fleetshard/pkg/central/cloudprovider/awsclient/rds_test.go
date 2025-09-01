@@ -38,12 +38,12 @@ func newTestRDS() (*RDS, error) {
 
 	return &RDS{
 		rdsClient:             rdsClient,
-		engineVersion:         cfg.ManagedDB.EngineVersion,
-		backupRetentionPeriod: cfg.ManagedDB.BackupRetentionPeriod,
-		minCapacityACU:        cfg.ManagedDB.MinCapacityACU,
-		maxCapacityACU:        cfg.ManagedDB.MaxCapacityACU,
-		dbSecurityGroup:       cfg.ManagedDB.SecurityGroup,
-		dbSubnetGroup:         cfg.ManagedDB.SubnetGroup,
+		backupRetentionPeriod: int32(1),
+		minCapacityACU:        0.5,
+		maxCapacityACU:        1,
+		engineVersion:         "15.13",
+		dbSecurityGroup:       os.Getenv("MANAGED_DB_SECURITY_GROUP"),
+		dbSubnetGroup:         os.Getenv("MANAGED_DB_SUBNET_GROUP"),
 	}, nil
 }
 
