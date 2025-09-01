@@ -33,7 +33,7 @@ func newTestRDS() (*RDS, error) {
 		SecurityGroup:         os.Getenv("MANAGED_DB_SECURITY_GROUP"),
 		SubnetGroup:           os.Getenv("MANAGED_DB_SUBNET_GROUP"),
 		BackupRetentionPeriod: 1,
-		EngineVersion:         "15.13",
+		EngineVersion:         "13.9",
 		MinCapacityACU:        0.5,
 		MaxCapacityACU:        1,
 	}

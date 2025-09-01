@@ -53,7 +53,7 @@ type ManagedDB struct {
 	SecurityGroup         string         `env:"MANAGED_DB_SECURITY_GROUP"`
 	SubnetGroup           string         `env:"MANAGED_DB_SUBNET_GROUP"`
 	PerformanceInsights   bool           `env:"MANAGED_DB_PERFORMANCE_INSIGHTS" envDefault:"false"`
-	EngineVersion         string         `env:"MANAGED_DB_ENGINE_VERSION" envDefault:"15.13"`       // See AWS RDS release calendar: https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-release-calendar.html
+	EngineVersion         string         `env:"MANAGED_DB_ENGINE_VERSION" envDefault:"13.9"`        // See AWS RDS release calendar: https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-release-calendar.html
 	AutoVersionUpgrade    bool           `env:"MANAGED_DB_AUTO_VERSION_UPGRADE" envDefault:"false"` // minor version upgrades only. Disable until figure out the strategy. s\See: ROX-16099
 	BackupRetentionPeriod int32          `env:"MANAGED_DB_BACKUP_RETENTION_PERIOD" envDefault:"30"` // days
 	ClusterParameterGroup string         `env:"MANAGED_DB_CLUSTER_PARAMETER_GROUP"`                 // if empty, the default parameter group for the engine version will be used
