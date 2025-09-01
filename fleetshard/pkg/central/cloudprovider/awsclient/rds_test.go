@@ -30,9 +30,10 @@ func newTestRDS() (*RDS, error) {
 	}
 
 	return &RDS{
-		rdsClient:       rdsClient,
-		dbSecurityGroup: os.Getenv("MANAGED_DB_SECURITY_GROUP"),
-		dbSubnetGroup:   os.Getenv("MANAGED_DB_SUBNET_GROUP"),
+		rdsClient:             rdsClient,
+		backupRetentionPeriod: int32(7),
+		dbSecurityGroup:       os.Getenv("MANAGED_DB_SECURITY_GROUP"),
+		dbSubnetGroup:         os.Getenv("MANAGED_DB_SUBNET_GROUP"),
 	}, nil
 }
 
