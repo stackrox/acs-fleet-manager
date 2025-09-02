@@ -233,6 +233,7 @@ func (ic *IAMConfig) GetDataPlaneIssuerURIs() []string {
 
 const (
 	openidConfigurationPath = "/.well-known/openid-configuration"
+	defaultJwksPath         = "/openid/v1/jwks"
 	kubernetesIssuer        = "https://kubernetes.default.svc"
 	jwksTempFilePattern     = "k8s-jwks-*.json"
 )
@@ -291,15 +292,41 @@ func (i *KubernetesIssuer) fetchJwks() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get JWKS URI for k8s issuer %s: %w", i.IssuerURI, err)
 	}
+
 	resp, err := client.Get(jwksURI)
+	if err == nil {
+		defer resp.Body.Close()
+		return i.readResponseAndReturnJWKS(resp)
+	}
+
+	if strings.Contains(jwksURI, kubernetesIssuer) {
+		return nil, fmt.Errorf("failed to fetch JWKS from: %q, with error: %w", jwksURI, err)
+	}
+
+	glog.V(5).Infof("failed to fetch JWKS from: %q with: %v\n trying internal JWKS endpoint instead", jwksURI, err)
+
+	internalJwksURI, err := url.JoinPath(kubernetesIssuer, defaultJwksPath)
 	if err != nil {
-		return nil, fmt.Errorf("fetch jwks from k8s issuer %s: %w", i.IssuerURI, err)
+		return nil, fmt.Errorf("failed to join JWKS base %q and path %q with err: %w", kubernetesIssuer, defaultJwksPath, err)
+	}
+	resp, err = client.Get(internalJwksURI)
+	if err != nil {
+		return nil, fmt.Errorf("request to internal JWKS endpoint: %q failed: %w", internalJwksURI, err)
 	}
 	defer resp.Body.Close()
+	return i.readResponseAndReturnJWKS(resp)
+}
+
+func (i *KubernetesIssuer) readResponseAndReturnJWKS(resp *http.Response) ([]byte, error) {
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("reading JWKS response: %w", err)
 	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get JWKS with status: %d, body: %q", resp.StatusCode, string(bytes))
+	}
+
 	return bytes, nil
 }
 
@@ -327,19 +354,6 @@ func (i *KubernetesIssuer) getJwksURI(client *http.Client) (string, error) {
 		jwksURI = i.overrideJwksURIForLocalCluster(jwksURI)
 	}
 
-	jwksURL, err := url.Parse(jwksURI)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to parse jwksURI as net/url: %s", jwksURI)
-	}
-
-	if netutil.IsIPAddress(jwksURL.Hostname()) && i.IssuerURI == kubernetesIssuer {
-		// in some cases like infra OCP the cluster internal jwks_uri in the discovery document
-		// is a private IP address of the pod running the oidc server. This breaks tls validation.
-		// This override makes sure that in those cases kubernetes.default.svc is used instead of the IP
-		glog.V(5).Infof("Configured issuer is: %s and jwks_uri contains IP, replacing host with internal kubernetes svc", i.IssuerURI)
-		jwksURI = i.overrideJwksURIForInternalCluster(jwksURL)
-	}
-
 	if cfg.Issuer != i.IssuerURI {
 		glog.V(5).Infof("Configured issuer URI does't match the issuer URI configured in the discovery document, overriding: [configured: %s, got: %s]", i.IssuerURI, cfg.Issuer)
 		i.IssuerURI = cfg.Issuer
@@ -360,14 +374,6 @@ func (i *KubernetesIssuer) overrideJwksURIForLocalCluster(jwksURI string) string
 		jwksURL.Host = "127.0.0.1"
 	}
 	return jwksURL.String()
-}
-
-func (i *KubernetesIssuer) overrideJwksURIForInternalCluster(url *url.URL) string {
-	k8sSvcHost := strings.TrimPrefix(kubernetesIssuer, "https://")
-	k8sSvcHost = strings.TrimPrefix(k8sSvcHost, "http://")
-	url.Host = k8sSvcHost
-
-	return url.String()
 }
 
 func (i *KubernetesIssuer) buildK8sConfig() (*rest.Config, error) {
