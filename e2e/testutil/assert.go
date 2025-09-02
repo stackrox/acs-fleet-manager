@@ -47,14 +47,15 @@ func AssertCentralRequestDeprovisioning(ctx context.Context, client *fleetmanage
 func AssertCentralRequestDeleted(ctx context.Context, client *fleetmanager.Client, id string) func() error {
 	return func() error {
 		_, httpResp, err := client.PublicAPI().GetCentralById(ctx, id)
-		if err != nil {
-			return fmt.Errorf("failed to get central: %w", err)
+		if err == nil {
+			return fmt.Errorf("expected central to be deleted, but it still exists")
 		}
-		if httpResp.StatusCode == 404 {
-			// Central not found, which means it has been deleted
-			return nil
+
+		if httpResp.StatusCode != 404 {
+			return fmt.Errorf("expected a 404 Not Found response, but got: %d", httpResp.StatusCode)
 		}
-		return fmt.Errorf("expected central to be deleted, but it still exists")
+
+		return nil
 	}
 }
 
