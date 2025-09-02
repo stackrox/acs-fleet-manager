@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -307,7 +306,10 @@ func (i *KubernetesIssuer) fetchJwks() ([]byte, error) {
 	glog.Infof("failed to fetch JWKS from: %q with: %v", jwksURI, err)
 	glog.Info("trying internal JWKS endpoint instead")
 
-	internalJwksURI := path.Join(kubernetesIssuer, defaultJwksPath)
+	internalJwksURI, err := url.JoinPath(kubernetesIssuer, defaultJwksPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to join JWKS base %q and path %q with err: %w", kubernetesIssuer, defaultJwksPath, err)
+	}
 	resp, err = client.Get(internalJwksURI)
 	if err != nil {
 		return nil, fmt.Errorf("request to internal JWKS endpoint: %q failed: %w", internalJwksURI, err)
