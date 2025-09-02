@@ -299,7 +299,7 @@ func (i *KubernetesIssuer) fetchJwks() ([]byte, error) {
 	}
 
 	if strings.Contains(jwksURI, kubernetesIssuer) {
-		return nil, fmt.Errorf("failed to fetch JWKS from: %q, with error: %w", err)
+		return nil, fmt.Errorf("failed to fetch JWKS from: %q, with error: %w", jwksURI, err)
 	}
 
 	glog.Infof("failed to fetch JWKS from: %q with: %v", jwksURI, err)
