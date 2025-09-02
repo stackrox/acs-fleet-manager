@@ -303,8 +303,7 @@ func (i *KubernetesIssuer) fetchJwks() ([]byte, error) {
 		return nil, fmt.Errorf("failed to fetch JWKS from: %q, with error: %w", jwksURI, err)
 	}
 
-	glog.Infof("failed to fetch JWKS from: %q with: %v", jwksURI, err)
-	glog.Info("trying internal JWKS endpoint instead")
+	glog.V(5).Infof("failed to fetch JWKS from: %q with: %v\n trying internal JWKS endpoint instead", jwksURI, err)
 
 	internalJwksURI, err := url.JoinPath(kubernetesIssuer, defaultJwksPath)
 	if err != nil {
