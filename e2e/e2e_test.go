@@ -381,6 +381,13 @@ var _ = Describe("Central", Ordered, func() {
 				Should(Succeed())
 		})
 
+		It("should be deleted from the api", func() {
+			Eventually(testutil.AssertCentralRequestDeleted(ctx, client, centralRequestID)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+		})
+
 		It("should be restorable", func() {
 			By("calling the admin restore API", func() {
 				res, err := adminAPI.RestoreCentral(ctx, centralRequestID)

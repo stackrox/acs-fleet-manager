@@ -43,6 +43,21 @@ func AssertCentralRequestDeprovisioning(ctx context.Context, client *fleetmanage
 	return AssertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusDeprovision.String())
 }
 
+// AssertCentralRequestDeleted verifies the central has been completely deleted (soft-deleted)
+func AssertCentralRequestDeleted(ctx context.Context, client *fleetmanager.Client, id string) func() error {
+	return func() error {
+		_, httpResp, err := client.PublicAPI().GetCentralById(ctx, id)
+		if err != nil {
+			return fmt.Errorf("failed to get central: %w", err)
+		}
+		if httpResp.StatusCode == 404 {
+			// Central not found, which means it has been deleted
+			return nil
+		}
+		return fmt.Errorf("expected central to be deleted, but it still exists")
+	}
+}
+
 // AssertReencryptIngressRouteExist asserts that the reencrypt RouteIngress for a CentralRequest is created
 // and stores it in the given RouteIngress object
 func AssertReencryptIngressRouteExist(ctx context.Context, routeService *k8s.RouteService, centralRequest public.CentralRequest, ingress *openshiftRouteV1.RouteIngress) func(g Gomega) {
