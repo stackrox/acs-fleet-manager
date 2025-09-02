@@ -291,11 +291,35 @@ func (i *KubernetesIssuer) fetchJwks() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get JWKS URI for k8s issuer %s: %w", i.IssuerURI, err)
 	}
+
 	resp, err := client.Get(jwksURI)
+	if err == nil {
+		defer resp.Body.Close()
+		return i.readAndReturnJWKS(resp)
+	}
+
+	if strings.Contains(jwksURI, kubernetesIssuer) {
+		return nil, fmt.Errorf("failed to fetch JWKS from: %q, with error: %w", err)
+	}
+
+	glog.Infof("failed to fetch JWKS from: %q with: %v", jwksURI, err)
+	glog.Info("trying internal JWKS endpoint instead")
+
+	jwksURL, err := url.Parse(jwksURI)
 	if err != nil {
-		return nil, fmt.Errorf("fetch jwks from k8s issuer %s: %w", i.IssuerURI, err)
+		return nil, fmt.Errorf("failed to parse jwksURI: %q as URL: %w", jwksURI, err)
+	}
+
+	internalJwksURI := i.overrideJwksURIForInternalCluster(jwksURL)
+	resp, err = client.Get(internalJwksURI)
+	if err != nil {
+		return nil, fmt.Errorf("request to internal JWKS endpoint: %q failed: %w", internalJwksURI, err)
 	}
 	defer resp.Body.Close()
+	return i.readAndReturnJWKS(resp)
+}
+
+func (i *KubernetesIssuer) readAndReturnJWKS(resp *http.Response) ([]byte, error) {
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("reading JWKS response: %w", err)
