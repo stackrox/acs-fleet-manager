@@ -245,6 +245,20 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return installingStatus(), nil
 	}
 
+	if r.useRoutes && !isRemoteCentralReady(&remoteCentral) {
+		// Check whether central UI host is reachable over HTTP.
+		centralUIReachable, err := isCentralUIHostReachable(ctx, remoteCentral.Spec.UiHost)
+		if err != nil {
+			return nil, err
+		}
+		if !centralUIReachable {
+			if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central UI becomes reachable
+				return nil, ErrCentralNotChanged
+			}
+			return installingStatus(), nil
+		}
+	}
+
 	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
 	if err != nil {
 		return nil, err
