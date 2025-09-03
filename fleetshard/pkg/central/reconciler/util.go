@@ -3,9 +3,7 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
-	"time"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +22,6 @@ const (
 	centralDeploymentName = "central"
 	centralServiceName    = "central"
 	oidcType              = "oidc"
-	httpCheckTimeout      = 10 * time.Second
 )
 
 func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, namespace string) (bool, error) {
@@ -39,39 +36,6 @@ func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, nam
 		return false, errors.Wrap(err, "retrieving central deployment resource from Kubernetes")
 	}
 	return deployment.Status.AvailableReplicas > 0 && deployment.Status.UnavailableReplicas == 0, nil
-}
-
-func isCentralUIHostReachable(ctx context.Context, uiHost string) (bool, error) {
-	if uiHost == "" {
-		return false, errors.New("UI host is empty")
-	}
-
-	// Construct the URL with https scheme
-	url := fmt.Sprintf("https://%s", uiHost)
-
-	// Create HTTP client with timeout
-	client := &http.Client{
-		Timeout: httpCheckTimeout,
-	}
-
-	// Create request with context
-	req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
-	if err != nil {
-		return false, errors.Wrapf(err, "creating HTTP request for %s", url)
-	}
-
-	// Perform the request
-	resp, err := client.Do(req)
-	if err != nil {
-		return false, errors.Wrapf(err, "HTTP request failed for %s", url)
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	// Accept any response status code in the 2xx or 3xx range as reachable
-	// This allows for redirects and successful responses
-	return resp.StatusCode >= 200 && resp.StatusCode < 400, nil
 }
 
 // TODO: ROX-11644: doesn't work when fleetshard-sync deployed outside of Central's cluster
