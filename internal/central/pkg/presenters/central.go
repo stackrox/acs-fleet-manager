@@ -3,6 +3,7 @@ package presenters
 import (
 	"fmt"
 
+	"github.com/stackrox/acs-fleet-manager/internal/central/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 )
@@ -30,7 +31,7 @@ func PresentCentralRequest(request *dbapi.CentralRequest) public.CentralRequest 
 		InstanceType:   request.InstanceType,
 	}
 
-	if request.RoutesCreated {
+	if request.Status == constants.CentralRequestStatusReady.String() && request.RoutesCreated {
 		if request.GetUIHost() != "" {
 			outputRequest.CentralUIURL = fmt.Sprintf("https://%s", request.GetUIHost())
 		}
