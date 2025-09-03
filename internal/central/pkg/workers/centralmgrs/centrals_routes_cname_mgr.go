@@ -104,20 +104,18 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 				}
 			} else {
 				// External DNS is enabled for this central (managed by external-dns operator)
-				if managedCentral.Spec.UiHost != "" {
-					ctx := context.Background()
-					uiReachable, checkErr := k.uiReachabilityChecker.IsReachable(ctx, managedCentral.Spec.UiHost)
-					if checkErr != nil {
-						glog.Warningf("Failed to check UI reachability for central %s at %s: %v",
-							central.ID, managedCentral.Spec.UiHost, checkErr)
-					} else if !uiReachable {
-						glog.Infof("Central %s UI at %s is not yet reachable from internet",
-							central.ID, managedCentral.Spec.UiHost)
-					} else {
-						glog.Infof("Central %s UI at %s is reachable from internet",
-							central.ID, managedCentral.Spec.UiHost)
-						central.RoutesCreated = true
-					}
+				ctx := context.Background()
+				uiReachable, checkErr := k.uiReachabilityChecker.IsReachable(ctx, managedCentral.Spec.UiHost)
+				if checkErr != nil {
+					glog.Warningf("Failed to check UI reachability for central %s at %s: %v",
+						central.ID, managedCentral.Spec.UiHost, checkErr)
+				} else if !uiReachable {
+					glog.Infof("Central %s UI at %s is not yet reachable from internet",
+						central.ID, managedCentral.Spec.UiHost)
+				} else {
+					glog.Infof("Central %s UI at %s is reachable from internet",
+						central.ID, managedCentral.Spec.UiHost)
+					central.RoutesCreated = true
 				}
 			}
 		} else {
