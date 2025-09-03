@@ -68,8 +68,6 @@ type CentralRequest struct {
 	QuotaType string `json:"quota_type"`
 	// Routes routes mapping for the central instance. It is an array and each item in the array contains a domain value and the corresponding route url.
 	Routes api.JSON `json:"routes"`
-	// RoutesCreated if the routes mapping have been created in the DNS provider like Route53. Use a separate field to make it easier to query.
-	RoutesCreated bool `json:"routes_created"`
 	// Namespace is the namespace of the provisioned central instance.
 	// We store this in the database to ensure that old centrals whose namespace contained "owner-<central-id>" information will continue to work.
 
@@ -79,8 +77,7 @@ type CentralRequest struct {
 	// It used used for equality checks of secrets in the dataplane cluster with the secrets stored in DB
 	SecretDataSha256Sum string `json:"secret_data_sha256_sum"`
 
-	Namespace        string `json:"namespace"`
-	RoutesCreationID string `json:"routes_creation_id"`
+	Namespace string `json:"namespace"`
 	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource.
 	DeletionTimestamp sql.NullTime `json:"deletionTimestamp"`
 

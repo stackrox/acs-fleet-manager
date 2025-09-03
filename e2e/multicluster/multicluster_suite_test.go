@@ -1,16 +1,11 @@
 package multicluster
 
 import (
-	"context"
 	"os"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/route53"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/stackrox/acs-fleet-manager/e2e/testutil"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -21,8 +16,6 @@ var (
 	cluster2KubeClient ctrlClient.Client
 
 	fleetManagerEndpoint = "http://localhost:8000"
-	route53Client        *route53.Client
-	dnsEnabled           bool
 )
 
 func TestMulticlusterE2E(t *testing.T) {
@@ -57,35 +50,4 @@ var _ = BeforeSuite(func() {
 		fleetManagerEndpoint = fmOverride
 	}
 
-	routesEnabled, err := k8s.IsRoutesResourceEnabled(cluster1KubeClient)
-	Expect(err).ToNot(HaveOccurred())
-
-	var accessKey, secretKey string
-	dnsEnabled, accessKey, secretKey = testutil.DNSConfiguration(routesEnabled)
-
-	if dnsEnabled {
-		creds := aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(
-			accessKey,
-			secretKey,
-			""))
-
-		_, err := creds.Retrieve(context.Background())
-		Expect(err).ToNot(HaveOccurred())
-
-		cfg := aws.Config{
-			Credentials: creds,
-			Region:      getEnvDefault("AWS_REGION", "us-east-1"),
-		}
-		Expect(err).ToNot(HaveOccurred())
-
-		route53Client = route53.NewFromConfig(cfg)
-	}
 })
-
-func getEnvDefault(key, defaultValue string) string {
-	value, ok := os.LookupEnv(key)
-	if !ok {
-		return defaultValue
-	}
-	return value
-}
