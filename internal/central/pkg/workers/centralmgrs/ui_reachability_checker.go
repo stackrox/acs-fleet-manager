@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
 )
 
@@ -63,7 +64,14 @@ func (c *HTTPUIReachabilityChecker) IsReachable(ctx context.Context, uiHost stri
 
 	// Accept any response status code in the 2xx or 3xx range as "reachable"
 	// This indicates the DNS resolved and the server responded
-	return resp.StatusCode >= 200 && resp.StatusCode < 400, nil
+	isSuccess := resp.StatusCode >= 200 && resp.StatusCode < 400
+	if !isSuccess {
+		glog.Infof("UI reachability check failed for host %q with status code %d", uiHost, resp.StatusCode)
+	} else {
+		glog.Infof("UI reachability check succeeded for host %q with status code %d", uiHost, resp.StatusCode)
+	}
+
+	return isSuccess, nil
 }
 
 // MockUIReachabilityChecker is a mock implementation for testing
