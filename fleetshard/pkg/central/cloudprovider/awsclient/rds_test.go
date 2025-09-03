@@ -268,6 +268,10 @@ func TestRestoreIfFinalSnapshotExists(t *testing.T) {
 
 	rdsDBClient := RDS{
 		rdsClient: &mockRDSClient,
+		config: &config.ManagedDB{
+			SecurityGroup: "sg-12345",
+			SubnetGroup:   "subnet-12345",
+		},
 	}
 
 	err := rdsDBClient.ensureDBClusterCreated(clusterID, tenantID, "testpassword1234", false)
