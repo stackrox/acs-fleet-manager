@@ -73,32 +73,3 @@ func (c *HTTPUIReachabilityChecker) IsReachable(ctx context.Context, uiHost stri
 
 	return isSuccess, nil
 }
-
-// MockUIReachabilityChecker is a mock implementation for testing
-type MockUIReachabilityChecker struct {
-	reachable bool
-	err       error
-}
-
-// NewMockUIReachabilityChecker creates a new mock checker
-func NewMockUIReachabilityChecker(reachable bool, err error) *MockUIReachabilityChecker {
-	return &MockUIReachabilityChecker{
-		reachable: reachable,
-		err:       err,
-	}
-}
-
-// IsReachable returns the mocked reachability status
-func (m *MockUIReachabilityChecker) IsReachable(_ context.Context, _ string) (bool, error) {
-	return m.reachable, m.err
-}
-
-// SetReachable sets the reachability status for the mock
-func (m *MockUIReachabilityChecker) SetReachable(reachable bool) {
-	m.reachable = reachable
-}
-
-// SetError sets the error for the mock
-func (m *MockUIReachabilityChecker) SetError(err error) {
-	m.err = err
-}
