@@ -47,7 +47,7 @@ spec:
     enabled: false
   scc:
     enabled: false
-  verticalPodAutoscaler:
-    enabled: $
+  vertical-pod-autoscaler:
+    enabled: $INSTALL_VERTICAL_POD_AUTOSCALER_OLM
     nodeSelector:
       node-role.kubernetes.io/worker: ""

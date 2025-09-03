@@ -36,4 +36,4 @@ dependencies:
     condition: secured-cluster.enabled
   - name: vertical-pod-autoscaler
     version: "0.1.0"
-    condition: verticalPodAutoscaler.enabled
+    condition: vertical-pod-autoscaler.enabled
