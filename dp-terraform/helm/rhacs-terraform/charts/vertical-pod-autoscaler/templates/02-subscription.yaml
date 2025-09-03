@@ -9,8 +9,8 @@ spec:
   name: vertical-pod-autoscaler
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  {{- if .Values.verticalPodAutoscaler.nodeSelector }}
+  {{- if .Values.nodeSelector }}
   config:
     nodeSelector:
-      {{- toYaml .Values.verticalPodAutoscaler.nodeSelector | nindent 6 }}
+      {{- toYaml .Values.nodeSelector | nindent 6 }}
   {{- end }}
