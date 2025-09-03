@@ -102,40 +102,19 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 					}
 					central.RoutesCreated = *recordStatus.Status == "INSYNC"
 				}
-				
-				// Check if UI is reachable from internet after CNAME records are in sync
-				if central.RoutesCreated && managedCentral.Spec.UiHost != "" {
-					ctx := context.Background()
-					uiReachable, checkErr := k.uiReachabilityChecker.IsReachable(ctx, managedCentral.Spec.UiHost)
-					if checkErr != nil {
-						glog.Warningf("Failed to check UI reachability for central %s at %s: %v", 
-							central.ID, managedCentral.Spec.UiHost, checkErr)
-						// Don't mark routes as created if we can't verify reachability
-						central.RoutesCreated = false
-					} else if !uiReachable {
-						glog.Infof("Central %s UI at %s is not yet reachable from internet, DNS may still be propagating", 
-							central.ID, managedCentral.Spec.UiHost)
-						// DNS records exist but UI is not yet reachable
-						central.RoutesCreated = false
-					} else {
-						glog.Infof("Central %s UI at %s is reachable from internet", 
-							central.ID, managedCentral.Spec.UiHost)
-					}
-				}
 			} else {
 				// External DNS is enabled for this central (managed by external-dns operator)
-				// We still check reachability but don't manage CNAME records
 				if managedCentral.Spec.UiHost != "" {
 					ctx := context.Background()
 					uiReachable, checkErr := k.uiReachabilityChecker.IsReachable(ctx, managedCentral.Spec.UiHost)
 					if checkErr != nil {
-						glog.Warningf("Failed to check UI reachability for central %s at %s: %v", 
+						glog.Warningf("Failed to check UI reachability for central %s at %s: %v",
 							central.ID, managedCentral.Spec.UiHost, checkErr)
 					} else if !uiReachable {
-						glog.Infof("Central %s UI at %s is not yet reachable from internet", 
+						glog.Infof("Central %s UI at %s is not yet reachable from internet",
 							central.ID, managedCentral.Spec.UiHost)
 					} else {
-						glog.Infof("Central %s UI at %s is reachable from internet", 
+						glog.Infof("Central %s UI at %s is reachable from internet",
 							central.ID, managedCentral.Spec.UiHost)
 						central.RoutesCreated = true
 					}
