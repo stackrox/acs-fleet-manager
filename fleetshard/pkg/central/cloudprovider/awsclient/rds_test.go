@@ -29,7 +29,14 @@ func newTestRDS() (*RDS, error) {
 		return nil, fmt.Errorf("unable to create RDS client: %w", err)
 	}
 
-	cfg := &config.ManagedDB{
+	cfg := &config.ManagedDB{}
+	if err := env.Parse(cfg); err != nil {
+		return nil, fmt.Errorf("unable to parse ManagedDB config: %w", err)
+	}
+	// Override the configuration for tests to save resources.
+	cfg.BackupRetentionPeriod = 1
+	cfg.MinCapacityACU = 0.5
+	cfg.MaxCapacityACU = 1
 		SecurityGroup:         os.Getenv("MANAGED_DB_SECURITY_GROUP"),
 		SubnetGroup:           os.Getenv("MANAGED_DB_SUBNET_GROUP"),
 		BackupRetentionPeriod: 1,
