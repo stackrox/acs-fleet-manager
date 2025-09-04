@@ -189,7 +189,8 @@ func (c *ClusterManager) processDeprovisioningClusters() []error {
 
 	for i := range deprovisioningClusters {
 		cluster := deprovisioningClusters[i]
-		glog.V(10).Infof("deprovision cluster ClusterID = %s", cluster.ClusterID)
+		clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(cluster.ClusterID)
+		glog.V(10).Infof("deprovision cluster ClusterID = %s (%s)", cluster.ClusterID, clusterName)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterDeprovisioning)
 		if err := c.reconcileDeprovisioningCluster(&cluster); err != nil {
 			errs = append(errs, errors.Wrapf(err, "failed to reconcile deprovisioning cluster %s", cluster.ID))
@@ -211,7 +212,8 @@ func (c *ClusterManager) processCleanupClusters() []error {
 	}
 
 	for _, cluster := range cleanupClusters {
-		glog.V(10).Infof("cleanup cluster ClusterID = %s", cluster.ClusterID)
+		clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(cluster.ClusterID)
+		glog.V(10).Infof("cleanup cluster ClusterID = %s (%s)", cluster.ClusterID, clusterName)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterCleanup)
 		if err := c.reconcileCleanupCluster(cluster); err != nil {
 			errs = append(errs, errors.Wrapf(err, "failed to reconcile cleanup cluster %s", cluster.ID))
@@ -234,7 +236,8 @@ func (c *ClusterManager) processAcceptedClusters() []error {
 
 	for i := range acceptedClusters {
 		cluster := acceptedClusters[i]
-		glog.V(10).Infof("accepted cluster ClusterID = %s", cluster.ClusterID)
+		clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(cluster.ClusterID)
+		glog.V(10).Infof("accepted cluster ClusterID = %s (%s)", cluster.ClusterID, clusterName)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterAccepted)
 		if err := c.reconcileAcceptedCluster(&cluster); err != nil {
 			errs = append(errs, errors.Wrapf(err, "failed to reconcile accepted cluster %s", cluster.ID))
@@ -258,7 +261,8 @@ func (c *ClusterManager) processProvisioningClusters() []error {
 	// process each local pending cluster and compare to the underlying ocm cluster
 	for i := range provisioningClusters {
 		provisioningCluster := provisioningClusters[i]
-		glog.V(10).Infof("provisioning cluster ClusterID = %s", provisioningCluster.ClusterID)
+		clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(provisioningCluster.ClusterID)
+		glog.V(10).Infof("provisioning cluster ClusterID = %s (%s)", provisioningCluster.ClusterID, clusterName)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisioningCluster, api.ClusterProvisioning)
 		_, err := c.reconcileClusterStatus(&provisioningCluster)
 		if err != nil {
@@ -285,7 +289,8 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
-		glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
+		clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(provisionedCluster.ClusterID)
+		glog.V(10).Infof("provisioned cluster ClusterID = %s (%s)", provisionedCluster.ClusterID, clusterName)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
 		err := c.reconcileProvisionedCluster(provisionedCluster)
 		if err != nil {
@@ -371,7 +376,8 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 	}
 
 	// cluster has been removed from cluster service. Mark it for cleanup
-	glog.Infof("Cluster %s  has been removed from cluster service.", cluster.ClusterID)
+	clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(cluster.ClusterID)
+	glog.Infof("Cluster %s (%s) has been removed from cluster service.", cluster.ClusterID, clusterName)
 	updateStatusErr := c.ClusterService.UpdateStatus(*cluster, api.ClusterCleanup)
 	if updateStatusErr != nil {
 		return errors.Wrapf(updateStatusErr, "Failed to update deprovisioning cluster %s status to 'cleanup'", cluster.ClusterID)
@@ -381,9 +387,10 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 }
 
 func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
-	glog.Infof("Removing Dataplane cluster %s fleetshard service account", cluster.ClusterID)
+	clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(cluster.ClusterID)
+	glog.Infof("Removing Dataplane cluster %s (%s) fleetshard service account", cluster.ClusterID, clusterName)
 
-	glog.Infof("Soft deleting the Dataplane cluster %s from the database", cluster.ClusterID)
+	glog.Infof("Soft deleting the Dataplane cluster %s (%s) from the database", cluster.ClusterID, clusterName)
 	deleteError := c.ClusterService.DeleteByClusterID(cluster.ClusterID)
 	if deleteError != nil {
 		return errors.Wrapf(deleteError, "Failed to soft delete Dataplane cluster %s from the database", cluster.ClusterID)
@@ -393,7 +400,8 @@ func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
 
 func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	if !c.DataplaneClusterConfig.IsReadyDataPlaneClustersReconcileEnabled() {
-		glog.Infof("Reconcile of dataplane ready clusters is disabled. Skipped reconcile of ready ClusterID '%s'", cluster.ClusterID)
+		clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(cluster.ClusterID)
+		glog.Infof("Reconcile of dataplane ready clusters is disabled. Skipped reconcile of ready ClusterID '%s' (%s)", cluster.ClusterID, clusterName)
 		return nil
 	}
 
@@ -452,13 +460,14 @@ func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error
 
 // reconcileEmptyCluster checks wether a cluster is empty and mark it for deletion
 func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error) {
-	glog.V(10).Infof("check if cluster is empty, ClusterID = %s", cluster.ClusterID)
+	clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(cluster.ClusterID)
+	glog.V(10).Infof("check if cluster is empty, ClusterID = %s (%s)", cluster.ClusterID, clusterName)
 	clusterFromDb, err := c.ClusterService.FindNonEmptyClusterByID(cluster.ClusterID)
 	if err != nil {
 		return false, err
 	}
 	if clusterFromDb != nil {
-		glog.V(10).Infof("cluster is not empty, ClusterID = %s", cluster.ClusterID)
+		glog.V(10).Infof("cluster is not empty, ClusterID = %s (%s)", cluster.ClusterID, clusterName)
 		return false, nil
 	}
 
@@ -473,7 +482,7 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 
 	siblingClusterCount := clustersByRegionAndCloudProvider[0]
 	if siblingClusterCount.Count <= 1 { // sibling cluster not found
-		glog.V(10).Infof("no valid sibling found for cluster ClusterID = %s", cluster.ClusterID)
+		glog.V(10).Infof("no valid sibling found for cluster ClusterID = %s (%s)", cluster.ClusterID, clusterName)
 		return false, nil
 	}
 
@@ -564,7 +573,8 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
 			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterID)}
 		}
-		glog.Infof("Registered a new cluster with config file: %s ", p.ClusterID)
+		clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(p.ClusterID)
+		glog.Infof("Registered a new cluster with config file: %s (%s)", p.ClusterID, clusterName)
 	}
 
 	// Update existing clusters.
@@ -589,7 +599,8 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			continue
 		}
 		diff := cmp.Diff(*cluster, newCluster)
-		glog.Infof("Updating data-plane cluster %s. Changes in cluster configuration:\n", manualCluster.ClusterID)
+		clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(manualCluster.ClusterID)
+		glog.Infof("Updating data-plane cluster %s (%s). Changes in cluster configuration:\n", manualCluster.ClusterID, clusterName)
 		for _, diffLine := range strings.Split(diff, "\n") {
 			glog.Infoln(diffLine)
 		}
@@ -624,12 +635,14 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	}
 
 	var idsOfClustersToDeprovision []string
-	for _, c := range centralInstanceCount {
-		if c.Count > 0 {
-			glog.Infof("Excess cluster %s is not going to be deleted because it has %d centrals.", c.Clusterid, c.Count)
+	for _, centralCount := range centralInstanceCount {
+		if centralCount.Count > 0 {
+			clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(centralCount.Clusterid)
+			glog.Infof("Excess cluster %s (%s) is not going to be deleted because it has %d centrals.", centralCount.Clusterid, clusterName, centralCount.Count)
 		} else {
-			glog.Infof("Excess cluster is going to be deleted %s", c.Clusterid)
-			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, c.Clusterid)
+			clusterName := c.DataplaneClusterConfig.FindClusterNameByClusterID(centralCount.Clusterid)
+			glog.Infof("Excess cluster is going to be deleted %s (%s)", centralCount.Clusterid, clusterName)
+			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, centralCount.Clusterid)
 		}
 	}
 
