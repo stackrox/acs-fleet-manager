@@ -12,6 +12,7 @@ import (
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
+	"github.com/caarlos0/env/v11"
 	"github.com/google/uuid"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
@@ -34,16 +35,12 @@ func newTestRDS() (*RDS, error) {
 		return nil, fmt.Errorf("unable to parse ManagedDB config: %w", err)
 	}
 	// Override the configuration for tests to save resources.
+	cfg.SecurityGroup = os.Getenv("MANAGED_DB_SECURITY_GROUP")
+	cfg.SubnetGroup = os.Getenv("MANAGED_DB_SUBNET_GROUP")
 	cfg.BackupRetentionPeriod = 1
+	cfg.EngineVersion = "13.9"
 	cfg.MinCapacityACU = 0.5
 	cfg.MaxCapacityACU = 1
-		SecurityGroup:         os.Getenv("MANAGED_DB_SECURITY_GROUP"),
-		SubnetGroup:           os.Getenv("MANAGED_DB_SUBNET_GROUP"),
-		BackupRetentionPeriod: 1,
-		EngineVersion:         "13.9",
-		MinCapacityACU:        0.5,
-		MaxCapacityACU:        1,
-	}
 
 	return &RDS{
 		rdsClient: rdsClient,
