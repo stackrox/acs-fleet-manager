@@ -12,6 +12,7 @@ import (
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
+	"github.com/caarlos0/env/v11"
 	"github.com/google/uuid"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
@@ -29,10 +30,21 @@ func newTestRDS() (*RDS, error) {
 		return nil, fmt.Errorf("unable to create RDS client: %w", err)
 	}
 
+	cfg := &config.ManagedDB{}
+	if err := env.Parse(cfg); err != nil {
+		return nil, fmt.Errorf("unable to parse ManagedDB config: %w", err)
+	}
+	// Override the configuration for tests to save resources.
+	cfg.SecurityGroup = os.Getenv("MANAGED_DB_SECURITY_GROUP")
+	cfg.SubnetGroup = os.Getenv("MANAGED_DB_SUBNET_GROUP")
+	cfg.BackupRetentionPeriod = 1
+	cfg.EngineVersion = "13.9"
+	cfg.MinCapacityACU = 0.5
+	cfg.MaxCapacityACU = 1
+
 	return &RDS{
-		rdsClient:       rdsClient,
-		dbSecurityGroup: os.Getenv("MANAGED_DB_SECURITY_GROUP"),
-		dbSubnetGroup:   os.Getenv("MANAGED_DB_SUBNET_GROUP"),
+		rdsClient: rdsClient,
+		config:    cfg,
 	}, nil
 }
 
@@ -260,6 +272,10 @@ func TestRestoreIfFinalSnapshotExists(t *testing.T) {
 
 	rdsDBClient := RDS{
 		rdsClient: &mockRDSClient,
+		config: &config.ManagedDB{
+			SecurityGroup: "sg-12345",
+			SubnetGroup:   "subnet-12345",
+		},
 	}
 
 	err := rdsDBClient.ensureDBClusterCreated(clusterID, tenantID, "testpassword1234", false)
@@ -290,7 +306,7 @@ func TestRDSTags(t *testing.T) {
 	require.Equal(t, *tags[0].Key, "DataplaneClusterName")
 	require.Equal(t, *tags[0].Value, "acs-dev-dp-01")
 	require.Equal(t, *tags[1].Key, instanceTypeTagKey)
-	require.Equal(t, *tags[1].Value, regularInstaceTagValue)
+	require.Equal(t, *tags[1].Value, regularInstanceTagValue)
 	require.Equal(t, *tags[2].Key, acsInstanceIDKey)
 	require.Equal(t, *tags[2].Value, "veryrandomid")
 }
