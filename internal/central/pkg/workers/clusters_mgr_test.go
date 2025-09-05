@@ -28,9 +28,11 @@ func TestClusterManager_processReadyClusters_emptyConfig(t *testing.T) {
 	}
 	c := &ClusterManager{
 		ClusterManagerOptions: ClusterManagerOptions{
-			ClusterService:         clusterService,
-			GitOpsConfigProvider:   provider,
-			DataplaneClusterConfig: &config.DataplaneClusterConfig{},
+			ClusterService:       clusterService,
+			GitOpsConfigProvider: provider,
+			DataplaneClusterConfig: &config.DataplaneClusterConfig{
+				ClusterConfig: &config.ClusterConfig{},
+			},
 		},
 	}
 	errs := c.processReadyClusters()

@@ -8,6 +8,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/clusters"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/clusters/types"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/config"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
@@ -63,15 +64,17 @@ type ClusterService interface {
 }
 
 type clusterService struct {
-	connectionFactory *db.ConnectionFactory
-	providerFactory   clusters.ProviderFactory
+	connectionFactory      *db.ConnectionFactory
+	providerFactory        clusters.ProviderFactory
+	dataplaneClusterConfig *config.DataplaneClusterConfig
 }
 
 // NewClusterService creates a new client for the OSD Cluster Service
-func NewClusterService(connectionFactory *db.ConnectionFactory, providerFactory clusters.ProviderFactory) ClusterService {
+func NewClusterService(connectionFactory *db.ConnectionFactory, providerFactory clusters.ProviderFactory, dataplaneClusterConfig *config.DataplaneClusterConfig) ClusterService {
 	return &clusterService{
-		connectionFactory: connectionFactory,
-		providerFactory:   providerFactory,
+		connectionFactory:      connectionFactory,
+		providerFactory:        providerFactory,
+		dataplaneClusterConfig: dataplaneClusterConfig,
 	}
 }
 
@@ -331,7 +334,11 @@ func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceEr
 		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "Unable to delete cluster with cluster_id %s", clusterID)
 	}
 
-	glog.Infof("Cluster %s deleted successful", clusterID)
+	clusterName := ""
+	if c.dataplaneClusterConfig != nil {
+		clusterName = c.dataplaneClusterConfig.FindClusterNameByClusterID(clusterID)
+	}
+	glog.Infof("Cluster %s (%s) deleted successful", clusterID, clusterName)
 	metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationDelete)
 	return nil
 }
