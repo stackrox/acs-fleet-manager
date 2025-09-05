@@ -1,9 +1,9 @@
 module github.com/stackrox/acs-fleet-manager/tools
 
-go 1.23.0
+go 1.25
 
 require (
-	github.com/matryer/moq v0.5.2
+	github.com/matryer/moq v0.6.0
 	github.com/segmentio/chamber/v2 v2.14.1
 	gotest.tools/gotestsum v1.12.3
 	sigs.k8s.io/controller-tools v0.17.0
