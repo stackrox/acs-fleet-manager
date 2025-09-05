@@ -184,8 +184,11 @@ secured-cluster:
       nodeSelector:
         node-role.kubernetes.io/acscs-infra: ""
 
-verticalPodAutoscaler:
+vertical-pod-autoscaler:
   enabled: true
+  # For HCP clusters, master nodes are hosted so VPA cannot use master node selectors
+  # because of that we need a way to overwrite initial selectors
+  nodeSelector: {}
 
 scc:
   enabled: true

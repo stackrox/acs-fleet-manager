@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/central/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -35,9 +36,10 @@ type DataPlaneCentralService interface {
 }
 
 type dataPlaneCentralService struct {
-	centralService    CentralService
-	clusterService    ClusterService
-	connectionFactory *db.ConnectionFactory
+	centralService         CentralService
+	clusterService         ClusterService
+	connectionFactory      *db.ConnectionFactory
+	dataplaneClusterConfig *config.DataplaneClusterConfig
 }
 
 // NewDataPlaneCentralService ...
@@ -45,11 +47,13 @@ func NewDataPlaneCentralService(
 	centralSrv CentralService,
 	clusterSrv ClusterService,
 	connectionFactory *db.ConnectionFactory,
+	dataplaneClusterConfig *config.DataplaneClusterConfig,
 ) DataPlaneCentralService {
 	return &dataPlaneCentralService{
-		centralService:    centralSrv,
-		clusterService:    clusterSrv,
-		connectionFactory: connectionFactory,
+		centralService:         centralSrv,
+		clusterService:         clusterSrv,
+		connectionFactory:      connectionFactory,
+		dataplaneClusterConfig: dataplaneClusterConfig,
 	}
 }
 
@@ -167,7 +171,11 @@ func (s *dataPlaneCentralService) setCentralClusterFailed(centralRequest *dbapi.
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants.CentralRequestStatusFailed, centralRequest.ID, centralRequest.ClusterID, time.Since(centralRequest.CreatedAt))
 		metrics.IncreaseCentralTotalOperationsCountMetric(constants.CentralOperationCreate)
 	}
-	logger.Logger.Errorf("Central status for Central ID '%s' in ClusterID '%s' reported as failed by Fleet Shard Operator: '%s'", centralRequest.ID, centralRequest.ClusterID, errMessage)
+	clusterName := ""
+	if s.dataplaneClusterConfig != nil {
+		clusterName = s.dataplaneClusterConfig.FindClusterNameByClusterID(centralRequest.ClusterID)
+	}
+	logger.Logger.Errorf("Central status for Central ID '%s' in ClusterID '%s' (%s) reported as failed by Fleet Shard Operator: '%s'", centralRequest.ID, centralRequest.ClusterID, clusterName, errMessage)
 
 	return nil
 }

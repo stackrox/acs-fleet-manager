@@ -98,7 +98,7 @@ func (p *AddonProvisioner) Provision(cluster api.Cluster, dataplaneClusterConfig
 
 	for _, installedAddon := range installedAddons {
 		// addon is installed on the cluster but not present in gitops config - uninstall it
-		errs = append(errs, p.uninstallAddon(cluster.ClusterID, installedAddon.ID))
+		errs = append(errs, p.uninstallAddon(cluster.ClusterID, dataplaneClusterConfig.ClusterName, installedAddon.ID))
 		p.updateAddonStatus(installedAddon.ID, dataplaneClusterConfig.ClusterName, cluster.ClusterID, metrics.AddonHealthy)
 	}
 
@@ -127,7 +127,7 @@ func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlan
 	if addonErr != nil {
 		if addonErr.Is404() {
 			// addon does not exist, install it
-			errs = append(errs, p.installAddon(clusterID, expectedConfig))
+			errs = append(errs, p.installAddon(clusterID, dataplaneClusterConfig.ClusterName, expectedConfig))
 			status = metrics.AddonUpgrade
 		} else {
 			errs = append(errs, fmt.Errorf("failed to get addon %s: %w", expectedConfig.ID, addonErr))
@@ -140,7 +140,7 @@ func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlan
 		return
 	}
 	if gitOpsConfigDifferent(expectedConfig, installedInOCM) {
-		errs = append(errs, p.updateAddon(clusterID, expectedConfig))
+		errs = append(errs, p.updateAddon(clusterID, dataplaneClusterConfig.ClusterName, expectedConfig))
 		status = metrics.AddonUpgrade
 		return
 	}
@@ -156,7 +156,7 @@ func (p *AddonProvisioner) provisionAddon(dataplaneClusterConfig gitops.DataPlan
 		return
 	}
 	if clusterInstallationDifferent(installedOnCluster, versionInstalledInOCM) {
-		errs = append(errs, p.updateAddon(clusterID, expectedConfig))
+		errs = append(errs, p.updateAddon(clusterID, dataplaneClusterConfig.ClusterName, expectedConfig))
 		status = metrics.AddonUpgrade
 	} else {
 		glog.V(10).Infof("Addon %s is already up-to-date", installedOnCluster.ID)
@@ -234,7 +234,7 @@ func (p *AddonProvisioner) getInstalledAddons(cluster api.Cluster) (map[string]d
 	return result, nil
 }
 
-func (p *AddonProvisioner) installAddon(clusterID string, config gitops.AddonConfig) error {
+func (p *AddonProvisioner) installAddon(clusterID string, clusterName string, config gitops.AddonConfig) error {
 	addonInstallation, err := p.newInstallation(config)
 	if err != nil {
 		return err
@@ -242,7 +242,7 @@ func (p *AddonProvisioner) installAddon(clusterID string, config gitops.AddonCon
 	if err = p.ocmClient.CreateAddonInstallation(clusterID, addonInstallation); err != nil {
 		return fmt.Errorf("create addon %s in ocm: %w", config.ID, err)
 	}
-	glog.V(5).Infof("Addon %s has been installed on the cluster %s", config.ID, clusterID)
+	glog.V(5).Infof("Addon %s has been installed on the cluster %s (%s)", config.ID, clusterID, clusterName)
 	return nil
 }
 
@@ -261,9 +261,9 @@ func (p *AddonProvisioner) newInstallation(config gitops.AddonConfig) (*clusters
 	return installation, nil
 }
 
-func (p *AddonProvisioner) updateAddon(clusterID string, config gitops.AddonConfig) error {
+func (p *AddonProvisioner) updateAddon(clusterID string, clusterName string, config gitops.AddonConfig) error {
 	if p.backoffUpgradeRequest(config.ID, clusterID) {
-		glog.V(5).Infof("update addon request backoff for cluster: %s", clusterID)
+		glog.V(5).Infof("update addon request backoff for cluster: %s (%s)", clusterID, clusterName)
 		return nil
 	}
 
@@ -275,7 +275,7 @@ func (p *AddonProvisioner) updateAddon(clusterID string, config gitops.AddonConf
 	if err := p.ocmClient.UpdateAddonInstallation(clusterID, update); err != nil {
 		return fmt.Errorf("update addon %s: %w", update.ID(), err)
 	}
-	glog.V(5).Infof("Addon %s has been updated on the cluster %s", config.ID, clusterID)
+	glog.V(5).Infof("Addon %s has been updated on the cluster %s (%s)", config.ID, clusterID, clusterName)
 	return nil
 }
 
@@ -284,11 +284,11 @@ func (p *AddonProvisioner) backoffUpgradeRequest(addonID string, clusterID strin
 	return p.lastStatusPerInstall[id] != metrics.AddonHealthy && time.Since(p.lastUpgradeRequestTime) < addonUpgradeBackoff
 }
 
-func (p *AddonProvisioner) uninstallAddon(clusterID string, addonID string) error {
+func (p *AddonProvisioner) uninstallAddon(clusterID string, clusterName string, addonID string) error {
 	if err := p.ocmClient.DeleteAddonInstallation(clusterID, addonID); err != nil {
 		return fmt.Errorf("uninstall addon %s: %w", addonID, err)
 	}
-	glog.V(5).Infof("Addon %s has been uninstalled from the cluster %s", addonID, clusterID)
+	glog.V(5).Infof("Addon %s has been uninstalled from the cluster %s (%s)", addonID, clusterID, clusterName)
 	return nil
 }
 

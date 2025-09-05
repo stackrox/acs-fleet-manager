@@ -397,7 +397,7 @@ func getDeploymentName(version string) string {
 
 func getOperatorDeployments(ctx context.Context) ([]appsv1.Deployment, error) {
 	deployments := appsv1.DeploymentList{}
-	labels := map[string]string{"app": "rhacs-operator"}
+	labels := map[string]string{"app.kubernetes.io/name": "rhacs-operator"}
 	err := k8sClient.List(ctx, &deployments,
 		ctrlClient.InNamespace("rhacs"),
 		ctrlClient.MatchingLabels(labels))
