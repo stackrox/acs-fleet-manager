@@ -4,7 +4,7 @@ ENV GOFLAGS="-mod=mod"
 
 RUN mkdir /src
 WORKDIR /src
-RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@v1.24.7
+RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@latest
 COPY go.*  ./
 RUN go mod download
 COPY . ./
