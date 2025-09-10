@@ -3,7 +3,6 @@ package quota
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -50,9 +49,9 @@ func (q amsQuotaService) HasQuotaAllowance(central *dbapi.CentralRequest, instan
 	quotaType := instanceType.GetQuotaType()
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(org.ID(), quotaType.GetResourceName(), quotaType.GetProduct())
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf(
+		return false, errors.NewWithCause(errors.ErrorGeneral, err,
 			"failed to get assigned quota of type %q for organization with external id %q and id %q",
-			quotaType, central.OrganisationID, org.ID()))
+			quotaType, central.OrganisationID, org.ID())
 	}
 
 	quotaCostsByModel, unsupportedModels := mapAllowedQuotaCosts(quotaCosts)

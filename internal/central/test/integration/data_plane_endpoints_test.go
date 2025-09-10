@@ -28,7 +28,7 @@ func TestDataPlaneClusterStatus(t *testing.T) {
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 
 	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
