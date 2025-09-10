@@ -17,11 +17,7 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// Prepare the body:
-	reason := fmt.Sprintf(
-		"The requested resource '%s' doesn't exist",
-		r.URL.Path,
-	)
-	apiError := errors.NotFound(reason).AsOpenapiError("", r.RequestURI)
+	apiError := errors.NotFound("The requested resource '%s' doesn't exist", r.URL.Path).AsOpenapiError("", r.RequestURI)
 	data, err := json.Marshal(apiError)
 	if err != nil {
 		SendPanic(w, r)
@@ -41,8 +37,7 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 
 // SendMethodNotAllowed response
 func SendMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
-	reason := fmt.Sprintf("Method: %s is not allowed or not yet implemented for %s", r.Method, r.URL.Path)
-	apiError := errors.NotImplemented(reason).AsOpenapiError("", r.RequestURI)
+	apiError := errors.NotImplemented("Method: %s is not allowed or not yet implemented for %s", r.Method, r.URL.Path).AsOpenapiError("", r.RequestURI)
 	jsonPayload, err := json.Marshal(apiError)
 	if err != nil {
 		SendPanic(w, r)
@@ -87,7 +82,7 @@ func SendServiceUnavailable(w http.ResponseWriter, r *http.Request, reason strin
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusServiceUnavailable)
 
-	apiError := errors.GeneralError(reason).AsOpenapiError("", r.RequestURI)
+	apiError := errors.GeneralError("%s", reason).AsOpenapiError("", r.RequestURI)
 	jsonPayload, err := json.Marshal(apiError)
 	if err != nil {
 		SendPanic(w, r)

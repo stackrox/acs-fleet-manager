@@ -3,7 +3,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"regexp"
@@ -372,7 +371,7 @@ func (h adminCentralHandler) GetTrait(w http.ResponseWriter, r *http.Request) {
 				return nil, svcErr
 			}
 			if !arrays.Contains(cr.Traits, trait) {
-				return nil, errors.NotFound(fmt.Sprintf("Trait %q not found", trait))
+				return nil, errors.NotFound("Trait %q not found", trait)
 			}
 			return nil, nil
 		},

@@ -95,12 +95,12 @@ func (q QuotaManagementListService) ReserveQuota(_ context.Context, central *dba
 		if quotaManagementListItem.IsInstanceCountWithinLimit(totalInstanceCount) {
 			return "", nil
 		}
-		return "", errors.MaximumAllowedInstanceReached(message)
+		return "", errors.MaximumAllowedInstanceReached("%s", message)
 	}
 
 	if instanceType == types.EVAL && quotaManagementListItem == nil {
 		if totalInstanceCount >= quotamanagement.GetDefaultMaxAllowedInstances() {
-			return "", errors.MaximumAllowedInstanceReached(message)
+			return "", errors.MaximumAllowedInstanceReached("%s", message)
 		}
 		return "", nil
 	}
