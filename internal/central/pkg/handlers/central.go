@@ -108,7 +108,7 @@ func (h centralHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			err = h.service.RegisterCentralDeprovisionJob(ctx, id)
+			err = h.service.RegisterCentralDeprovisionJob(ctx, centralRequest)
 			if !centralRequest.Internal {
 				h.telemetry.TrackDeletionRequested(ctx, id, false, err.AsError())
 			}
