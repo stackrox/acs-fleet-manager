@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/go/.cache/ \
     make binary GOARCH=${TARGETARCH}
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295 AS standard
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295.1749680713.1749680713 AS standard
 
 ENV KUBECTL_VERSION=v1.28.1
 
