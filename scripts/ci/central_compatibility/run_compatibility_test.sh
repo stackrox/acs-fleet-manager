@@ -69,7 +69,7 @@ if [ "$GITHUB_REPOSITORY" = "stackrox/stackrox" ]; then
   ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
 else
   git -C "$STACKROX_DIR" fetch --tags
-  ACS_VERSION="$(git -C "$STACKROX_DIR" tag | grep -E '-nightly-[0-9]{8}$' | tail -n 1)"
+  ACS_VERSION="$(git -C "$STACKROX_DIR" tag | grep -E '.*-nightly-[0-9]{8}$' | tail -n 1)"
   git -C "$STACKROX_DIR" checkout "$ACS_VERSION"
 fi
 
