@@ -58,6 +58,9 @@ kubectl apply -f "${SOURCE_DIR}/emailsender-db.yaml"
 
 log "Emailsender deployed to Kind."
 
+echo "Available tags:"
+git -C "$STACKROX_DIR" tag
+
 log "Starting to deploy central services..."
 # use nightly if GH action running for acs-fleet-manager
 # use the stackrox tag otherwise
