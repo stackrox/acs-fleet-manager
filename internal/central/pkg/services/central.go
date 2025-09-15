@@ -103,7 +103,7 @@ type CentralService interface {
 	ChangeCentralCNAMErecords(centralRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	GetCNAMERecordStatus(centralRequest *dbapi.CentralRequest) (*CNameRecordStatus, error)
 	DetectInstanceType(centralRequest *dbapi.CentralRequest) types.CentralInstanceType
-	RegisterCentralDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
+	RegisterCentralDeprovisionJob(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 	// DeprovisionCentralForUsers registers all centrals for deprovisioning given the list of owners
 	DeprovisionCentralForUsers(users []string) *errors.ServiceError
 	DeprovisionExpiredCentrals() *errors.ServiceError
@@ -482,8 +482,8 @@ func (k *centralService) GetByID(id string) (*dbapi.CentralRequest, *errors.Serv
 }
 
 // RegisterCentralDeprovisionJob registers a central deprovision job in the central table
-func (k *centralService) RegisterCentralDeprovisionJob(ctx context.Context, id string) *errors.ServiceError {
-	if id == "" {
+func (k *centralService) RegisterCentralDeprovisionJob(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
+	if centralRequest.ID == "" {
 		return errors.Validation("id is undefined")
 	}
 
@@ -493,29 +493,27 @@ func (k *centralService) RegisterCentralDeprovisionJob(ctx context.Context, id s
 		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
 
-	dbConn := k.connectionFactory.New()
-
+	isAuthorizedToDelete := false
 	if auth.GetIsAdminFromContext(ctx) {
-		dbConn = dbConn.Where("id = ?", id)
+		isAuthorizedToDelete = true
 	} else if claims.IsOrgAdmin() {
 		orgID, _ := claims.GetOrgID()
-		dbConn = dbConn.Where("id = ?", id).Where("organisation_id = ?", orgID)
+		isAuthorizedToDelete = centralRequest.OrganisationID == orgID
 	} else {
 		user, _ := claims.GetUsername()
-		dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
+		isAuthorizedToDelete = centralRequest.Owner == user
 	}
 
-	var centralRequest dbapi.CentralRequest
-	if err := dbConn.First(&centralRequest).Error; err != nil {
-		return services.HandleGetError("CentralResource", "id", id, err)
+	if !isAuthorizedToDelete {
+		return errors.Unauthorized("user not authorized to delete central")
 	}
+
 	metrics.IncreaseCentralTotalOperationsCountMetric(constants.CentralOperationDeprovision)
-
 	deprovisionStatus := constants.CentralRequestStatusDeprovision
 
-	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
+	if executed, err := k.UpdateStatus(centralRequest.ID, deprovisionStatus); executed {
 		if err != nil {
-			return services.HandleGetError("CentralResource", "id", id, err)
+			return services.HandleGetError("CentralResource", "id", centralRequest.ID, err)
 		}
 		metrics.IncreaseCentralSuccessOperationsCountMetric(constants.CentralOperationDeprovision)
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(deprovisionStatus, centralRequest.ID, centralRequest.ClusterID, time.Since(centralRequest.CreatedAt))

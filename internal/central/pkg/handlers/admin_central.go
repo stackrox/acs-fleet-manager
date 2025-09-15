@@ -194,7 +194,11 @@ func (h adminCentralHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-			err := h.service.RegisterCentralDeprovisionJob(ctx, id)
+			centralRequest, err := h.service.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			err = h.service.RegisterCentralDeprovisionJob(ctx, centralRequest)
 			h.telemetry.TrackDeletionRequested(ctx, id, true, err.AsError())
 			return nil, err
 		},

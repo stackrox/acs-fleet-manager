@@ -85,7 +85,7 @@ var _ CentralService = &CentralServiceMock{}
 //			PrepareCentralRequestFunc: func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the PrepareCentralRequest method")
 //			},
-//			RegisterCentralDeprovisionJobFunc: func(ctx context.Context, id string) *serviceError.ServiceError {
+//			RegisterCentralDeprovisionJobFunc: func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the RegisterCentralDeprovisionJob method")
 //			},
 //			RegisterCentralJobFunc: func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
@@ -180,7 +180,7 @@ type CentralServiceMock struct {
 	PrepareCentralRequestFunc func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// RegisterCentralDeprovisionJobFunc mocks the RegisterCentralDeprovisionJob method.
-	RegisterCentralDeprovisionJobFunc func(ctx context.Context, id string) *serviceError.ServiceError
+	RegisterCentralDeprovisionJobFunc func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// RegisterCentralJobFunc mocks the RegisterCentralJob method.
 	RegisterCentralJobFunc func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
@@ -334,8 +334,8 @@ type CentralServiceMock struct {
 		RegisterCentralDeprovisionJob []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// ID is the id argument value.
-			ID string
+			// CentralRequest is the centralRequest argument value.
+			CentralRequest *dbapi.CentralRequest
 		}
 		// RegisterCentralJob holds details about calls to the RegisterCentralJob method.
 		RegisterCentralJob []struct {
@@ -1104,21 +1104,21 @@ func (mock *CentralServiceMock) PrepareCentralRequestCalls() []struct {
 }
 
 // RegisterCentralDeprovisionJob calls RegisterCentralDeprovisionJobFunc.
-func (mock *CentralServiceMock) RegisterCentralDeprovisionJob(ctx context.Context, id string) *serviceError.ServiceError {
+func (mock *CentralServiceMock) RegisterCentralDeprovisionJob(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 	if mock.RegisterCentralDeprovisionJobFunc == nil {
 		panic("CentralServiceMock.RegisterCentralDeprovisionJobFunc: method is nil but CentralService.RegisterCentralDeprovisionJob was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
-		ID  string
+		Ctx            context.Context
+		CentralRequest *dbapi.CentralRequest
 	}{
-		Ctx: ctx,
-		ID:  id,
+		Ctx:            ctx,
+		CentralRequest: centralRequest,
 	}
 	mock.lockRegisterCentralDeprovisionJob.Lock()
 	mock.calls.RegisterCentralDeprovisionJob = append(mock.calls.RegisterCentralDeprovisionJob, callInfo)
 	mock.lockRegisterCentralDeprovisionJob.Unlock()
-	return mock.RegisterCentralDeprovisionJobFunc(ctx, id)
+	return mock.RegisterCentralDeprovisionJobFunc(ctx, centralRequest)
 }
 
 // RegisterCentralDeprovisionJobCalls gets all the calls that were made to RegisterCentralDeprovisionJob.
@@ -1126,12 +1126,12 @@ func (mock *CentralServiceMock) RegisterCentralDeprovisionJob(ctx context.Contex
 //
 //	len(mockedCentralService.RegisterCentralDeprovisionJobCalls())
 func (mock *CentralServiceMock) RegisterCentralDeprovisionJobCalls() []struct {
-	Ctx context.Context
-	ID  string
+	Ctx            context.Context
+	CentralRequest *dbapi.CentralRequest
 } {
 	var calls []struct {
-		Ctx context.Context
-		ID  string
+		Ctx            context.Context
+		CentralRequest *dbapi.CentralRequest
 	}
 	mock.lockRegisterCentralDeprovisionJob.RLock()
 	calls = mock.calls.RegisterCentralDeprovisionJob
