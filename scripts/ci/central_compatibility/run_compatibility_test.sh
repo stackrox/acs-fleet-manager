@@ -100,7 +100,8 @@ helm upgrade --install -n $CENTRAL_NS stackrox-central-services ./central-chart 
   -f "${SOURCE_DIR}/central-values.yaml" \
   --set "central.adminPassword.values=$ADMIN_PW" \
   --set "central.image.tag=$ACS_VERSION" \
-  --set "central.db.image.tag=$ACS_VERSION"
+  --set "central.db.image.tag=$ACS_VERSION" \
+  --set "scannerV4.db.image.tag=$ACS_VERSION"
 
 KUBECTL="$(which kubectl)"
 wait_for_container_to_become_ready "$CENTRAL_NS" "app=central" "central"
