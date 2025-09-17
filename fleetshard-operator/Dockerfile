@@ -41,8 +41,8 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/go/.cache/ \
     make fleetshard-operator GOOS=linux GOARCH=${TARGETARCH}
 
-# RH catalog see: https://catalog.redhat.com/software/containers/openshift4/ose-helm-operator
-FROM registry.redhat.io/openshift4/ose-helm-operator:v4.15.0-202503310336.p0.g52fc4b9.assembly.stream.el8
+# RH catalog see: https://catalog.redhat.com/en/software/containers/openshift4/ose-helm-rhel9-operator/6528099db4022aa92175dba4
+FROM registry.redhat.io/openshift4/ose-helm-rhel9-operator@sha256:16f3efe11070dab0af40750fa6811c7c6b1866ee10f06dc5820ea1576450adbf
 
 ENV HOME=/opt/helm
 ENV ADDON_NAME=acs-fleetshard
