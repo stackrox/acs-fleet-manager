@@ -11,7 +11,7 @@ func TestResourceIDGeneration(t *testing.T) {
 	errors := validation.IsDNS1123Label(id)
 	if len(errors) > 0 {
 		for _, e := range errors {
-			t.Fatalf(e)
+			t.Fatalf("%s", e)
 		}
 	}
 }

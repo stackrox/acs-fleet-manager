@@ -314,7 +314,7 @@ func ToServiceError(err error) *ServiceError {
 	case *ServiceError:
 		return convertedErr
 	default:
-		return GeneralError(convertedErr.Error())
+		return GeneralError("%s", convertedErr.Error())
 	}
 }
 
@@ -398,7 +398,7 @@ func (e *ServiceError) AsError() error {
 	if e == nil {
 		return nil
 	}
-	return fmt.Errorf(e.Error())
+	return fmt.Errorf("%s", e.Error())
 }
 
 // Is404 ...
@@ -693,5 +693,5 @@ func FailedClusterAuthorization(err error) *ServiceError {
 	if svcErr.IsForbidden() {
 		reason += " - please contact your administrator to ensure that your Red Hat account has the RedhatManagedCluster permission."
 	}
-	return NewWithCause(svcErr.Code, svcErr, reason)
+	return NewWithCause(svcErr.Code, svcErr, "%s", reason)
 }

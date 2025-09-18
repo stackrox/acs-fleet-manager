@@ -14,7 +14,7 @@ RUN microdnf install gzip tar && \
 ARG IMAGE_TAG=latest
 RUN yq -i ".global.image.tag = strenv(IMAGE_TAG)" rhacs-terraform/values.yaml
 
-FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.23.6-4 AS build-go
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.24.6-1756315360 AS build-go
 USER root
 
 RUN mkdir /src

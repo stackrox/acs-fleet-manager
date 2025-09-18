@@ -123,7 +123,7 @@ func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1
 	clusterResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, err := clusterResource.Add().Body(cluster).Send()
 	if err != nil {
-		return &clustersmgmtv1.Cluster{}, serviceErrors.New(serviceErrors.ErrorGeneral, err.Error())
+		return &clustersmgmtv1.Cluster{}, serviceErrors.New(serviceErrors.ErrorGeneral, "%s", err.Error())
 	}
 	createdCluster := response.Body()
 
