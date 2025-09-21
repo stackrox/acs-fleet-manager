@@ -121,8 +121,8 @@ require (
 	github.com/bombsimon/logrusr/v2 v2.0.1 // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/bradleyfalzon/ghinstallation/v2 v2.12.0 // indirect
-	github.com/casbin/casbin/v2 v2.102.0 // indirect
-	github.com/casbin/govaluate v1.2.0 // indirect
+	github.com/casbin/casbin/v2 v2.127.0 // indirect
+	github.com/casbin/govaluate v1.3.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
@@ -150,6 +150,7 @@ require (
 	github.com/go-git/go-git/v5 v5.13.2 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
+	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
@@ -205,6 +206,7 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
+	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-ciede2000 v0.0.0-20170301095244-782e8c62fec3 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -231,6 +233,7 @@ require (
 	github.com/pjbgf/sha1cd v0.3.2 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/pquerna/otp v1.4.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/redis/go-redis/v9 v9.7.3 // indirect
@@ -241,11 +244,14 @@ require (
 	github.com/segmentio/analytics-go/v3 v3.3.0 // indirect
 	github.com/segmentio/backo-go v1.0.1 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
+	github.com/shirou/gopsutil/v3 v3.24.5 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.3.0 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/stackrox/scanner v0.0.0-20240830165150-d133ba942d59 // indirect
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
+	github.com/tklauser/go-sysconf v0.3.12 // indirect
+	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/tkuchiki/go-timezone v0.2.3 // indirect
 	github.com/urfave/cli v1.22.16 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
@@ -256,6 +262,7 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
+	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zmap/zcrypto v0.0.0-20231219022726-a1f61fb1661c // indirect
 	github.com/zmap/zlint/v3 v3.6.0 // indirect
 	go.opentelemetry.io/otel v1.33.0 // indirect
