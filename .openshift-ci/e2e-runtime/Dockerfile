@@ -5,7 +5,7 @@ RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
 
 RUN dnf update -y --disablerepo=\* --enablerepo=baseos,appstream && dnf -y install procps make which git gettext jq gcc && dnf clean all && rm -rf /var/cache/dnf
 
-COPY --from=registry.redhat.io/rhel8/go-toolset@sha256:4842bf7e31849a442f4c6d00f00fe3a6d4793525764e0ddb3ba098c6649a7f67 /usr/lib/golang /usr/lib/golang
+COPY --from=registry.redhat.io/rhel9/go-toolset:1.24.6 /usr/lib/golang /usr/lib/golang
 COPY --from=quay.io/openshift/origin-cli:4.20 /usr/bin/oc /usr/bin
 
 ENV GOPATH=/go
