@@ -556,25 +556,6 @@ image/build/probe:
 	$(DOCKER) tag $(IMAGE_REF) $(PROBE_SHORT_IMAGE_REF)
 .PHONY: image/build/probe
 
-image/build/fleet-manager-tools: GOOS=linux
-image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
-image/build/fleet-manager-tools: fleet-manager fleetshard-sync acsfleetctl
-	$(DOCKER) build -t $(IMAGE_REF) -f tools.Dockerfile .
-	$(DOCKER) tag $(IMAGE_REF) fleet-manager-tools:$(image_tag)
-.PHONY: image/build/fleet-manager-tools
-
-image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
-image/push/fleet-manager-tools: image/build/fleet-manager-tools
-	$(DOCKER) push $(IMAGE_REF)
-	@echo
-	@echo "Image fleet-manager-tools was pushed as $(IMAGE_REF)."
-.PHONY: image/push/fleet-manager-tools
-
-image/push/fleet-manager-tools/internal: IMAGE_TAG ?= $(image_tag)
-image/push/fleet-manager-tools/internal: docker/login/internal
-	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/fleet-manager-tools:$(IMAGE_TAG)" --platform linux/amd64 --push -f tools.Dockerfile .
-.PHONY: image/push/fleet-manager-tools/internal
-
 image/build/emailsender: GOOS=linux
 image/build/emailsender: IMAGE_REF="$(external_image_registry)/$(emailsender_image_repository):$(image_tag)"
 image/build/emailsender:
