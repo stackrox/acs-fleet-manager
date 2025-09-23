@@ -230,7 +230,7 @@ func (helper *Helper) NewAccountWithNameAndOrg(name string, orgID string) *amv1.
 func (helper *Helper) NewAccount(username, name, email string, orgID string) *amv1.Account {
 	account, err := helper.AuthHelper.NewAccount(username, name, email, orgID)
 	if err != nil {
-		helper.T.Errorf(fmt.Sprintf("Unable to create a new account: %s", err.Error()))
+		helper.T.Errorf("Unable to create a new account: %s", err.Error())
 	}
 	return account
 }
@@ -239,7 +239,7 @@ func (helper *Helper) NewAccount(username, name, email string, orgID string) *am
 func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.MapClaims) context.Context {
 	token, err := helper.AuthHelper.CreateSignedJWT(account, claims)
 	if err != nil {
-		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token: %s", err.Error()))
+		helper.T.Errorf("Unable to create a signed token: %s", err.Error())
 	}
 
 	return context.WithValue(context.Background(), compat.ContextAccessToken, token)
@@ -260,7 +260,7 @@ func (helper *Helper) NewAuthenticatedAdminContext(account *amv1.Account, claims
 
 	token, err := helper.AuthHelper.CreateSignedJWT(account, claims)
 	if err != nil {
-		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token: %s", err.Error()))
+		helper.T.Errorf("Unable to create a signed token: %s", err.Error())
 	}
 
 	return context.WithValue(context.Background(), adminprivate.ContextAccessToken, token)
@@ -301,7 +301,7 @@ func (helper *Helper) ResetDB() {
 func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 	token, err := helper.AuthHelper.CreateSignedJWT(account, nil)
 	if err != nil {
-		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token: %s", err.Error()))
+		helper.T.Errorf("Unable to create a signed token: %s", err.Error())
 	}
 	return token
 }
@@ -310,7 +310,7 @@ func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 func (helper *Helper) CreateJWTStringWithClaim(account *amv1.Account, jwtClaims jwt.MapClaims) string {
 	token, err := helper.AuthHelper.CreateSignedJWT(account, jwtClaims)
 	if err != nil {
-		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token with the given claims: %s", err.Error()))
+		helper.T.Errorf("Unable to create a signed token with the given claims: %s", err.Error())
 	}
 	return token
 }

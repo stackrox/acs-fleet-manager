@@ -28,7 +28,7 @@ func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	termsReviewResponse, err := mocks.GetMockTermsReviewBuilder(nil).TermsRequired(termsRequired).Build()
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 	ocmServerBuilder.SetTermsReviewPostResponse(termsReviewResponse, nil)
 	ocmServer := ocmServerBuilder.Build()

@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:1.23.6-4 AS build
+FROM registry.access.redhat.com/ubi8/go-toolset:1.24.6-1756315360 AS build
 USER root
 ENV GOFLAGS="-mod=mod"
 

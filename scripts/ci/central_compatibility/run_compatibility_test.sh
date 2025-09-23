@@ -66,7 +66,7 @@ if [ "$GITHUB_REPOSITORY" = "stackrox/stackrox" ]; then
   ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
 else
   git -C "$STACKROX_DIR" fetch --tags
-  ACS_VERSION="$(git -C "$STACKROX_DIR" tag | grep nightly | tail -n 1)"
+  ACS_VERSION="$(git -C "$STACKROX_DIR" tag | grep -E '.*-nightly-[0-9]{8}$' | tail -n 1)"
   git -C "$STACKROX_DIR" checkout "$ACS_VERSION"
 fi
 
@@ -100,7 +100,8 @@ helm upgrade --install -n $CENTRAL_NS stackrox-central-services ./central-chart 
   -f "${SOURCE_DIR}/central-values.yaml" \
   --set "central.adminPassword.values=$ADMIN_PW" \
   --set "central.image.tag=$ACS_VERSION" \
-  --set "central.db.image.tag=$ACS_VERSION"
+  --set "central.db.image.tag=$ACS_VERSION" \
+  --set "scannerV4.db.image.tag=$ACS_VERSION"
 
 KUBECTL="$(which kubectl)"
 wait_for_container_to_become_ready "$CENTRAL_NS" "app=central" "central"
