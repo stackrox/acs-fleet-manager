@@ -43,13 +43,13 @@ Maya understands the nuances of API versioning, backward compatibility, security
   - Current usage status (active/deprecated/experimental)
 
 ### Phase 2: API Architecture Analysis
-- [ ] **Trace request flows**: Map how requests flow through the system
+- [x] **Trace request flows**: Map how requests flow through the system
   - Customer → Public API → Database
   - Fleetshard → Internal API → Database  
   - Admin → Admin API → Database
-- [ ] **Identify data models**: Catalog core data structures and their relationships
-- [ ] **Security model review**: Document authentication/authorization patterns
-- [ ] **Deprecation assessment**: Identify unused or legacy endpoints
+- [x] **Identify data models**: Catalog core data structures and their relationships
+- [x] **Security model review**: Document authentication/authorization patterns
+- [x] **Deprecation assessment**: Identify unused or legacy endpoints
 
 ### Context Notes
 - **Public API**: Where customers request Central creation/deletion, UI gets Central status
@@ -148,9 +148,112 @@ Maya understands the nuances of API versioning, backward compatibility, security
 
 8. **Separate Email Service**: The emailsender has its own API specification and service, suggesting microservice architecture
 
-### Next Investigation Priorities
+## Phase 2 Architecture Analysis - COMPLETED
 
-1. Examine generated API client/server code structure in `internal/central/pkg/api/`
-2. Trace request flow through handlers and services  
-3. Analyze authentication/authorization implementation
-4. Map data models and database schema relationships
+### Request Flow Analysis
+
+**1. Public API Request Flow (Customer Operations)**
+```
+HTTP Request → Authentication Middleware → Handler (central.go) → Service Layer → Database
+```
+- `internal/central/pkg/handlers/central.go` - Main customer-facing handlers
+- Authentication via composite handler (`authentication.go`) routing by URL prefix  
+- Uses `HandlerConfig` pattern with validation chain and action functions
+- Services in `internal/central/pkg/services/central.go` provide business logic
+- Database access through GORM ORM with `dbapi.CentralRequest` models
+
+**2. Internal API Request Flow (Fleetshard Operations)**
+```  
+Fleetshard → Private API → Data Plane Handlers → Central Service → Database Updates
+```
+- `internal/central/pkg/handlers/data_plane_central.go` - Fleetshard-facing handlers
+- Handles status updates from data plane clusters via `UpdateCentralStatuses()`
+- Returns `ManagedCentralList` with GitOps configuration for fleet deployment
+- Authentication uses data plane OIDC issuers + Kubernetes service account tokens
+
+**3. Admin API Request Flow (Operations)**
+```
+Admin Tool → Admin API → Admin Handlers → Central Service → Direct DB Operations  
+```
+- `internal/central/pkg/handlers/admin_central.go` - Administrative operations
+- Bypasses organization-level filtering (cross-tenant visibility)
+- Supports emergency operations like `DbDelete()` for force removal
+- Authentication via internal SSO (auth.redhat.com) + OCM tokens
+
+### Core Data Models & Relationships
+
+**Primary Entity: `CentralRequest` (dbapi/central_request_types.go)**
+```go
+type CentralRequest struct {
+    api.Meta                    // ID, CreatedAt, UpdatedAt, DeletedAt
+    Name         string         // Central instance name  
+    Status       string         // Lifecycle state (accepted→preparing→provisioning→ready→deprovision→deleting)
+    Owner        string         // Red Hat SSO username
+    OwnerUserID  string         // Subject claim from token
+    OrganisationID string       // Customer organization ID
+    ClusterID    string         // Data plane cluster assignment
+    Region       string         // Cloud region (us-east-1, etc.)
+    CloudProvider string        // AWS, GCP, etc.
+    Host         string         // Domain suffix for Central URLs
+    Routes       api.JSON       // DNS routing configuration
+    Secrets      api.JSON       // Encrypted Central secrets  
+    AuthConfig                  // OIDC client configuration
+    Traits       []string       // Feature flags/capabilities
+}
+```
+
+**Related Entities:**
+- `Cluster` (pkg/api/cluster_types.go) - Data plane cluster metadata
+- `DataPlaneCentralStatus` - Fleetshard status reports from clusters
+- `CloudProvider` & `CloudRegion` - Infrastructure topology data
+
+**Status Lifecycle:** 
+`accepted` → `preparing` → `provisioning` → `ready` → `deprovision` → `deleting`
+
+### Security Model Patterns
+
+**1. Composite Authentication Handler**
+- Routes requests to different auth handlers based on URL prefix:
+  - `/admin/*` → Internal SSO (auth.redhat.com) + OCM
+  - `/private/*` → Data plane OIDC + Kubernetes service accounts  
+  - `/*` → Customer SSO (sso.redhat.com) + OCM
+
+**2. JWT Claims Processing**
+- `ACSClaims` (`pkg/auth/acs_claims.go`) extracts identity from JWT tokens:
+  - `org_id` - Organization ID for multi-tenancy
+  - `username` - Display name  
+  - `sub` - Subject (user ID or service account)
+  - `is_org_admin` - Organization admin privileges
+
+**3. Authorization Layers**
+- Organization-level scoping for Public API (customers see only their tenants)
+- Admin API bypasses org filtering (operations team sees all tenants)
+- Fleetshard authentication via dedicated OIDC issuers + cluster service accounts
+
+**4. Multi-tenancy Enforcement**
+- Database queries filtered by `organisation_id` for customer API
+- Admin API uses unfiltered queries for cross-tenant operations
+- Central names must be unique within organization scope
+
+### Deprecation Assessment
+
+**Current Status: No Deprecated Endpoints Found**
+- All API specifications (`openapi/*.yaml`) show no `deprecated: true` flags
+- No experimental or alpha/beta endpoints identified in current API versions
+- All endpoints appear to be actively maintained and in production use
+- API versioning follows semantic versioning (Public: 1.2.0, Internal: 1.4.0, Admin: 0.0.3)
+
+**Monitoring Approach:**
+- Generated mock files show comprehensive usage tracking across all endpoints
+- Telemetry service tracks central creation/deletion events  
+- No unused or legacy endpoint patterns detected in codebase analysis
+
+### Key Architectural Insights
+
+1. **Consistent Request Pattern**: All APIs follow `HandlerConfig` pattern with validation chains and action functions
+2. **Service Layer Separation**: Clean separation between HTTP handlers and business logic services  
+3. **Database Abstraction**: GORM ORM provides database access with model validation
+4. **Code Generation**: OpenAPI-first approach with generated client/server code
+5. **Dependency Injection**: Uses `goava/di` framework for service wiring
+6. **Background Workers**: Separate worker processes handle Central lifecycle management
+7. **Multi-tenancy**: Organization-based isolation with admin override capabilities
