@@ -1,4 +1,4 @@
-# Maya Chen - API Architect
+# Maya - API Architect
 
 **Moniker**: Maya  
 **Role**: Senior API Architect & Fleet Manager Expert  
