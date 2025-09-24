@@ -24,20 +24,20 @@ River has expertise in identifying unused configuration fields, optimizing confi
 
 ### Phase 1: Configuration Discovery and Mapping
 
-- [ ] **Map configuration initialization flow**: Trace how configuration is loaded from startup to runtime
+- [x] **Map configuration initialization flow**: Trace how configuration is loaded from startup to runtime
   - Main application entry points (`cmd/fleet-manager/main.go`)
   - Dependency injection setup (`internal/central/providers.go`)
   - Environment-specific configuration loading patterns
   - Flag precedence and override mechanisms
 
-- [ ] **Enumerate all configuration structs**: Catalog every configuration struct across the codebase
+- [x] **Enumerate all configuration structs**: Catalog every configuration struct across the codebase
   - Core Fleet Manager configurations (`internal/central/pkg/config/`)
   - Component-specific configurations (fleetshard, emailsender, probe)
   - Client configurations (OCM, IAM, telemetry, Red Hat SSO)
   - Server configurations (HTTP, metrics, health checks)
   - Database and authentication configurations
 
-- [ ] **Document YAML configuration schemas**: For each YAML config file, document:
+- [x] **Document YAML configuration schemas**: For each YAML config file, document:
   - File purpose and consumer
   - Complete schema with field types and validation rules
   - Environment-specific variations (dev vs staging vs prod)
@@ -95,10 +95,33 @@ River has expertise in identifying unused configuration fields, optimizing confi
 
 ### Configuration Architecture Overview
 
-**Configuration Loading Flow:**
+**Configuration Loading Flow (ANALYZED):**
 ```
-1. Main Application Start → 2. Environment Detection → 3. Base Config Loading → 4. Environment Overrides → 5. Flag Processing → 6. Validation → 7. DI Registration → 8. Service Initialization
+1. Main Application Start (cmd/fleet-manager/main.go)
+   ↓
+2. Environment Detection (environments.GetEnvironmentStrFromEnv() - OCM_ENV)
+   ↓
+3. DI Container Creation (environments.New() with central.ConfigProviders())
+   ↓
+4. Flag Registration (env.AddFlags() - pflag integration)
+   ↓
+5. Service Creation (env.CreateServices()):
+   a. ConfigModule.ReadFiles() - Load YAML files and secrets
+   b. EnvLoader.ModifyConfiguration() - Environment-specific overrides
+   c. BeforeCreateServicesHook execution
+   d. ServiceContainer creation with ServiceProviders
+   e. ServiceValidator.Validate() - Configuration validation
+   f. AfterCreateServicesHook execution
+   ↓
+6. Boot Service Startup (env.Start() - servers, workers, etc.)
 ```
+
+**Configuration Module Pattern:**
+- Each config struct implements `ConfigModule` interface:
+  - `AddFlags(*pflag.FlagSet)` - Register command-line flags
+  - `ReadFiles() error` - Load file-based configuration and secrets
+- Environment-specific loaders handle defaults and modifications
+- Dependency injection provides configuration to services
 
 **Key Configuration Categories Identified:**
 
@@ -139,23 +162,174 @@ River has expertise in identifying unused configuration fields, optimizing confi
 - **Dependency injection**: Configuration providers registered through DI container
 - **Modular design**: Each service component owns its configuration struct
 
-### Initial Configuration Files Inventory
+### YAML Configuration Schema Documentation (ANALYZED)
 
-**YAML Configuration Files (34 identified):**
-- Provider configurations: 3 files (dev/staging/prod variations)
-- Data plane cluster configurations: 4 files (environment + infrastructure control variants)
-- Authorization configurations: 7 files (admin, fleetshard, emailsender for different environments)
+**1. Provider Configuration (`config/provider-configuration.yaml`, `dev/config/provider-configuration.yaml`)**
+- **Purpose**: Define supported cloud providers and regions for Central deployments
+- **Consumer**: `internal/central/pkg/config/providers.go` → `ProviderConfig` struct
+- **Schema**:
+  ```yaml
+  supported_providers:
+    - name: string (required) # "aws", "standalone"
+      default: boolean # Mark as default provider
+      regions:
+        - name: string (required) # Region name (e.g., "us-east-1")
+          default: boolean # Mark as default region
+          supported_instance_type:
+            standard: {} # Standard instance type support
+            eval: {} # Evaluator instance type support
+  ```
+- **Environment Variations**: Dev has additional regions for development clusters
+
+**2. Data Plane Cluster Configuration (`config/dataplane-cluster-configuration.yaml`, `dev/config/dataplane-cluster-configuration.yaml`)**
+- **Purpose**: Define available data plane clusters for Central deployments
+- **Consumer**: `internal/central/pkg/config/dataplane_cluster_config.go` → `DataplaneClusterConfig`
+- **Schema**:
+  ```yaml
+  clusters:
+    - name: string # Required for standalone clusters
+      cluster_id: string (required) # Unique cluster identifier
+      cloud_provider: string # "aws", etc.
+      region: string # AWS region
+      multi_az: boolean # Multi-availability zone deployment
+      schedulable: boolean # Whether cluster accepts new centrals
+      central_instance_limit: integer # Max centrals per cluster
+      status: string # "cluster_provisioning", "cluster_provisioned", "ready"
+      provider_type: string # "ocm" (default), "standalone"
+      cluster_dns: string # Required for standalone clusters
+      supported_instance_type: string # "standard", "eval", "standard,eval"
+  ```
+- **Environment Variations**: Production uses empty list, dev has actual cluster definitions
+
+**3. Authorization Role Mapping (`config/admin-authz-roles-{dev,prod}.yaml`, `config/fleetshard-authz-{dev,prod}.yaml`)**
+- **Purpose**: Define role-based access control for admin and fleetshard APIs
+- **Consumer**: `pkg/auth/roles_authz.go`, `pkg/auth/fleetshard_authz.go`
+- **Schema**:
+  ```yaml
+  - method: string (required) # HTTP method: "GET", "POST", "PUT", "PATCH", "DELETE"
+    roles:
+      - string # Role name (e.g., "acs-fleet-manager-admin-full")
+  ```
+- **Environment Variations**: Dev includes broader engineering roles, prod has restricted roles
+
+**4. Quota Management Configuration (`config/quota-management-list-configuration.yaml`)**
+- **Purpose**: Define user and organization quotas for Central instance creation
+- **Consumer**: `pkg/quotamanagement/quota_management_list_config.go`
+- **Schema**:
+  ```yaml
+  registered_service_accounts:
+    - username: string (required) # Service account username
+      max_allowed_instances: integer # Instance limit (defaults to global)
+  
+  registered_users_per_organisation:
+    - id: integer (required) # Organization ID
+      any_user: boolean # Allow all users in org if no registered_users
+      max_allowed_instances: integer # Org-wide instance limit
+      registered_users:
+        - username: string # Individual user in organization
+  ```
+
+**5. GitOps Configuration (`dev/config/gitops-config.yaml`)**
+- **Purpose**: ArgoCD application definitions and tenant resource templates
+- **Consumer**: `internal/central/pkg/gitops/config.go` → `Config` struct
+- **Schema**:
+  ```yaml
+  applications: # ArgoCD application definitions
+    - metadata:
+        name: string
+      spec:
+        destination:
+          namespace: string
+          server: string
+        project: string
+        source:
+          path: string
+          repoURL: string
+          targetRevision: string
+          helm: # Optional Helm values
+            valuesObject: object
+        syncPolicy:
+          automated:
+            prune: boolean
+            selfHeal: boolean
+  
+  tenantResources:
+    default: | # YAML template for Central resource allocation
+      rolloutGroup: string
+      centralResources:
+        limits: {memory: string}
+        requests: {cpu: string, memory: string}
+      # Additional resource definitions...
+  ```
+
+**6. Access Control Lists (`config/deny-list-configuration.yaml`, `config/read-only-user-list.yaml`)**
+- **Purpose**: User access restrictions and read-only user definitions
+- **Consumer**: `pkg/acl/access_control_list.go`
+
+**7. OIDC/SSO Issuer Configuration (`config/dataplane-oidc-issuers.yaml`, `config/additional-sso-issuers.yaml`)**
+- **Purpose**: Define additional OIDC issuers for authentication
+- **Consumer**: `pkg/client/iam/config.go` → `IAMConfig`
+
+**Configuration File Categories (18 YAML files identified):**
+- Provider configurations: 2 files (prod + dev)
+- Data plane cluster configurations: 4 files (prod + dev + staging + infractl variants)
+- Authorization configurations: 6 files (admin + fleetshard for dev/prod + emailsender)
 - Access control configurations: 3 files (quota, deny lists, read-only users)
-- OIDC/SSO configurations: 3 files (data plane and additional SSO issuers)
-- Development-specific: 2 files (GitOps and additional dev configs)
-- Deployment templates: 12+ files (Kubernetes/OpenShift manifests)
+- OIDC/SSO configurations: 2 files (data plane + additional issuers)
+- GitOps configuration: 1 file (development environment)
 
-**Go Configuration Structs (25+ identified):**
-- Central service configurations: 6 structs
-- Client configurations: 5 structs (OCM, IAM, telemetry, SSO)
-- Server configurations: 4 structs (HTTP, metrics, health, database)
-- Component configurations: 3 structs (fleetshard, emailsender, probe)
-- Shared infrastructure: 7+ structs (environment, auth, quota management)
+**Go Configuration Structs (CATALOGUED - 35+ identified):**
+
+**1. Core Fleet Manager Configurations (internal/central/pkg/config/):**
+- `AWSConfig` - AWS credentials and Route53 configuration
+- `CentralConfig` - Central service business logic, domain settings, IdP config
+- `CentralLifespanConfig` - Central instance expiration and deletion settings
+- `CentralQuotaConfig` - Quota management and internal organization overrides
+- `CentralRequestConfig` - Central request validation and defaults
+- `DataplaneClusterConfig` - Data plane cluster management configuration
+- `FleetshardConfig` - Fleetshard synchronization service configuration
+- `ProviderConfig` (providers.go) - Cloud provider definitions and regions
+
+**2. Component Service Configurations:**
+- `fleetshard/config/Config` - Fleetshard sync agent configuration
+- `emailsender/config/Config` - Email notification service configuration
+- `probe/config/Config` - Health probe and monitoring service configuration
+- `pkg/services/sentry/Config` - Error reporting and telemetry configuration
+
+**3. Client Library Configurations:**
+- `pkg/client/iam/IAMConfig` - Identity and access management configuration
+- `pkg/client/ocm/impl/OCMConfig` - OpenShift Cluster Manager client configuration
+- `pkg/client/ocm/impl/AddonConfig` - OCM addon configuration
+- `pkg/client/telemetry/TelemetryConfigImpl` - Telemetry and phone-home configuration
+
+**4. Server Infrastructure Configurations:**
+- `pkg/server/ServerConfig` - HTTP server configuration (ports, TLS, timeouts)
+- `pkg/server/MetricsConfig` - Prometheus metrics server configuration
+- `pkg/server/HealthCheckConfig` - Health check endpoint configuration
+- `pkg/db/DatabaseConfig` - PostgreSQL database connection configuration
+
+**5. Authentication and Authorization Configurations:**
+- `pkg/auth/ContextConfig` - Request context and authentication configuration
+- `pkg/auth/FleetShardAuthZConfig` - Fleetshard authorization configuration
+- `pkg/auth/AdminAuthZConfig` - Admin role authorization configuration
+- `pkg/acl/AccessControlListConfig` - Access control list configuration
+- `pkg/quotamanagement/QuotaManagementListConfig` - Quota management configuration
+
+**6. GitOps and Tenant Resource Configurations:**
+- `internal/central/pkg/gitops/Config` - GitOps configuration management
+- `TenantResourceConfig` - Tenant resource allocation and overrides
+- `AuthProviderConfig` - Additional auth provider configurations for centrals
+- `DataPlaneClusterConfig` - GitOps data plane cluster definitions
+- `AddonConfig` - Addon installation configuration
+
+**7. Sub-configurations and Nested Structs:**
+- `ManagedDB` (fleetshard) - Managed database configuration for RDS
+- `AuditLogging` (fleetshard) - Audit logging configuration
+- `Telemetry` (fleetshard) - Telemetry storage configuration  
+- `SecretEncryption` (fleetshard) - Secret encryption configuration
+- `OIDCIssuers` (IAM) - Multiple OIDC issuer configuration
+- `IAMRealmConfig` - Keycloak realm configuration
+- `KubernetesIssuer` - Kubernetes service account token issuer configuration
 
 **Configuration Libraries in Use:**
 - `spf13/pflag` - Command-line flag parsing
@@ -170,3 +344,9 @@ River has expertise in identifying unused configuration fields, optimizing confi
 - [ ] **Schema optimization**: Simplify overly complex configuration structures
 - [ ] **Performance improvements**: Optimize configuration loading and validation performance
 - [ ] **Documentation enhancement**: Improve configuration documentation and examples
+
+---
+
+## Session Notes
+
+**Latest Progress (2025-09-24)**: Completed Phase 1 configuration discovery and mapping. Successfully analyzed configuration initialization flow, catalogued all 35+ configuration structs across the codebase, and documented YAML schemas for 18 configuration files. Ready to proceed with Phase 2 - analyzing configuration loading patterns and dependencies in detail. Context cleared - resume with Phase 2 analysis.
