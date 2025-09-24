@@ -46,20 +46,20 @@ River has expertise in identifying unused configuration fields, optimizing confi
 
 ### Phase 2: Configuration Architecture Analysis
 
-- [ ] **Analyze configuration loading patterns**: Understand the flow of configuration data
+- [x] **Analyze configuration loading patterns**: Understand the flow of configuration data
   - File-based configuration reading (`pkg/shared/config.go`)
   - Environment variable integration
   - Command-line flag processing with pflag
   - Configuration validation and error handling
   - Configuration hot-reloading capabilities
 
-- [ ] **Map configuration dependencies**: Document relationships between configurations
+- [x] **Map configuration dependencies**: Document relationships between configurations
   - Configuration struct composition and embedding
   - Cross-service configuration dependencies
   - Configuration provider registration in DI container
   - Configuration propagation to services and workers
 
-- [ ] **Security and secrets management review**: Analyze how sensitive configuration is handled
+- [x] **Security and secrets management review**: Analyze how sensitive configuration is handled
   - Secrets directory structure and file-based secrets
   - Configuration field security classifications
   - Environment-specific secret management
@@ -349,4 +349,139 @@ River has expertise in identifying unused configuration fields, optimizing confi
 
 ## Session Notes
 
-**Latest Progress (2025-09-24)**: Completed Phase 1 configuration discovery and mapping. Successfully analyzed configuration initialization flow, catalogued all 35+ configuration structs across the codebase, and documented YAML schemas for 18 configuration files. Ready to proceed with Phase 2 - analyzing configuration loading patterns and dependencies in detail. Context cleared - resume with Phase 2 analysis.
+**Latest Progress (2025-09-24)**: Completed Phase 1 and Phase 2 configuration analysis. Successfully analyzed configuration initialization flow, catalogued all 35+ configuration structs across the codebase, documented YAML schemas for 18 configuration files, and completed detailed analysis of configuration loading patterns, dependencies, and security management. Ready to proceed with Phase 3 - Configuration Usage Analysis to identify unused fields and optimization opportunities.
+
+### Phase 2 Architecture Analysis - COMPLETED FINDINGS
+
+**Configuration Loading Flow Deep Dive (ANALYZED):**
+
+**1. File-Based Configuration Reading (`pkg/shared/config.go`)**
+- **Core Functions**:
+  - `ReadFile(file string)` - Base file reading with path resolution
+  - `BuildFullFilePath(filename string)` - Handles absolute/relative paths and unquoting
+  - `ReadFileValueString/Int/Bool()` - Type-specific file value parsing
+  - `ReadYamlFile()` - YAML parsing with strict unmarshaling
+
+- **Path Resolution Logic**:
+  - Supports both absolute and relative paths
+  - Relative paths resolved against `projectRootDirectory`
+  - Handles quoted filenames via `strconv.Unquote()`
+  - Empty filenames gracefully ignored (no error)
+
+- **YAML Processing**:
+  - Uses `yaml.UnmarshalStrict()` for strict validation
+  - Error wrapping with contextual information
+  - Direct struct unmarshaling support
+
+**2. Dependency Injection Configuration Architecture (ANALYZED):**
+
+**Configuration Provider Registration Pattern**:
+```go
+// Main configuration providers (internal/central/providers.go)
+ConfigProviders() = EnvConfigProviders() + CoreConfigProviders() + CentralConfigProviders()
+
+// Core Infrastructure (pkg/providers/core.go)
+CoreConfigProviders() = {
+  server.ServerConfig, db.DatabaseConfig, ocm.OCMConfig, iam.IAMConfig,
+  auth.ContextConfig, telemetry.TelemetryConfig, etc.
+}
+
+// Central Service Specific (internal/central/providers.go)
+CentralConfigProviders() = {
+  config.AWSConfig, config.CentralConfig, config.DataplaneClusterConfig,
+  config.FleetshardConfig, etc.
+}
+```
+
+**Environment-Specific Loader Registration**:
+- Each environment (dev/prod/stage/integration/testing) has dedicated `EnvLoader`
+- Tagged registration: `di.Tags{"env": environments.DevelopmentEnv}`
+- Environment loaders provide default flag values and configuration modifications
+
+**Service Lifecycle Integration**:
+- `ConfigModule` interface: `AddFlags()` + `ReadFiles()`
+- `ServiceValidator` interface: `Validate()` for post-creation validation
+- `BootService` interface: `Start()` + `Stop()` for lifecycle management
+
+**3. Configuration Dependencies and Relationships (MAPPED):**
+
+**Composition Patterns**:
+- **Embedded Configuration Structs**: `CentralConfig` embeds `CentralLifespanConfig` and `CentralQuotaConfig`
+- **Hierarchical Configuration**: Environment-specific configs inherit from base configs
+- **Cross-Service Dependencies**: OCM config used by multiple services (ClusterManagementClient, AMSClient)
+
+**Dependency Injection Flow**:
+1. `ConfigContainer` → Holds all configuration modules and env loaders
+2. `ServiceContainer` → Created from service providers, inherits from ConfigContainer
+3. **Parent-Child Relationship**: ServiceContainer.AddParent(ConfigContainer) enables config resolution in services
+
+**Configuration Propagation**:
+- Configuration types injected directly into service constructors
+- Provider functions use config instances to create clients (e.g., OCM connection)
+- Mock enablement through configuration flags (e.g., `config.EnableMock`)
+
+**4. Security and Secrets Management Patterns (ANALYZED):**
+
+**File-Based Secrets Architecture**:
+- **Standard Location**: All secrets in `secrets/` directory relative to project root
+- **Naming Convention**: `{service}.{credential_type}` (e.g., `db.password`, `aws.secretaccesskey`)
+- **Security Markers**: `// pragma: allowlist secret` comments for static analysis tools
+
+**Configuration Security Classifications**:
+- **Public Fields**: Standard configuration that can be in flags/environment
+- **Secret File Fields**: Sensitive values with `*File` suffix (e.g., `PasswordFile`, `SecretAccessKeyFile`)
+- **In-Memory Secrets**: Loaded values stored in corresponding non-file fields (e.g., `Password`, `SecretAccessKey`)
+
+**Secrets Loading Pattern**:
+```go
+// Configuration Definition
+type Config struct {
+    Password     string `json:"password"`      // Runtime value (not exposed)
+    PasswordFile string `json:"password_file"` // File path (can be in config)
+}
+
+// Loading in ReadFiles()
+func (c *Config) ReadFiles() error {
+    return shared.ReadFileValueString(c.PasswordFile, &c.Password)
+}
+```
+
+**Environment-Specific Secret Management**:
+- Development: Points to local files in `secrets/` directory
+- Production: Expected to point to mounted secret volumes or files
+- File path configuration via flags allows runtime secret location override
+
+**Secret Types Identified**:
+- Database credentials (`db.host`, `db.user`, `db.password`, `db.ca_cert`)
+- AWS credentials (`aws.accesskey`, `aws.secretaccesskey`, `aws.route53*`)
+- OIDC/SSO secrets (`central.idp-client-secret`)
+- No encryption at rest - relies on filesystem security
+
+**5. Environment Variable Integration and Flag Processing (ANALYZED):**
+
+**Environment Variable Patterns**:
+- **Primary Environment Detection**: `OCM_ENV` environment variable determines runtime environment
+- **Flag Override Support**: pflag integration allows environment variables to override defaults
+- **Environment Loader Defaults**: Each environment provides different default values for flags
+
+**Command-Line Flag Processing with pflag**:
+- **Flag Registration**: Each `ConfigModule.AddFlags(fs *pflag.FlagSet)` registers its flags
+- **Type Support**: String, Int, Bool, StringArray flags supported
+- **Default Value Chain**: Hard-coded defaults → environment loader defaults → flag overrides
+- **Go Flag Integration**: `flags.AddGoFlagSet(flag.CommandLine)` for compatibility
+
+**Configuration Precedence (Highest to Lowest)**:
+1. Command-line flags (`--flag-name value`)
+2. Environment loader defaults (environment-specific)
+3. Struct field defaults (hard-coded in `New*Config()` functions)
+
+**Environment-Specific Default Examples**:
+- Development: `"enable-ocm-mock": "true"`, `"enable-https": "false"`
+- Production: Opposite values for security and real integrations
+- Each environment can have different service URLs, auth configurations, feature flags
+
+**Configuration Validation and Error Handling**:
+- **Strict YAML Parsing**: `yaml.UnmarshalStrict()` catches unused fields
+- **Service Validation**: `ServiceValidator.Validate()` called after service creation
+- **File Reading Errors**: Wrapped with contextual information and file paths
+- **Dependency Injection Validation**: DI container validates all dependencies can be resolved
