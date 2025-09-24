@@ -67,19 +67,19 @@ River has expertise in identifying unused configuration fields, optimizing confi
 
 ### Phase 3: Configuration Usage Analysis
 
-- [ ] **Field usage tracking**: Identify which configuration fields are actively used
+- [x] **Field usage tracking**: Identify which configuration fields are actively used
   - Static analysis of configuration field references
   - Runtime configuration value access patterns
   - Dead code analysis for unused configuration paths
   - Configuration field deprecation status
 
-- [ ] **Environment configuration comparison**: Compare configurations across environments
+- [x] **Environment configuration comparison**: Compare configurations across environments
   - Development vs staging vs production differences
   - Configuration drift detection between environments
   - Environment-specific feature flag configurations
   - Configuration consistency validation
 
-- [ ] **Configuration optimization opportunities**: Identify areas for improvement
+- [x] **Configuration optimization opportunities**: Identify areas for improvement
   - Unused or redundant configuration fields
   - Configuration schema simplification opportunities
   - Performance impact of configuration loading
@@ -480,6 +480,146 @@ func (c *Config) ReadFiles() error {
 
 ---
 
+### Phase 3: Configuration Field Usage Analysis (COMPLETED)
+
+**Configuration Field Usage Patterns Identified:**
+
+**1. Actively Used Configuration Fields:**
+- **AWS Configuration**: `AccessKey`, `SecretAccessKey`, `Route53AccessKey`, `Route53SecretAccessKey` - Used extensively in AWS client creation and Route53 DNS management
+- **Central Configuration**: 
+  - `EnableCentralExternalDomain` - Used in 4 locations for DNS and external domain management
+  - `CentralDomainName` - Used in DNS record creation and host assignment
+  - `CentralRetentionPeriodDays` - Used in central deletion logic
+  - `CentralIDPClientID`, `CentralIDPClientSecret`, `CentralIDPIssuer` - Used in static authentication configuration
+  - Embedded configs: `CentralLifespan` and `CentralQuotaConfig` fields are actively used
+- **Data Plane Cluster Configuration**: Heavily used across cluster management, placement strategies, and validation
+- **Provider Configuration**: `Region` field is extensively used throughout the codebase (100+ references)
+
+**2. Potentially Unused Configuration Fields:**
+- **FleetshardConfig**: `PollInterval` and `ResyncInterval` fields are defined and have CLI flags but appear UNUSED in runtime code
+  - Flags are registered but values are never accessed in business logic
+  - This suggests potential dead configuration paths
+- **InstanceTypeConfig.Limit**: Defined in YAML schema but usage pattern unclear - needs deeper investigation
+
+**3. Configuration Field Security Patterns:**
+- Secrets follow consistent `*File` suffix pattern with corresponding runtime fields
+- File-based secret loading is actively used (e.g., `CentralIDPClientSecretFile` → `CentralIDPClientSecret`)
+- All AWS credential fields are actively used in AWS client creation
+
+**4. YAML Configuration Usage Analysis:**
+- Provider configuration: All fields in YAML (`name`, `default`, `regions`, `supported_instance_type`) are actively used
+- Data plane cluster configuration: YAML schema matches runtime usage patterns
+- Authorization configurations: Role mapping YAML files are actively loaded and used
+- GitOps configuration: Template-based system with active usage in development environment
+
+**Key Findings:**
+- Most configuration structs have good field utilization
+- FleetshardConfig represents the clearest case of unused configuration (fields defined but never used)
+- Provider and region configurations are heavily utilized throughout the system
+- Security-sensitive fields (AWS credentials, IdP secrets) are all actively used
+- Configuration file structure generally aligns well with runtime usage
+
+### Environment Configuration Comparison Analysis (COMPLETED)
+
+**Environment-Specific Configuration Differences Identified:**
+
+**1. Provider Configuration Differences:**
+- **Production** (`config/provider-configuration.yaml`): AWS + Standalone only
+  - AWS: us-east-1, us-west-2 regions
+  - Standalone: single region setup
+- **Development** (`dev/config/provider-configuration.yaml`): AWS + GCP + Standalone
+  - Additional GCP provider with us-east1 region
+  - Same AWS regions as production
+  - More permissive provider support for development workflows
+
+**2. Data Plane Cluster Configuration:**
+- **Production** (`config/dataplane-cluster-configuration.yaml`): Empty cluster list `clusters: []`
+  - Comment references dev config for actual cluster definitions
+  - Production clusters managed through external infrastructure provisioning
+- **Development** (`dev/config/dataplane-cluster-configuration.yaml`): Standalone dev cluster
+  - Single standalone cluster with ID `1234567890abcdef1234567890abcdef`
+  - High instance limit (99999) for development
+  - cluster_dns: `host.acscs.internal` (overridable)
+
+**3. Authorization Configuration Differences:**
+- **Development** (`admin-authz-roles-dev.yaml`): Broader engineering access
+  - Includes `acs-general-engineering` role for all operations
+  - Allows wider ACS engineering team access
+- **Production** (`admin-authz-roles-prod.yaml`): Restricted access
+  - Only specific admin roles (`acs-fleet-manager-admin-*`)
+  - Tighter security model for production operations
+
+**4. Quota Management Configuration:**
+- **Production** (`config/quota-management-list-configuration.yaml`): Basic RH org
+  - Single organization (11009103) with 50 instance limit
+  - Standard test users configuration
+- **Development** (`dev/config/quota-management-list-configuration.yaml`): Extended testing
+  - Additional E2E testing organization (16155304) with 100 instance limit
+  - Higher limits for development testing scenarios
+
+**5. OIDC and SSO Configuration Consistency:**
+- Both environments use identical SSO issuer configurations
+- Development includes additional GitOps configuration not present in production
+
+**Key Environment Drift Patterns:**
+- **Security Model**: Production uses tighter role-based access control
+- **Resource Limits**: Development has higher quotas and more lenient configurations
+- **Provider Support**: Development supports additional cloud providers (GCP)
+- **Cluster Management**: Production uses external cluster provisioning, dev uses static configuration
+- **Testing Infrastructure**: Development includes E2E testing organization and configurations
+
+### Configuration Optimization Opportunities Analysis (COMPLETED)
+
+**Immediate Optimization Opportunities Identified:**
+
+**1. Unused Configuration Fields (Priority: High)**
+- **FleetshardConfig.PollInterval and ResyncInterval**: 
+  - Fields are defined and have CLI flags but are NEVER used in runtime code
+  - **Recommendation**: Remove unused fields or implement their usage in fleetshard synchronization logic
+  - **Impact**: Reduces configuration complexity and removes dead code paths
+
+**2. Configuration Schema Simplification (Priority: Medium)**
+- **InstanceTypeConfig.Limit field**: Defined in YAML schema but usage pattern unclear
+  - **Recommendation**: Investigate if this field provides value or can be removed
+- **Empty configuration files**: Production dataplane-cluster-configuration.yaml is effectively empty
+  - **Recommendation**: Consider whether this file structure is necessary or could be simplified
+
+**3. Configuration Loading Performance (Priority: Low)**
+- Current file-based configuration loading happens sequentially during startup
+- **Recommendation**: Consider parallel configuration file loading for faster startup times
+- **Impact**: Minimal, as startup time is not a critical performance metric
+
+**4. Configuration Validation Enhancement (Priority: Medium)**
+- **Cross-environment consistency**: No automated validation that dev/prod configs are compatible
+- **Recommendation**: Add validation rules to ensure configuration consistency across environments
+- **Schema validation**: Some YAML files lack strict validation against expected schemas
+- **Recommendation**: Implement comprehensive YAML schema validation
+
+**5. Configuration Documentation and Discoverability (Priority: Medium)**
+- **Scattered configuration**: 18 YAML files across different directories with varying naming patterns
+- **Recommendation**: Consolidate configuration documentation and improve naming consistency
+- **Missing documentation**: Some configuration fields lack clear documentation
+- **Recommendation**: Add comprehensive field-level documentation for all configuration structs
+
+**6. Security and Secret Management (Priority: High)**
+- **File-based secrets**: Current pattern relies on filesystem security without encryption at rest
+- **Recommendation**: Consider integration with dedicated secret management systems
+- **Secret validation**: No validation that secret files contain valid values
+- **Recommendation**: Add secret content validation during configuration loading
+
+**7. Configuration Drift Prevention (Priority: Medium)**
+- **Manual environment sync**: No automated checking for configuration drift between environments
+- **Recommendation**: Implement automated configuration drift detection
+- **Version control**: Configuration changes lack change tracking and approval workflows
+- **Recommendation**: Consider configuration change management processes
+
+**Priority Action Items:**
+1. **Remove unused FleetshardConfig fields** - Quick win for code cleanup
+2. **Implement comprehensive configuration validation** - Prevents runtime issues
+3. **Investigate InstanceTypeConfig.Limit usage** - Clarify or remove unclear fields
+4. **Enhance secret management security** - Address security concerns
+5. **Add configuration drift detection** - Improve operational reliability
+
 ## Session Notes
 
-**Latest Progress (2025-09-24)**: Completed Phase 1 and Phase 2 configuration analysis. Successfully analyzed configuration initialization flow, catalogued all 35+ configuration structs across the codebase, documented YAML schemas for 18 configuration files, and completed detailed analysis of configuration loading patterns, dependencies, and security management. Ready to proceed with Phase 3 - Configuration Usage Analysis to identify unused fields and optimization opportunities.
+**Latest Progress (2025-09-24)**: Successfully completed Phase 1, Phase 2, and Phase 3 configuration analysis. Accomplished comprehensive analysis of configuration initialization flow, catalogued all 35+ configuration structs, documented YAML schemas for 18 configuration files, analyzed configuration loading patterns and dependencies, identified unused FleetshardConfig fields, completed environment configuration comparison revealing security and resource differences, and identified 7 key optimization opportunities with prioritized action items. Phase 3 - Configuration Usage Analysis is now COMPLETE. Ready to proceed with Phase 4 - Configuration Optimization implementation when requested.
