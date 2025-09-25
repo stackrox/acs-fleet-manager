@@ -59,7 +59,7 @@ require (
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f
 	golang.org/x/oauth2 v0.30.0
 	golang.org/x/sync v0.15.0
-	golang.org/x/sys v0.33.0
+	golang.org/x/sys v0.35.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.11
@@ -74,7 +74,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute/metadata v0.5.2 // indirect
+	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
