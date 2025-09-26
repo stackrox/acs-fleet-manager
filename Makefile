@@ -630,7 +630,7 @@ secrets/touch:
           secrets/rhsso-metrics.clientId \
           secrets/rhsso-metrics.clientSecret \
           secrets/redhatsso-service.clientId \
-          secrets/redhatsso-service.clientSecret \
+          secrets/redhatsso-service.clientSecret
 .PHONY: secrets/touch
 
 # Setup for AWS credentials
