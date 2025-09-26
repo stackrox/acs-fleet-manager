@@ -26,8 +26,8 @@ var _ environments.BootService = &APIServer{}
 
 // APIServer ...
 type APIServer struct {
-	httpServer    *http.Server
-	serverConfig  *ServerConfig
+	httpServer   *http.Server
+	serverConfig *ServerConfig
 }
 
 // ServerOptions ...
@@ -42,8 +42,8 @@ type ServerOptions struct {
 // NewAPIServer ...
 func NewAPIServer(options ServerOptions) *APIServer {
 	s := &APIServer{
-		httpServer:    nil,
-		serverConfig:  options.ServerConfig,
+		httpServer:   nil,
+		serverConfig: options.ServerConfig,
 	}
 
 	// mainRouter is top level "/"
@@ -52,7 +52,6 @@ func NewAPIServer(options ServerOptions) *APIServer {
 	mainRouter.MethodNotAllowedHandler = http.HandlerFunc(api.SendMethodNotAllowed)
 
 	// Top-level middlewares
-
 
 	// Operation ID middleware sets a relatively unique operation ID in the context of each request for debugging purposes
 	mainRouter.Use(logger.OperationIDMiddleware)
