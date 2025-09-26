@@ -10,7 +10,6 @@ func NewProductionEnvLoader() environments.EnvLoader {
 		"v":                              "1",
 		"ocm-debug":                      "false",
 		"enable-ocm-mock":                "false",
-		"enable-sentry":                  "true",
 		"enable-deny-list":               "true",
 		"max-allowed-instances":          "1",
 		"enable-central-external-domain": "true",
