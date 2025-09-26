@@ -114,4 +114,3 @@ you can set Fleet Manager to use them by running the following command:
 In the Data Plane cluster, the Central Operator and the FleetShard Deployments
 might reference container images that are located in authenticated container
 image registries.
-
