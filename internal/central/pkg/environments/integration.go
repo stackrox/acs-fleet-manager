@@ -32,7 +32,6 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"ocm-debug":                          "false",
 		"enable-ocm-mock":                    "true",
 		"ocm-mock-mode":                      ocm.MockModeEmulateServer,
-		"enable-sentry":                      "false",
 		"enable-deny-list":                   "true",
 		"enable-instance-limit-control":      "true",
 		"max-allowed-instances":              "1",

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 
-	sentryGo "github.com/getsentry/sentry-go"
 	"github.com/goava/di"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -116,7 +115,6 @@ func (env *Env) CreateServices() error {
 		if err != nil {
 			err = errors.Errorf("unable to read configuration files: %s", err)
 			glog.Error(err)
-			sentryGo.CaptureException(err)
 			return err
 		}
 	}

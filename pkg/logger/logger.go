@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	sentry "github.com/getsentry/sentry-go"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
@@ -96,7 +95,6 @@ type logger struct {
 	// TODO username is unused, should we be logging it? Could be pii
 	username  string
 	session   string
-	sentryHub *sentry.Hub
 }
 
 // NewUHCLogger creates a new logger instance with a default verbosity of 1
@@ -105,7 +103,6 @@ func NewUHCLogger(ctx context.Context) UHCLogger {
 		context:   ctx,
 		level:     1,
 		username:  getUsernameFromClaims(ctx),
-		sentryHub: sentry.GetHubFromContext(ctx),
 		session:   getSessionFromClaims(ctx),
 	}
 	return logger
@@ -212,7 +209,6 @@ func doIfChangedInt32(counter *int32, f func()) {
 func (l *logger) Warningf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.WarningDepth(logDepth, prefixed)
-	l.captureSentryEvent(sentry.LevelWarning, format, args...)
 }
 
 // Errorf ...
@@ -220,37 +216,19 @@ func (l *logger) Errorf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.Errorln(prefixed)
 	glog.ErrorDepth(logDepth, prefixed)
-	l.captureSentryEvent(sentry.LevelError, format, args...)
 }
 
 // Error ...
 func (l *logger) Error(err error) {
 	glog.ErrorDepth(logDepth, err)
-	if l.sentryHub == nil {
-		sentry.CaptureException(err)
-		return
-	}
-	l.sentryHub.CaptureException(err)
 }
 
 // Fatalf ...
 func (l *logger) Fatalf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.FatalDepth(logDepth, prefixed)
-	l.captureSentryEvent(sentry.LevelFatal, format, args...)
 }
 
-func (l *logger) captureSentryEvent(level sentry.Level, format string, args ...interface{}) {
-	event := sentry.NewEvent()
-	event.Level = level
-	event.Message = fmt.Sprintf(format, args...)
-	if l.sentryHub == nil {
-		glog.Warning("Sentry hub not present in logger")
-		sentry.CaptureEvent(event)
-		return
-	}
-	l.sentryHub.CaptureEvent(event)
-}
 
 func getUsernameFromClaims(ctx context.Context) string {
 	var claims jwt.MapClaims

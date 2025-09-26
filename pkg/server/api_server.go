@@ -13,9 +13,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/server/logging"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
-	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/golang/glog"
 	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -30,7 +28,6 @@ var _ environments.BootService = &APIServer{}
 type APIServer struct {
 	httpServer    *http.Server
 	serverConfig  *ServerConfig
-	sentryTimeout time.Duration
 }
 
 // ServerOptions ...
@@ -38,7 +35,6 @@ type ServerOptions struct {
 	di.Inject
 	ServerConfig *ServerConfig
 	IAMConfig    *iam.IAMConfig
-	SentryConfig *sentry.Config
 	RouteLoaders []environments.RouteLoader
 	Env          *environments.Env
 }
@@ -48,7 +44,6 @@ func NewAPIServer(options ServerOptions) *APIServer {
 	s := &APIServer{
 		httpServer:    nil,
 		serverConfig:  options.ServerConfig,
-		sentryTimeout: options.SentryConfig.Timeout,
 	}
 
 	// mainRouter is top level "/"
@@ -58,17 +53,6 @@ func NewAPIServer(options ServerOptions) *APIServer {
 
 	// Top-level middlewares
 
-	// Sentryhttp middleware performs two operations:
-	// 1) Attaches an instance of *sentry.Hub to the request’s context. Accessit by using the sentry.GetHubFromContext() method on the request
-	//   NOTE this is the only way middleware, handlers, and services should be reporting to sentry, through the hub
-	// 2) Reports panics to the configured sentry service
-	sentryhttpOptions := sentryhttp.Options{
-		Repanic:         true,
-		WaitForDelivery: false,
-		Timeout:         options.SentryConfig.Timeout,
-	}
-	sentryMW := sentryhttp.New(sentryhttpOptions)
-	mainRouter.Use(sentryMW.Handle)
 
 	// Operation ID middleware sets a relatively unique operation ID in the context of each request for debugging purposes
 	mainRouter.Use(logger.OperationIDMiddleware)
@@ -77,7 +61,7 @@ func NewAPIServer(options ServerOptions) *APIServer {
 	mainRouter.Use(logging.RequestLoggingMiddleware)
 
 	for _, loader := range options.RouteLoaders {
-		check(loader.AddRoutes(mainRouter), "error adding routes", options.SentryConfig.Timeout)
+		check(loader.AddRoutes(mainRouter), "error adding routes", 5*time.Second)
 	}
 
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
@@ -85,7 +69,7 @@ func NewAPIServer(options ServerOptions) *APIServer {
 
 	var err error
 	mainHandler, err = handlers.NewAuthenticationHandler(options.IAMConfig, mainHandler)
-	check(err, "Unable to create authentication handler", options.SentryConfig.Timeout)
+	check(err, "Unable to create authentication handler", 5*time.Second)
 
 	mainHandler = gorillahandlers.CORS(
 		gorillahandlers.AllowedMethods([]string{
@@ -122,7 +106,7 @@ func (s *APIServer) Serve(listener net.Listener) {
 			check(
 				fmt.Errorf("Unspecified required --https-cert-file, --https-key-file"),
 				"Can't start https server",
-				s.sentryTimeout,
+				5*time.Second,
 			)
 		}
 
@@ -135,7 +119,7 @@ func (s *APIServer) Serve(listener net.Listener) {
 	}
 
 	// Web server terminated.
-	check(err, "Web server terminated with errors", s.sentryTimeout)
+	check(err, "Web server terminated with errors", 5*time.Second)
 	glog.Info("Web server terminated")
 }
 

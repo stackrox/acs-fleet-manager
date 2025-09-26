@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/rs/xid"
 )
 
@@ -27,12 +26,6 @@ func OperationIDMiddleware(handler http.Handler) http.Handler {
 			w.Header().Set(string(OpIDHeader), opID)
 		}
 
-		// Add operation ID to sentry context
-		if hub := sentry.GetHubFromContext(ctx); hub != nil {
-			hub.ConfigureScope(func(scope *sentry.Scope) {
-				scope.SetTag("operation_id", opID)
-			})
-		}
 
 		handler.ServeHTTP(w, r.WithContext(ctx))
 	})
