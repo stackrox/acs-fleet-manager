@@ -20,7 +20,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/serviceregistration"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 )
 
 // CoreConfigProviders ...
@@ -46,7 +45,6 @@ func CoreConfigProviders() di.Option {
 		di.Provide(telemetry.NewTelemetryConfig, di.As(new(environments.ConfigModule))),
 
 		// Add other core config providers..
-		sentry.ConfigProviders(),
 		authorization.ConfigProviders(),
 		account.ConfigProviders(),
 

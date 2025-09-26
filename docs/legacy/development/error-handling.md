@@ -58,14 +58,14 @@ if err := somefunc(); err != nil {
 }
 ```
 
-### Errors should be logged and forward to Sentry in central places
+### Errors should be logged in central places
 
-There is no need to log an error or forward it to Sentry at the place where it occurs. We have central places to handle errors.
+There is no need to log an error at the place where it occurs. We have central places to handle errors.
 The main places where errors handled are:
 
-1. The [handError](../pkg/handlers/framework.go#L42) function. All errors for HTTP requested should be handled here, and it will log the error to logs and forward the error to Sentry.
+1. The [handError](../pkg/handlers/framework.go#L42) function. All errors for HTTP requested should be handled here, and it will log the error.
 2. The [runReconcile](../pkg/workers/reconciler.go#L87) function. All errors occur in the background workers should be handled here.
-3. If the error is not returned to the caller, we should use an instance of the `UHCLogger` to log the error which will make sure it is captured by Sentry as well.
+3. If the error is not returned to the caller, we should use an instance of the `UHCLogger` to log the error.
 
 #### Do
 
@@ -84,10 +84,9 @@ logger.Logger.Error(err)
 #### Don't
 
 ```
-// no need to log the error or capture it in Sentry where it occurs
+// no need to log the error where it occurs
 if err := somefunc(); err != nil {
     golg.Errorf("unexpected error %v", err)
-    sentry.CaptureExeception(err)
     return NewWithCause(ErrorGeneral, err, "unexpected error from somefunc()")
 }
 
