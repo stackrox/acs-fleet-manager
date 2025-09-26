@@ -220,7 +220,7 @@ River has expertise in identifying unused configuration fields, optimizing confi
   registered_service_accounts:
     - username: string (required) # Service account username
       max_allowed_instances: integer # Instance limit (defaults to global)
-  
+
   registered_users_per_organisation:
     - id: integer (required) # Organization ID
       any_user: boolean # Allow all users in org if no registered_users
@@ -252,7 +252,7 @@ River has expertise in identifying unused configuration fields, optimizing confi
           automated:
             prune: boolean
             selfHeal: boolean
-  
+
   tenantResources:
     default: | # YAML template for Central resource allocation
       rolloutGroup: string
@@ -486,7 +486,7 @@ func (c *Config) ReadFiles() error {
 
 **1. Actively Used Configuration Fields:**
 - **AWS Configuration**: `AccessKey`, `SecretAccessKey`, `Route53AccessKey`, `Route53SecretAccessKey` - Used extensively in AWS client creation and Route53 DNS management
-- **Central Configuration**: 
+- **Central Configuration**:
   - `EnableCentralExternalDomain` - Used in 4 locations for DNS and external domain management
   - `CentralDomainName` - Used in DNS record creation and host assignment
   - `CentralRetentionPeriodDays` - Used in central deletion logic
@@ -573,7 +573,7 @@ func (c *Config) ReadFiles() error {
 **Immediate Optimization Opportunities Identified:**
 
 **1. Unused Configuration Fields (Priority: High)**
-- **FleetshardConfig.PollInterval and ResyncInterval**: 
+- **FleetshardConfig.PollInterval and ResyncInterval**:
   - Fields are defined and have CLI flags but are NEVER used in runtime code
   - **Recommendation**: Remove unused fields or implement their usage in fleetshard synchronization logic
   - **Impact**: Reduces configuration complexity and removes dead code paths

@@ -207,7 +207,7 @@ type CentralRequest struct {
 - `DataPlaneCentralStatus` - Fleetshard status reports from clusters
 - `CloudProvider` & `CloudRegion` - Infrastructure topology data
 
-**Status Lifecycle:** 
+**Status Lifecycle:**
 `accepted` → `preparing` → `provisioning` → `ready` → `deprovision` → `deleting`
 
 ### Security Model Patterns
