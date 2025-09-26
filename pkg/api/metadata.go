@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 )
 
@@ -62,7 +61,6 @@ func (m *Metadata) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err = fmt.Errorf("Can't send response body for request '%s'", r.URL.Path)
 		glog.Error(err)
-		sentry.CaptureException(err)
 		return
 	}
 }
