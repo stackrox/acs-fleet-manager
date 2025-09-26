@@ -35,7 +35,6 @@ func transactionMiddleware(db *ConnectionFactory, next http.Handler) http.Handle
 		// Set the value of the request pointer to the value of a new copy of the request with the new context key,vale stored in it
 		*r = *r.WithContext(ctx)
 
-
 		// Returned from handlers and resolve transactions.
 		defer func() {
 			err := Resolve(r.Context())

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sync"
 
-
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
@@ -93,17 +92,17 @@ type logger struct {
 	level     int32
 	accountID string
 	// TODO username is unused, should we be logging it? Could be pii
-	username  string
-	session   string
+	username string
+	session  string
 }
 
 // NewUHCLogger creates a new logger instance with a default verbosity of 1
 func NewUHCLogger(ctx context.Context) UHCLogger {
 	logger := &logger{
-		context:   ctx,
-		level:     1,
-		username:  getUsernameFromClaims(ctx),
-		session:   getSessionFromClaims(ctx),
+		context:  ctx,
+		level:    1,
+		username: getUsernameFromClaims(ctx),
+		session:  getSessionFromClaims(ctx),
 	}
 	return logger
 }
@@ -228,7 +227,6 @@ func (l *logger) Fatalf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.FatalDepth(logDepth, prefixed)
 }
-
 
 func getUsernameFromClaims(ctx context.Context) string {
 	var claims jwt.MapClaims

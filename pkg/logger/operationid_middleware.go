@@ -26,7 +26,6 @@ func OperationIDMiddleware(handler http.Handler) http.Handler {
 			w.Header().Set(string(OpIDHeader), opID)
 		}
 
-
 		handler.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
