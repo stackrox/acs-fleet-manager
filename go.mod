@@ -247,7 +247,7 @@ require (
 	github.com/stackrox/scanner v0.0.0-20240830165150-d133ba942d59 // indirect
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
 	github.com/tkuchiki/go-timezone v0.2.3 // indirect
-	github.com/urfave/cli v1.22.16 // indirect
+	github.com/urfave/cli/v3 v3.4.1 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
 	github.com/vmihailenco/go-tinylfu v0.2.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
