@@ -57,7 +57,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/zgalor/weberr v0.8.2
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f
-	golang.org/x/oauth2 v0.30.0
+	golang.org/x/oauth2 v0.31.0
 	golang.org/x/sync v0.15.0
 	golang.org/x/sys v0.33.0
 	gopkg.in/resty.v1 v1.12.0
