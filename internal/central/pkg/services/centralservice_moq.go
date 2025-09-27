@@ -5,7 +5,6 @@ package services
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/stackrox/acs-fleet-manager/internal/central/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"
@@ -34,9 +33,6 @@ var _ CentralService = &CentralServiceMock{}
 //			ChangeBillingParametersFunc: func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError {
 //				panic("mock out the ChangeBillingParameters method")
 //			},
-//			ChangeCentralCNAMErecordsFunc: func(centralRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
-//				panic("mock out the ChangeCentralCNAMErecords method")
-//			},
 //			ChangeSubscriptionFunc: func(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string, subscriptionID string) *serviceError.ServiceError {
 //				panic("mock out the ChangeSubscription method")
 //			},
@@ -64,9 +60,6 @@ var _ CentralService = &CentralServiceMock{}
 //			GetByIDFunc: func(id string) (*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the GetByID method")
 //			},
-//			GetCNAMERecordStatusFunc: func(centralRequest *dbapi.CentralRequest) (*CNameRecordStatus, error) {
-//				panic("mock out the GetCNAMERecordStatus method")
-//			},
 //			HasAvailableCapacityInRegionFunc: func(centralRequest *dbapi.CentralRequest) (bool, *serviceError.ServiceError) {
 //				panic("mock out the HasAvailableCapacityInRegion method")
 //			},
@@ -75,9 +68,6 @@ var _ CentralService = &CentralServiceMock{}
 //			},
 //			ListByStatusFunc: func(status ...constants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListByStatus method")
-//			},
-//			ListCentralsWithRoutesNotCreatedFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
-//				panic("mock out the ListCentralsWithRoutesNotCreated method")
 //			},
 //			ListCentralsWithoutAuthConfigFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListCentralsWithoutAuthConfig method")
@@ -128,9 +118,6 @@ type CentralServiceMock struct {
 	// ChangeBillingParametersFunc mocks the ChangeBillingParameters method.
 	ChangeBillingParametersFunc func(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *serviceError.ServiceError
 
-	// ChangeCentralCNAMErecordsFunc mocks the ChangeCentralCNAMErecords method.
-	ChangeCentralCNAMErecordsFunc func(centralRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
-
 	// ChangeSubscriptionFunc mocks the ChangeSubscription method.
 	ChangeSubscriptionFunc func(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string, subscriptionID string) *serviceError.ServiceError
 
@@ -158,9 +145,6 @@ type CentralServiceMock struct {
 	// GetByIDFunc mocks the GetByID method.
 	GetByIDFunc func(id string) (*dbapi.CentralRequest, *serviceError.ServiceError)
 
-	// GetCNAMERecordStatusFunc mocks the GetCNAMERecordStatus method.
-	GetCNAMERecordStatusFunc func(centralRequest *dbapi.CentralRequest) (*CNameRecordStatus, error)
-
 	// HasAvailableCapacityInRegionFunc mocks the HasAvailableCapacityInRegion method.
 	HasAvailableCapacityInRegionFunc func(centralRequest *dbapi.CentralRequest) (bool, *serviceError.ServiceError)
 
@@ -169,9 +153,6 @@ type CentralServiceMock struct {
 
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status ...constants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
-
-	// ListCentralsWithRoutesNotCreatedFunc mocks the ListCentralsWithRoutesNotCreated method.
-	ListCentralsWithRoutesNotCreatedFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
 
 	// ListCentralsWithoutAuthConfigFunc mocks the ListCentralsWithoutAuthConfig method.
 	ListCentralsWithoutAuthConfigFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
@@ -237,13 +218,6 @@ type CentralServiceMock struct {
 			// Product is the product argument value.
 			Product string
 		}
-		// ChangeCentralCNAMErecords holds details about calls to the ChangeCentralCNAMErecords method.
-		ChangeCentralCNAMErecords []struct {
-			// CentralRequest is the centralRequest argument value.
-			CentralRequest *dbapi.CentralRequest
-			// Action is the action argument value.
-			Action CentralRoutesAction
-		}
 		// ChangeSubscription holds details about calls to the ChangeSubscription method.
 		ChangeSubscription []struct {
 			// Ctx is the ctx argument value.
@@ -297,11 +271,6 @@ type CentralServiceMock struct {
 			// ID is the id argument value.
 			ID string
 		}
-		// GetCNAMERecordStatus holds details about calls to the GetCNAMERecordStatus method.
-		GetCNAMERecordStatus []struct {
-			// CentralRequest is the centralRequest argument value.
-			CentralRequest *dbapi.CentralRequest
-		}
 		// HasAvailableCapacityInRegion holds details about calls to the HasAvailableCapacityInRegion method.
 		HasAvailableCapacityInRegion []struct {
 			// CentralRequest is the centralRequest argument value.
@@ -318,9 +287,6 @@ type CentralServiceMock struct {
 		ListByStatus []struct {
 			// Status is the status argument value.
 			Status []constants.CentralStatus
-		}
-		// ListCentralsWithRoutesNotCreated holds details about calls to the ListCentralsWithRoutesNotCreated method.
-		ListCentralsWithRoutesNotCreated []struct {
 		}
 		// ListCentralsWithoutAuthConfig holds details about calls to the ListCentralsWithoutAuthConfig method.
 		ListCentralsWithoutAuthConfig []struct {
@@ -392,35 +358,32 @@ type CentralServiceMock struct {
 			CentralRequest *dbapi.CentralRequest
 		}
 	}
-	lockAcceptCentralRequest             sync.RWMutex
-	lockAssignCluster                    sync.RWMutex
-	lockChangeBillingParameters          sync.RWMutex
-	lockChangeCentralCNAMErecords        sync.RWMutex
-	lockChangeSubscription               sync.RWMutex
-	lockCountByRegionAndInstanceType     sync.RWMutex
-	lockCountByStatus                    sync.RWMutex
-	lockDelete                           sync.RWMutex
-	lockDeprovisionCentralForUsers       sync.RWMutex
-	lockDeprovisionExpiredCentrals       sync.RWMutex
-	lockDetectInstanceType               sync.RWMutex
-	lockGet                              sync.RWMutex
-	lockGetByID                          sync.RWMutex
-	lockGetCNAMERecordStatus             sync.RWMutex
-	lockHasAvailableCapacityInRegion     sync.RWMutex
-	lockList                             sync.RWMutex
-	lockListByStatus                     sync.RWMutex
-	lockListCentralsWithRoutesNotCreated sync.RWMutex
-	lockListCentralsWithoutAuthConfig    sync.RWMutex
-	lockPrepareCentralRequest            sync.RWMutex
-	lockRegisterCentralDeprovisionJob    sync.RWMutex
-	lockRegisterCentralJob               sync.RWMutex
-	lockResetCentralSecretBackup         sync.RWMutex
-	lockRestore                          sync.RWMutex
-	lockRotateCentralRHSSOClient         sync.RWMutex
-	lockUpdateIgnoreNils                 sync.RWMutex
-	lockUpdateStatus                     sync.RWMutex
-	lockUpdates                          sync.RWMutex
-	lockVerifyAndUpdateCentralAdmin      sync.RWMutex
+	lockAcceptCentralRequest          sync.RWMutex
+	lockAssignCluster                 sync.RWMutex
+	lockChangeBillingParameters       sync.RWMutex
+	lockChangeSubscription            sync.RWMutex
+	lockCountByRegionAndInstanceType  sync.RWMutex
+	lockCountByStatus                 sync.RWMutex
+	lockDelete                        sync.RWMutex
+	lockDeprovisionCentralForUsers    sync.RWMutex
+	lockDeprovisionExpiredCentrals    sync.RWMutex
+	lockDetectInstanceType            sync.RWMutex
+	lockGet                           sync.RWMutex
+	lockGetByID                       sync.RWMutex
+	lockHasAvailableCapacityInRegion  sync.RWMutex
+	lockList                          sync.RWMutex
+	lockListByStatus                  sync.RWMutex
+	lockListCentralsWithoutAuthConfig sync.RWMutex
+	lockPrepareCentralRequest         sync.RWMutex
+	lockRegisterCentralDeprovisionJob sync.RWMutex
+	lockRegisterCentralJob            sync.RWMutex
+	lockResetCentralSecretBackup      sync.RWMutex
+	lockRestore                       sync.RWMutex
+	lockRotateCentralRHSSOClient      sync.RWMutex
+	lockUpdateIgnoreNils              sync.RWMutex
+	lockUpdateStatus                  sync.RWMutex
+	lockUpdates                       sync.RWMutex
+	lockVerifyAndUpdateCentralAdmin   sync.RWMutex
 }
 
 // AcceptCentralRequest calls AcceptCentralRequestFunc.
@@ -544,42 +507,6 @@ func (mock *CentralServiceMock) ChangeBillingParametersCalls() []struct {
 	mock.lockChangeBillingParameters.RLock()
 	calls = mock.calls.ChangeBillingParameters
 	mock.lockChangeBillingParameters.RUnlock()
-	return calls
-}
-
-// ChangeCentralCNAMErecords calls ChangeCentralCNAMErecordsFunc.
-func (mock *CentralServiceMock) ChangeCentralCNAMErecords(centralRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
-	if mock.ChangeCentralCNAMErecordsFunc == nil {
-		panic("CentralServiceMock.ChangeCentralCNAMErecordsFunc: method is nil but CentralService.ChangeCentralCNAMErecords was just called")
-	}
-	callInfo := struct {
-		CentralRequest *dbapi.CentralRequest
-		Action         CentralRoutesAction
-	}{
-		CentralRequest: centralRequest,
-		Action:         action,
-	}
-	mock.lockChangeCentralCNAMErecords.Lock()
-	mock.calls.ChangeCentralCNAMErecords = append(mock.calls.ChangeCentralCNAMErecords, callInfo)
-	mock.lockChangeCentralCNAMErecords.Unlock()
-	return mock.ChangeCentralCNAMErecordsFunc(centralRequest, action)
-}
-
-// ChangeCentralCNAMErecordsCalls gets all the calls that were made to ChangeCentralCNAMErecords.
-// Check the length with:
-//
-//	len(mockedCentralService.ChangeCentralCNAMErecordsCalls())
-func (mock *CentralServiceMock) ChangeCentralCNAMErecordsCalls() []struct {
-	CentralRequest *dbapi.CentralRequest
-	Action         CentralRoutesAction
-} {
-	var calls []struct {
-		CentralRequest *dbapi.CentralRequest
-		Action         CentralRoutesAction
-	}
-	mock.lockChangeCentralCNAMErecords.RLock()
-	calls = mock.calls.ChangeCentralCNAMErecords
-	mock.lockChangeCentralCNAMErecords.RUnlock()
 	return calls
 }
 
@@ -885,38 +812,6 @@ func (mock *CentralServiceMock) GetByIDCalls() []struct {
 	return calls
 }
 
-// GetCNAMERecordStatus calls GetCNAMERecordStatusFunc.
-func (mock *CentralServiceMock) GetCNAMERecordStatus(centralRequest *dbapi.CentralRequest) (*CNameRecordStatus, error) {
-	if mock.GetCNAMERecordStatusFunc == nil {
-		panic("CentralServiceMock.GetCNAMERecordStatusFunc: method is nil but CentralService.GetCNAMERecordStatus was just called")
-	}
-	callInfo := struct {
-		CentralRequest *dbapi.CentralRequest
-	}{
-		CentralRequest: centralRequest,
-	}
-	mock.lockGetCNAMERecordStatus.Lock()
-	mock.calls.GetCNAMERecordStatus = append(mock.calls.GetCNAMERecordStatus, callInfo)
-	mock.lockGetCNAMERecordStatus.Unlock()
-	return mock.GetCNAMERecordStatusFunc(centralRequest)
-}
-
-// GetCNAMERecordStatusCalls gets all the calls that were made to GetCNAMERecordStatus.
-// Check the length with:
-//
-//	len(mockedCentralService.GetCNAMERecordStatusCalls())
-func (mock *CentralServiceMock) GetCNAMERecordStatusCalls() []struct {
-	CentralRequest *dbapi.CentralRequest
-} {
-	var calls []struct {
-		CentralRequest *dbapi.CentralRequest
-	}
-	mock.lockGetCNAMERecordStatus.RLock()
-	calls = mock.calls.GetCNAMERecordStatus
-	mock.lockGetCNAMERecordStatus.RUnlock()
-	return calls
-}
-
 // HasAvailableCapacityInRegion calls HasAvailableCapacityInRegionFunc.
 func (mock *CentralServiceMock) HasAvailableCapacityInRegion(centralRequest *dbapi.CentralRequest) (bool, *serviceError.ServiceError) {
 	if mock.HasAvailableCapacityInRegionFunc == nil {
@@ -1014,33 +909,6 @@ func (mock *CentralServiceMock) ListByStatusCalls() []struct {
 	mock.lockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
 	mock.lockListByStatus.RUnlock()
-	return calls
-}
-
-// ListCentralsWithRoutesNotCreated calls ListCentralsWithRoutesNotCreatedFunc.
-func (mock *CentralServiceMock) ListCentralsWithRoutesNotCreated() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
-	if mock.ListCentralsWithRoutesNotCreatedFunc == nil {
-		panic("CentralServiceMock.ListCentralsWithRoutesNotCreatedFunc: method is nil but CentralService.ListCentralsWithRoutesNotCreated was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockListCentralsWithRoutesNotCreated.Lock()
-	mock.calls.ListCentralsWithRoutesNotCreated = append(mock.calls.ListCentralsWithRoutesNotCreated, callInfo)
-	mock.lockListCentralsWithRoutesNotCreated.Unlock()
-	return mock.ListCentralsWithRoutesNotCreatedFunc()
-}
-
-// ListCentralsWithRoutesNotCreatedCalls gets all the calls that were made to ListCentralsWithRoutesNotCreated.
-// Check the length with:
-//
-//	len(mockedCentralService.ListCentralsWithRoutesNotCreatedCalls())
-func (mock *CentralServiceMock) ListCentralsWithRoutesNotCreatedCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockListCentralsWithRoutesNotCreated.RLock()
-	calls = mock.calls.ListCentralsWithRoutesNotCreated
-	mock.lockListCentralsWithRoutesNotCreated.RUnlock()
 	return calls
 }
 

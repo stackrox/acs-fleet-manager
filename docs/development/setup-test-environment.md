@@ -91,23 +91,6 @@ To clean up the environment run
 $ make undeploy/dev # points to down.sh
 ```
 
-### DNS tests
-
-The test suite has auto-sensing logic built in to skip DNS e2e tests when the test environment does  not support execution of DNS e2e tests. Currently this is only supported in OpenShift environments.
-
-To run the DNS e2e tests additionally to the default e2e test setup the cluster you're running against needs to have the openshift Route Custom Resource Definition installed and you need to set following environment variables:
-
-```shell
-export ROUTE53_ACCESS_KEY="<key-id>"
-export ROUTE53_SECRET_ACCESS_KEY="<secret-key>"
-
-# Depending on cluster type and its default configuration you might need
-export ENABLE_CENTRAL_EXTERNAL_DOMAIN_DEFAULT=true
-
-# If the domain you test against is not the default dev domain
-export CENTRAL_DOMAIN_NAME="<domain>"
-```
-
 
 ## Cluster setup
 Bootstrap a local cluster using one of the options below.

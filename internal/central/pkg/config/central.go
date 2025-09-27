@@ -10,8 +10,7 @@ import (
 
 // CentralConfig ...
 type CentralConfig struct {
-	EnableCentralExternalDomain bool   `json:"enable_central_external_domain"`
-	CentralDomainName           string `json:"central_domain_name"`
+	CentralDomainName string `json:"central_domain_name"`
 
 	CentralLifespan *CentralLifespanConfig `json:"central_lifespan"`
 	Quota           *CentralQuotaConfig    `json:"central_quota"`
@@ -29,19 +28,17 @@ type CentralConfig struct {
 // NewCentralConfig ...
 func NewCentralConfig() *CentralConfig {
 	return &CentralConfig{
-		EnableCentralExternalDomain: false,
-		CentralDomainName:           "rhacs-dev.com",
-		CentralLifespan:             NewCentralLifespanConfig(),
-		Quota:                       NewCentralQuotaConfig(),
-		CentralIDPClientSecretFile:  "secrets/central.idp-client-secret", //pragma: allowlist secret
-		CentralIDPIssuer:            "https://sso.redhat.com/auth/realms/redhat-external",
-		CentralRetentionPeriodDays:  7,
+		CentralDomainName:          "rhacs-dev.com",
+		CentralLifespan:            NewCentralLifespanConfig(),
+		Quota:                      NewCentralQuotaConfig(),
+		CentralIDPClientSecretFile: "secrets/central.idp-client-secret", //pragma: allowlist secret
+		CentralIDPIssuer:           "https://sso.redhat.com/auth/realms/redhat-external",
+		CentralRetentionPeriodDays: 7,
 	}
 }
 
 // AddFlags ...
 func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.BoolVar(&c.EnableCentralExternalDomain, "enable-central-external-domain", c.EnableCentralExternalDomain, "Enable custom domain for Central TLS")
 	fs.BoolVar(&c.CentralLifespan.EnableDeletionOfExpiredCentral, "enable-deletion-of-expired-central", c.CentralLifespan.EnableDeletionOfExpiredCentral, "Enable the deletion of centrals when its life span has expired")
 	fs.IntVar(&c.CentralLifespan.CentralLifespanInHours, "central-lifespan", c.CentralLifespan.CentralLifespanInHours, "The desired lifespan of a Central instance")
 	fs.StringVar(&c.CentralDomainName, "central-domain-name", c.CentralDomainName, "The domain name to use for Central instances")

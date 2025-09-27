@@ -54,8 +54,6 @@ jobs:
       AWS_ACCOUNT_ID: aws_accountid
       AWS_ACCESS_KEY: aws_accesskey
       AWS_SECRET_ACCESS_KEY: aws_secretaccesskey # pragma: allowlist secret - dummy value
-      ROUTE53_ACCESS_KEY: aws_route53_access_key # pragma: allowlist secret - dummy value
-      ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key # pragma: allowlist secret - dummy value
       TEST_TIMEOUT: 30m
     services:
       postgres:

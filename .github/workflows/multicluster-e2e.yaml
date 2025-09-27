@@ -95,7 +95,6 @@ jobs:
       - name: "Run"
         env:
           RUN_MULTICLUSTER_E2E: "true"
-          ENABLE_CENTRAL_EXTERNAL_DOMAIN: "true"
         run: "scripts/ci/multicluster_tests/entrypoint.sh"
 
   cleanup-clusters:

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -44,15 +43,19 @@ func AssertCentralRequestDeprovisioning(ctx context.Context, client *fleetmanage
 	return AssertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusDeprovision.String())
 }
 
-// AssertDNSMatchesRouter asserts that every domain in centralDomainNames is in recordSets and targets
-// the correct hostname given by the routeIngress
-func AssertDNSMatchesRouter(centralDomainNames []string, recordSets []*types.ResourceRecordSet, routeIngress *openshiftRouteV1.RouteIngress) {
-	for idx, domain := range centralDomainNames {
-		recordSet := recordSets[idx]
-		Expect(recordSet.ResourceRecords).To(HaveLen(1))
-		record := recordSet.ResourceRecords[0]
-		Expect(*recordSet.Name).To(Equal(domain))
-		Expect(*record.Value).To(Equal(routeIngress.RouterCanonicalHostname)) // TODO use route specific ingress instead of comparing with reencryptIngress for all cases
+// AssertCentralRequestDeleted verifies the central has been completely deleted (soft-deleted)
+func AssertCentralRequestDeleted(ctx context.Context, client *fleetmanager.Client, id string) func() error {
+	return func() error {
+		_, httpResp, err := client.PublicAPI().GetCentralById(ctx, id)
+		if err == nil {
+			return fmt.Errorf("expected central to be deleted, but it still exists")
+		}
+
+		if httpResp.StatusCode != 404 {
+			return fmt.Errorf("expected a 404 Not Found response, but got: %d", httpResp.StatusCode)
+		}
+
+		return nil
 	}
 }
 

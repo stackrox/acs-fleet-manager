@@ -9,7 +9,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	"github.com/stackrox/acs-fleet-manager/e2e/dns"
 	"github.com/stackrox/acs-fleet-manager/e2e/testutil"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/admin/private"
@@ -64,11 +63,6 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 	})
 
 	AfterAll(func() {
-		// if the Id is empty we've never successfully created a CentralRequest, thus no cleanup necessary
-		if dnsEnabled && centralRequest.Id != "" {
-			dns.CleanupCentralRequestRecords(route53Client, centralRequest)
-		}
-
 		for _, note := range notes {
 			GinkgoWriter.Println(note)
 		}
@@ -104,11 +98,9 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 				Should(Succeed())
 		})
 
-		It("should have DNS CNAME records for cluster1 routes", func() {
-			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
+		It("should have routes configured on cluster1", func() {
 			testutil.GetCentralRequest(context.Background(), fleetmanagerClient, centralRequest.Id, &centralRequest)
 
-			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
 			routeService := k8s.NewRouteService(cluster1KubeClient)
 
 			var reencryptIngress openshiftRouteV1.RouteIngress
@@ -117,12 +109,7 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 				WithPolling(defaultPolling).
 				Should(Succeed())
 
-			Eventually(dnsRecordsLoader.LoadDNSRecords).
-				WithTimeout(waitTimeout).
-				WithPolling(3 * defaultPolling).
-				Should(HaveLen(len(dnsRecordsLoader.CentralDomainNames)))
-
-			testutil.AssertDNSMatchesRouter(dnsRecordsLoader.CentralDomainNames, dnsRecordsLoader.LastResult, &reencryptIngress)
+			GinkgoWriter.Printf("Route host configured: %s\n", reencryptIngress.Host)
 		})
 	})
 
@@ -155,11 +142,9 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
-		It("should have DNS CNAME records for cluster2 routes", func() {
-			testutil.SkipIf(!dnsEnabled, testutil.SkipDNSMsg)
+		It("should have routes configured on cluster2", func() {
 			testutil.GetCentralRequest(context.Background(), fleetmanagerClient, centralRequest.Id, &centralRequest)
 
-			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
 			routeService := k8s.NewRouteService(cluster2KubeClient)
 
 			var reencryptIngress openshiftRouteV1.RouteIngress
@@ -168,12 +153,7 @@ var _ = Describe("Central Migration Test", Ordered, func() {
 				WithPolling(defaultPolling).
 				Should(Succeed())
 
-			Eventually(dnsRecordsLoader.LoadDNSRecords).
-				WithTimeout(waitTimeout).
-				WithPolling(3 * defaultPolling).
-				Should(HaveLen(len(dnsRecordsLoader.CentralDomainNames)))
-
-			testutil.AssertDNSMatchesRouter(dnsRecordsLoader.CentralDomainNames, dnsRecordsLoader.LastResult, &reencryptIngress)
+			GinkgoWriter.Printf("Route host configured: %s\n", reencryptIngress.Host)
 		})
 	})
 

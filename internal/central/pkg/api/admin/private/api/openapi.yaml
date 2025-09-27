@@ -1091,8 +1091,6 @@ components:
           items:
             $ref: '#/components/schemas/Central_allOf_routes'
           type: array
-        routes_created:
-          type: boolean
         cluster_id:
           type: string
         namespace:

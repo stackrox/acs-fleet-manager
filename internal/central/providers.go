@@ -72,7 +72,6 @@ func ServiceProviders() di.Option {
 		di.Provide(centralmgrs.NewDeletingCentralManager, di.As(new(workers.Worker))),
 		di.Provide(centralmgrs.NewProvisioningCentralManager, di.As(new(workers.Worker))),
 		di.Provide(centralmgrs.NewReadyCentralManager, di.As(new(workers.Worker))),
-		di.Provide(centralmgrs.NewCentralCNAMEManager, di.As(new(workers.Worker))),
 		di.Provide(centralmgrs.NewCentralAuthConfigManager, di.As(new(workers.Worker))),
 		di.Provide(centralmgrs.NewExpirationDateManager, di.As(new(workers.Worker))),
 		di.Provide(gitops.NewEmptyReader),

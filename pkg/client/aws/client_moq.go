@@ -3,11 +3,7 @@
 
 package aws
 
-import (
-	"github.com/aws/aws-sdk-go-v2/service/route53"
-	"github.com/aws/aws-sdk-go-v2/service/route53/types"
-	"sync"
-)
+import ()
 
 // Ensure, that ClientMock does implement Client.
 // If this is not the case, regenerate this file with moq.
@@ -19,15 +15,6 @@ var _ Client = &ClientMock{}
 //
 //		// make and configure a mocked Client
 //		mockedClient := &ClientMock{
-//			ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *types.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
-//				panic("mock out the ChangeResourceRecordSets method")
-//			},
-//			GetChangeFunc: func(changeID string) (*route53.GetChangeOutput, error) {
-//				panic("mock out the GetChange method")
-//			},
-//			ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
-//				panic("mock out the ListHostedZonesByNameInput method")
-//			},
 //		}
 //
 //		// use mockedClient in code that requires Client
@@ -35,136 +22,7 @@ var _ Client = &ClientMock{}
 //
 //	}
 type ClientMock struct {
-	// ChangeResourceRecordSetsFunc mocks the ChangeResourceRecordSets method.
-	ChangeResourceRecordSetsFunc func(dnsName string, recordChangeBatch *types.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
-
-	// GetChangeFunc mocks the GetChange method.
-	GetChangeFunc func(changeID string) (*route53.GetChangeOutput, error)
-
-	// ListHostedZonesByNameInputFunc mocks the ListHostedZonesByNameInput method.
-	ListHostedZonesByNameInputFunc func(dnsName string) (*route53.ListHostedZonesByNameOutput, error)
-
 	// calls tracks calls to the methods.
 	calls struct {
-		// ChangeResourceRecordSets holds details about calls to the ChangeResourceRecordSets method.
-		ChangeResourceRecordSets []struct {
-			// DnsName is the dnsName argument value.
-			DnsName string
-			// RecordChangeBatch is the recordChangeBatch argument value.
-			RecordChangeBatch *types.ChangeBatch
-		}
-		// GetChange holds details about calls to the GetChange method.
-		GetChange []struct {
-			// ChangeID is the changeID argument value.
-			ChangeID string
-		}
-		// ListHostedZonesByNameInput holds details about calls to the ListHostedZonesByNameInput method.
-		ListHostedZonesByNameInput []struct {
-			// DnsName is the dnsName argument value.
-			DnsName string
-		}
 	}
-	lockChangeResourceRecordSets   sync.RWMutex
-	lockGetChange                  sync.RWMutex
-	lockListHostedZonesByNameInput sync.RWMutex
-}
-
-// ChangeResourceRecordSets calls ChangeResourceRecordSetsFunc.
-func (mock *ClientMock) ChangeResourceRecordSets(dnsName string, recordChangeBatch *types.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
-	if mock.ChangeResourceRecordSetsFunc == nil {
-		panic("ClientMock.ChangeResourceRecordSetsFunc: method is nil but Client.ChangeResourceRecordSets was just called")
-	}
-	callInfo := struct {
-		DnsName           string
-		RecordChangeBatch *types.ChangeBatch
-	}{
-		DnsName:           dnsName,
-		RecordChangeBatch: recordChangeBatch,
-	}
-	mock.lockChangeResourceRecordSets.Lock()
-	mock.calls.ChangeResourceRecordSets = append(mock.calls.ChangeResourceRecordSets, callInfo)
-	mock.lockChangeResourceRecordSets.Unlock()
-	return mock.ChangeResourceRecordSetsFunc(dnsName, recordChangeBatch)
-}
-
-// ChangeResourceRecordSetsCalls gets all the calls that were made to ChangeResourceRecordSets.
-// Check the length with:
-//
-//	len(mockedClient.ChangeResourceRecordSetsCalls())
-func (mock *ClientMock) ChangeResourceRecordSetsCalls() []struct {
-	DnsName           string
-	RecordChangeBatch *types.ChangeBatch
-} {
-	var calls []struct {
-		DnsName           string
-		RecordChangeBatch *types.ChangeBatch
-	}
-	mock.lockChangeResourceRecordSets.RLock()
-	calls = mock.calls.ChangeResourceRecordSets
-	mock.lockChangeResourceRecordSets.RUnlock()
-	return calls
-}
-
-// GetChange calls GetChangeFunc.
-func (mock *ClientMock) GetChange(changeID string) (*route53.GetChangeOutput, error) {
-	if mock.GetChangeFunc == nil {
-		panic("ClientMock.GetChangeFunc: method is nil but Client.GetChange was just called")
-	}
-	callInfo := struct {
-		ChangeID string
-	}{
-		ChangeID: changeID,
-	}
-	mock.lockGetChange.Lock()
-	mock.calls.GetChange = append(mock.calls.GetChange, callInfo)
-	mock.lockGetChange.Unlock()
-	return mock.GetChangeFunc(changeID)
-}
-
-// GetChangeCalls gets all the calls that were made to GetChange.
-// Check the length with:
-//
-//	len(mockedClient.GetChangeCalls())
-func (mock *ClientMock) GetChangeCalls() []struct {
-	ChangeID string
-} {
-	var calls []struct {
-		ChangeID string
-	}
-	mock.lockGetChange.RLock()
-	calls = mock.calls.GetChange
-	mock.lockGetChange.RUnlock()
-	return calls
-}
-
-// ListHostedZonesByNameInput calls ListHostedZonesByNameInputFunc.
-func (mock *ClientMock) ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
-	if mock.ListHostedZonesByNameInputFunc == nil {
-		panic("ClientMock.ListHostedZonesByNameInputFunc: method is nil but Client.ListHostedZonesByNameInput was just called")
-	}
-	callInfo := struct {
-		DnsName string
-	}{
-		DnsName: dnsName,
-	}
-	mock.lockListHostedZonesByNameInput.Lock()
-	mock.calls.ListHostedZonesByNameInput = append(mock.calls.ListHostedZonesByNameInput, callInfo)
-	mock.lockListHostedZonesByNameInput.Unlock()
-	return mock.ListHostedZonesByNameInputFunc(dnsName)
-}
-
-// ListHostedZonesByNameInputCalls gets all the calls that were made to ListHostedZonesByNameInput.
-// Check the length with:
-//
-//	len(mockedClient.ListHostedZonesByNameInputCalls())
-func (mock *ClientMock) ListHostedZonesByNameInputCalls() []struct {
-	DnsName string
-} {
-	var calls []struct {
-		DnsName string
-	}
-	mock.lockListHostedZonesByNameInput.RLock()
-	calls = mock.calls.ListHostedZonesByNameInput
-	mock.lockListHostedZonesByNameInput.RUnlock()
-	return calls
 }
