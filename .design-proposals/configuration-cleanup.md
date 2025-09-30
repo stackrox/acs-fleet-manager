@@ -13,7 +13,7 @@ This proposal outlines recommended cleanups for the ACS Fleet Manager configurat
 ### Vault Configuration Files Analyzed
 
 1. **Integration Environment** (`.tmp/vault_configs/integration-secret.yaml`)
-2. **Staging Environment** (`.tmp/vault_configs/stage-secret.json`) 
+2. **Staging Environment** (`.tmp/vault_configs/stage-secret.json`)
 3. **Production Environment** (`.tmp/vault_configs/prod-secret.json`)
 
 ### Configuration Loading Patterns
@@ -40,7 +40,7 @@ The Fleet Manager uses a file-based secret loading pattern where:
 - **Recommendation**: **Remove** these secrets from all environments
 
 #### Unused Image Pull Configuration
-- **Found in vault**: `image-pull.dockerconfigjson` 
+- **Found in vault**: `image-pull.dockerconfigjson`
 - **Status**: No references found in Go codebase
 - **Recommendation**: **Remove** this secret from all environments
 
@@ -54,17 +54,17 @@ The Fleet Manager uses a file-based secret loading pattern where:
 **Issue**: Several secrets use dummy/placeholder values that indicate either unused functionality or hardcodable values.
 
 #### AWS Credentials with Dummy Values
-- **Found**: `aws.accesskey: "dummySecret"`, `aws.secretaccesskey: "dummyKey"` (all environments)
+- **Found**: `aws.accesskey: "dummySecret"`, `aws.secretaccesskey: "dummyKey"` (all environments) <!-- pragma: allowlist secret -->
 - **Analysis**: These are actively used in `internal/central/pkg/config/aws.go` for OSD cluster creation
-- **Recommendation**: 
+- **Recommendation**:
   - **Investigation needed**: Determine if these are actually used or if OCM integration bypasses them
   - If unused: Remove AWS access key/secret fields entirely and rely only on Route53 credentials
   - If used: Ensure proper credentials are provided instead of dummy values
 
 #### Central IDP Client Secret
-- **Found**: `central.idp-client-secret: "dummySecret"` (integration/staging), real value in production
+- **Found**: `central.idp-client-secret: "dummySecret"` (integration/staging), real value in production <!-- pragma: allowlist secret -->
 - **Analysis**: Used in `internal/central/pkg/config/central.go` for static authentication configuration
-- **Recommendation**: 
+- **Recommendation**:
   - **Investigation needed**: Verify if static IDP configuration is still required
   - Consider if this can be moved to environment-specific defaults rather than secrets
 
@@ -151,7 +151,7 @@ The Fleet Manager uses a file-based secret loading pattern where:
 
 ## Success Metrics
 
-1. **Configuration Complexity Reduction**: 
+1. **Configuration Complexity Reduction**:
    - Target: Remove 6-8 unused secret keys (40-50% reduction in unused secrets)
    - Measure: Count of secret keys before/after cleanup
 
