@@ -17,6 +17,7 @@ on:
       - 'docs/**'
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
+      - '.design-proposals/**'
 
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -33,6 +34,7 @@ on:
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
       - 'dp-terraform/**'
+      - '.design-proposals/**'
 
 jobs:
   verify-test:
