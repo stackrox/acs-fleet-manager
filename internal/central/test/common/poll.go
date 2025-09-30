@@ -143,7 +143,7 @@ func (poller *poller) dumpDB() {
 					}
 				}
 				table := tablewriter.NewWriter(os.Stdout)
-				table.SetHeader(columns)
+				table.Header(columns)
 
 				for _, v := range results {
 					row := make([]string, len(columns))
