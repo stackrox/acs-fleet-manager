@@ -54,7 +54,7 @@ The Fleet Manager uses a file-based secret loading pattern where:
 **Issue**: Several secrets use dummy/placeholder values that indicate either unused functionality or hardcodable values.
 
 #### AWS Credentials with Dummy Values
-- **Found**: `aws.accesskey: "dummySecret"`, `aws.secretaccesskey: "dummyKey"` (all environments)  # pragma: allowlist secret
+- **Found**: `aws.accesskey: "dummySecret"`, `aws.secretaccesskey: "dummyKey"` (all environments) <!-- pragma: allowlist secret -->
 - **Analysis**: These are actively used in `internal/central/pkg/config/aws.go` for OSD cluster creation
 - **Recommendation**:
   - **Investigation needed**: Determine if these are actually used or if OCM integration bypasses them
@@ -62,7 +62,7 @@ The Fleet Manager uses a file-based secret loading pattern where:
   - If used: Ensure proper credentials are provided instead of dummy values
 
 #### Central IDP Client Secret
-- **Found**: `central.idp-client-secret: "dummySecret"` (integration/staging), real value in production  # pragma: allowlist secret
+- **Found**: `central.idp-client-secret: "dummySecret"` (integration/staging), real value in production <!-- pragma: allowlist secret -->
 - **Analysis**: Used in `internal/central/pkg/config/central.go` for static authentication configuration
 - **Recommendation**:
   - **Investigation needed**: Verify if static IDP configuration is still required
