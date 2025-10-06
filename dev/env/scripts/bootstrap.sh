@@ -87,6 +87,15 @@ fi
 
 apply "${MANIFESTS_DIR}/addons"
 
+if is_openshift_cluster "$CLUSTER_TYPE"; then
+    log "Installing ExternalDNS for OpenShift"
+    wait_for_crd "applications.argoproj.io"
+    source "${GITROOT}/dev/env/scripts/get-infrastructure-name.sh"
+    apply "${MANIFESTS_DIR}/external-dns"
+else
+    log "Skipping installation of ExternalDNS (only installed on openshift)"
+fi
+
 if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
     log "Ensuring operator images exist from dev GitOps config"
     ensure_operator_image_exists.sh
