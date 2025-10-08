@@ -85,6 +85,8 @@ if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     apply "${MANIFESTS_DIR}/monitoring"
 fi
 
+apply "${MANIFESTS_DIR}/addons/00-addon-crd.yaml"
+wait_for_crd "addons.addons.managed.openshift.io"
 apply "${MANIFESTS_DIR}/addons"
 
 if is_openshift_cluster "$CLUSTER_TYPE"; then
