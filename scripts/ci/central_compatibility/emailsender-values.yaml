@@ -19,6 +19,3 @@ emailsender:
   clusterName: test
   replicas: 1
   authConfigFromKubernetes: true
-secured-cluster:
-  clusterName: test
-  centralEndpoint: dummyEndpoint
