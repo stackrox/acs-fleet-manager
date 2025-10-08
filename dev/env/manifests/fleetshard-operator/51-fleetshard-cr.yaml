@@ -35,10 +35,6 @@ spec:
     addonAutoUpgradeEnabled: false
     printCentralUpdateDiff: true
     resources: $FLEETSHARD_SYNC_RESOURCES
-  emailsender:
-    enabled: $ENABLE_EMAIL_SENDER
-    enableHTTPS: false
-    replicas: 1
   cloudwatch:
     enabled: false
   audit-logs:

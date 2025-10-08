@@ -1,4 +1,3 @@
-{{- if .Values.emailsender.enabled }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -22,4 +21,3 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: emailsender-role
-{{- end }}
