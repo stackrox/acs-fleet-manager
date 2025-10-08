@@ -9,8 +9,8 @@ spec:
   name: vertical-pod-autoscaler
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  {{- if .Values.nodeSelector }}
   config:
     nodeSelector:
-      {{- toYaml .Values.nodeSelector | nindent 6 }}
-  {{- end }}
+      # For HCP clusters, master nodes are hosted so VPA cannot use master node selectors
+      # because of that we need a way to overwrite initial selectors
+      node-role.kubernetes.io/worker: ""
