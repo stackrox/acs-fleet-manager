@@ -22,7 +22,7 @@ updates:
     schedule:
       interval: "weekly"
   - package-ecosystem: "docker"
-    directory: "/dp-terraform/helm"
+    directory: "/fleetshard-operator"
     schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"

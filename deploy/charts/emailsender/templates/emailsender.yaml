@@ -1,4 +1,3 @@
-{{- if .Values.emailsender.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,7 +6,7 @@ metadata:
   labels:
     app: emailsender
 spec:
-  replicas: {{ .Values.emailsender.replicas }}
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       app: emailsender
@@ -21,42 +20,39 @@ spec:
       serviceAccountName: emailsender
       containers:
         - name: emailsender
-          image: "{{ .Values.emailsender.image.repo }}:{{ .Values.emailsender.image.tag | default .Values.global.image.tag }}"
+          image: "{{ .Values.image.repo }}:{{ .Values.image.tag }}"
           imagePullPolicy: IfNotPresent
           command:
             - /acscs/emailsender
           env:
-            # TODO(ROX-23260): use emailsender values once their are available via the Addon flow
             - name: CLUSTER_ID
-              value: {{ .Values.fleetshardSync.clusterId }}
+              value: {{ .Values.clusterId }}
             - name: CLUSTER_NAME
-              value: {{ .Values.fleetshardSync.clusterName }}
+              value: {{ .Values.clusterName }}
             - name: ENVIRONMENT
-              value: {{ .Values.fleetshardSync.environment }}
+              value: {{ .Values.environment }}
             - name: SENDER_ADDRESS
-              value: {{ .Values.emailsender.senderAddress }}
+              value: {{ .Values.senderAddress }}
             - name: EMAIL_PROVIDER
-              value: {{ .Values.emailsender.emailProvider }}
+              value: {{ .Values.emailProvider }}
             - name: HTTPS_CERT_FILE
               value: "/var/run/certs/tls.crt"
             - name: HTTPS_KEY_FILE
               value: "/var/run/certs/tls.key"
             - name: DATABASE_SSL_MODE
-              value: {{ .Values.emailsender.db.sslMode }}
+              value: {{ .Values.db.sslMode }}
             - name: DATABASE_CA_CERT_FILE
-              value: {{ .Values.emailsender.db.caCertFile }}
-            {{- if .Values.emailsender.authConfigFromKubernetes }}
+              value: {{ .Values.db.caCertFile }}
+            {{- if .Values.authConfigFromKubernetes }}
             - name: AUTH_CONFIG_FROM_KUBERNETES
               value: "true"
             {{- end }}
-            {{- if .Values.emailsender.enableHTTPS }}
+            {{- if .Values.enableHTTPS }}
             - name: ENABLE_HTTPS
               value: "true"
             {{- end }}
-            # Reusing fleetshardSync.aws.region here since the Values file defines multiple
-            # aws region for different components and the emailsender should always use the same as FS
             - name: AWS_REGION
-              value: {{ .Values.fleetshardSync.aws.region }}
+              value: {{ .Values.aws.region }}
             - name: AWS_ROLE_ARN
               valueFrom:
                 secretKeyRef:
@@ -71,10 +67,10 @@ spec:
               containerPort: 8080
           resources:
             limits:
-              memory: {{ .Values.emailsender.resources.limits.memory | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
             requests:
-              cpu: {{ .Values.emailsender.resources.requests.cpu | quote }}
-              memory: {{ .Values.emailsender.resources.requests.memory | quote }}
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
           volumeMounts:
           - name: aws-token
             mountPath: /var/run/secrets/tokens
@@ -82,7 +78,7 @@ spec:
           - name: emailsender-db
             mountPath: /secrets
             readOnly: true
-          {{- if .Values.emailsender.enableHTTPS }}
+          {{- if .Values.enableHTTPS }}
           - name: emailsender-tls
             mountPath: /var/run/certs
             readOnly: true
@@ -91,7 +87,7 @@ spec:
         - name: emailsender-db
           secret:
             secretName: emailsender-db # pragma: allowlist secret
-        {{- if .Values.emailsender.enableHTTPS }}
+        {{- if .Values.enableHTTPS }}
         - name: emailsender-tls
           secret:
             secretName: emailsender-tls # pragma: allowlist secret
@@ -122,4 +118,3 @@ spec:
   selector:
     app: emailsender
   type: ClusterIP
-{{- end }}

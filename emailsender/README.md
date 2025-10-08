@@ -33,7 +33,7 @@ All related AWS and emailsender limits and how to change them are document in th
 
 ## Deployment
 
-The emailsender is deployed as part of the acs-fleetshard-sync addon. The helm chart is defined in `dp-terraform/helm/rhacs-terraform/templates/emailsender*.yaml`.
+The emailsender is deployed as part of the acs-fleetshard-sync addon. The helm chart is defined in `deploy/charts/emailsender`.
 
 The most important helm values are exposed for configuration through the addon.
 

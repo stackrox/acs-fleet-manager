@@ -1,0 +1,5 @@
+clusterId: 1234567890abcdef1234567890abcdef # pragma: allowlist secret
+clusterName: dev
+environment: dev
+enableHTTPS: false
+replicas: 1

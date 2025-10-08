@@ -7,7 +7,7 @@ set -eux
 # 2. acs-fleet-manager repo to be available at the execution path with directory name acs-fleet-manager
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../../.. && pwd)"
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-EMAILSENDER_HELM_DIR="$ROOT_DIR/dp-terraform/helm/rhacs-terraform"
+EMAILSENDER_HELM_DIR="$ROOT_DIR/deploy/charts/emailsender"
 STACKROX_DIR="$(cd "$ROOT_DIR/../stackrox" && pwd)"
 
 EMAILSENDER_NS="rhacs"
@@ -48,8 +48,8 @@ kubectl create ns $CENTRAL_NS -o yaml --dry-run=client | kubectl apply -f -
 # Render emailsender kubernetes resources
 helm template --namespace "${EMAILSENDER_NS}" \
   -f "${SOURCE_DIR}/emailsender-values.yaml" "${EMAILSENDER_HELM_DIR}" \
-  --set emailsender.image.repo="${EMAILSENDER_IMG_NAME}" \
-  --set emailsender.image.tag="${EMAILSENDER_IMG_TAG}" \
+  --set image.repo="${EMAILSENDER_IMG_NAME}" \
+  --set image.tag="${EMAILSENDER_IMG_TAG}" \
   | yq e '. | select(.metadata.name == "emailsender")' \
   > emailsender-manifests.yaml
 
@@ -60,7 +60,7 @@ log "Emailsender deployed to Kind."
 
 log "Starting to deploy central services..."
 # use nightly if GH action running for acs-fleet-manager
-# use the stackrox tag otherwise
+# use the stackrox tag otherwise
 log "Running for repository: $GITHUB_REPOSITORY"
 if [ "$GITHUB_REPOSITORY" = "stackrox/stackrox" ]; then
   ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
