@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: rhacs-external-dns
+  name: rhacs-external-dns-operator
   namespace: "$ARGOCD_NAMESPACE"
 spec:
   destination:
@@ -27,10 +27,4 @@ spec:
   source:
     repoURL: https://github.com/stackrox/acscs-manifests
     targetRevision: HEAD
-    path: external-dns
-    helm:
-      valuesObject:
-        name: "$INFRASTRUCTURE_NAME"
-        zones: [Z07321763RS4X0PD14EUT] # dev.acs.rhcloud.com Route53 zone
-        region: us-east-1
-        routerName: default
+    path: external-dns-operator
