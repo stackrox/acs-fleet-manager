@@ -34,3 +34,4 @@ spec:
         zones: [Z07321763RS4X0PD14EUT] # dev.acs.rhcloud.com Route53 zone
         region: us-east-1
         routerName: default
+        roleArn: arn:aws:iam::047735621815:role/ExternalDnsRole-acs-dev-dp-01
