@@ -25,7 +25,6 @@ spec:
         factor: 2
         maxDuration: 3m
   source:
-    chart: external-dns
     repoURL: https://github.com/stackrox/acscs-manifests
     targetRevision: HEAD
     path: external-dns
