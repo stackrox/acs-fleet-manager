@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emailsender-db
+  labels:
+    app: emailsender-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: emailsender-db
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: emailsender-db
+    spec:
+      containers:
+        - image: postgres:13
+          name: postgres
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: "100m"
+              memory: 250Mi
+            limits:
+              cpu: "150m"
+              memory: 300Mi
+          env:
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "postgres"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emailsender-db
+  labels:
+    app: emailsender-db
+spec:
+  ports:
+    - name: 5432-5432
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+  selector:
+    app: emailsender-db
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: emailsender-db
+stringData:
+  db.host: "emailsender-db"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: emailsender-parameters
+stringData:
+  aws-role-arn: "placeholder"
