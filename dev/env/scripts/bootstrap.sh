@@ -22,11 +22,29 @@ fi
 log "** Preparing ACSCS Environment **"
 print_env
 
-if ! kc_output=$($KUBECTL api-versions 2>&1); then
-    die "Error: Sanity check for contacting Kubernetes cluster failed:
+# Retry for up to 30 minutes to contact the Kubernetes cluster
+MAX_RETRIES=180  # 30 minutes with 10 second intervals
+RETRY_COUNT=0
+RETRY_DELAY=10
+
+log "Attempting to contact Kubernetes cluster..."
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if kc_output=$($KUBECTL api-versions 2>&1); then
+        log "Successfully contacted Kubernetes cluster"
+        break
+    fi
+
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    ELAPSED=$((RETRY_COUNT * RETRY_DELAY))
+    log "Failed to contact cluster (attempt $RETRY_COUNT/$MAX_RETRIES, elapsed: ${ELAPSED}s). Retrying in ${RETRY_DELAY}s..."
+    sleep $RETRY_DELAY
+done
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+    die "Error: Sanity check for contacting Kubernetes cluster failed after $((MAX_RETRIES * RETRY_DELAY)) seconds:
 
 Command tried: '$KUBECTL api-versions'
-Output:
+Last output:
 ${kc_output:-(no output)}"
 fi
 
