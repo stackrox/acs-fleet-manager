@@ -7,7 +7,6 @@ set -eux
 # 2. acs-fleet-manager repo to be available at the execution path with directory name acs-fleet-manager
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../../.. && pwd)"
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-EMAILSENDER_HELM_DIR="$ROOT_DIR/deploy/charts/emailsender"
 STACKROX_DIR="$(cd "$ROOT_DIR/../stackrox" && pwd)"
 
 EMAILSENDER_NS="rhacs"
@@ -36,25 +35,13 @@ function pull_to_kind() {
   kind load docker-image "${img}"
 }
 
-EMAILSENDER_IMG_TAG="$(make --no-print-directory -C "$ROOT_DIR" tag)"
-EMAILSENDER_IMG_NAME="$(make --no-print-directory -C "$ROOT_DIR" image-name/emailsender)"
-EMAILSENDER_IMG="$(make --no-print-directory -C "$ROOT_DIR" image-tag/emailsender)"
 make --no-print-directory -C "$ROOT_DIR" image/build/emailsender
-kind load docker-image "${EMAILSENDER_IMG}"
+kind load docker-image "$(make --no-print-directory -C "$ROOT_DIR" image-tag/emailsender)"
 
 kubectl create ns $EMAILSENDER_NS -o yaml --dry-run=client | kubectl apply -f -
 kubectl create ns $CENTRAL_NS -o yaml --dry-run=client | kubectl apply -f -
 
-# Render emailsender kubernetes resources
-helm template --namespace "${EMAILSENDER_NS}" \
-  -f "${SOURCE_DIR}/emailsender-values.yaml" "${EMAILSENDER_HELM_DIR}" \
-  --set image.repo="${EMAILSENDER_IMG_NAME}" \
-  --set image.tag="${EMAILSENDER_IMG_TAG}" \
-  | yq e '. | select(.metadata.name == "emailsender")' \
-  > emailsender-manifests.yaml
-
-kubectl apply -f emailsender-manifests.yaml
-kubectl apply -f "${SOURCE_DIR}/emailsender-db.yaml"
+make --no-print-directory -C "$ROOT_DIR" deploy/emailsender
 
 log "Emailsender deployed to Kind."
 
