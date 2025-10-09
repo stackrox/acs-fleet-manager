@@ -294,9 +294,9 @@ parameters:
   description: The domain name to use for Central instances
   value: acs-stage.rhcloud.com
 
-- name: QUOTA_INTERNAL_ORG_IDS
-  displayName: Quota internal organisation ids
-  description: A Comma separated list of organisation IDs that should be ignored for quota checks and for the expiration worker
+- name: QUOTA_INTERNAL_CENTRAL_IDS
+  displayName: Quota internal Central ids
+  description: A Comma separated list of Central IDs that should be ignored for quota checks and for the expiration worker
   value: ""
 
 - name: ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE
@@ -963,7 +963,7 @@ objects:
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --central-domain-name=${CENTRAL_DOMAIN_NAME}
-            - --quota-internal-organisation-ids=${QUOTA_INTERNAL_ORG_IDS}
+            - --quota-internal-central-ids=${QUOTA_INTERNAL_CENTRAL_IDS}
             - --alsologtostderr
             - --central-request-expiration-timeout=${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}
             - --central-request-internal-user-agents=${CENTRAL_REQUEST_INTERNAL_USER_AGENTS}
