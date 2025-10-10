@@ -110,9 +110,13 @@ apply "${MANIFESTS_DIR}/addons"
 if is_openshift_cluster "$CLUSTER_TYPE"; then
     log "Installing ExternalDNS for OpenShift"
     wait_for_crd "applications.argoproj.io"
-    source "${GITROOT}/dev/env/scripts/get-infrastructure-name.sh"
+
     apply "${MANIFESTS_DIR}/external-dns-operator"
-    apply "${MANIFESTS_DIR}/external-dns"
+    wait_for_crd externaldnses.externaldns.olm.openshift.io
+
+    source "${GITROOT}/dev/env/scripts/get-infrastructure-name.sh"
+    export EXTERNAL_DNS_NAME=${INFRASTRUCTURE_NAME}
+    chamber exec e2e-external-dns -- apply "${MANIFESTS_DIR}/external-dns"
 else
     log "Skipping installation of ExternalDNS (only installed on openshift)"
 fi
