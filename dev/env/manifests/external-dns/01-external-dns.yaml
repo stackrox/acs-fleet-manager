@@ -6,7 +6,7 @@ spec:
   domains:
     - filterType: Include
       matchType: Pattern
-      pattern: ".*\\.dev\.rhcloud.com"
+      pattern: ".*\\.dev\\.rhcloud.com"
   provider:
     type: AWS
     aws:
