@@ -7,9 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/route53"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -27,7 +24,6 @@ var (
 	routeService          *k8s.RouteService
 	dnsEnabled            bool
 	routesEnabled         bool
-	route53Client         *route53.Client
 	waitTimeout           = testutil.GetWaitTimeout()
 	extendedWaitTimeout   = testutil.GetWaitTimeout() * 3
 	dpCloudProvider       = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
@@ -63,26 +59,6 @@ var _ = BeforeSuite(func() {
 	var err error
 	routesEnabled, err = k8s.IsRoutesResourceEnabled(k8sClient)
 	Expect(err).ToNot(HaveOccurred())
-
-	var accessKey, secretKey string
-	dnsEnabled, accessKey, secretKey = testutil.DNSConfiguration(routesEnabled)
-
-	if dnsEnabled {
-		creds := aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(
-			accessKey,
-			secretKey,
-			""))
-
-		_, err := creds.Retrieve(context.Background())
-		Expect(err).ToNot(HaveOccurred())
-		cfg := aws.Config{
-			Credentials: creds,
-			Region:      getEnvDefault("AWS_REGION", "us-east-1"),
-		}
-		Expect(err).ToNot(HaveOccurred())
-
-		route53Client = route53.NewFromConfig(cfg)
-	}
 
 	if val := os.Getenv("FLEET_MANAGER_ENDPOINT"); val != "" {
 		fleetManagerEndpoint = val

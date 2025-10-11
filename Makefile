@@ -364,7 +364,6 @@ test/cluster/cleanup:
 test/e2e: $(GINKGO_BIN)
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	RUN_E2E=true \
-	ENABLE_CENTRAL_EXTERNAL_DOMAIN=$(ENABLE_CENTRAL_EXTERNAL_DOMAIN) \
 	GITOPS_CONFIG_PATH=$(GITOPS_CONFIG_FILE) \
 	$(GINKGO_BIN) -r $(GINKGO_FLAGS) \
 		--randomize-suites \
@@ -379,7 +378,6 @@ test/e2e: $(GINKGO_BIN)
 
 test/e2e/multicluster: $(GINKGO_BIN)
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
-	ENABLE_CENTRAL_EXTERNAL_DOMAIN=$(ENABLE_CENTRAL_EXTERNAL_DOMAIN) \
 	GITOPS_CONFIG_PATH=$(GITOPS_CONFIG_FILE) \
 	RUN_MULTICLUSTER_E2E=true \
 	$(GINKGO_BIN) -r $(GINKGO_FLAGS) \
@@ -610,8 +608,6 @@ image/push/fleetshard-operator/internal: docker/login/internal
 secrets/touch:
 	touch secrets/aws.accesskey \
           secrets/aws.accountid \
-          secrets/aws.route53accesskey \
-          secrets/aws.route53secretaccesskey \
           secrets/aws.secretaccesskey \
           secrets/db.host \
           secrets/db.name \
@@ -639,8 +635,6 @@ aws/setup:
 	@echo -n "$(AWS_ACCOUNT_ID)" > secrets/aws.accountid
 	@echo -n "$(AWS_ACCESS_KEY)" > secrets/aws.accesskey
 	@echo -n "$(AWS_SECRET_ACCESS_KEY)" > secrets/aws.secretaccesskey
-	@echo -n "$(ROUTE53_ACCESS_KEY)" > secrets/aws.route53accesskey
-	@echo -n "$(ROUTE53_SECRET_ACCESS_KEY)" > secrets/aws.route53secretaccesskey
 .PHONY: aws/setup
 
 redhatsso/setup:
@@ -689,8 +683,6 @@ deploy/secrets:
 		-p AWS_ACCESS_KEY="$(shell ([ -s './secrets/aws.accesskey' ] && [ -z '${AWS_ACCESS_KEY}' ]) && cat ./secrets/aws.accesskey || echo '${AWS_ACCESS_KEY}')" \
 		-p AWS_ACCOUNT_ID="$(shell ([ -s './secrets/aws.accountid' ] && [ -z '${AWS_ACCOUNT_ID}' ]) && cat ./secrets/aws.accountid || echo '${AWS_ACCOUNT_ID}')" \
 		-p AWS_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.secretaccesskey' ] && [ -z '${AWS_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.secretaccesskey || echo '${AWS_SECRET_ACCESS_KEY}')" \
-		-p ROUTE53_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53accesskey' ] && [ -z '${ROUTE53_ACCESS_KEY}' ]) && cat ./secrets/aws.route53accesskey || echo '${ROUTE53_ACCESS_KEY}')" \
-		-p ROUTE53_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53secretaccesskey' ] && [ -z '${ROUTE53_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.route53secretaccesskey || echo '${ROUTE53_SECRET_ACCESS_KEY}')" \
 		-p SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${SSO_CLIENT_ID}')" \
 		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
 		-p CENTRAL_IDP_CLIENT_SECRET="$(shell ([ -s './secrets/central.idp-client-secret' ] && [ -z '${CENTRAL_IDP_CLIENT_SECRET}' ]) && cat ./secrets/central.idp-client-secret || echo '${CENTRAL_IDP_CLIENT_SECRET}')" \
@@ -724,7 +716,6 @@ deploy/service: FLEET_MANAGER_IMAGE ?= $(SHORT_IMAGE_REF)
 deploy/service: IMAGE_TAG ?= $(image_tag)
 deploy/service: FLEET_MANAGER_ENV ?= "development"
 deploy/service: REPLICAS ?= "1"
-deploy/service: ENABLE_CENTRAL_EXTERNAL_DOMAIN ?= "false"
 deploy/service: ENABLE_CENTRAL_LIFE_SPAN ?= "false"
 deploy/service: CENTRAL_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
@@ -758,7 +749,6 @@ endif
 		-p REPO_DIGEST="$(FLEET_MANAGER_IMAGE)" \
 		-p IMAGE_TAG=$(IMAGE_TAG) \
 		-p REPLICAS="${REPLICAS}" \
-		-p ENABLE_CENTRAL_EXTERNAL_DOMAIN="${ENABLE_CENTRAL_EXTERNAL_DOMAIN}" \
 		-p ENABLE_CENTRAL_LIFE_SPAN="${ENABLE_CENTRAL_LIFE_SPAN}" \
 		-p CENTRAL_LIFE_SPAN="${CENTRAL_LIFE_SPAN}" \
 		-p ENABLE_OCM_MOCK=$(ENABLE_OCM_MOCK) \

@@ -13,7 +13,7 @@ const (
 
 // PresentCentralRequest - create CentralRequest in an appropriate format ready to be returned by the API
 func PresentCentralRequest(request *dbapi.CentralRequest) public.CentralRequest {
-	outputRequest := public.CentralRequest{
+	return public.CentralRequest{
 		Id:             request.ID,
 		Kind:           "CentralRequest",
 		Href:           fmt.Sprintf("/api/rhacs/v1/centrals/%s", request.ID),
@@ -28,16 +28,7 @@ func PresentCentralRequest(request *dbapi.CentralRequest) public.CentralRequest 
 		UpdatedAt:      request.UpdatedAt,
 		FailedReason:   request.FailedReason,
 		InstanceType:   request.InstanceType,
+		CentralUIURL:   fmt.Sprintf("https://%s", request.GetUIHost()),
+		CentralDataURL: fmt.Sprintf("%s:%d", request.GetDataHost(), sensorDataPort),
 	}
-
-	if request.RoutesCreated {
-		if request.GetUIHost() != "" {
-			outputRequest.CentralUIURL = fmt.Sprintf("https://%s", request.GetUIHost())
-		}
-		if request.GetDataHost() != "" {
-			outputRequest.CentralDataURL = fmt.Sprintf("%s:%d", request.GetDataHost(), sensorDataPort)
-		}
-	}
-
-	return outputRequest
 }
