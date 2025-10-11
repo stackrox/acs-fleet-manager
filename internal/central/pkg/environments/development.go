@@ -15,7 +15,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"enable-metrics-https":               "false",
 		"enable-terms-acceptance":            "false",
 		"api-server-bindaddress":             "localhost:8000",
-		"enable-sentry":                      "false",
 		"enable-deny-list":                   "true",
 		"enable-instance-limit-control":      "false",
 		"enable-central-external-domain":     "false",

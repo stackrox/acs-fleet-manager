@@ -15,7 +15,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
   - [Metrics Server](#metrics-server)
   - [OpenShift Cluster Manager](#openshift-cluster-manager)
   - [Dataplane Cluster Management](#dataplane-cluster-management)
-  - [Sentry](#sentry)
   - [Server](#server)
 
 ## Access Control
@@ -90,13 +89,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
         - `cluster-compute-machine-type` [Optional]: The compute machine type to be used for provisioning a new dataplane cluster (default: `m5.2xlarge`).
         - `cluster-openshift-version` [Optional]: The OpenShift version to be installed on the dataplane cluster (default: `""`, empty string indicates that the latest stable version will be used).
 
-## Sentry
-- **enable-sentry**: Enables Sentry error reporting.
-    - `sentry-key-file` [Required]: The path to the file containing the Sentry key (default: `'secrets/sentry.key'`).
-    - `sentry-project` [Required]: The Sentry project ID.
-    - `sentry-url` [Required]: The base URL of the Sentry instance.
-    - `enable-sentry-debug` [Optional]: Enables Sentry debug logging (default: `false`).
-    - `sentry-timeout` [Optional]: The timeout duration for requests to Sentry.
 
 ## Server
 - **enable-https**: Enables HTTPS for the Fleet Manager server.

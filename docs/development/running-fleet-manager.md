@@ -8,7 +8,7 @@ function differently. Environments can be set using the `OCM_ENV` environment
 variable. Below are the list of known environments and their
 details.
 
-- `development` (default) - The `staging` OCM environment is used. Sentry is disabled.
+- `development` (default) - The `staging` OCM environment is used.
   Debugging utilities are enabled. This should be used in local development.
   The `OCM_ENV` variable has not been set.
 - `testing` - The OCM API is mocked/stubbed out, meaning network calls to OCM
@@ -16,7 +16,7 @@ details.
 - `integration` - Identical to `testing` but using an emulated OCM API server
   to respond to OCM API calls, instead of a basic mock. This can be used for
   integration testing to mock OCM behaviour.
-- `production` - Debugging utilities are disabled, Sentry is enabled.
+- `production` - Debugging utilities are disabled.
   This environment can be ignored in most development and is only used when
   the service is deployed.
 

@@ -155,27 +155,6 @@ parameters:
   description: OCM mock mode
   value: "emulate-server"
 
-- name: ENABLE_SENTRY
-  displayName: Enable Sentry Error Reporting
-  value: "false"
-
-- name: SENTRY_URL
-  displayName: Sentry base URL
-  description: Base URL (without https://) of sentry server
-  value: "sentry.autom8.in"
-
-- name: SENTRY_PROJECT
-  displayName: Sentry Project ID
-  value: "8"
-
-- name: ENABLE_SENTRY_DEBUG
-  displayName: Enable Sentry Debug Logging
-  value: "false"
-
-- name: SENTRY_TIMEOUT
-  displayName: Sentry Timeout
-  description: Timeout for all Sentry operations
-  value: "5s"
 
 - name: SUPPORTED_CLOUD_PROVIDERS
   displayName: Supported Cloud Providers
@@ -660,7 +639,6 @@ objects:
       ocm-service.clientId: badger
       ocm-service.clientSecret: badger
       ocm-service.token: badger
-      sentry.key: badger
       aws.accesskey: badger
       aws.accountid: badger
       aws.secretaccesskey: badger
@@ -943,12 +921,6 @@ objects:
             - --enable-ocm-mock=${ENABLE_OCM_MOCK}
             - --enable-ready-dataplane-clusters-reconcile=${ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE}
             - --ocm-mock-mode=${OCM_MOCK_MODE}
-            - --enable-sentry=${ENABLE_SENTRY}
-            - --enable-sentry-debug=${ENABLE_SENTRY_DEBUG}
-            - --sentry-url=${SENTRY_URL}
-            - --sentry-project=${SENTRY_PROJECT}
-            - --sentry-timeout=${SENTRY_TIMEOUT}
-            - --sentry-key-file=/secrets/service/sentry.key
             - --enable-terms-acceptance=${ENABLE_TERMS_ACCEPTANCE}
             - --enable-deny-list=${ENABLE_DENY_LIST}
             - --enable-instance-limit-control=${ENABLE_INSTANCE_LIMIT_CONTROL}
