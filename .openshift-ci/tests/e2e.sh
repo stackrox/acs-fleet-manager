@@ -152,7 +152,7 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
     log "** BEGIN GITOPS STATE **"
     GITOPS_NS="openshift-gitops"
     $KUBECTL -n $GITOPS_NS get pods || true
-    $KUBECTL -n $GITOPS_NS get apps || grue
+    $KUBECTL -n $GITOPS_NS get apps || true
     $KUBECTL -n $GITOPS_NS get apps -o yaml
     log "** END GITOPS STATE **"
 
