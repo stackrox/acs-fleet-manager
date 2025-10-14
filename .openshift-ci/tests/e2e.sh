@@ -149,6 +149,13 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
     log "** END OPERATOR STATE **"
     log
 
+    log "** BEGIN GITOPS STATE **"
+    GITOPS_NS="openshift-gitops"
+    $KUBECTL -n $GITOPS_NS get pods || true
+    $KUBECTL -n $GITOPS_NS get apps || grue
+    $KUBECTL -n $GITOPS_NS get apps -o yaml
+    log "** END GITOPS STATE **"
+
     if [[ "$SPAWN_LOGGER" == "true" ]]; then
         log "Logs are in ${LOG_DIR}"
         log
