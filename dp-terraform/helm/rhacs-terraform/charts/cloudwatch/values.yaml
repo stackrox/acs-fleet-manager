@@ -1,9 +1,0 @@
-clusterName: ""
-environment: ""
-image: "quay.io/prometheuscommunity/yet-another-cloudwatch-exporter:v0.62.1"
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
