@@ -6,15 +6,15 @@ import "github.com/stackrox/acs-fleet-manager/pkg/api"
 type CentralQuotaConfig struct {
 	Type                   string `json:"type"`
 	AllowEvaluatorInstance bool   `json:"allow_evaluator_instance"`
-	// InternalOrganisationIDs is a list of organisation IDs that should be ignored for quota checks
-	InternalOrganisationIDs []string `json:"internal_organisation_ids"`
+	// InternalCentralIDs is a list of Central IDs that should be ignored for quota checks
+	InternalCentralIDs []string `json:"internal_central_ids"`
 }
 
 // NewCentralQuotaConfig ...
 func NewCentralQuotaConfig() *CentralQuotaConfig {
 	return &CentralQuotaConfig{
-		Type:                    api.QuotaManagementListQuotaType.String(),
-		AllowEvaluatorInstance:  true,
-		InternalOrganisationIDs: []string{},
+		Type:                   api.QuotaManagementListQuotaType.String(),
+		AllowEvaluatorInstance: true,
+		InternalCentralIDs:     []string{},
 	}
 }
