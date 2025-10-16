@@ -4,8 +4,6 @@ metadata:
   name: rhacs-terraform
   namespace: "$ACSCS_NAMESPACE"
 spec:
-  acsOperator:
-    enabled: false
   fleetshardSync:
     image:
       ref: "$FLEET_MANAGER_IMAGE"
@@ -39,15 +37,3 @@ spec:
     enabled: $ENABLE_EMAIL_SENDER
     enableHTTPS: false
     replicas: 1
-  cloudwatch:
-    enabled: false
-  audit-logs:
-    enabled: false
-  secured-cluster:
-    enabled: false
-  scc:
-    enabled: false
-  vertical-pod-autoscaler:
-    enabled: $INSTALL_VERTICAL_POD_AUTOSCALER_OLM
-    nodeSelector:
-      node-role.kubernetes.io/worker: ""

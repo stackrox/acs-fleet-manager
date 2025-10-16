@@ -16,7 +16,6 @@ func TestHelmTemplate_FleetshardSyncDeployment_ServiceAccountTokenAuthType(t *te
 	t.Parallel()
 
 	deployment := unmarshalFleetshardSyncDeployment(t, map[string]string{
-		"secured-cluster.enabled":          "false",
 		"fleetshardSync.managedDB.enabled": "false",
 		"fleetshardSync.authType":          "SERVICE_ACCOUNT_TOKEN",
 	})
@@ -111,7 +110,6 @@ func TestHelmTemplate_FleetshardSyncDeployment_Tenant(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			values := map[string]string{
-				"secured-cluster.enabled":          "false",
 				"fleetshardSync.managedDB.enabled": "false",
 			}
 
@@ -179,7 +177,6 @@ func TestHelmTemplate_FleetshardSyncDeployment_Image(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			values := map[string]string{
-				"secured-cluster.enabled":          "false",
 				"fleetshardSync.managedDB.enabled": "false",
 			}
 
@@ -239,7 +236,6 @@ func TestHelmTemplate_FleetshardSync_ImagePullSecret(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			values := map[string]string{
-				"secured-cluster.enabled":                     "false",
 				"fleetshardSync.managedDB.enabled":            "false",
 				"fleetshardSync.tenantImagePullSecret.create": tt.createPullSecret,
 			}
@@ -248,68 +244,6 @@ func TestHelmTemplate_FleetshardSync_ImagePullSecret(t *testing.T) {
 			}
 
 			output := renderTemplate(t, values, "templates/fleetshard-sync-secret.yaml")
-			allRange := strings.Split(output, "---")
-			for _, rawOutput := range allRange[1:] {
-				var secret corev1.Secret
-				helm.UnmarshalK8SYaml(t, rawOutput, &secret)
-				if secret.Name == tt.pullSecret {
-					require.True(t, tt.wantPullSecret)
-					return
-				}
-			}
-			require.False(t, tt.wantPullSecret)
-		})
-	}
-}
-
-func TestHelmTemplate_SecuredCluster_ImagePullSecret(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name             string
-		pullSecret       string
-		createPullSecret string
-		wantPullSecret   bool
-	}{
-		{
-			name:             "should not create secret when pull secret is not set and createPullSecret is false",
-			pullSecret:       "",
-			createPullSecret: "false",
-			wantPullSecret:   false,
-		},
-		{
-			name:             "should not create secret when pull secret is set and createPullSecret is false",
-			pullSecret:       "quay-image-pull-secret",
-			createPullSecret: "false",
-			wantPullSecret:   false,
-		},
-		{
-			name:             "should not create secret when pull secret is not set and createPullSecret is true",
-			pullSecret:       "",
-			createPullSecret: "true",
-			wantPullSecret:   false,
-		},
-		{
-			name:             "should create secret when pull secret is set and createPullSecret is true",
-			pullSecret:       "quay-image-pull-secret",
-			createPullSecret: "true",
-			wantPullSecret:   true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			values := map[string]string{
-				"secured-cluster.clusterName":      "test-cluster",
-				"secured-cluster.centralEndpoint":  "https://localhost:8443",
-				"secured-cluster.createPullSecret": tt.createPullSecret,
-				"fleetshardSync.managedDB.enabled": "false",
-			}
-			if tt.pullSecret != "" {
-				values["secured-cluster.pullSecret"] = tt.pullSecret // pragma: allowlist secret
-			}
-
-			output := renderTemplate(t, values, "charts/secured-cluster/templates/secured-cluster-secrets.yaml")
 			allRange := strings.Split(output, "---")
 			for _, rawOutput := range allRange[1:] {
 				var secret corev1.Secret
@@ -336,7 +270,6 @@ func TestHelmTemplate_FleetshardSyncDeployment_ManagedDBTags(t *testing.T) {
 		{
 			name: "should not add env vars if managedDB is disabled",
 			values: map[string]string{
-				"secured-cluster.enabled":                      "false",
 				"fleetshardSync.managedDB.enabled":             "false",
 				"fleetshardSync.managedDB.sharedTags[0].key":   "tag1",
 				"fleetshardSync.managedDB.sharedTags[0].value": "value1",
@@ -346,7 +279,6 @@ func TestHelmTemplate_FleetshardSyncDeployment_ManagedDBTags(t *testing.T) {
 		{
 			name: "should add env vars if managedDB is enabled",
 			values: map[string]string{
-				"secured-cluster.enabled":                      "false",
 				"fleetshardSync.managedDB.enabled":             "true",
 				"fleetshardSync.managedDB.subnetGroup":         "dummy-subnet-group",
 				"fleetshardSync.managedDB.securityGroup":       "dummy-security-group",
@@ -365,7 +297,6 @@ func TestHelmTemplate_FleetshardSyncDeployment_ManagedDBTags(t *testing.T) {
 		{
 			name: "should not add env vars if managedDB is enabled but no tags are provided",
 			values: map[string]string{
-				"secured-cluster.enabled":                "false",
 				"fleetshardSync.managedDB.enabled":       "true",
 				"fleetshardSync.managedDB.subnetGroup":   "dummy-subnet-group",
 				"fleetshardSync.managedDB.securityGroup": "dummy-security-group",
