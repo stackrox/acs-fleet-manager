@@ -12,7 +12,6 @@
 - [ ] Add secret to app-interface Vault or Secrets Manager if necessary
 - [ ] RDS changes were e2e tested [manually](../docs/development/howto-e2e-test-rds.md)
 - [ ] Check AWS limits are reasonable for changes provisioning new resources
-- [ ] (If applicable) Changes to the dp-terraform Helm values have been reflected in the addon on integration environment
 
 ## Test manual
 

@@ -17,6 +17,8 @@ on:
       - 'docs/**'
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
+      - 'dp-terraform/**'
+      - 'deploy/**'
       - '.design-proposals/**'
 
   pull_request:
@@ -34,6 +36,7 @@ on:
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
       - 'dp-terraform/**'
+      - 'deploy/**'
       - '.design-proposals/**'
 
 jobs:

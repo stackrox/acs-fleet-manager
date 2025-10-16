@@ -77,6 +77,8 @@ if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
 fi
 
 if [[ "$ENABLE_EMAIL_SENDER" == "true" ]]; then
+    log "Deploying emailsender"
+    make -C "$GITROOT" deploy/emailsender
     wait_for_container_to_appear "$ACSCS_NAMESPACE" "application=emailsender" "emailsender"
     if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
         $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=emailsender --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_emailsender_emailsender.txt" 2>&1 &
