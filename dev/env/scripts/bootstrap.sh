@@ -22,11 +22,29 @@ fi
 log "** Preparing ACSCS Environment **"
 print_env
 
-if ! kc_output=$($KUBECTL api-versions 2>&1); then
-    die "Error: Sanity check for contacting Kubernetes cluster failed:
+# Retry for up to 30 minutes to contact the Kubernetes cluster
+MAX_RETRIES=180  # 30 minutes with 10 second intervals
+RETRY_COUNT=0
+RETRY_DELAY=10
+
+log "Attempting to contact Kubernetes cluster..."
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if kc_output=$($KUBECTL api-versions 2>&1); then
+        log "Successfully contacted Kubernetes cluster"
+        break
+    fi
+
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    ELAPSED=$((RETRY_COUNT * RETRY_DELAY))
+    log "Failed to contact cluster (attempt $RETRY_COUNT/$MAX_RETRIES, elapsed: ${ELAPSED}s). Retrying in ${RETRY_DELAY}s..."
+    sleep $RETRY_DELAY
+done
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+    die "Error: Sanity check for contacting Kubernetes cluster failed after $((MAX_RETRIES * RETRY_DELAY)) seconds:
 
 Command tried: '$KUBECTL api-versions'
-Output:
+Last output:
 ${kc_output:-(no output)}"
 fi
 
@@ -92,7 +110,23 @@ if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     apply "${MANIFESTS_DIR}/monitoring"
 fi
 
+apply "${MANIFESTS_DIR}/addons/00-addon-crd.yaml"
+wait_for_crd "addons.addons.managed.openshift.io"
 apply "${MANIFESTS_DIR}/addons"
+
+if is_openshift_cluster "$CLUSTER_TYPE"; then
+    log "Installing ExternalDNS for OpenShift"
+    wait_for_crd "applications.argoproj.io"
+
+    apply "${MANIFESTS_DIR}/external-dns-operator"
+    wait_for_crd externaldnses.externaldns.olm.openshift.io
+
+    source "${GITROOT}/dev/env/scripts/get-infrastructure-name.sh"
+    export EXTERNAL_DNS_NAME=${INFRASTRUCTURE_NAME}
+    chamber exec e2e-external-dns -- apply "${MANIFESTS_DIR}/external-dns"
+else
+    log "Skipping installation of ExternalDNS (only installed on openshift)"
+fi
 
 if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
     log "Ensuring operator images exist from dev GitOps config"
