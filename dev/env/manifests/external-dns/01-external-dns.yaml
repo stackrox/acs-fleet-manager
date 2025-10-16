@@ -1,0 +1,23 @@
+apiVersion: externaldns.olm.openshift.io/v1beta1
+kind: ExternalDNS
+metadata:
+  name: "${EXTERNAL_DNS_NAME}"
+spec:
+  domains:
+    - filterType: Include
+      matchType: Pattern
+      pattern: ".*\\.dev\\.rhcloud.com"
+  provider:
+    type: AWS
+    aws:
+      credentials:
+        name: "${EXTERNAL_DNS_NAME}-aws-credentials"
+  source:
+    type: OpenShiftRoute
+    labelFilter:
+      matchLabels:
+        external-dns.rhacs.redhat.com/enabled: "true"
+    openshiftRouteOptions:
+      routerName: default
+  zones:
+    - "${ROUTE53_ZONE_ID}"
