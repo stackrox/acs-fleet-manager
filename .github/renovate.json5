@@ -17,24 +17,29 @@
     // This tells Renovate to combine all updates in one PR so that we have fewer PRs to deal with.
     "group:all",
   ],
+  // The number of PRs that can be open against the repo.
+  "prConcurrentLimit": 20,
+  // `null` means the branch limit should be the same as PR limit.
+  "branchConcurrentLimit": null,
+  // The number of PRs MintMaker can open in one hour, effectively in one run.
+  "prHourlyLimit": 4,
   "timezone": "Etc/UTC",
   "schedule": [
-    // This controls when Renovate can create new branches and open PRs.
     // Allowed syntax: https://docs.renovatebot.com/configuration-options/#schedule
+    // This is a "general" schedule for managers that don't declare their own.
     // The time was selected (with the help of https://time.fyi/timezones) so that Renovate isn't active during business
-    // hours from Germany to US West Coast. This way, we limit the number of changes Renovate can merge to one per day.
-    "after 3am and before 7am",
+    // hours from Central Europe to US West Coast. This way, after we merge a PR, a new one does not pop up immediately
+    // after that.
+    // Between 3a.m. and 7a.m. every day.
+    "* 3-7 * * *",
   ],
-  // Tell Renovate that it can rebase and update its branches (and/or its PRs) at times outside the `schedule`.
-  "updateNotScheduled": true,
+  // Tell Renovate not to update PRs when outside schedule.
+  "updateNotScheduled": false,
   "tekton": {
-    "includePaths": [
-      ".tekton/**",
-    ],
     "schedule": [
-      // For some reason, Konflux config defines custom schedule on each type of dependency manager and that takes
-      // precedence over the global/default schedule. We want our own schedule and hence need to make this override.
-      "after 3am and before 7am",
+      // Between 3a.m. and 7a.m. every day.
+      // We duplicate our desired schedule here because Konflux global config tends to have a special override for it.
+      "* 3-7 * * *",
     ],
     "packageRules": [
       // Note: the packageRules from the Konflux config (find URL in comments above) get merged with these.
@@ -45,17 +50,26 @@
         ],
       },
     ],
-    "automerge": true,
-    // PRs can't be actually automerged because we require approval from CODEOWNERS which Renovate can't bypass,
-    // therefore, we set automerge type to branch.
-    "automergeType": "branch",
-    "automergeStrategy": "squash",
-    // Tell Renovate that it can automerge branches at any time of the day.
-    "automergeSchedule": [
-      "at any time"
-    ],
   },
   "enabledManagers": [
+    // Restrict Konflux bot focus on Konflux things since we rely on GitHub's dependabot for everything else.
     "tekton",
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "*",
+      ],
+      "groupName": "All updates",
+      "automerge": true,
+      // A known issue is that some non-Konflux CI jobs currently fail, which may prevent successful auto-merging with a "branch" auto-merge setting.
+      // Therefore, we use PR merge type and have automation approve PRs.
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      // Tell Renovate that it can automerge branches at any time of the day.
+      "automergeSchedule": [
+        "at any time",
+      ],
+    }
   ],
 }
