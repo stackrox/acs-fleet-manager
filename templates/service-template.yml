@@ -182,11 +182,6 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, eval: {}}}]}]"
 
-- name: ENABLE_CENTRAL_EXTERNAL_DOMAIN
-  displayName: Enable Central TLS
-  description: Enable the Central TLS certificate
-  value: "true"
-
 - name: ENABLE_TERMS_ACCEPTANCE
   displayName: Enable terms acceptance
   description: If enabled, centrals can't be created unless required terms are accepted
@@ -666,8 +661,6 @@ objects:
       aws.secretaccesskey: badger
       redhatsso-service.clientId: badger
       redhatsso-service.clientSecret: badger
-      aws.route53accesskey: badger
-      aws.route53secretaccesskey: badger
   - apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -894,7 +887,6 @@ objects:
             command:
             - /usr/local/bin/fleet-manager
             - serve
-            - --enable-central-external-domain=${ENABLE_CENTRAL_EXTERNAL_DOMAIN}
             - --providers-config-file=${PROVIDERS_CONFIG_FILE}
             - --quota-management-list-config-file=/config/quota-management-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
@@ -904,8 +896,6 @@ objects:
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/fleet-manager-credentials/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
-            - --aws-route53-access-key-file=/secrets/fleet-manager-credentials/aws.route53accesskey
-            - --aws-route53-secret-access-key-file=/secrets/fleet-manager-credentials/aws.route53secretaccesskey
             - --central-idp-client-secret-file=/secrets/fleet-manager-credentials/central.idp-client-secret
             - --central-idp-client-id=${CENTRAL_IDP_CLIENT_ID}
             - --db-host-file=/secrets/rds/db.host

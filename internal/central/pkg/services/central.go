@@ -9,14 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/route53"
-	route53Types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/central/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/externaldns"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/rhsso"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -49,22 +46,7 @@ var (
 	}
 )
 
-// CentralRoutesAction ...
-type CentralRoutesAction string
-
-// CentralRoutesActionUpsert ...
-const CentralRoutesActionUpsert CentralRoutesAction = "UPSERT"
-
-// CentralRoutesActionDelete ...
-const CentralRoutesActionDelete CentralRoutesAction = "DELETE"
-
 const gracePeriod = 14 * 24 * time.Hour
-
-// CNameRecordStatus ...
-type CNameRecordStatus struct {
-	ID     *string
-	Status *string
-}
 
 // CentralService ...
 //
@@ -100,8 +82,6 @@ type CentralService interface {
 	// Use this only when you want to update the multiple columns that may contain zero-fields, otherwise use the `CentralService.Update()` method.
 	// See https://gorm.io/docs/update.html#Updates-multiple-columns for more info
 	Updates(centralRequest *dbapi.CentralRequest, values map[string]interface{}) *errors.ServiceError
-	ChangeCentralCNAMErecords(centralRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
-	GetCNAMERecordStatus(centralRequest *dbapi.CentralRequest) (*CNameRecordStatus, error)
 	DetectInstanceType(centralRequest *dbapi.CentralRequest) types.CentralInstanceType
 	RegisterCentralDeprovisionJob(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 	// DeprovisionCentralForUsers registers all centrals for deprovisioning given the list of owners
@@ -109,7 +89,6 @@ type CentralService interface {
 	DeprovisionExpiredCentrals() *errors.ServiceError
 	CountByStatus(status []constants.CentralStatus) ([]CentralStatusCount, error)
 	CountByRegionAndInstanceType() ([]CentralRegionCount, error)
-	ListCentralsWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateCentralAdmin(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 	Restore(ctx context.Context, id string) *errors.ServiceError
@@ -338,16 +317,11 @@ func (k *centralService) AcceptCentralRequest(centralRequest *dbapi.CentralReque
 	centralRequest.Namespace = namespace
 
 	// Set host.
-	if k.centralConfig.EnableCentralExternalDomain {
-		// the host should use the external domain name rather than the cluster domain
-		centralRequest.Host = k.centralConfig.CentralDomainName
-	} else {
-		clusterDNS, err := k.clusterService.GetClusterDNS(centralRequest.ClusterID)
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
-		}
-		centralRequest.Host = clusterDNS
+	clusterDNS, err := k.clusterService.GetClusterDNS(centralRequest.ClusterID)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
 	}
+	centralRequest.Host = clusterDNS
 
 	// UpdateIgnoreNils the fields of the CentralRequest record in the database.
 	updatedCentralRequest := &dbapi.CentralRequest{
@@ -594,31 +568,6 @@ func (k *centralService) DeprovisionExpiredCentrals() *errors.ServiceError {
 func (k *centralService) Delete(centralRequest *dbapi.CentralRequest, force bool) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
-	// if the we don't have the clusterID we can only delete the row from the database
-	if centralRequest.ClusterID != "" {
-		routes, err := centralRequest.GetRoutes()
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
-		}
-		managedCentral, err := k.managedCentralPresenter.PresentManagedCentral(centralRequest)
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to present managed central")
-		}
-		// Only delete the routes when they are set
-		if routes != nil && k.centralConfig.EnableCentralExternalDomain && !externaldns.IsEnabled(managedCentral) {
-			_, err := k.ChangeCentralCNAMErecords(centralRequest, CentralRoutesActionDelete)
-			if err != nil {
-				if force {
-					glog.Warningf("Failed to delete CNAME records for Central tenant %q: %v", centralRequest.ID, err)
-					glog.Warning("Continuing with deletion of Central tenant because force-deletion is specified")
-				} else {
-					return err
-				}
-			}
-			glog.Infof("Successfully deleted CNAME records for Central tenant %q", centralRequest.ID)
-		}
-	}
-
 	logStateChange("delete request", centralRequest.ID, nil)
 	// soft delete the central request
 	if err := dbConn.Delete(centralRequest).Error; err != nil {
@@ -786,57 +735,6 @@ func (k *centralService) UpdateStatus(id string, status constants.CentralStatus)
 	return true, nil
 }
 
-// ChangeCentralCNAMErecords ...
-func (k *centralService) ChangeCentralCNAMErecords(centralRequest *dbapi.CentralRequest, action CentralRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
-	routes, err := centralRequest.GetRoutes()
-	if routes == nil || err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
-	}
-
-	changeAction, err := CentralRoutesActionToRoute53ChangeAction(action)
-	domainRecordBatch := buildCentralClusterCNAMESRecordBatch(routes, changeAction)
-
-	// Create AWS client with the region of this Central Cluster
-	awsConfig := aws.Config{
-		AccessKeyID:     k.awsConfig.Route53AccessKey,
-		SecretAccessKey: k.awsConfig.Route53SecretAccessKey, // pragma: allowlist secret
-	}
-	awsClient, err := k.awsClientFactory.NewClient(awsConfig, centralRequest.Region)
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
-	}
-
-	changeRecordsOutput, err := awsClient.ChangeResourceRecordSets(k.centralConfig.CentralDomainName, domainRecordBatch)
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create domain record sets")
-	}
-
-	return changeRecordsOutput, nil
-}
-
-// GetCNAMERecordStatus ...
-func (k *centralService) GetCNAMERecordStatus(centralRequest *dbapi.CentralRequest) (*CNameRecordStatus, error) {
-	awsConfig := aws.Config{
-		AccessKeyID:     k.awsConfig.Route53AccessKey,
-		SecretAccessKey: k.awsConfig.Route53SecretAccessKey, // pragma: allowlist secret
-	}
-	awsClient, err := k.awsClientFactory.NewClient(awsConfig, centralRequest.Region)
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
-	}
-
-	changeOutput, err := awsClient.GetChange(centralRequest.RoutesCreationID)
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to CNAME record status")
-	}
-
-	status := string(changeOutput.ChangeInfo.Status)
-	return &CNameRecordStatus{
-		ID:     changeOutput.ChangeInfo.Id,
-		Status: &status,
-	}, nil
-}
-
 func (k *centralService) Restore(ctx context.Context, id string) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 	var centralRequest dbapi.CentralRequest
@@ -857,8 +755,6 @@ func (k *centralService) Restore(ctx context.Context, id string) *errors.Service
 	columnsToReset := []string{
 		"Routes",
 		"Status",
-		"RoutesCreated",
-		"RoutesCreationID",
 		"DeletedAt",
 		"DeletionTimestamp",
 		"ClientID",
@@ -913,19 +809,15 @@ func (k *centralService) AssignCluster(ctx context.Context, centralID string, cl
 	}
 
 	central.ClusterID = clusterID
-	central.RoutesCreated = false
 	central.Routes = nil
-	central.RoutesCreationID = ""
 	central.Status = constants.CentralRequestStatusProvisioning.String()
 	now := time.Now()
 	central.EnteredProvisioningAt = dbapi.TimePtrToNullTime(&now)
 
 	return k.Updates(central, map[string]interface{}{
 		"cluster_id":              central.ClusterID,
-		"routes_created":          central.RoutesCreated,
 		"routes":                  central.Routes,
 		"status":                  central.Status,
-		"routes_creation_id":      central.RoutesCreationID,
 		"entered_provisioning_at": central.EnteredProvisioningAt,
 	})
 }
@@ -981,16 +873,6 @@ func (k *centralService) CountByStatus(status []constants.CentralStatus) ([]Cent
 	return results, nil
 }
 
-// ListCentralsWithRoutesNotCreated ...
-func (k *centralService) ListCentralsWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError) {
-	dbConn := k.connectionFactory.New()
-	var results []*dbapi.CentralRequest
-	if err := dbConn.Where("routes IS NOT NULL").Where("routes_created = ?", "no").Find(&results).Error; err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list central requests")
-	}
-	return results, nil
-}
-
 // ListCentralsWithoutAuthConfig returns all _relevant_ central requests with
 // no auth config. For central requests without host set, we cannot compute
 // redirect_uri and hence cannot set up auth config.
@@ -1015,39 +897,6 @@ func (k *centralService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralReques
 	}
 
 	return filteredResults, nil
-}
-
-func buildCentralClusterCNAMESRecordBatch(routes []dbapi.DataPlaneCentralRoute, action route53Types.ChangeAction) *route53Types.ChangeBatch {
-	var changes []route53Types.Change
-	for _, r := range routes {
-		c := buildResourceRecordChange(r.Domain, r.Router, action)
-		changes = append(changes, c)
-	}
-	recordChangeBatch := &route53Types.ChangeBatch{
-		Changes: changes,
-	}
-
-	return recordChangeBatch
-}
-
-func buildResourceRecordChange(recordName string, clusterIngress string, action route53Types.ChangeAction) route53Types.Change {
-	recordTTL := int64(300)
-
-	resourceRecordChange := route53Types.Change{
-		Action: action,
-		ResourceRecordSet: &route53Types.ResourceRecordSet{
-			Name: &recordName,
-			Type: route53Types.RRTypeCname,
-			TTL:  &recordTTL,
-			ResourceRecords: []route53Types.ResourceRecord{
-				{
-					Value: &clusterIngress,
-				},
-			},
-		},
-	}
-
-	return resourceRecordChange
 }
 
 func logStateChange(msg, id string, req *dbapi.CentralRequest) {
@@ -1084,9 +933,7 @@ func convertCentralRequestToString(req *dbapi.CentralRequest) string {
 		"placement_id":            req.PlacementID,
 		"instance_type":           req.InstanceType,
 		"qouta_type":              req.QuotaType,
-		"routes_created":          req.RoutesCreated,
 		"namespace":               req.Namespace,
-		"routes_creation_id":      req.RoutesCreationID,
 		"deletion_timestamp":      req.DeletionTimestamp,
 		"internal":                req.Internal,
 		"expired_at":              req.ExpiredAt,
@@ -1171,15 +1018,4 @@ func (k *centralService) ChangeSubscription(ctx context.Context, centralID strin
 
 	glog.Infof("Central %q cloud account parameters have been changed to %q with id %q", centralID, cloudProvider, cloudAccountID)
 	return nil
-}
-
-// CentralRoutesActionToRoute53ChangeAction converts a CentralRoutesAction to a route53 types ChangeAction
-func CentralRoutesActionToRoute53ChangeAction(a CentralRoutesAction) (route53Types.ChangeAction, error) {
-	changeAction := route53Types.ChangeAction(a)
-	switch changeAction {
-	case route53Types.ChangeActionCreate, route53Types.ChangeActionUpsert, route53Types.ChangeAction(CentralRoutesActionDelete):
-		return changeAction, nil
-	default:
-		return "", fmt.Errorf("invalid CentralChangeAction: %q, cannot convert to Route53 action", changeAction)
-	}
 }
