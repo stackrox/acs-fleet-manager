@@ -17,6 +17,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+const internalCentralID = "internal-central-id"
+
 func TestExpirationDateManager(t *testing.T) {
 	withEntitlement := func(e bool) (*services.QuotaServiceMock, *services.QuotaServiceFactoryMock) {
 		qs := &services.QuotaServiceMock{
@@ -44,7 +46,7 @@ func TestExpirationDateManager(t *testing.T) {
 		}
 	}
 	quotaConf := config.NewCentralQuotaConfig()
-	quotaConf.InternalOrganisationIDs = []string{"internal-org-id"}
+	quotaConf.InternalCentralIDs = []string{internalCentralID}
 	defaultCfg := &config.CentralConfig{
 		Quota: quotaConf,
 	}
@@ -92,8 +94,9 @@ func TestExpirationDateManager(t *testing.T) {
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
 
-	t.Run("skip setting expired_at for internal organisation even if no valid quota", func(t *testing.T) {
-		central := &dbapi.CentralRequest{OrganisationID: "internal-org-id"}
+	t.Run("skip setting expired_at for internal central even if no valid quota", func(t *testing.T) {
+		central := &dbapi.CentralRequest{}
+		central.ID = internalCentralID
 		centralService := withCentrals(central)
 		quotaSvc, quotaFactory := withEntitlement(true)
 		gpm := NewExpirationDateManager(centralService, quotaFactory, defaultCfg)

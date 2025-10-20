@@ -94,14 +94,14 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 
 	quotaCostCache := make(map[quotaCostCacheKey]bool, 0)
 	for _, central := range centrals {
-		if slice.Contains(k.centralConfig.Quota.InternalOrganisationIDs, central.OrganisationID) {
-			glog.Infof("skipping quota check for central instance %q as it belongs to an internal organisation", central.ID)
-			// remove expiration date from internal organisation Central instances
+		if slice.Contains(k.centralConfig.Quota.InternalCentralIDs, central.ID) {
+			glog.Infof("skipping quota check for internal central instance %q", central.ID)
+			// remove expiration date from internal Central instances
 			if central.ExpiredAt.Valid {
 				central.ExpiredAt = dbapi.TimePtrToNullTime(nil)
 				if err := k.updateExpiredAtInDB(central); err != nil {
 					svcErrors = append(svcErrors, errors.Wrapf(err,
-						"failed to update expired_at for internal organisation central instance %q", central.ID))
+						"failed to update expired_at for internal central instance %q", central.ID))
 				}
 			}
 			continue
