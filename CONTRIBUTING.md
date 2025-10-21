@@ -113,27 +113,6 @@ glog.V(10).Info("biz")
   * This is local / debug level logging. Useful information for tracing through transactions on a local machine during development.
   * This means that given the verbosity setting and the above code, we would see `foo`, `bar`, and `biz` logged.
 
-### Sentry Logging
-Sentry monitors errors/exceptions in a real-time environment. It provides detailed information about captured errors. See [sentry](https://sentry.io/welcome/) for more details.
-
-Logging can be enabled by importing the sentry-go package: "github.com/getsentry/sentry-go
-
-Following are possible ways of logging events via Sentry:
-
-```go
-sentry.CaptureMessage(message) // for logging message
-sentry.CaptureEvent(event) // capture the events
-sentry.CaptureException(error) // capture the exception
-```
-Example :
-```go
-func check(err error, msg string) {
-	if err != nil && err != http.ErrServerClosed {
-		glog.Errorf("%s: %s", msg, err)
-		sentry.CaptureException(err)
-	}
-}
-```
 
 ## Writing Docs
 

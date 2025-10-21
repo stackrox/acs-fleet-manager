@@ -9,7 +9,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
 	health "github.com/docker/go-healthcheck"
 	"github.com/golang/glog"
@@ -26,13 +25,12 @@ var _ environments.BootService = &HealthCheckServer{}
 type HealthCheckServer struct {
 	httpServer          *http.Server
 	serverConfig        *ServerConfig
-	sentryTimeout       time.Duration
 	healthCheckConfig   *HealthCheckConfig
 	dbConnectionFactory *db.ConnectionFactory
 }
 
 // NewHealthCheckServer ...
-func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config, dbConnectionFactory *db.ConnectionFactory) *HealthCheckServer {
+func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *ServerConfig, dbConnectionFactory *db.ConnectionFactory) *HealthCheckServer {
 	router := mux.NewRouter()
 	health.DefaultRegistry = health.NewRegistry()
 	health.Register("maintenance_status", updater)
@@ -46,7 +44,6 @@ func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *Se
 		httpServer:          srv,
 		serverConfig:        serverConfig,
 		healthCheckConfig:   healthCheckConfig,
-		sentryTimeout:       sentryConfig.Timeout,
 		dbConnectionFactory: dbConnectionFactory,
 	}
 
@@ -69,7 +66,7 @@ func (s HealthCheckServer) run() {
 		if s.serverConfig.HTTPSCertFile == "" || s.serverConfig.HTTPSKeyFile == "" {
 			check(
 				fmt.Errorf("Unspecified required --https-cert-file, --https-key-file"),
-				"Can't start https server", s.sentryTimeout,
+				"Can't start https server", 5*time.Second,
 			)
 		}
 
@@ -80,7 +77,7 @@ func (s HealthCheckServer) run() {
 		glog.Infof("Serving HealthCheck without TLS at %s", s.healthCheckConfig.BindAddress)
 		err = s.httpServer.ListenAndServe()
 	}
-	check(err, "HealthCheck server terminated with errors", s.sentryTimeout)
+	check(err, "HealthCheck server terminated with errors", 5*time.Second)
 	glog.Infof("HealthCheck server terminated")
 }
 

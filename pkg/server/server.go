@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 )
 
@@ -21,8 +20,6 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 func check(err error, msg string, timeout time.Duration) {
 	if err != nil && err != http.ErrServerClosed {
 		glog.Errorf("%s: %s", msg, err)
-		sentry.CaptureException(err)
-		sentry.Flush(timeout)
 		os.Exit(1)
 	}
 }

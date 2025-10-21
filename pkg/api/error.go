@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
@@ -30,7 +29,6 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err = fmt.Errorf("Can't send response body for request '%s'", r.URL.Path)
 		glog.Error(err)
-		sentry.CaptureException(err)
 		return
 	}
 }
@@ -51,7 +49,6 @@ func SendMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err = fmt.Errorf("Can't send response body for request '%s'", r.URL.Path)
 		glog.Error(err)
-		sentry.CaptureException(err)
 		return
 	}
 }
@@ -68,7 +65,6 @@ func SendPanic(w http.ResponseWriter, r *http.Request) {
 			err.Error(),
 		)
 		glog.Error(err)
-		sentry.CaptureException(err)
 	}
 }
 
@@ -109,7 +105,6 @@ func init() {
 			err.Error(),
 		)
 		glog.Error(err)
-		sentry.CaptureException(err)
 		os.Exit(1)
 	}
 }

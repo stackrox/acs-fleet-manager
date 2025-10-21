@@ -630,8 +630,7 @@ secrets/touch:
           secrets/rhsso-metrics.clientId \
           secrets/rhsso-metrics.clientSecret \
           secrets/redhatsso-service.clientId \
-          secrets/redhatsso-service.clientSecret \
-          secrets/sentry.key
+          secrets/redhatsso-service.clientSecret
 .PHONY: secrets/touch
 
 # Setup for AWS credentials
@@ -685,7 +684,6 @@ deploy/secrets:
 		-p OCM_ADDON_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-addon-service.clientId' ] && [ -z '${OCM_ADDON_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-addon-service.clientId || echo '${OCM_ADDON_SERVICE_CLIENT_ID}')" \
 		-p OCM_ADDON_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-addon-service.clientSecret' ] && [ -z '${OCM_ADDON_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-addon-service.clientSecret || echo '${OCM_ADDON_SERVICE_CLIENT_SECRET}')" \
 		-p OCM_ADDON_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-addon-service.token' ] && [ -z '${OCM_ADDON_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-addon-service.token || echo '${OCM_ADDON_SERVICE_TOKEN}')" \
-		-p SENTRY_KEY="$(shell ([ -s './secrets/sentry.key' ] && [ -z '${SENTRY_KEY}' ]) && cat ./secrets/sentry.key || echo '${SENTRY_KEY}')" \
 		-p AWS_ACCESS_KEY="$(shell ([ -s './secrets/aws.accesskey' ] && [ -z '${AWS_ACCESS_KEY}' ]) && cat ./secrets/aws.accesskey || echo '${AWS_ACCESS_KEY}')" \
 		-p AWS_ACCOUNT_ID="$(shell ([ -s './secrets/aws.accountid' ] && [ -z '${AWS_ACCOUNT_ID}' ]) && cat ./secrets/aws.accountid || echo '${AWS_ACCOUNT_ID}')" \
 		-p AWS_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.secretaccesskey' ] && [ -z '${AWS_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.secretaccesskey || echo '${AWS_SECRET_ACCESS_KEY}')" \

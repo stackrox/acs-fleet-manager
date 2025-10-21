@@ -2,10 +2,8 @@ package db
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/pkg/errors"
 
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -36,13 +34,6 @@ func transactionMiddleware(db *ConnectionFactory, next http.Handler) http.Handle
 
 		// Set the value of the request pointer to the value of a new copy of the request with the new context key,vale stored in it
 		*r = *r.WithContext(ctx)
-
-		if hub := sentry.GetHubFromContext(ctx); hub != nil {
-			hub.ConfigureScope(func(scope *sentry.Scope) {
-				txid := ctx.Value("txid").(int64)
-				scope.SetTag("db_transaction_id", fmt.Sprintf("%d", txid))
-			})
-		}
 
 		// Returned from handlers and resolve transactions.
 		defer func() {

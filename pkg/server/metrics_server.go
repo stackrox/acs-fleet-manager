@@ -8,7 +8,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
 	"github.com/gorilla/mux"
 
@@ -19,7 +18,7 @@ import (
 var _ environments.BootService = &MetricsServer{}
 
 // NewMetricsServer ...
-func NewMetricsServer(metricsConfig *MetricsConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config) *MetricsServer {
+func NewMetricsServer(metricsConfig *MetricsConfig, serverConfig *ServerConfig) *MetricsServer {
 	mainRouter := mux.NewRouter()
 	mainRouter.NotFoundHandler = http.HandlerFunc(api.SendNotFound)
 
@@ -31,7 +30,6 @@ func NewMetricsServer(metricsConfig *MetricsConfig, serverConfig *ServerConfig, 
 
 	s := &MetricsServer{
 		serverConfig:  serverConfig,
-		sentryTimeout: sentryConfig.Timeout,
 		metricsConfig: metricsConfig,
 	}
 	s.httpServer = &http.Server{
@@ -46,7 +44,6 @@ type MetricsServer struct {
 	httpServer    *http.Server
 	serverConfig  *ServerConfig
 	metricsConfig *MetricsConfig
-	sentryTimeout time.Duration
 }
 
 // Start ...
@@ -61,7 +58,7 @@ func (s MetricsServer) run() {
 		if s.serverConfig.HTTPSCertFile == "" || s.serverConfig.HTTPSKeyFile == "" {
 			check(
 				fmt.Errorf("Unspecified required --https-cert-file, --https-key-file"),
-				"Can't start https server", s.sentryTimeout,
+				"Can't start https server", 5*time.Second,
 			)
 		}
 
@@ -72,7 +69,7 @@ func (s MetricsServer) run() {
 		glog.Infof("Serving Metrics without TLS at %s", s.metricsConfig.BindAddress)
 		err = s.httpServer.ListenAndServe()
 	}
-	check(err, "Metrics server terminated with errors", s.sentryTimeout)
+	check(err, "Metrics server terminated with errors", 5*time.Second)
 	glog.Infof("Metrics server terminated")
 }
 
