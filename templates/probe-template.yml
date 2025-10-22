@@ -50,6 +50,8 @@ objects:
       name: probe
       labels:
         app: probe
+      annotations:
+        ignore-check.kube-linter.io/minimum-three-replicas: "Probe has only 1 replica"
     spec:
       replicas: 1
       selector:
