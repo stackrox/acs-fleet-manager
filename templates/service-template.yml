@@ -388,6 +388,7 @@ objects:
     data:
       additional-sso-issuers.yaml: |-
         - https://sso.stage.redhat.com/auth/realms/redhat-external
+        - https://sso.redhat.com/auth/realms/redhat-external
   - kind: ConfigMap
     apiVersion: v1
     metadata:
