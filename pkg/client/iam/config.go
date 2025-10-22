@@ -48,7 +48,7 @@ type OIDCIssuers struct {
 
 // GetURIs returns copy of URIs to protect config from modifications.
 func (a *OIDCIssuers) GetURIs() []string {
-	uris := make([]string, 0, len(a.URIs))
+	uris := make([]string, len(a.URIs))
 	copy(uris, a.URIs)
 	return uris
 }
