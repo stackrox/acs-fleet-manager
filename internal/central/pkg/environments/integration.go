@@ -42,6 +42,8 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"enable-deletion-of-expired-central": "true",
 		"dataplane-cluster-scaling-type":     "auto", // need to set this to 'auto' for integration environment as some tests rely on this
 		"fleetshard-authz-config-file":       "config/fleetshard-authz-development.yaml",
+		"enable-additional-sso-issuers":      "true",
+		"additional-sso-issuers-file":        "config/additional-sso-issuers.yaml",
 	}
 }
 
