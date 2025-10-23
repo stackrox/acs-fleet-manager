@@ -122,7 +122,9 @@ jobs:
     name: "Cleanup Test Infra Clusters"
     runs-on: ubuntu-latest
     needs: [create-cluster, e2e-test]
-    if: ${{ !github.event.pull_request.head.repo.fork && !github.event.pull_request.draft && always() }} # do not run for PRs from forks
+    # do not run for PRs from forks
+    # keep the clusters in case of failure for debugging
+    if: ${{ !github.event.pull_request.head.repo.fork && !github.event.pull_request.draft && (success() || cancelled()) }}
     environment: development
     env:
       INFRA_TOKEN: ${{ secrets.INFRA_TOKEN }}
