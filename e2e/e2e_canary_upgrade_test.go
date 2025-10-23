@@ -693,7 +693,7 @@ func operatorsApplication(operators ...OperatorConfig) argocd.Application {
 					},
 				},
 				Path:           "rhacs-operator-legacy",
-				RepoURL:        "https://github.com/stackrox/acscs-manifests",
+				RepoURL:        "https://github.com/stackrox/acscs-manifests.git",
 				TargetRevision: "HEAD",
 			},
 			SyncPolicy: &argocd.SyncPolicy{

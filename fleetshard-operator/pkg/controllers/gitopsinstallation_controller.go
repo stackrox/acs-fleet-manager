@@ -51,7 +51,7 @@ const (
 	bootstrapAppName           = "rhacs-bootstrap"
 	bootstrapAppPath           = "bootstrap"
 	bootstrapAppRepositoryName = "acscs-manifests-repo"
-	bootstrapAppRepositoryURL  = "https://github.com/stackrox/acscs-manifests"
+	bootstrapAppRepositoryURL  = "https://github.com/stackrox/acscs-manifests.git"
 	crdPollInterval            = 5 * time.Second
 )
 

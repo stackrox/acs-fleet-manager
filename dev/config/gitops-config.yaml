@@ -39,7 +39,7 @@ applications:
           selfHeal: true
       source:
         path: rhacs-operator-legacy
-        repoURL: https://github.com/stackrox/acscs-manifests
+        repoURL: https://github.com/stackrox/acscs-manifests.git
         targetRevision: HEAD
         helm:
           valuesObject:
