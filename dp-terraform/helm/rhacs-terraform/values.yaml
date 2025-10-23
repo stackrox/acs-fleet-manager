@@ -71,34 +71,6 @@ fleetshardSync:
   printCentralUpdateDiff: false
   argoCdNamespace: openshift-gitops
 
-# Email sender service parameters
-# - enabled flag is used to completely enable/disable email sender service
-emailsender:
-  enabled: false
-  # Use this in case you apply this manifest against a cluster without service-ca operator
-  # to turn of HTTPS and mounting the service-ca certs since they'll not be created
-  db:
-    sslMode: "verify-full"
-    caCertFile: /rds_ca/aws-rds-ca-global-bundle.pem
-  enableHTTPS: true
-  replicas: 3
-  image:
-    repo: "quay.io/redhat-services-prod/acscs-rhacs-tenant/acscs-main/acs-emailsender"
-    tag: null
-  clusterId: ""
-  clusterName: ""
-  environment: ""
-  senderAddress: "noreply@mail.rhacs-dev.com"
-  authConfigFromKubernetes: true
-  emailProvider: "AWS_SES"
-  resources:
-    requests:
-      cpu: "100m"
-      memory: "512Mi"
-    limits:
-      cpu: "200m"
-      memory: "512Mi"
-
 global:
   image:
     tag: "latest"
