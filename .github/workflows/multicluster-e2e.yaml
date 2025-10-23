@@ -55,7 +55,7 @@ jobs:
         uses: stackrox/actions/infra/create-cluster@v1
         with:
           token: ${{ secrets.INFRA_TOKEN }}
-          flavor: osd-on-aws
+          flavor: rosahcp
           name: ${{ matrix.name }}-${{ steps.cluster_id.outputs.short_sha }}
           description: "Used for acs-fleet-manager Multicluster E2E tests. Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           lifespan: 3h
