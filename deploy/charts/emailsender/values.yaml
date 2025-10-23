@@ -1,6 +1,3 @@
-# Default values for emailsender.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
 replicas: 3
 image:
   repo: "quay.io/redhat-services-prod/acscs-rhacs-tenant/acscs-main/acs-emailsender"
@@ -9,10 +6,10 @@ image:
 # to turn off HTTPS and mounting the service-ca certs since they'll not be created
 enableHTTPS: true
 # Database connection settings
-# Use this in case you apply this manifest against a cluster without service-ca operator
-# to turn of HTTPS and mounting the service-ca certs since they'll not be created
 db:
+  # Possible values: disable, require, verify-ca, verify-full
   sslMode: "verify-full"
+  # Can be empty if sslMode is disabled
   caCertFile: /rds_ca/aws-rds-ca-global-bundle.pem
 # Cluster information
 clusterId: ""
