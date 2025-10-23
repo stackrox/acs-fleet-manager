@@ -24,6 +24,12 @@ on:
       - 'internal/central/pkg/handlers/admin_central.go'
       - 'internal/central/pkg/services/central.go'
 
+# Cancel previous runs
+# see: https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   create-cluster:
     name: "Create Test Infra Clusters"
