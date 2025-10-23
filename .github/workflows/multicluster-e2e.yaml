@@ -60,6 +60,7 @@ jobs:
           lifespan: 3h
           args: nodes=3,machine-type=m5.2xlarge
           wait: true
+          no-slack: true
 
   e2e-test:
     name: "Multicluster e2e tests"
