@@ -122,8 +122,6 @@ apply "${MANIFESTS_DIR}/addons/acs-fleetshard"
 
 if is_openshift_cluster "$CLUSTER_TYPE"; then
     log "Installing ExternalDNS for OpenShift"
-    wait_for_crd "applications.argoproj.io"
-
     apply "${MANIFESTS_DIR}/external-dns-operator"
     wait_for_crd externaldnses.externaldns.olm.openshift.io
 
