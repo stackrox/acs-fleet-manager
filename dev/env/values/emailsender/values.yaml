@@ -1,0 +1,12 @@
+clusterId: 1234567890abcdef1234567890abcdef # pragma: allowlist secret
+clusterName: dev
+environment: dev
+enableHTTPS: false
+replicas: 1
+authConfigFromKubernetes: true
+db:
+  sslMode: "disable"
+  caCertFile: ""
+image:
+  repo: "quay.io/rhacs-eng/emailsender"
+createExternalSecrets: false

@@ -77,7 +77,7 @@ spec:
         git:
             uri: 'https://github.com/stackrox/acs-fleet-manager'
             ref: ${CUR_BRANCH}
-        contextDir: /dp-terraform/helm
+        contextDir: /fleetshard-operator
     runPolicy: Serial
 EOF
 

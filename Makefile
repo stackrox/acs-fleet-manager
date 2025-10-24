@@ -893,3 +893,18 @@ CLUSTER_ID ?= test
 run/emailsender:
 	@CLUSTER_ID=$(CLUSTER_ID) go run emailsender/cmd/app/main.go
 .PHONY: run/emailsender
+
+deploy/emailsender: IMAGE_REPO?="$(external_image_registry)/$(emailsender_image_repository)"
+deploy/emailsender: IMAGE_TAG?="$(image_tag)"
+deploy/emailsender:
+	@kubectl apply -n "$(NAMESPACE)" -f "dev/env/manifests/emailsender-db"
+	@helm upgrade --install -n "$(NAMESPACE)" emailsender "deploy/charts/emailsender" \
+		--values "dev/env/values/emailsender/values.yaml" \
+		--set image.repo="$(IMAGE_REPO)" \
+		--set image.tag="$(IMAGE_TAG)"
+.PHONY: deploy/emailsender
+
+undeploy/emailsender:
+	@helm uninstall -n "$(NAMESPACE)" emailsender
+	@kubectl delete -n "$(NAMESPACE)" -f "dev/env/manifests/emailsender-db"
+.PHONY: undeploy/emailsender

@@ -1,0 +1,39 @@
+replicas: 3
+image:
+  repo: "quay.io/redhat-services-prod/acscs-rhacs-tenant/acscs-main/acs-emailsender"
+  tag: "latest"
+# Use this in case you apply this manifest against a cluster without service-ca operator
+# to turn off HTTPS and mounting the service-ca certs since they'll not be created
+enableHTTPS: true
+# Database connection settings
+db:
+  # Possible values: disable, require, verify-ca, verify-full
+  sslMode: "verify-full"
+  # Can be empty if sslMode is disabled
+  caCertFile: /rds_ca/aws-rds-ca-global-bundle.pem
+# Cluster information
+clusterId: ""
+clusterName: ""
+environment: ""
+# Email provider configuration
+senderAddress: "noreply@mail.rhacs-dev.com"
+emailProvider: "AWS_SES"
+# Authentication configuration
+authConfigFromKubernetes: true
+# AWS configuration
+aws:
+  region: "us-east-1"
+# Resource limits and requests
+resources:
+  requests:
+    cpu: "100m"
+    memory: "512Mi"
+  limits:
+    cpu: "200m"
+    memory: "512Mi"
+
+createExternalSecrets: true
+secretStore:
+  aws:
+    secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret
+    parameterStoreSecretStoreName: parameter-store-secret-store # pragma: allowlist secret
