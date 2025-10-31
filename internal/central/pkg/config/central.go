@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -46,13 +47,15 @@ func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&c.CentralLifespan.CentralLifespanInHours, "central-lifespan", c.CentralLifespan.CentralLifespanInHours, "The desired lifespan of a Central instance")
 	fs.StringVar(&c.CentralDomainName, "central-domain-name", c.CentralDomainName, "The domain name to use for Central instances")
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
-	fs.StringArrayVar(&c.Quota.InternalCentralIDs, "quota-internal-central-ids", c.Quota.InternalCentralIDs, "Comma separated list of Central IDs that should be ignored for quota checks and for the expiration worker.")
+	fs.StringSliceVar(&c.Quota.InternalCentralIDs, "quota-internal-central-ids", c.Quota.InternalCentralIDs, "Comma separated list of Central IDs that should be ignored for quota checks and for the expiration worker.")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of central evaluator instances")
 
 	fs.StringVar(&c.CentralIDPClientID, "central-idp-client-id", c.CentralIDPClientID, "OIDC client_id to pass to Central's auth config")
 	fs.StringVar(&c.CentralIDPClientSecretFile, "central-idp-client-secret-file", c.CentralIDPClientSecretFile, "File containing OIDC client_secret to pass to Central's auth config")
 	fs.StringVar(&c.CentralIDPIssuer, "central-idp-issuer", c.CentralIDPIssuer, "OIDC issuer URL to pass to Central's auth config")
 	fs.IntVar(&c.CentralRetentionPeriodDays, "central-retention-period-days", c.CentralRetentionPeriodDays, "The number of days after deletion until central tenants can no longer be restored")
+
+	c.LogFlagsConfig()
 }
 
 // ReadFiles ...
@@ -84,4 +87,18 @@ func (c *CentralConfig) HasStaticAuth() bool {
 	// CentralIDPIssuer or CentralIDPClientSecret. Failure to provide a working auth
 	// configuration should not mask an intent to use static configuration.
 	return c.CentralIDPClientID != ""
+}
+
+// LogFlagsConfig logs all configuration values for debugging purposes
+func (c *CentralConfig) LogFlagsConfig() {
+	glog.Info("=== Central Configuration ===")
+	glog.Infof("  enable-central-external-domain: %v", c.EnableCentralExternalDomain)
+	glog.Infof("  central-domain-name: %s", c.CentralDomainName)
+	glog.Infof("  enable-deletion-of-expired-central: %v", c.CentralLifespan.EnableDeletionOfExpiredCentral)
+	glog.Infof("  central-lifespan: %d hours", c.CentralLifespan.CentralLifespanInHours)
+	glog.Infof("  quota-type: %s", c.Quota.Type)
+	glog.Infof("  quota-internal-central-ids: %v", c.Quota.InternalCentralIDs)
+	glog.Infof("  allow-evaluator-instance: %v", c.Quota.AllowEvaluatorInstance)
+	glog.Infof("  central-retention-period-days: %d", c.CentralRetentionPeriodDays)
+	glog.Info("=============================")
 }
