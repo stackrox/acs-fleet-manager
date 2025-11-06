@@ -612,8 +612,6 @@ secrets/touch:
           secrets/ocm-service.token \
           secrets/rhsso-logs.clientId \
           secrets/rhsso-logs.clientSecret \
-          secrets/rhsso-metrics.clientId \
-          secrets/rhsso-metrics.clientSecret \
           secrets/redhatsso-service.clientId \
           secrets/redhatsso-service.clientSecret
 .PHONY: secrets/touch
