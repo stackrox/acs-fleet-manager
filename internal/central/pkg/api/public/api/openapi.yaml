@@ -723,27 +723,6 @@ components:
         supported_instance_types:
         - standard
         - eval
-    MetricsRangeQueryExample:
-      value:
-        metric:
-          __name__: central_server_brokertopicmetrics_bytes_in_total
-          central_operator_io_cluster: central-service
-          topic: __consumer_offsets
-        values:
-        - timestamp: 1611670230000
-          value: 84154
-        - timestamp: 1611670260000
-          value: 85888
-        - timestamp: 1611670290000
-          value: 87622
-    MetricsInstantQueryExample:
-      value:
-        metric:
-          __name__: central_server_brokertopicmetrics_bytes_in_total
-          central_operator_io_cluster: central-service
-          topic: __consumer_offsets
-        timestamp: 1611670230000
-        value: 84154
     CloudAccountsList:
       value:
         cloudAccounts:
@@ -1176,51 +1155,6 @@ components:
       required:
       - enabled
       - supported_instance_types
-    MetricsRangeQueryList:
-      allOf:
-      - $ref: '#/components/schemas/MetricsRangeQueryList_allOf'
-    RangeQuery:
-      properties:
-        metric:
-          additionalProperties:
-            type: string
-          type: object
-        values:
-          items:
-            $ref: '#/components/schemas/values'
-          type: array
-      type: object
-    values:
-      properties:
-        timestamp:
-          format: int64
-          type: integer
-        value:
-          format: double
-          type: number
-      required:
-      - value
-      type: object
-    MetricsInstantQueryList:
-      allOf:
-      - $ref: '#/components/schemas/MetricsInstantQueryList_allOf'
-    MetricsFederationResult:
-      type: string
-    InstantQuery:
-      properties:
-        metric:
-          additionalProperties:
-            type: string
-          type: object
-        timestamp:
-          format: int64
-          type: integer
-        value:
-          format: double
-          type: number
-      required:
-      - value
-      type: object
     CloudAccountsList:
       example:
         cloudAccounts:
@@ -1338,30 +1272,6 @@ components:
           items:
             allOf:
             - $ref: '#/components/schemas/CloudRegion'
-          type: array
-    MetricsRangeQueryList_allOf:
-      example: '{"kind":"MetricsRangeQueryList","id":"1nbpS70HduPe4l0to8jSg2CLzfu","items":{"$ref":"#/components/examples/MetricsRangeQueryExample"}}'
-      properties:
-        kind:
-          type: string
-        id:
-          type: string
-        items:
-          items:
-            allOf:
-            - $ref: '#/components/schemas/RangeQuery'
-          type: array
-    MetricsInstantQueryList_allOf:
-      example: '{"kind":"MetricsInstantQueryList","id":"1nbpS70HduPe4l0to8jSg2CLzfu","items":{"$ref":"#/components/examples/MetricsInstantQueryExample"}}'
-      properties:
-        kind:
-          type: string
-        id:
-          type: string
-        items:
-          items:
-            allOf:
-            - $ref: '#/components/schemas/InstantQuery'
           type: array
   securitySchemes:
     Bearer:
