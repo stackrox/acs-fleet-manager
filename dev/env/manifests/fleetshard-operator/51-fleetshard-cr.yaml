@@ -19,6 +19,7 @@ spec:
       securityGroup: "$MANAGED_DB_SECURITY_GROUP"
     aws:
       region: "$AWS_REGION"
+      roleArn: "$AWS_ROLE_ARN"
     gitops:
       enabled: true
       tenantDefaultAppSourceTargetRevision: "$ARGOCD_TENANT_APP_TARGET_REVISION"
