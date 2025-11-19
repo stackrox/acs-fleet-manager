@@ -121,8 +121,8 @@ func assertStoredSecrets(ctx context.Context, privateAPI fleetmanager.PrivateAPI
 	}
 }
 
-func assertCentralCRExists(ctx context.Context, central *v1alpha1.Central, namespace, name string) func() error {
-	return assertObjectExists(ctx, central, namespace, name)
+func assertCentralCRExists(ctx context.Context, central *v1alpha1.Central, namespace string) func() error {
+	return assertObjectExists(ctx, central, namespace, "central")
 }
 
 func assertSecretExists(ctx context.Context, secret *v1.Secret, namespace, name string) func() error {
@@ -149,9 +149,9 @@ func deleteCentralByID(ctx context.Context, client *fleetmanager.Client, id stri
 	return err
 }
 
-func assertCentralCRDeleted(ctx context.Context, namespace, name string) func() error {
+func assertCentralCRDeleted(ctx context.Context, namespace string) func() error {
 	central := &v1alpha1.Central{}
-	return assertObjectDeleted(ctx, central, namespace, name)
+	return assertObjectDeleted(ctx, central, namespace, "central")
 }
 
 func assertNamespaceDeleted(ctx context.Context, name string) func() error {

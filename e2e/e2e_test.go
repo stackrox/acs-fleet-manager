@@ -98,7 +98,6 @@ var _ = Describe("Central", Ordered, func() {
 	Describe("should be created and deployed to k8s", Ordered, func() {
 
 		var centralRequestID string
-		var centralRequestName string
 		var namespaceName string
 
 		BeforeAll(func() {
@@ -114,9 +113,7 @@ var _ = Describe("Central", Ordered, func() {
 			})
 			Expect(err).To(BeNil())
 			centralRequestID = resp.Id
-			centralRequestName = resp.Name
 			notes = []string{
-				fmt.Sprintf("Central name: %s", resp.Name),
 				fmt.Sprintf("Central ID: %s", resp.Id),
 			}
 			printNotes(notes)
@@ -150,7 +147,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should create central CR in its namespace on a managed cluster", func() {
-			Eventually(assertCentralCRExists(ctx, &v1alpha1.Central{}, namespaceName, centralRequestName)).
+			Eventually(assertCentralCRExists(ctx, &v1alpha1.Central{}, namespaceName)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -335,7 +332,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should delete Central CR", func() {
-			Eventually(assertCentralCRDeleted(ctx, namespaceName, centralRequestName)).
+			Eventually(assertCentralCRDeleted(ctx, namespaceName)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -367,7 +364,6 @@ var _ = Describe("Central", Ordered, func() {
 
 	Describe("should be created and deployed to k8s with admin API", Ordered, func() {
 		var centralRequestID string
-		var centralRequestName string
 		var namespaceName string
 
 		BeforeAll(func() {
@@ -385,14 +381,13 @@ var _ = Describe("Central", Ordered, func() {
 				fmt.Sprintf("Central ID: %s", resp.Id),
 			}
 			centralRequestID = resp.Id
-			centralRequestName = resp.Name
 			namespaceName, err = services.FormatNamespace(centralRequestID)
 			Expect(err).To(BeNil())
 			Expect(resp.Status).To(Equal(statusAccepted))
 		})
 
 		It("should create central in its namespace on a managed cluster", func() {
-			Eventually(assertCentralCRExists(ctx, &v1alpha1.Central{}, namespaceName, centralRequestName)).
+			Eventually(assertCentralCRExists(ctx, &v1alpha1.Central{}, namespaceName)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -415,7 +410,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should delete central CR", func() {
-			Eventually(assertCentralCRDeleted(ctx, namespaceName, centralRequestName)).
+			Eventually(assertCentralCRDeleted(ctx, namespaceName)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -485,7 +480,6 @@ var _ = Describe("Central", Ordered, func() {
 
 	Describe("should be deployed and can be force-deleted", Ordered, func() {
 		var centralRequestID string
-		var centralRequestName string
 		var namespaceName string
 
 		BeforeAll(func() {
@@ -500,9 +494,7 @@ var _ = Describe("Central", Ordered, func() {
 			resp, _, err := client.PublicAPI().CreateCentral(ctx, true, request)
 			Expect(err).To(BeNil())
 			centralRequestID = resp.Id
-			centralRequestName = resp.Name
 			notes = []string{
-				fmt.Sprintf("Central name: %s", centralRequestName),
 				fmt.Sprintf("Central ID: %s", centralRequestID),
 			}
 			namespaceName, err = services.FormatNamespace(centralRequestID)
@@ -536,7 +528,7 @@ var _ = Describe("Central", Ordered, func() {
 			// (1) Delete the Central CR.
 			centralRef := &v1alpha1.Central{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      centralRequestName,
+					Name:      "central",
 					Namespace: namespaceName,
 				},
 			}

@@ -188,7 +188,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 			centralNamespace, err = services.FormatNamespace(createdCentral.Id)
 			debugGitopsConfig(ctx)
-			Eventually(assertCentralLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion1)).
+			Eventually(assertCentralLabelSelectorPresent(ctx, centralNamespace, operatorVersion1)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -208,7 +208,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				return config
 			})).To(Succeed())
 			debugGitopsConfig(ctx)
-			Eventually(assertCentralLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion2)).
+			Eventually(assertCentralLabelSelectorPresent(ctx, centralNamespace, operatorVersion2)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -264,17 +264,17 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 	})
 })
 
-func assertCentralLabelSelectorPresent(ctx context.Context, createdCentral *public.CentralRequest, centralNamespace, version string) func() error {
+func assertCentralLabelSelectorPresent(ctx context.Context, centralNamespace, version string) func() error {
 	return func() error {
 		var centralCR v1alpha1.Central
-		if err := assertCentralCRExists(ctx, &centralCR, centralNamespace, createdCentral.Name)(); err != nil {
-			return fmt.Errorf("failed finding central CR %s/%s: %w", centralNamespace, createdCentral.Name, err)
+		if err := assertCentralCRExists(ctx, &centralCR, centralNamespace)(); err != nil {
+			return fmt.Errorf("failed finding central CR in namespace %s: %w", centralNamespace, err)
 		}
 		if centralCR.Labels == nil {
-			return fmt.Errorf("central CR %s/%s has no labels", centralNamespace, createdCentral.Name)
+			return fmt.Errorf("central CR in namespace %s has no labels", centralNamespace)
 		}
 		if centralCR.GetLabels()["rhacs.redhat.com/version-selector"] != version {
-			return fmt.Errorf("central CR %s/%s has incorrect label selector %s", centralNamespace, createdCentral.Name, centralCR.GetLabels()["rhacs.redhat.com/version-selector"])
+			return fmt.Errorf("central CR in namespace %s has incorrect label selector %s", centralNamespace, centralCR.GetLabels()["rhacs.redhat.com/version-selector"])
 		}
 		return nil
 	}
