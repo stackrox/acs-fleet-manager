@@ -36,7 +36,8 @@ fleetshardSync:
     type: kms # local or kms
     keyID: ""
   aws:
-    region: "us-east-1" # TODO(2023-05-01): Remove the default value here as we now set it explicitly
+    region: ""
+    roleArn: ""
     enableTokenAuth: true
   telemetry:
     storage:
@@ -78,4 +79,3 @@ global:
   secretStore:
     aws:
       secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret
-      parameterStoreSecretStoreName: parameter-store-secret-store # pragma: allowlist secret

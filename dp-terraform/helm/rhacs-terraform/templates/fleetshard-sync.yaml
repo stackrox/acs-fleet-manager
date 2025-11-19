@@ -103,10 +103,7 @@ spec:
         - name: AWS_REGION
           value: {{ .Values.fleetshardSync.aws.region }}
         - name: AWS_ROLE_ARN
-          valueFrom:
-            secretKeyRef:
-              name: fleetshard-sync-parameters
-              key: "aws-role-arn"
+          value: {{ .Values.fleetshardSync.aws.roleArn | quote }}
         - name: TELEMETRY_STORAGE_ENDPOINT
           value: {{ .Values.fleetshardSync.telemetry.storage.endpoint | quote }}
         - name: TELEMETRY_STORAGE_KEY
