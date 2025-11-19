@@ -263,7 +263,7 @@ parameters:
 
 - name: ENVOY_IMAGE
   description: Envoy image
-  value: envoyproxy/envoy:v1.28.0
+  value: envoyproxy/envoy:v1.28.8
 
 - name: ENVOY_LOG_LEVEL
   description: Envoy log level
