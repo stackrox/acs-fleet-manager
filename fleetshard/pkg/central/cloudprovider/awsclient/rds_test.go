@@ -38,7 +38,7 @@ func newTestRDS() (*RDS, error) {
 	cfg.SecurityGroup = os.Getenv("MANAGED_DB_SECURITY_GROUP")
 	cfg.SubnetGroup = os.Getenv("MANAGED_DB_SUBNET_GROUP")
 	cfg.BackupRetentionPeriod = 1
-	cfg.EngineVersion = "13.9"
+	cfg.EngineVersion = "15.10"
 	cfg.MinCapacityACU = 0.5
 	cfg.MaxCapacityACU = 1
 
