@@ -88,7 +88,8 @@ helm upgrade --install -n $CENTRAL_NS stackrox-central-services ./central-chart 
   --set "central.adminPassword.values=$ADMIN_PW" \
   --set "central.image.tag=$ACS_VERSION" \
   --set "central.db.image.tag=$ACS_VERSION" \
-  --set "scannerV4.db.image.tag=$ACS_VERSION"
+  --set "scannerV4.disable=true" \
+  --set "scanner.disable=true" # Disabling scanner to reduce resource usage, it is not important for this test
 
 KUBECTL="$(which kubectl)"
 wait_for_container_to_become_ready "$CENTRAL_NS" "app=central" "central"
