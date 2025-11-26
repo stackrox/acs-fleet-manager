@@ -46,7 +46,7 @@ func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&c.CentralLifespan.CentralLifespanInHours, "central-lifespan", c.CentralLifespan.CentralLifespanInHours, "The desired lifespan of a Central instance")
 	fs.StringVar(&c.CentralDomainName, "central-domain-name", c.CentralDomainName, "The domain name to use for Central instances")
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
-	fs.StringArrayVar(&c.Quota.InternalCentralIDs, "quota-internal-central-ids", c.Quota.InternalCentralIDs, "Comma separated list of Central IDs that should be ignored for quota checks and for the expiration worker.")
+	fs.StringSliceVar(&c.Quota.InternalCentralIDs, "quota-internal-central-ids", c.Quota.InternalCentralIDs, "Comma separated list of Central IDs that should be ignored for quota checks and for the expiration worker.")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of central evaluator instances")
 
 	fs.StringVar(&c.CentralIDPClientID, "central-idp-client-id", c.CentralIDPClientID, "OIDC client_id to pass to Central's auth config")
