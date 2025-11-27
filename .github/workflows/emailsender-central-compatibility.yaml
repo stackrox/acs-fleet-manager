@@ -67,3 +67,10 @@ jobs:
           cluster_name: kind
       - name: Run Test
         run: acs-fleet-manager/scripts/ci/central_compatibility/entrypoint.sh
+      - name: Upload logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: logs-directory-${{ github.sha }}
+          path: logs/
+          retention-days: 3

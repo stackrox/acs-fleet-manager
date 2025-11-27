@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eux
+set -eu
 
 # Deploy a kind cluster previously to running this script
 # This script expects:
