@@ -12,25 +12,26 @@ source "$ROOT_DIR/dev/env/scripts/lib.sh"
 export EMAILSENDER_NS="rhacs"
 export CENTRAL_NS="rhacs-tenant"
 
+LOG_DIR="$GITHUB_WORKSPACE/logs"
+mkdir "$LOG_DIR"
+
 function log_failure() {
   log "Test failed with status: $EXIT_CODE"
-  log "Starting to log cluster resources and container logs..."
+  log "Starting to log cluster resources and container logs into $LOG_DIR directory"
 
-  log "***** START EMAILSENDER RESOURCES *****"
-  kubectl describe deploy -n "$EMAILSENDER_NS" emailsender
-  kubectl describe pods -n "$EMAILSENDER_NS" -l app=emailsender
-  kubectl logs -n "$EMAILSENDER_NS" --prefix --all-containers -l app=emailsender
+  kubectl describe deploy -n "$EMAILSENDER_NS" > "$LOG_DIR/emailsender-ns-deploy-describe.log"
+  kubectl describe pods -n "$EMAILSENDER_NS" -l app=emailsender > "$LOG_DIR/emailsender-ns-pod-describe.log"
+  for pod in $(kubectl get pods -n "$EMAILSENDER_NS" -o name); do
+    pod_name=$(basename "$pod")
+    kubectl logs -n "$EMAILSENDER_NS" "$pod_name" --all-containers --prefix > "$LOG_DIR/${pod_name}.log"
+  done
 
-  kubectl describe deploy -n "$EMAILSENDER_NS" emailsender-db
-  kubectl describe pods -n "$EMAILSENDER_NS" -l app=emailsender-db
-  kubectl logs -n "$EMAILSENDER_NS" --prefix --all-containers -l app=emailsender-db
-  log "***** END EMAILSENDER RESOURCES *****"
-
-  log "***** START STACKROX KUBERNETES RESOURCES *****"
-  kubectl describe deploy -n "$CENTRAL_NS"
-  kubectl describe pods -n "$CENTRAL_NS"
-  kubectl logs -n "$CENTRAL_NS" --prefix --all-containers -l "app.kubernetes.io/name=stackrox"
-  log "***** END STACKROX KUBERNETES RESOURCES *****"
+  kubectl describe deploy -n "$CENTRAL_NS" > "$LOG_DIR/central-ns-deploy-describe.log"
+  kubectl describe pods -n "$CENTRAL_NS" > "$LOG_DIR/central-ns-pod-describe.log"
+  for pod in $(kubectl get pods -n "$CENTRAL_NS" -l "app.kubernetes.io/name=stackrox" -o name); do
+    pod_name=$(basename "$pod")
+    kubectl logs -n "$CENTRAL_NS" "$pod_name" --all-containers --prefix > "$LOG_DIR/${pod_name}.log"
+  done
 }
 
 bash "$SOURCE_DIR/run_compatibility_test.sh"
