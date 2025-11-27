@@ -99,3 +99,4 @@ echo $! >> /tmp/pids-port-forward
 
 cd "$ROOT_DIR"
 go test -tags=test_central_compatibility ./emailsender/compatibility
+exit 1
