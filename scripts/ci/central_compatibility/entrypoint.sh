@@ -20,7 +20,7 @@ function log_failure() {
   log "Starting to log cluster resources and container logs into $LOG_DIR directory"
 
   kubectl describe deploy -n "$EMAILSENDER_NS" > "$LOG_DIR/emailsender-ns-deploy-describe.log"
-  kubectl describe pods -n "$EMAILSENDER_NS" -l app=emailsender > "$LOG_DIR/emailsender-ns-describe.log"
+  kubectl describe pods -n "$EMAILSENDER_NS" -l app=emailsender > "$LOG_DIR/emailsender-ns-pod-describe.log"
   for pod in $(kubectl get pods -n "$EMAILSENDER_NS" -o name); do
     pod_name=$(basename "$pod")
     kubectl logs -n "$EMAILSENDER_NS" "$pod_name" --all-containers --prefix > "$LOG_DIR/${pod_name}.log"
@@ -28,7 +28,6 @@ function log_failure() {
 
   kubectl describe deploy -n "$CENTRAL_NS" > "$LOG_DIR/central-ns-deploy-describe.log"
   kubectl describe pods -n "$CENTRAL_NS" > "$LOG_DIR/central-ns-pod-describe.log"
-  # Log each central namespace pod separately
   for pod in $(kubectl get pods -n "$CENTRAL_NS" -l "app.kubernetes.io/name=stackrox" -o name); do
     pod_name=$(basename "$pod")
     kubectl logs -n "$CENTRAL_NS" "$pod_name" --all-containers --prefix > "$LOG_DIR/${pod_name}.log"
