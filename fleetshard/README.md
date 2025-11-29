@@ -34,7 +34,7 @@ make fleetshard-sync
 ```
 
 ## External configuration
-To run Fleetshard-sync locally, you may need to download the development configuration from AWS Parameter Store:
+To run Fleetshard-sync locally, you may need to download the development configuration from AWS Secrets Manager:
 ```shell
 export AWS_AUTH_HELPER=aws-saml
 source ./scripts/lib/external_config.sh

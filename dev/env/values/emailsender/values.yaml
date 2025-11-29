@@ -10,3 +10,5 @@ db:
 image:
   repo: "quay.io/rhacs-eng/emailsender"
 createExternalSecrets: false
+aws:
+  roleArn: placeholder

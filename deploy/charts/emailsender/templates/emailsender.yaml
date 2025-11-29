@@ -54,10 +54,7 @@ spec:
             - name: AWS_REGION
               value: {{ .Values.aws.region }}
             - name: AWS_ROLE_ARN
-              valueFrom:
-                secretKeyRef:
-                  name: emailsender-parameters
-                  key: "aws-role-arn"
+              value: {{ .Values.aws.roleArn }}
             - name: AWS_WEB_IDENTITY_TOKEN_FILE
               value: "/var/run/secrets/tokens/aws-token"
           ports:
