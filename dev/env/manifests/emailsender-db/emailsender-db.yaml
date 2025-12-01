@@ -57,10 +57,3 @@ metadata:
   name: emailsender-db
 stringData:
   db.host: "emailsender-db"
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: emailsender-parameters
-stringData:
-  aws-role-arn: "placeholder"

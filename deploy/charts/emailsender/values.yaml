@@ -23,6 +23,7 @@ authConfigFromKubernetes: true
 # AWS configuration
 aws:
   region: "us-east-1"
+  roleArn: ""
 # Resource limits and requests
 resources:
   requests:
@@ -36,4 +37,3 @@ createExternalSecrets: true
 secretStore:
   aws:
     secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret
-    parameterStoreSecretStoreName: parameter-store-secret-store # pragma: allowlist secret

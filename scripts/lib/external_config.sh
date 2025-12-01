@@ -60,17 +60,3 @@ auth_init_error() {
 auth_helper_error() {
     die "Error: $1. Please refer to the troubleshooting section in docs/development/secret-management.md for a possible cause."
 }
-
-# Loads config from the external storage to the environment and applying a prefix to a variable name (if exists).
-load_external_config() {
-    local service="$1"
-    local prefix="${2:-}"
-    local parameter_store_output
-    local secrets_manager_output
-    parameter_store_output=$(chamber env "$service" --backend ssm)
-    # chamber fails for secretsmanager backend, but not for ssm (parameter store).
-    # We suppress pipefail error for secretsmanager backend to get similar behaviour.
-    secrets_manager_output=$(chamber env "$service" --backend secretsmanager) || true
-    [[ -z "$parameter_store_output" && -z "$secrets_manager_output" ]] && echo "WARNING: no parameters found under '/$service' of this environment"
-    eval "$(printf '%s\n%s' "$parameter_store_output" "$secrets_manager_output" | sed -E "s/(^export +)(.*)/readonly ${prefix}\2/")"
-}
