@@ -697,82 +697,6 @@ components:
       required:
         - enabled
         - supported_instance_types
-    # user-facing metrics related #
-    MetricsRangeQueryList:
-      allOf:
-        - type: object
-          example:
-            kind: "MetricsRangeQueryList"
-            id: "1nbpS70HduPe4l0to8jSg2CLzfu"
-            items:
-              $ref: "#/components/examples/MetricsRangeQueryExample"
-          properties:
-            kind:
-              type: string
-            id:
-              type: string
-            items:
-              type: array
-              items:
-                allOf:
-                  - $ref: "#/components/schemas/RangeQuery"
-    RangeQuery:
-      type: object
-      properties:
-        metric:
-          type: object
-          additionalProperties:
-            type: string
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/values"
-    values:
-      type: object
-      properties:
-        timestamp:
-          type: integer
-          format: int64
-        value:
-          type: number
-          format: double
-      required:
-        - value
-    MetricsInstantQueryList:
-      allOf:
-        - type: object
-          example:
-            kind: "MetricsInstantQueryList"
-            id: "1nbpS70HduPe4l0to8jSg2CLzfu"
-            items:
-              $ref: "#/components/examples/MetricsInstantQueryExample"
-          properties:
-            kind:
-              type: string
-            id:
-              type: string
-            items:
-              type: array
-              items:
-                allOf:
-                  - $ref: "#/components/schemas/InstantQuery"
-    MetricsFederationResult:
-      type: string
-    InstantQuery:
-      type: object
-      properties:
-        metric:
-          type: object
-          additionalProperties:
-            type: string
-        timestamp:
-          type: integer
-          format: int64
-        value:
-          type: number
-          format: double
-      required:
-        - value
     CloudAccountsList:
       type: object
       properties:
@@ -1035,27 +959,6 @@ components:
         display_name: "US East, N. Virginia"
         enabled: true
         supported_instance_types: ["standard", "eval"]
-    MetricsRangeQueryExample:
-      value:
-        metric:
-          __name__: central_server_brokertopicmetrics_bytes_in_total
-          central_operator_io_cluster: central-service
-          topic: __consumer_offsets
-        values:
-          - timestamp: 1611670230000
-            value: 84154
-          - timestamp: 1611670260000
-            value: 85888
-          - timestamp: 1611670290000
-            value: 87622
-    MetricsInstantQueryExample:
-      value:
-        metric:
-          __name__: central_server_brokertopicmetrics_bytes_in_total
-          central_operator_io_cluster: central-service
-          topic: __consumer_offsets
-        timestamp: 1611670230000
-        value: 84154
     CloudAccountsList:
       value:
         cloudAccounts:
