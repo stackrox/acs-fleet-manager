@@ -16,8 +16,8 @@ func TestHelmTemplate_FleetshardSyncDeployment_ServiceAccountTokenAuthType(t *te
 	t.Parallel()
 
 	deployment := unmarshalFleetshardSyncDeployment(t, map[string]string{
-		"fleetshardSync.managedDB.enabled": "false",
-		"fleetshardSync.authType":          "SERVICE_ACCOUNT_TOKEN",
+		"managedDB.enabled": "false",
+		"authType":          "SERVICE_ACCOUNT_TOKEN",
 	})
 
 	container := deployment.Spec.Template.Spec.Containers[0]
@@ -40,7 +40,7 @@ func TestHelmTemplate_FleetshardSyncDeployment_ServiceAccountTokenAuthType(t *te
 }
 
 func renderTemplate(t *testing.T, values map[string]string, template string) string {
-	helmChartPath, err := filepath.Abs("../helm/rhacs-terraform")
+	helmChartPath, err := filepath.Abs("../charts/fleetshard-sync")
 	releaseName := "rhacs-terraform"
 	require.NoError(t, err)
 
@@ -59,7 +59,7 @@ func renderTemplate(t *testing.T, values map[string]string, template string) str
 }
 
 func unmarshalFleetshardSyncDeployment(t *testing.T, values map[string]string) appsv1.Deployment {
-	output := renderTemplate(t, values, "templates/fleetshard-sync.yaml")
+	output := renderTemplate(t, values, "templates/deployment.yaml")
 	var deployment appsv1.Deployment
 	helm.UnmarshalK8SYaml(t, output, &deployment)
 	return deployment
@@ -110,14 +110,14 @@ func TestHelmTemplate_FleetshardSyncDeployment_Tenant(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			values := map[string]string{
-				"fleetshardSync.managedDB.enabled": "false",
+				"managedDB.enabled": "false",
 			}
 
 			if tt.secretName != "" {
-				values["fleetshardSync.tenantImagePullSecret.name"] = tt.secretName
+				values["tenantImagePullSecret.name"] = tt.secretName
 			}
 			if tt.key != "" {
-				values["fleetshardSync.tenantImagePullSecret.key"] = tt.key
+				values["tenantImagePullSecret.key"] = tt.key
 			}
 
 			deployment := unmarshalFleetshardSyncDeployment(t, values)
@@ -177,17 +177,17 @@ func TestHelmTemplate_FleetshardSyncDeployment_Image(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			values := map[string]string{
-				"fleetshardSync.managedDB.enabled": "false",
+				"managedDB.enabled": "false",
 			}
 
 			if tt.repo != "" {
-				values["fleetshardSync.image.repo"] = tt.repo
+				values["image.repo"] = tt.repo
 			}
 			if tt.tag != "" {
-				values["fleetshardSync.image.tag"] = tt.tag
+				values["image.tag"] = tt.tag
 			}
 			if tt.ref != "" {
-				values["fleetshardSync.image.ref"] = tt.ref
+				values["image.ref"] = tt.ref
 			}
 
 			deployment := unmarshalFleetshardSyncDeployment(t, values)
@@ -236,14 +236,14 @@ func TestHelmTemplate_FleetshardSync_ImagePullSecret(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			values := map[string]string{
-				"fleetshardSync.managedDB.enabled":            "false",
-				"fleetshardSync.tenantImagePullSecret.create": tt.createPullSecret,
+				"managedDB.enabled":            "false",
+				"tenantImagePullSecret.create": tt.createPullSecret,
 			}
 			if tt.pullSecret != "" {
-				values["fleetshardSync.tenantImagePullSecret.name"] = tt.pullSecret // pragma: allowlist secret
+				values["tenantImagePullSecret.name"] = tt.pullSecret // pragma: allowlist secret
 			}
 
-			output := renderTemplate(t, values, "templates/fleetshard-sync-secret.yaml")
+			output := renderTemplate(t, values, "templates/secret.yaml")
 			allRange := strings.Split(output, "---")
 			for _, rawOutput := range allRange[1:] {
 				var secret corev1.Secret
@@ -270,22 +270,22 @@ func TestHelmTemplate_FleetshardSyncDeployment_ManagedDBTags(t *testing.T) {
 		{
 			name: "should not add env vars if managedDB is disabled",
 			values: map[string]string{
-				"fleetshardSync.managedDB.enabled":             "false",
-				"fleetshardSync.managedDB.sharedTags[0].key":   "tag1",
-				"fleetshardSync.managedDB.sharedTags[0].value": "value1",
+				"managedDB.enabled":             "false",
+				"managedDB.sharedTags[0].key":   "tag1",
+				"managedDB.sharedTags[0].value": "value1",
 			},
 			wantNoEnvs: []string{"MANAGED_DB_TAGS_0_KEY", "MANAGED_DB_TAGS_0_VALUE"},
 		},
 		{
 			name: "should add env vars if managedDB is enabled",
 			values: map[string]string{
-				"fleetshardSync.managedDB.enabled":             "true",
-				"fleetshardSync.managedDB.subnetGroup":         "dummy-subnet-group",
-				"fleetshardSync.managedDB.securityGroup":       "dummy-security-group",
-				"fleetshardSync.managedDB.sharedTags[0].key":   "tag1",
-				"fleetshardSync.managedDB.sharedTags[0].value": "value1",
-				"fleetshardSync.managedDB.sharedTags[1].key":   "tag2",
-				"fleetshardSync.managedDB.sharedTags[1].value": "value2",
+				"managedDB.enabled":             "true",
+				"managedDB.subnetGroup":         "dummy-subnet-group",
+				"managedDB.securityGroup":       "dummy-security-group",
+				"managedDB.sharedTags[0].key":   "tag1",
+				"managedDB.sharedTags[0].value": "value1",
+				"managedDB.sharedTags[1].key":   "tag2",
+				"managedDB.sharedTags[1].value": "value2",
 			},
 			wantEnvs: map[string]string{
 				"MANAGED_DB_TAGS_0_KEY":   "tag1",
@@ -297,9 +297,9 @@ func TestHelmTemplate_FleetshardSyncDeployment_ManagedDBTags(t *testing.T) {
 		{
 			name: "should not add env vars if managedDB is enabled but no tags are provided",
 			values: map[string]string{
-				"fleetshardSync.managedDB.enabled":       "true",
-				"fleetshardSync.managedDB.subnetGroup":   "dummy-subnet-group",
-				"fleetshardSync.managedDB.securityGroup": "dummy-security-group",
+				"managedDB.enabled":       "true",
+				"managedDB.subnetGroup":   "dummy-subnet-group",
+				"managedDB.securityGroup": "dummy-security-group",
 			},
 			wantNoEnvs: []string{"MANAGED_DB_TAGS_0_KEY", "MANAGED_DB_TAGS_0_VALUE"},
 		},
