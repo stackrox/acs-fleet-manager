@@ -17,7 +17,6 @@ on:
       - 'docs/**'
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
-      - 'dp-terraform/**'
       - 'deploy/**'
       - '.design-proposals/**'
 
@@ -35,7 +34,6 @@ on:
       - 'docs/**'
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
-      - 'dp-terraform/**'
       - 'deploy/**'
       - '.design-proposals/**'
 
