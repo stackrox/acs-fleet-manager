@@ -7,7 +7,6 @@ set -eu
 # 2. acs-fleet-manager repo to be available at the execution path with directory name acs-fleet-manager
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../../.. && pwd)"
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STACKROX_DIR="$(cd "$ROOT_DIR/../stackrox" && pwd)"
 
 EMAILSENDER_NS="rhacs"
 CENTRAL_NS="rhacs-tenant"
@@ -48,13 +47,13 @@ log "Emailsender deployed to Kind."
 log "Starting to deploy central services..."
 # use nightly if GH action running for acs-fleet-manager
 # use the stackrox tag otherwise
+GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-stackrox/acs-fleet-manager}
 log "Running for repository: $GITHUB_REPOSITORY"
 if [ "$GITHUB_REPOSITORY" = "stackrox/stackrox" ]; then
+  STACKROX_DIR="$(cd "$ROOT_DIR/../stackrox" && pwd)"
   ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
 else
-  git -C "$STACKROX_DIR" fetch --tags
-  ACS_VERSION="$(git -C "$STACKROX_DIR" tag | grep -E '.*-nightly-[0-9]{8}$' | tail -n 1)"
-  git -C "$STACKROX_DIR" checkout "$ACS_VERSION"
+  ACS_VERSION="$(git ls-remote --tags https://github.com/stackrox/stackrox | grep -E '.*-nightly-[0-9]{8}$' | tail -n 1 | awk '{print $2}' | sed 's|refs/tags/||')"
 fi
 
 log "ACS version: $ACS_VERSION"
@@ -74,13 +73,9 @@ for img in "${IMAGES_TO_PULL[@]}"; do
   pull_to_kind "$img"
 done
 
-TAG="$ACS_VERSION" make --no-print-directory -C "$STACKROX_DIR" cli_host-arch
-GOARCH="$(go env GOARCH)"
-GOOS="$(go env GOOS)"
-
-ROXCTL="$STACKROX_DIR/bin/${GOOS}_${GOARCH}/roxctl"
+ROXCTL="docker run --rm --user $(id -u):$(id -g) -v $(pwd):/tmp/stackrox-charts/ $MAIN_IMG_NAME:$ACS_VERSION"
 # --remove to make this script rerunnable on a local machine
-$ROXCTL helm output central-services --remove --output-dir ./central-chart
+$ROXCTL helm output central-services --image-defaults opensource --remove --output-dir /tmp/stackrox-charts/central-chart
 
 # Using ACS_VERSION explicitly here since it would otherwise not use the nightly build tag
 helm upgrade --install -n $CENTRAL_NS stackrox-central-services ./central-chart \
