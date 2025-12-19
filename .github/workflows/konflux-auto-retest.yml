@@ -1,4 +1,4 @@
-name: Auto-retest Konflux Builds
+name: Retest Failed Konflux Builds
 
 on:
   check_run:
@@ -7,8 +7,8 @@ on:
     types: [synchronize]
 
 jobs:
-  retest-failed-builds:
-    uses: stackrox/actions/konflux/auto-retest/action.yml@v1
+  retest-failed:
+    uses: stackrox/actions/.github/workflows/retest-konflux-builds.yml@v1
     permissions:
       pull-requests: write
       issues: write
