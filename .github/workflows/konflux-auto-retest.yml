@@ -7,7 +7,7 @@ on:
     types: [synchronize]
 
 jobs:
-  retest-failed:
+  retest-builds:
     uses: stackrox/actions/.github/workflows/retest-konflux-builds.yml@v1
     permissions:
       pull-requests: write
