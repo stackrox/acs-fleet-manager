@@ -1,5 +1,4 @@
-
-name: emailsender-central-compatibility
+name: Emailsender-Central Compatibility Tests
 
 on:
   push:
@@ -7,6 +6,7 @@ on:
       - main
     paths:
       - 'emailsender/**'
+      - 'deploy/charts/emailsender/**'
       - 'scripts/**'
       - '.github/workflows/emailsender-central-compatibility.yaml'
 
@@ -14,6 +14,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'emailsender/**'
+      - 'deploy/charts/emailsender/**'
       - 'scripts/**'
       - '.github/workflows/emailsender-central-compatibility.yaml'
 
@@ -53,13 +54,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: acs-fleet-manager
-          fetch-depth: 0
-      - name: Checkout stackrox/stackrox repository
-        uses: actions/checkout@v4
-        with:
-          repository: stackrox/stackrox
-          path: stackrox
-          fetch-tags: true
           fetch-depth: 0
       - name: Create Kind cluster"
         uses: helm/kind-action@v1
