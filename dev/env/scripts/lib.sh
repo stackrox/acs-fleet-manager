@@ -290,35 +290,33 @@ wait_for_cluster_resource_to_appear() {
     return 1
 }
 
-
-wait_for_resource_condition() {
-    local namespace="$1"
-    local kind="$2"
-    local name="$3"
-    local condition="$4"
-
-    if ! wait_for_resource_to_appear "${namespace}" "${kind}" "${name}"; then
-        return 1
-    fi
-    log "Waiting for ${kind}/${name} in namespace ${namespace} to have status ${condition}"
-    $KUBECTL -n "${namespace}" wait --for="${condition}" --timeout="3m" "${kind}/${name}"
-}
-
-wait_for_cluster_resource_condition() {
-    local kind="$1"
-    local name="$2"
-    local condition="$3"
-
-    if ! wait_for_cluster_resource_to_appear "${kind}" "${name}"; then
-        return 1
-    fi
-    log "Waiting for ${kind}/${name} to have status ${condition}"
-    $KUBECTL wait --for "${condition}" --timeout="3m" "${kind}/${name}"
-}
-
 wait_for_crd() {
     local name="$1"
-    wait_for_cluster_resource_condition crd "$name" "jsonpath={.status.conditions[?(@.type==\"Established\")].status}=True"
+    local seconds="${2:-180}"
+
+    # First wait for the CRD to appear
+    if ! wait_for_cluster_resource_to_appear crd "${name}"; then
+        return 1
+    fi
+
+    log "Waiting for crd/${name} status.conditions to appear"
+    # Wait for status.conditions to exist before using kubectl wait
+    for _ in $(seq "$seconds"); do
+        local conditions
+        conditions=$($KUBECTL get crd "${name}" -o jsonpath='{.status.conditions}' 2>/dev/null || echo "")
+        if [[ -n "$conditions" && "$conditions" != "[]" ]]; then
+            log "crd/${name} status.conditions appeared, waiting for established condition"
+            break
+        fi
+        sleep 1
+    done
+
+    if [[ -z "$conditions" || "$conditions" == "[]" ]]; then
+        log "Giving up after ${seconds}s waiting for crd/${name} status.conditions to appear"
+        return 1
+    fi
+
+    $KUBECTL wait --for "condition=established" --timeout="3m" "crd/${name}"
 }
 
 assemble_kubeconfig() {
