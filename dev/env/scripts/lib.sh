@@ -318,7 +318,7 @@ wait_for_cluster_resource_condition() {
 
 wait_for_crd() {
     local name="$1"
-    wait_for_cluster_resource_condition crd "$name" "condition=established"
+    wait_for_cluster_resource_condition crd "$name" "jsonpath={.status.conditions[?(@.type==\"Established\")].status}=True"
 }
 
 assemble_kubeconfig() {
