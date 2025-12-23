@@ -1,0 +1,25 @@
+clusterId: "1234567890abcdef1234567890abcdef" # pragma: allowlist secret
+clusterName: "acs-dev-dp-01"
+environment: "dev"
+fleetManagerEndpoint: "http://fleet-manager:8000"
+gitops:
+  enabled: true
+targetedOperatorUpgrades:
+  enabled: true
+secretEncryption:
+  type: "local"
+tenantImagePullSecret:
+  name: "rhacs-registry"
+nodeSelector: null
+tolerations: null
+addonAutoUpgradeEnabled: false
+printCentralUpdateDiff: true
+resources:
+  requests:
+    cpu: 200m
+    memory: 300Mi
+  limits:
+    cpu: 200m
+    memory: 300Mi
+managedDB:
+  enabled: false
