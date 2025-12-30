@@ -52,12 +52,8 @@ gitops:
 targetedOperatorUpgrades:
   enabled: false
 affinity: {}
-nodeSelector:
-  node-role.kubernetes.io/acscs-infra: ""
-tolerations:
-  - key: node-role.kubernetes.io/acscs-infra
-    operator: Exists
-    effect: NoSchedule
+nodeSelector: {}
+tolerations: []
 addonAutoUpgradeEnabled: true
 addonName: acs-fleetshard
 tenantImagePullSecret:
