@@ -1,0 +1,186 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleetshard-sync
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: fleetshard-sync
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fleetshard-sync
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        rhacs.redhat.com/cluster-name: {{ .Values.clusterName | quote }}
+        rhacs.redhat.com/environment: {{ .Values.environment | quote }}
+      labels:
+        app: fleetshard-sync
+    spec:
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: fleetshard-sync
+      containers:
+      - name: fleetshard-sync
+        {{- with .Values.image }}
+        {{- if .ref }}
+        image: "{{ .ref }}"
+        {{- else }}
+        image: "{{ .repo }}:{{ .tag }}"
+        {{- end }}
+        {{- end }}
+        imagePullPolicy: IfNotPresent
+        command:
+        - /usr/local/bin/fleetshard-sync
+        env:
+        - name: OCM_TOKEN
+          value: {{ .Values.ocmToken }}
+        - name: FLEET_MANAGER_ENDPOINT
+          value: {{ .Values.fleetManagerEndpoint }}
+        - name: CLUSTER_ID
+          value: {{ .Values.clusterId }}
+        - name: CLUSTER_NAME
+          value: {{ .Values.clusterName }}
+        - name: ENVIRONMENT
+          value: {{ .Values.environment }}
+        - name: CREATE_AUTH_PROVIDER
+          value: "{{ .Values.createAuthProvider }}"
+        - name: AUTH_TYPE
+          value: {{ .Values.authType }}
+        {{- if eq "STATIC_TOKEN" .Values.authType }}
+        - name: STATIC_TOKEN
+          value: {{ .Values.staticToken }}
+        {{- end }}
+        - name: AUDIT_LOG_ENABLED
+          value: {{ .Values.auditLogs.enabled | quote }}
+        - name: AUDIT_LOG_SKIP_TLS_VERIFY
+          value: {{ .Values.auditLogs.skipTLSVerify | quote }}
+        - name: MANAGED_DB_ENABLED
+          value: {{ .Values.managedDB.enabled | quote }}
+        {{- if eq .Values.managedDB.enabled true }}
+        - name: MANAGED_DB_SUBNET_GROUP
+          value: {{ required "managedDB.subnetGroup is required when managedDB.enabled = true" .Values.managedDB.subnetGroup }}
+        - name: MANAGED_DB_SECURITY_GROUP
+          value: {{ required "managedDB.securityGroup is required when managedDB.enabled = true" .Values.managedDB.securityGroup }}
+        - name: MANAGED_DB_PERFORMANCE_INSIGHTS
+          value: {{ .Values.managedDB.performanceInsights | quote }}
+        - name: MANAGED_DB_ENGINE_VERSION
+          value: {{ .Values.managedDB.engineVersion | quote }}
+        - name: MANAGED_DB_AUTO_VERSION_UPGRADE
+          value: {{ .Values.managedDB.autoVersionUpgrade | quote }}
+        - name: MANAGED_DB_BACKUP_RETENTION_PERIOD
+          value: {{ .Values.managedDB.backupRetentionPeriod }}
+        - name: MANAGED_DB_CLUSTER_PARAMETER_GROUP
+          value: {{ .Values.managedDB.clusterParameterGroup | quote }}
+        - name: MANAGED_DB_MIN_CAPACITY_ACU
+          value: {{ .Values.managedDB.minCapacityACU }}
+        - name: MANAGED_DB_MAX_CAPACITY_ACU
+          value: {{ .Values.managedDB.maxCapacityACU }}
+        {{- range $i, $tag := .Values.managedDB.sharedTags }}
+        - name: MANAGED_DB_TAGS_{{ $i }}_KEY
+          value: {{ $tag.key | quote }}
+        - name: MANAGED_DB_TAGS_{{ $i }}_VALUE
+          value: {{ $tag.value | quote }}
+        {{- end }}
+        - name: SECRET_ENCRYPTION_TYPE
+          value: {{ .Values.secretEncryption.type | quote }}
+        - name: SECRET_ENCRYPTION_KEY_ID
+          value: {{ .Values.secretEncryption.keyID | quote }}
+        {{- end }}
+        - name: AWS_REGION
+          value: {{ .Values.aws.region }}
+        - name: AWS_ROLE_ARN
+          value: {{ .Values.aws.roleArn | quote }}
+        - name: TELEMETRY_STORAGE_ENDPOINT
+          value: {{ .Values.telemetry.storage.endpoint | quote }}
+        - name: TELEMETRY_STORAGE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleetshard-sync
+              key: "telemetry-storage-key"
+        {{- if .Values.aws.enableTokenAuth }}
+        - name: AWS_WEB_IDENTITY_TOKEN_FILE
+          value: "/var/run/secrets/tokens/aws-token"
+        {{- else }}
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: fleetshard-sync
+              key: "aws-access-key-id"
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleetshard-sync
+              key: "aws-secret-access-key"
+        {{- end }}
+        - name: RHACS_GITOPS_ENABLED
+          value: {{ .Values.gitops.enabled | quote }}
+        - name: RHACS_TARGETED_OPERATOR_UPGRADES
+          value: {{ .Values.targetedOperatorUpgrades.enabled | quote }}
+        - name: RHACS_ADDON_AUTO_UPGRADE
+          value: {{ .Values.addonAutoUpgradeEnabled | quote }}
+        - name: FLEETSHARD_ADDON_NAME
+          value: {{ .Values.addonName | quote }}
+        {{- if eq "SERVICE_ACCOUNT_TOKEN" .Values.authType }}
+        - name: FLEET_MANAGER_TOKEN_FILE
+          value: "/var/run/secrets/tokens/fleet-manager-token"
+        {{- end }}
+        {{- if .Values.tenantImagePullSecret.name }}
+        - name: TENANT_IMAGE_PULL_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.tenantImagePullSecret.name | quote }}
+              key: {{ .Values.tenantImagePullSecret.key | quote }}
+        {{- end }}
+        - name: RHACS_PRINT_CENTRAL_UPDATE_DIFF
+          value: {{ .Values.printCentralUpdateDiff | quote }}
+        - name: ARGOCD_NAMESPACE
+          value: {{ .Values.argoCdNamespace | quote }}
+        {{- if .Values.gitops.tenantDefaultAppSourceRepoUrl }}
+        - name: TENANT_DEFAULT_ARGOCD_APP_SOURCE_REPO_URL
+          value: {{ .Values.gitops.tenantDefaultAppSourceRepoUrl | quote }}
+        {{- end }}
+        {{- if .Values.gitops.tenantDefaultAppSourceTargetRevision }}
+        - name: TENANT_DEFAULT_ARGOCD_APP_SOURCE_TARGET_REVISION
+          value: {{ .Values.gitops.tenantDefaultAppSourceTargetRevision | quote }}
+        {{- end }}
+        {{- if .Values.gitops.tenantDefaultAppSourcePath }}
+        - name: TENANT_DEFAULT_ARGOCD_APP_SOURCE_PATH
+          value: {{ .Values.gitops.tenantDefaultAppSourcePath | quote }}
+        {{- end }}
+        volumeMounts:
+          - mountPath: /var/run/secrets/tokens
+            name: tokens
+        ports:
+        - name: monitoring
+          containerPort: 8080
+        {{- with .Values.resources }}
+        resources: {{- toYaml . | nindent 10 }}
+        {{- end }}
+      volumes:
+        - name: tokens
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: aws-token
+                  audience: sts.amazonaws.com
+                  expirationSeconds: 3600
+              {{- if eq "SERVICE_ACCOUNT_TOKEN" .Values.authType }}
+              - serviceAccountToken:
+                  path: fleet-manager-token
+                  audience: acs-fleet-manager-private-api
+                  expirationSeconds: 3600
+              {{- end }}

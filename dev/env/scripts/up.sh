@@ -29,7 +29,6 @@ KUBE_CONFIG=$(assemble_kubeconfig | yq e . -o=json - | jq -c . -)
 export KUBE_CONFIG
 
 ensure_fleet_manager_image_exists
-ensure_fleetshard_operator_image_exists
 
 # Apply cluster type specific manifests, if any.
 if [[ -d "${MANIFESTS_DIR}/cluster-type-${CLUSTER_TYPE}" ]]; then
@@ -68,8 +67,7 @@ if [[ -z "${DATAPLANE_ONLY}" ]]; then
 fi
 
 log "Deploying fleetshard-sync"
-exec_fleetshard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
-apply "${MANIFESTS_DIR}/fleetshard-operator"
+make -C "$GITROOT" deploy/fleetshard-sync
 
 wait_for_container_to_appear "$ACSCS_NAMESPACE" "app=fleetshard-sync" "fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then

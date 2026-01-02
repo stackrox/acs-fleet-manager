@@ -12,9 +12,9 @@ ACS fleet-manager repository for the ACS managed service.
 ├── cmd                 -- cmd entry points
 ├── config              -- various fleet-manager configurations
 ├── dashboards          -- grafana dashboards
+├── deploy              -- helm charts for application deployment
 ├── docs                -- documentation
 ├── docker              -- docker images
-├── dp-terraform        -- terraforming scripts for data-plane clusters
 ├── e2e                 -- e2e tests
 ├── fleetshard          -- source code for fleetshard-synchronizer
 ├── internal            -- internal source code
