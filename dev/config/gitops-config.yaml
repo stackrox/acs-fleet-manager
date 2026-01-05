@@ -45,10 +45,10 @@ applications:
           valuesObject:
             operator:
               images:
-                - deploymentName: "rhacs-operator-4.6.2"
-                  image: "registry.redhat.io/advanced-cluster-security/rhacs-rhel8-operator@sha256:a96572d0df791da60763dec4b4f0f52124772c3649303170968806dcc3de8269"
+                - deploymentName: "rhacs-operator-4.9.1"
+                  image: "registry.redhat.io/advanced-cluster-security/rhacs-rhel8-operator@sha256:68d9c77d33b50fde89121bc62ffb8a2fe8b43f50ebf0ec964938d33ffef17874"
                   centralLabelSelector: "rhacs.redhat.com/version-selector=dev"
-                  securedClusterReconcilerEnabled: false
+                  securedClusterLabelSelector: "rhacs.redhat.com/selector=dev"
 
 tenantResources:
   default: |
