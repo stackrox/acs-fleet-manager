@@ -256,7 +256,7 @@ verify: check-gopath openapi/validate
 		./fleetshard/... \
 		./probe/... \
 		./emailsender/... \
-		./dp-terraform/test/... \
+		./deploy/test/... \
 		./fleetshard-operator/...
 .PHONY: verify
 
@@ -342,12 +342,12 @@ test/integration/central: $(GOTESTSUM_BIN)
 				./internal/central/test/integration/...
 .PHONY: test/integration/central
 
-test/dp-terraform: $(GOTESTSUM_BIN)
+test/deploy: $(GOTESTSUM_BIN)
 	$(GOTESTSUM_BIN) --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
-				./dp-terraform/test/...
-.PHONY: test/dp-terraform
+				./deploy/test...
+.PHONY: test/deploy
 
-test/integration: test/integration/central test/dp-terraform
+test/integration: test/integration/central test/deploy
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM
@@ -905,6 +905,25 @@ deploy/emailsender:
 .PHONY: deploy/emailsender
 
 undeploy/emailsender:
-	@helm uninstall -n "$(NAMESPACE)" emailsender
-	@kubectl delete -n "$(NAMESPACE)" -f "dev/env/manifests/emailsender-db"
+	@helm uninstall -n "$(NAMESPACE)" emailsender --ignore-not-found
+	@kubectl delete -n "$(NAMESPACE)" -f "dev/env/manifests/emailsender-db" --ignore-not-found=true
 .PHONY: undeploy/emailsender
+
+deploy/fleetshard-sync: FLEET_MANAGER_IMAGE?="$(IMAGE_NAME):$(image_tag)"
+deploy/fleetshard-sync: ARGOCD_TENANT_APP_TARGET_REVISION?="HEAD"
+deploy/fleetshard-sync: ARGOCD_NAMESPACE?="openshift-gitops"
+deploy/fleetshard-sync: MANAGED_DB_ENABLED?="false"
+deploy/fleetshard-sync:
+	@helm upgrade --install -n "$(NAMESPACE)" fleetshard-sync "deploy/charts/fleetshard-sync" \
+		--values "dev/env/values/fleetshard-sync/values.yaml" \
+		--set image.ref="$(FLEET_MANAGER_IMAGE)" \
+		--set gitops.tenantDefaultAppSourceTargetRevision="$(ARGOCD_TENANT_APP_TARGET_REVISION)" \
+		--set argoCdNamespace="$(ARGOCD_NAMESPACE)" \
+		--set managedDB.enabled="$(MANAGED_DB_ENABLED)" \
+		--set managedDB.subnetGroup="$(MANAGED_DB_SUBNET_GROUP)" \
+		--set managedDB.securityGroup="$(MANAGED_DB_SECURITY_GROUP)"
+.PHONY: deploy/fleetshard-sync
+
+undeploy/fleetshard-sync:
+	@helm uninstall -n "$(NAMESPACE)" fleetshard-sync --ignore-not-found
+.PHONY: undeploy/fleetshard-sync

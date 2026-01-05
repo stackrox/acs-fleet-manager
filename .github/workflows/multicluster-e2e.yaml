@@ -12,6 +12,7 @@ on:
       - 'scripts/lib/**'
       - 'internal/central/pkg/handlers/admin_central.go'
       - 'internal/central/pkg/services/central.go'
+      - 'deploy/charts/fleetshard-sync/**'
 
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -23,6 +24,7 @@ on:
       - 'scripts/lib/**'
       - 'internal/central/pkg/handlers/admin_central.go'
       - 'internal/central/pkg/services/central.go'
+      - 'deploy/charts/fleetshard-sync/**'
 
 # Cancel previous runs
 # see: https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency

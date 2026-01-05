@@ -61,36 +61,6 @@ ensure_fleet_manager_image_exists() {
     fi
 }
 
-ensure_fleetshard_operator_image_exists() {
-    if should_skip_image_build; then
-        if [[ -z "${FLEETSHARD_OPERATOR_IMAGE:-}" ]]; then
-            die "FLEET_MANAGER_IMAGE is not set"
-        fi
-        return
-    fi
-
-    if [[ -z "${FLEETSHARD_OPERATOR_IMAGE:-}" ]]; then
-        FLEETSHARD_OPERATOR_IMAGE="fleetshard-operator:$(make -s tag)"
-        export FLEETSHARD_OPERATOR_IMAGE
-        if [[ "$CLUSTER_TYPE" == "infra-openshift" ]]; then
-            if [[ -n "${RH_REGISTRY_USER:-}" && -n "${RH_REGISTRY_PW:-}" ]]; then
-                make -C "${GITROOT}" docker/login/rh-registry
-            fi
-            log "Building fleetshard operator image ${FLEETSHARD_OPERATOR_IMAGE} and pushing it to internal registry"
-            make -C "${GITROOT}" image/push/fleetshard-operator/internal
-        else
-            log "Building fleetshard operator image ${FLEETSHARD_OPERATOR_IMAGE}..."
-            make -C "${GITROOT}" image/build/fleetshard-operator IMAGE_REF="${FLEETSHARD_OPERATOR_IMAGE}"
-            if [[ "${CLUSTER_TYPE}" == "kind" ]]; then
-                kind load docker-image "$FLEETSHARD_OPERATOR_IMAGE"
-            fi
-            if [[ "${CLUSTER_TYPE}" == "crc" ]]; then
-                $DOCKER tag "$FLEETSHARD_OPERATOR_IMAGE" "${ACSCS_NAMESPACE}/$FLEETSHARD_OPERATOR_IMAGE"
-            fi
-        fi
-    fi
-}
-
 should_skip_image_build() {
     if [[ "$CLUSTER_TYPE" == "openshift-ci" ]]; then
         return 0

@@ -47,13 +47,11 @@ DATAPLANE_ONLY="true" make deploy/dev
 STATIC_TOKEN=$(KUBECONFIG="$CLUSTER_1_KUBECONFIG" kubectl create token -n rhacs fleetshard-sync --audience acs-fleet-manager-private-api --duration 8760h)
 
 # Configure FS on cluster2 to reach out to FM on cluster1
-kubectl patch fleetshards -n rhacs rhacs-terraform --type='merge' -p "{\"spec\":{\"fleetshardSync\":{\"authType\":\"STATIC_TOKEN\",\"staticToken\":\"$STATIC_TOKEN\",\"fleetManagerEndpoint\":\"$FM_URL\",\"clusterId\":\"1234567890abcdef1234567890abcdeg\"}}}"
+helm upgrade -n rhacs fleetshard-sync ./deploy/charts/fleetshard-sync  \
+    --reuse-values \
+    --set authType=STATIC_TOKEN \
+    --set staticToken="${STATIC_TOKEN}" \
+    --set fleetManagerEndpoint="${FM_URL}" \
+    --set clusterId="1234567890abcdef1234567890abcdeg"
 
-# TODO: remove this as soon as the feature flag RHACS_CLUSTER_MIGRATION is retired
-export KUBECONFIG=$CLUSTER_1_KUBECONFIG
-kubectl patch deploy -n rhacs fleetshard-sync -p '{"spec":{"template":{"spec":{"containers":[{"name":"fleetshard-sync","env":[{"name":"RHACS_CLUSTER_MIGRATION", "value":"true"}]}]}}}}'
-kubectl patch deploy -n rhacs fleet-manager -p '{"spec":{"template":{"spec":{"containers":[{"name":"service","env":[{"name":"RHACS_CLUSTER_MIGRATION", "value":"true"}]}]}}}}'
-
-export KUBECONFIG=$CLUSTER_2_KUBECONFIG
-kubectl patch deploy -n rhacs fleetshard-sync -p '{"spec":{"template":{"spec":{"containers":[{"name":"fleetshard-sync","env":[{"name":"RHACS_CLUSTER_MIGRATION", "value":"true"}]}]}}}}'
 # Start test execution in Go

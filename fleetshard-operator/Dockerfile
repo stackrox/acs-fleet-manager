@@ -1,20 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295 AS build-helm
-ENV HOME=/opt/helm
-COPY ./dp-terraform/helm/rhacs-terraform  ${HOME}/rhacs-terraform
-WORKDIR ${HOME}
-
-RUN microdnf install gzip tar && \
-    curl -L --retry 10 --silent --show-error --fail -o /tmp/yq_linux_amd64.tar.gz \
-        "https://github.com/mikefarah/yq/releases/download/v4.44.5/yq_linux_amd64.tar.gz" && \
-        tar -xzf /tmp/yq_linux_amd64.tar.gz ./yq_linux_amd64 && \
-        mv yq_linux_amd64 /usr/local/bin/yq && \
-        chmod +x /usr/local/bin/yq && \
-        rm /tmp/yq_linux_amd64.tar.gz
-
-ARG IMAGE_TAG=latest
-RUN yq -i ".global.image.tag = strenv(IMAGE_TAG)" rhacs-terraform/values.yaml
-
-FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.24.6-1756315360 AS build-go
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.24.6-1756315360 AS build
 USER root
 
 RUN mkdir /src
@@ -41,15 +25,16 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/go/.cache/ \
     make fleetshard-operator GOOS=linux GOARCH=${TARGETARCH}
 
-# RH catalog see: https://catalog.redhat.com/en/software/containers/openshift4/ose-helm-rhel9-operator/6528099db4022aa92175dba4
-FROM registry.redhat.io/openshift4/ose-helm-rhel9-operator@sha256:16f3efe11070dab0af40750fa6811c7c6b1866ee10f06dc5820ea1576450adbf
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295
 
-ENV HOME=/opt/helm
-ENV ADDON_NAME=acs-fleetshard
-COPY ./dp-terraform/helm/watches.yaml ${HOME}/watches.yaml
-COPY --from=build-helm ${HOME}/rhacs-terraform ${HOME}/rhacs-terraform
-COPY --from=build-go /src/fleetshard-operator/bin /usr/local/bin/
-WORKDIR ${HOME}
+RUN microdnf install shadow-utils
+
+RUN useradd -u 1001 unprivilegeduser
+# Switch to non-root user
+USER unprivilegeduser
+
+COPY --chown=unprivilegeduser --from=build /src/fleetshard-operator/bin /usr/local/bin/
+ENTRYPOINT ["/usr/local/bin/fleetshard-operator"]
 
 LABEL name="acs-fleetshard-operator" \
     vendor="Red Hat, Inc." \
