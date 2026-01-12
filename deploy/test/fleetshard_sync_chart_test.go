@@ -52,7 +52,7 @@ func renderTemplate(t *testing.T, values map[string]string, template string) str
 	}
 
 	extraHelmArgs := []string{
-		"--api-versions", "external-secrets.io/v1beta1",
+		"--api-versions", "external-secrets.io/v1",
 	}
 	output := helm.RenderTemplate(t, options, helmChartPath, releaseName, []string{template}, extraHelmArgs...)
 	return output
