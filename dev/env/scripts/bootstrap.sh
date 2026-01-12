@@ -124,7 +124,7 @@ else
 fi
 apply "${MANIFESTS_DIR}/addons/acs-fleetshard"
 
-if is_openshift_cluster "$CLUSTER_TYPE"; then
+if [[ "$INSTALL_EXTERNAL_DNS" == "true" ]]; then
     log "Installing ExternalDNS for OpenShift"
     apply "${MANIFESTS_DIR}/external-dns-operator"
     wait_for_crd externaldnses.externaldns.olm.openshift.io
@@ -133,7 +133,7 @@ if is_openshift_cluster "$CLUSTER_TYPE"; then
     export EXTERNAL_DNS_NAME=${INFRASTRUCTURE_NAME}
     chamber exec e2e-external-dns -- apply "${MANIFESTS_DIR}/external-dns"
 else
-    log "Skipping installation of ExternalDNS (only installed on openshift)"
+    log "Skipping installation of ExternalDNS"
 fi
 
 if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
