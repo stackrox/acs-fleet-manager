@@ -53,7 +53,7 @@ if [ "$GITHUB_REPOSITORY" = "stackrox/stackrox" ]; then
   STACKROX_DIR="$(cd "$ROOT_DIR/../stackrox" && pwd)"
   ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
 else
-  ACS_VERSION="$(git ls-remote --tags https://github.com/stackrox/stackrox | grep -E '.*-nightly-[0-9]{8}$' | tail -n 1 | awk '{print $2}' | sed 's|refs/tags/||')"
+  ACS_VERSION="$(git ls-remote --tags https://github.com/stackrox/stackrox | grep -E '.*-nightly-[0-9]{8}$' | awk '{print $2}' | sed 's|refs/tags/||' | sort -V | tail -n 1)"
 fi
 
 log "ACS version: $ACS_VERSION"
