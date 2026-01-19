@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/go-toolset:1.24.6-1756315360 AS build
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi9/go-toolset:1.25.3@sha256:e8938564f866174a6d79e55dfe577c2ed184b1f53e91d782173fb69b07ce69ef AS build
 USER root
 
 RUN mkdir /src
@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/go/.cache/ \
     make fleetshard-operator GOOS=linux GOARCH=${TARGETARCH}
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1295
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7@sha256:90bd85dcd061d1ad6dbda70a867c41958c04a86462d05c631f8205e8870f28f8
 
 RUN microdnf install shadow-utils
 
