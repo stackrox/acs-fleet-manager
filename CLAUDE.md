@@ -152,7 +152,7 @@ The codebase follows a dependency injection pattern using the `goava/di` framewo
 ## Development Workflow
 
 ### Environment Setup
-1. Install prerequisites: Go 1.24+, Docker, Node.js, Java, OCM CLI
+1. Install prerequisites: Go 1.25+, Docker, Node.js, Java, OCM CLI
 2. Run `make setup/git/hooks` to install pre-commit hooks
 3. Use `make deploy/bootstrap` to set up development cluster
 4. Run `make deploy/dev` to start local development environment
