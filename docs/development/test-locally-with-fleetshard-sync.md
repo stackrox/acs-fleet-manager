@@ -1,6 +1,6 @@
 # Test Locally with the fleetshard Synchronizer
 
-The communication between the fleetshard operator and the fleet-manager will be handled by the synchronizer module. The communication is established by the synchronizer module, so for it to work it needs to know the url of the control plane. However, when you run the fleet-manager locally and the fleetshard operator on a remote public OSD cluster, this will not work as there is no public URL for the synchronizer to use.
+The communication between the fleetshard-sync and the fleet-manager will be handled by the synchronizer module. The communication is established by the synchronizer module, so for it to work it needs to know the url of the control plane. However, when you run the fleet-manager locally and the fleetshard-sync on a remote OpenShift cluster, this will not work as there is no public URL for the synchronizer to use.
 
 To solve this problem, it is recommended to use a service like [ngrok](https://ngrok.com/). Ngrok will be able to expose your local sever on the public internet.
 

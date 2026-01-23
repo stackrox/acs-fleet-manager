@@ -82,7 +82,7 @@ func NewAdminHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 
 func newCentralHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, func()) {
 	return test.NewHelperWithHooks(t, server, configurationHook, central.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, centralConfig *config.CentralConfig, fleetshardConfig *config.FleetshardConfig, ocmConfig *ocm.OCMConfig) {
+		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, centralConfig *config.CentralConfig, ocmConfig *ocm.OCMConfig) {
 			centralConfig.CentralLifespan.EnableDeletionOfExpiredCentral = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 			// Integration tests require a valid OCM client. This requires OCM service account credentials to be set.

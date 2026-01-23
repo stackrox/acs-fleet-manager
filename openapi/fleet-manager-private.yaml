@@ -6,7 +6,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 info:
   title: Red Hat Advanced Cluster Security Service Fleet Manager
   version: 1.4.0
-  description: Red Hat Advanced Cluster Security (RHACS) Service Fleet Manager APIs that are used by internal services e.g fleetshard operators.
+  description: Red Hat Advanced Cluster Security (RHACS) Service Fleet Manager APIs that are used by internal services e.g fleetshard-sync.
 servers:
   - url: https://api.openshift.com
     description: Main (production) server

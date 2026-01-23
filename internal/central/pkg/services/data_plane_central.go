@@ -193,9 +193,9 @@ func (s *dataPlaneCentralService) setCentralClusterDeleting(centralRequest *dbap
 
 func (s *dataPlaneCentralService) reassignCentralCluster(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 	if centralRequest.Status == constants.CentralRequestStatusProvisioning.String() {
-		// If a Central cluster is rejected by the fleetshard-operator, it should be assigned to another OSD cluster (via some scheduler service in the future).
-		// But now we only have one OSD cluster, so we need to change the placementId field so that the fleetshard-operator will try it again
-		// In the future, we may consider adding a new table to track the placement history for central clusters if there are multiple OSD clusters and the value here can be the key of that table
+		// If Central is rejected by the fleetshard-sync, it should be assigned to another Data Plane cluster (via some scheduler service in the future).
+		// But now we only have one Data Plane cluster, so we need to change the placementId field so that the fleetshard-sync will try it again
+		// In the future, we may consider adding a new table to track the placement history for central clusters if there are multiple Data Plane clusters and the value here can be the key of that table
 		centralRequest.PlacementID = api.NewID()
 		if err := s.centralService.UpdateIgnoreNils(centralRequest); err != nil {
 			return err

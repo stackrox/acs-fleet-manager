@@ -54,8 +54,8 @@ func (k *ProvisioningCentralManager) Reconcile() []error {
 	var encounteredErrors []error
 
 	// handle provisioning centrals state
-	// Centrals in a "provisioning" state means that it is ready to be sent to the Fleetshard Operator for Central creation in the data plane cluster.
-	// The update of the Central request status from 'provisioning' to another state will be handled by the Fleetshard Operator.
+	// Centrals in a "provisioning" state means that it is ready to be sent to the Fleetshard Sync for Central creation in the data plane cluster.
+	// The update of the Central request status from 'provisioning' to another state will be handled by the Fleetshard Sync.
 	// We only need to update the metrics here.
 	provisioningCentrals, serviceErr := k.centralService.ListByStatus(constants.CentralRequestStatusProvisioning)
 	if serviceErr != nil {

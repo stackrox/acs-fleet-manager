@@ -5,7 +5,6 @@ go 1.25
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/antihax/optional v1.0.0
-	github.com/argoproj-labs/argocd-operator v0.14.0
 	github.com/argoproj/argo-cd/v2 v2.14.20
 	github.com/aws/aws-sdk-go-v2 v1.41.0
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
@@ -21,7 +20,6 @@ require (
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-gormigrate/gormigrate/v2 v2.1.5
-	github.com/go-logr/glogr v1.2.2
 	github.com/go-logr/logr v1.4.3
 	github.com/goava/di v1.11.1
 	github.com/golang-jwt/jwt/v4 v4.5.2
@@ -40,9 +38,7 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.456
 	github.com/openshift/addon-operator/apis v0.0.0-20231110045543-dd01f2f5c184
 	github.com/openshift/api v0.0.0-20250320115527-3aa9dd5b9002
-	github.com/operator-framework/api v0.31.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pingcap/errors v0.11.4
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.21.0
 	github.com/prometheus/client_model v0.6.2
@@ -269,6 +265,7 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230307190834-24139beb5833 // indirect
+	golang.org/x/lint v0.0.0-20241112194109-818c5a804067 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/term v0.37.0 // indirect
 	golang.org/x/text v0.31.0 // indirect

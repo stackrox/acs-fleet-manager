@@ -61,14 +61,6 @@ const (
 	EndpointPathMachinePools = "/api/clusters_mgmt/v1/clusters/{id}/machine_pools"
 	// EndpointPathMachinePool ocm cluster management machine pool endpoint
 	EndpointPathMachinePool = "/api/clusters_mgmt/v1/clusters/{id}/machine_pools/{machinePoolId}"
-	// EndpointPathAddonInstallations ocm cluster addon installations endpoint
-	EndpointPathAddonInstallations = "/api/clusters_mgmt/v1/clusters/{id}/addons"
-	// EndpointPathAddonInstallation ocm cluster addon installation endpoint
-	EndpointPathAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/{addoninstallationId}"
-	// EndpointPathFleetshardOperatorAddonInstallation ocm cluster fleetshard-operator-qe addon installation endpoint
-	EndpointPathFleetshardOperatorAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/fleetshard-operator-qe"
-	// EndpointPathClusterLoggingOperatorAddonInstallation ocm cluster cluster-logging-operator addon installation endpoint
-	EndpointPathClusterLoggingOperatorAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/cluster-logging-operator"
 
 	EndpointPathClusterAuthorization = "/api/accounts_mgmt/v1/cluster_authorizations"
 	EndpointPathSubscription         = "/api/accounts_mgmt/v1/subscriptions/{id}"
@@ -149,9 +141,6 @@ var (
 	EndpointMachinePoolGet           = Endpoint{EndpointPathMachinePool, http.MethodGet}
 	EndpointIdentityProviderPost     = Endpoint{EndpointPathClusterIdentityProviders, http.MethodPost}
 	EndpointIdentityProviderPatch    = Endpoint{EndpointPathClusterIdentityProvider, http.MethodPatch}
-	EndpointAddonInstallationsPost   = Endpoint{EndpointPathAddonInstallations, http.MethodPost}
-	EndpointAddonInstallationGet     = Endpoint{EndpointPathAddonInstallation, http.MethodGet}
-	EndpointAddonInstallationPatch   = Endpoint{EndpointPathAddonInstallation, http.MethodPatch}
 	EndpointClusterAuthorizationPost = Endpoint{EndpointPathClusterAuthorization, http.MethodPost}
 	EndpointSubscriptionDelete       = Endpoint{EndpointPathSubscription, http.MethodDelete}
 	EndpointSubscriptionSearch       = Endpoint{EndpointPathSubscriptionSearch, http.MethodGet}
@@ -307,9 +296,6 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointMachinePoolPost:          buildMockRequestHandler(MockMachinePool, nil),
 		EndpointIdentityProviderPatch:    buildMockRequestHandler(MockIdentityProvider, nil),
 		EndpointIdentityProviderPost:     buildMockRequestHandler(MockIdentityProvider, nil),
-		EndpointAddonInstallationsPost:   buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointAddonInstallationGet:     buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointAddonInstallationPatch:   buildMockRequestHandler(MockClusterAddonInstallation, nil),
 		EndpointClusterAuthorizationPost: buildMockRequestHandler(MockClusterAuthorization, nil),
 		EndpointSubscriptionDelete:       buildMockRequestHandler(MockSubscription, nil),
 		EndpointSubscriptionSearch:       buildMockRequestHandler(MockSubscriptionSearch, nil),

@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   description: Red Hat Advanced Cluster Security (RHACS) Service Fleet Manager APIs
-    that are used by internal services e.g fleetshard operators.
+    that are used by internal services e.g fleetshard-sync.
   title: Red Hat Advanced Cluster Security Service Fleet Manager
   version: 1.4.0
 servers:
