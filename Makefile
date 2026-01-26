@@ -95,10 +95,6 @@ CHAMBER_BIN := $(LOCAL_BIN_PATH)/chamber
 $(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/segmentio/chamber/v2
 
-CONTROLLER_GEN_BIN := $(LOCAL_BIN_PATH)/controller-gen
-$(CONTROLLER_GEN_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
-	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen
-
 GINKGO_BIN := $(LOCAL_BIN_PATH)/ginkgo
 $(GINKGO_BIN): go.mod go.sum
 	@GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
@@ -256,8 +252,7 @@ verify: check-gopath openapi/validate
 		./fleetshard/... \
 		./probe/... \
 		./emailsender/... \
-		./deploy/test/... \
-		./fleetshard-operator/...
+		./deploy/test/...
 .PHONY: verify
 
 # Runs linter against go files and .y(a)ml files in the templates directory
@@ -283,10 +278,6 @@ fleetshard-sync:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
 .PHONY: fleetshard-sync
 
-fleetshard-operator:
-	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o fleetshard-operator/bin/fleetshard-operator ./fleetshard-operator
-.PHONY: fleetshard-operator
-
 probe:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0 $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
 .PHONY: probe
@@ -299,11 +290,11 @@ emailsender:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o emailsender/bin/emailsender ./emailsender/cmd/app
 .PHONY: emailsender
 
-binary: fleet-manager fleetshard-sync probe acsfleetctl emailsender fleetshard-operator
+binary: fleet-manager fleetshard-sync probe acsfleetctl emailsender
 .PHONY: binary
 
 clean:
-	rm -f fleet-manager fleetshard-sync probe/bin/probe emailsender/bin/emailsender fleetshard-operator/bin/fleetshard-operator
+	rm -f fleet-manager fleetshard-sync probe/bin/probe emailsender/bin/emailsender
 .PHONY: clean
 
 # Runs the unit tests.
@@ -408,7 +399,7 @@ test/e2e/cleanup:
 .PHONY: test/e2e/cleanup
 
 # generate files
-generate: $(MOQ_BIN) openapi/generate controller-gen/generate
+generate: $(MOQ_BIN) openapi/generate
 	$(GO) generate ./...
 .PHONY: generate
 
@@ -458,10 +449,6 @@ openapi/generate/emailsender: openapi-generator
 	$(OPENAPI_GENERATOR) generate -i openapi/emailsender.yaml -g go -o emailsender/pkg/client/openapi --package-name openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w emailsender/pkg/client/openapi
 .PHONY: openapi/generate/emailsender
-
-.PHONY: controller-gen/generate
-controller-gen/generate: $(CONTROLLER_GEN_BIN)
-	@$(CONTROLLER_GEN_BIN) object crd paths="./fleetshard-operator/..." output:crd:artifacts:config=fleetshard-operator/config/crd
 
 # fail if formatting is required
 code/check:
@@ -594,17 +581,6 @@ image/push/internal: IMAGE_TAG ?= $(image_tag)
 image/push/internal: docker/login/internal
 	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)" --platform linux/amd64 --push .
 .PHONY: image/push/internal
-
-image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
-image/build/fleetshard-operator:
-	$(DOCKER) buildx build -t $(IMAGE_REF) --build-arg IMAGE_TAG=$(image_tag) --load -f fleetshard-operator/Dockerfile .
-.PHONY: image/build/fleetshard-operator
-
-# push the image to the OpenShift internal registry
-image/push/fleetshard-operator/internal: IMAGE_TAG ?= $(image_tag)
-image/push/fleetshard-operator/internal: docker/login/internal
-	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/fleetshard-operator:$(IMAGE_TAG)" --platform linux/amd64 --push -f fleetshard-operator/Dockerfile .
-.PHONY: image/push/fleetshard-operator/internal
 
 # Touch all necessary secret files for fleet manager to start up
 secrets/touch:

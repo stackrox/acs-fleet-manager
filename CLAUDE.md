@@ -113,7 +113,6 @@ make image/build/emailsender
 2. **Fleetshard-sync** (`fleetshard/`) - Data plane synchronization service
 3. **Probe** (`probe/`) - Health check and monitoring service
 4. **Emailsender** (`emailsender/`) - Email notification service
-5. **Fleetshard Operator** (`fleetshard-operator/`) - Kubernetes operator for fleet management
 
 ### Key Directories
 

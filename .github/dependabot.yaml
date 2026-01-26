@@ -21,10 +21,6 @@ updates:
     directory: "/probe"
     schedule:
       interval: "weekly"
-  - package-ecosystem: "docker"
-    directory: "/fleetshard-operator"
-    schedule:
-      interval: "weekly"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

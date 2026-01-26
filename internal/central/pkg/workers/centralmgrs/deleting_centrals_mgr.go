@@ -68,7 +68,7 @@ func (k *DeletingCentralManager) Reconcile() []error {
 
 	// handle deleting central requests
 	// Centrals in a "deleting" state have been removed, along with all their resources (i.e. ManagedCentral, Central CRs),
-	// from the data plane cluster by the Fleetshard operator. This reconcile phase ensures that any other
+	// from the data plane cluster by Fleetshard Sync. This reconcile phase ensures that any other
 	// dependencies (i.e. SSO clients, CNAME records) are cleaned up for these Centrals and their records soft deleted from the database.
 	deletingCentrals, serviceErr := k.centralService.ListByStatus(constants.CentralRequestStatusDeleting)
 	originalTotalCentralInDeleting := len(deletingCentrals)

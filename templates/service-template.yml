@@ -226,16 +226,6 @@ parameters:
   description: Tye type of quota management service to be used. Available options are 'ams' and "quota-management-list"
   value: "quota-management-list"
 
-- name: FLEETSHARD_POLL_INTERVAL
-  displayName: fleetshard-operator poll interval
-  description: Interval defining how often the synchronizer polls and gets updates from the control plane
-  value: "15s"
-
-- name: FLEETSHARD_RESYNC_INTERVAL
-  displayName: fleetshard-operator resync interval
-  description: Interval defining how often the synchronizer reports back status changes to the control plane
-  value: "60s"
-
 - name: SERVICE_PUBLIC_HOST_URL
   displayName: The public HTTP host URL of the service
   description: The public HTTP host URL of the service
@@ -934,8 +924,6 @@ objects:
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
             - --dataplane-cluster-config-file=${DATAPLANE_CLUSTER_CONFIG_FILE}
-            - --fleetshard-poll-interval=${FLEETSHARD_POLL_INTERVAL}
-            - --fleetshard-resync-interval=${FLEETSHARD_RESYNC_INTERVAL}
             - --allow-evaluator-instance=${ALLOW_EVALUATOR_INSTANCE}
             - --quota-type=${QUOTA_TYPE}
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}

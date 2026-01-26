@@ -41,7 +41,6 @@ func ConfigProviders() di.Option {
 		di.Provide(config.NewSupportedProvidersConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
 		di.Provide(config.NewCentralConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewDataplaneClusterConfig, di.As(new(environments2.ConfigModule))),
-		di.Provide(config.NewFleetshardConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewCentralRequestConfig, di.As(new(environments2.ConfigModule))),
 
 		di.Provide(environments2.Func(ServiceProviders)),
