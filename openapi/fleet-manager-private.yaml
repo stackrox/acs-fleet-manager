@@ -22,46 +22,6 @@ tags:
 
 paths:
   # Endpoints for data plane communications
-  "/api/rhacs/v1/agent-clusters/{id}/status":
-    put:
-      tags:
-        - Agent Clusters
-      parameters:
-        - $ref: "fleet-manager.yaml#/components/parameters/id"
-      requestBody:
-        description: Cluster status update data
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DataPlaneClusterUpdateStatusRequest"
-        required: true
-      responses:
-        "200":
-          description: Cluster status is updated
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: "fleet-manager.yaml#/components/schemas/Error"
-              examples:
-                400InvalidIdExample:
-                  $ref: "#/components/examples/400InvalidIdExample"
-          description: id value is not valid
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "fleet-manager.yaml#/components/schemas/Error"
-              examples:
-                404Example:
-                  $ref: "fleet-manager.yaml#/components/examples/404Example"
-          # This is deliberate to hide the endpoints for unauthorised users
-          description: Auth token is not valid.
-      security:
-        - Bearer: [ ]
-      operationId: updateAgentClusterStatus
-      summary: Update the status of an agent cluster
-
   "/api/rhacs/v1/agent-clusters/{id}/centrals/status":
     put:
       tags:
@@ -175,43 +135,6 @@ paths:
         - Bearer: [ ]
       operationId: getCentral
       summary: Get the ManagedaCentral for the specified agent cluster and centralId
-
-  "/api/rhacs/v1/agent-clusters/{id}":
-    get:
-      tags:
-        - Agent Clusters
-      parameters:
-        - $ref: "fleet-manager.yaml#/components/parameters/id"
-      responses:
-        "200":
-          description: The Data Plane Cluster Agent configuration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DataplaneClusterAgentConfig"
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: "fleet-manager.yaml#/components/schemas/Error"
-              examples:
-                400InvalidIdExample:
-                  $ref: "#/components/examples/400InvalidIdExample"
-          description: id value is not valid
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "fleet-manager.yaml#/components/schemas/Error"
-              examples:
-                404Example:
-                  $ref: "fleet-manager.yaml#/components/examples/404Example"
-          # This is deliberate to hide the endpoints for unauthorised users
-          description: Auth token is not valid.
-      security:
-        - Bearer: [ ]
-      operationId: getDataPlaneClusterAgentConfig
-      summary: Get the data plane cluster agent configuration
 
 components:
   schemas:
@@ -385,25 +308,6 @@ components:
               items:
                 type: object
 
-    DataPlaneClusterUpdateStatusRequest:
-      description: "Schema for the request to update a data plane cluster's status"
-      type: object
-      properties:
-        addons:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              version:
-                type: string
-              sourceImage:
-                type: string
-              packageImage:
-                type: string
-              parametersSHA256Sum:
-                type: string
     DataPlaneCentralStatus:
       description: "Schema of the status object for a Central"
       type: object

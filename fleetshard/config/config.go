@@ -44,7 +44,6 @@ type Config struct {
 	Telemetry                                  Telemetry
 	AuditLogging                               AuditLogging
 	SecretEncryption                           SecretEncryption
-	FleetshardAddonName                        string `env:"FLEETSHARD_ADDON_NAME" envDefault:"acs-fleetshard"`
 }
 
 // ManagedDB for configuring managed DB specific parameters

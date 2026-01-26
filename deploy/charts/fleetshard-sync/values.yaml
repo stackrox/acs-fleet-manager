@@ -54,8 +54,6 @@ targetedOperatorUpgrades:
 affinity: {}
 nodeSelector: {}
 tolerations: []
-addonAutoUpgradeEnabled: true
-addonName: acs-fleetshard
 tenantImagePullSecret:
   name: ""
   key: .dockerconfigjson

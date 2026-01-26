@@ -68,9 +68,6 @@ const (
 	// ClusterStatusCapacityUsed - metric name for the current number of instances
 	ClusterStatusCapacityUsed = "cluster_status_capacity_used"
 
-	// ClusterAddonStatusMetric - metric name for the cluster addon status represented by ClusterAddonStatus
-	ClusterAddonStatusMetric = "cluster_addon_status"
-
 	// GitopsConfigProviderErrorCount - metric name for the number of errors encountered while fetching GitOps config
 	GitopsConfigProviderErrorCount = "gitops_config_provider_error_count"
 
@@ -154,11 +151,6 @@ var clusterStatusCapacityLabels = []string{
 	LabelRegion,
 	LabelInstanceType,
 	LabelClusterID,
-}
-
-var clusterAddonStatusLabels = []string{
-	LabelID,
-	LabelClusterName,
 }
 
 // #### Metrics for Dataplane clusters - Start ####
@@ -630,37 +622,6 @@ func init() {
 	GitopsConfigProviderErrorCounter.WithLabelValues().Add(0)
 }
 
-// AddonStatus represents the status of the addon installation on a Data Plane cluster
-type AddonStatus int
-
-const (
-	// AddonHealthy the addon is healthy and up-to-date with the existing config
-	AddonHealthy AddonStatus = iota
-	// AddonUpgrade the addon is upgrading
-	AddonUpgrade
-	// AddonUnhealthy the addon is unhealthy, something goes wrong
-	AddonUnhealthy
-)
-
-// clusterAddonStatusMetric create a new GaugeVec for cluster addon upgrade started timestamp
-var clusterAddonStatusMetric = prometheus.NewGaugeVec(
-	prometheus.GaugeOpts{
-		Subsystem: FleetManager,
-		Name:      ClusterAddonStatusMetric,
-		Help:      "metric name for the time period after the addon is upgraded in OCM but not yet installed on a cluster in seconds",
-	},
-	clusterAddonStatusLabels,
-)
-
-// UpdateClusterAddonStatusMetric updates ClusterAddonStatusMetric Metric
-func UpdateClusterAddonStatusMetric(addonID, clusterName string, status AddonStatus) {
-	labels := prometheus.Labels{
-		LabelID:          addonID,
-		LabelClusterName: clusterName,
-	}
-	clusterAddonStatusMetric.With(labels).Set(float64(status))
-}
-
 // UpdateDatabaseQueryDurationMetric Update the observatorium request duration metric with the following labels:
 //   - status: (i.e. "success" or "failure")
 //   - queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
@@ -685,7 +646,6 @@ func init() {
 	prometheus.MustRegister(centralPerClusterCountMetric)
 	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
-	prometheus.MustRegister(clusterAddonStatusMetric)
 	prometheus.MustRegister(GitopsConfigProviderErrorCounter)
 
 	// metrics for Centrals
@@ -745,7 +705,6 @@ func Reset() {
 	centralPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
-	clusterAddonStatusMetric.Reset()
 	GitopsConfigProviderErrorCounter.Reset()
 
 	requestCentralCreationDurationMetric.Reset()

@@ -21,7 +21,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cipher"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cluster"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
@@ -57,7 +56,6 @@ type Runtime struct {
 	statusResponseCh              chan private.DataPlaneCentralStatus
 	secretCipher                  cipher.Cipher
 	encryptionKeyGenerator        cipher.KeyGenerator
-	addonService                  cluster.AddonService
 	runtimeApplicationsReconciler *runtimeApplicationsReconciler
 }
 
@@ -99,8 +97,6 @@ func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient
 		return nil, fmt.Errorf("creating encryption KeyGenerator: %w", err)
 	}
 
-	addonService := cluster.NewAddonService(k8sClient)
-
 	return &Runtime{
 		config:                        config,
 		k8sClient:                     k8sClient,
@@ -110,7 +106,6 @@ func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient
 		reconcilers:                   make(reconcilerRegistry),
 		secretCipher:                  secretCipher, // pragma: allowlist secret
 		encryptionKeyGenerator:        encryptionKeyGen,
-		addonService:                  addonService,
 		runtimeApplicationsReconciler: newRuntimeApplicationsReconciler(k8sClient, config.ArgoCdNamespace),
 	}, nil
 }
@@ -217,12 +212,6 @@ func (r *Runtime) Start() error {
 				glog.Warningf("Error retrieving account quotas: %v", err)
 			} else {
 				fleetshardmetrics.MetricsInstance().SetDatabaseAccountQuotas(accountQuotas)
-			}
-		}
-
-		if features.AddonAutoUpgrade.Enabled() {
-			if err := r.sendClusterStatus(ctx); err != nil {
-				glog.Errorf("Failed to send cluster status update due to an error: %v", err)
 			}
 		}
 
@@ -358,30 +347,4 @@ func (r *Runtime) isReconcilePaused(ctx context.Context, remoteCentral private.M
 	}
 
 	return false, nil
-}
-
-func (r *Runtime) sendClusterStatus(ctx context.Context) error {
-	addonName := r.config.FleetshardAddonName
-	addon, err := r.addonService.GetAddon(ctx, addonName)
-	if err != nil {
-		return fmt.Errorf("retrieving %s addon: %w", addonName, err)
-	}
-
-	_, err = r.client.PrivateAPI().UpdateAgentClusterStatus(ctx, r.clusterID, private.DataPlaneClusterUpdateStatusRequest{
-		Addons: []private.DataPlaneClusterUpdateStatusRequestAddons{
-			{
-				Id:                  addonName,
-				Version:             addon.Version,
-				SourceImage:         addon.SourceImage,
-				PackageImage:        addon.PackageImage,
-				ParametersSHA256Sum: addon.Parameters.SHA256Sum(),
-			},
-		},
-	})
-
-	if err != nil {
-		return fmt.Errorf("calling fleet manager private api to update the cluster status: %w", err)
-	}
-
-	return nil
 }

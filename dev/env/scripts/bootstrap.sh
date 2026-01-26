@@ -114,16 +114,6 @@ if ! is_openshift_cluster "$CLUSTER_TYPE"; then
     apply "${MANIFESTS_DIR}/monitoring"
 fi
 
-# Apply addon CRD only if it doesn't exist
-if ! $KUBECTL get crd addons.addons.managed.openshift.io &>/dev/null; then
-    log "Addon CRD not found, applying..."
-    apply "${MANIFESTS_DIR}/addons/crds/00-addon-crd.yaml"
-    wait_for_crd "addons.addons.managed.openshift.io"
-else
-    log "Addon CRD already exists, skipping..."
-fi
-apply "${MANIFESTS_DIR}/addons/acs-fleetshard"
-
 if [[ "$INSTALL_EXTERNAL_DNS" == "true" ]]; then
     log "Installing ExternalDNS for OpenShift"
     apply "${MANIFESTS_DIR}/external-dns-operator"

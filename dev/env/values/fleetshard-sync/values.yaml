@@ -10,7 +10,6 @@ secretEncryption:
   type: "local"
 tenantImagePullSecret:
   name: "rhacs-registry"
-addonAutoUpgradeEnabled: false
 printCentralUpdateDiff: true
 resources:
   requests:

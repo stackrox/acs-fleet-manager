@@ -44,7 +44,6 @@ type options struct {
 	Central                 services.CentralService
 	ClusterService          services.ClusterService
 	CloudProviders          services.CloudProvidersService
-	DataPlaneCluster        services.DataPlaneClusterService
 	DataPlaneCentralService services.DataPlaneCentralService
 	AccountService          account.AccountService
 	AuthService             authorization.Authorization
@@ -170,15 +169,8 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string) er
 	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
 
 	// /agent-clusters/{id}
-	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
 	dataPlaneCentralHandler := handlers.NewDataPlaneCentralHandler(s.DataPlaneCentralService, s.Central, s.ClusterService, s.ManagedCentralPresenter, s.GitopsProvider)
 	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix(routes.PrivateAPIPrefix).Subrouter()
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).
-		Name(logger.NewLogEvent("get-dataplane-cluster-config", "get dataplane cluster config by id").ToString()).
-		Methods(http.MethodGet)
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).
-		Name(logger.NewLogEvent("update-dataplane-cluster-status", "update dataplane cluster status by id").ToString()).
-		Methods(http.MethodPut)
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals/status", dataPlaneCentralHandler.UpdateCentralStatuses).
 		Name(logger.NewLogEvent("update-dataplane-centrals-status", "update dataplane centrals status by id").ToString()).
 		Methods(http.MethodPut)
