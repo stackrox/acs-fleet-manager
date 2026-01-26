@@ -661,7 +661,7 @@ func UpdateClusterAddonStatusMetric(addonID, clusterName string, status AddonSta
 	clusterAddonStatusMetric.With(labels).Set(float64(status))
 }
 
-// UpdateDatabaseQueryDurationMetric Update the observatorium request duration metric with the following labels:
+// UpdateDatabaseQueryDurationMetric Update the database query duration metric with the following labels:
 //   - status: (i.e. "success" or "failure")
 //   - queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
 func UpdateDatabaseQueryDurationMetric(status string, queryType string, elapsed time.Duration) {
