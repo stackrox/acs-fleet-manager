@@ -1,7 +1,6 @@
-# For development we use ocm tokens issued by RH SSO to authenticate to emailsender API
-# for prod we use serviceaccount issued by the OSD cluster for centrals
-# this file should be replaced by a secret/configmap mounted to emailsender
-# with the fitting values per cluster through the fleetshard addon
+# For development, we use ocm tokens issued by RH SSO to authenticate to emailsender API.
+# For prod, we use serviceaccount issued by the OSD cluster for centrals.
+# This file should be replaced by a secret/configmap mounted to emailsender with the fitting values per cluster.
 ---
 jwks_urls:
   - "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"

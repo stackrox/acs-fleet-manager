@@ -33,11 +33,7 @@ All related AWS and emailsender limits and how to change them are document in th
 
 ## Deployment
 
-The emailsender is deployed as part of the acs-fleetshard-sync addon. The helm chart is defined in `deploy/charts/emailsender`.
-
-The most important helm values are exposed for configuration through the addon.
-
-For more details refer to the addon [documentation](https://spaces.redhat.com/pages/viewpage.action?spaceKey=StackRox&title=ACS+Fleetshard+Addon).
+The emailsender helm chart is defined in [deploy/charts/emailsender](../deploy/charts/emailsender). The chart is installed on the Data Plane clusters using ArgoCD.
 
 ## API Authentication
 

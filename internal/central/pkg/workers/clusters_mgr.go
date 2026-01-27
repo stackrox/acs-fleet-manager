@@ -26,15 +26,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	mkReadOnlyGroupName             = "mk-readonly-access"
-	mkSREGroupName                  = "central-sre"
-	mkReadOnlyRoleBindingName       = "mk-dedicated-readers"
-	mkSRERoleBindingName            = "central-sre-cluster-admin"
-	dedicatedReadersRoleBindingName = "dedicated-readers"
-	clusterAdminRoleName            = "cluster-admin"
-)
-
 var (
 	readyClusterCount int32
 )
@@ -75,7 +66,6 @@ type ClusterManagerOptions struct {
 	SupportedProviders     *config.ProviderConfig
 	ClusterService         services.ClusterService
 	CloudProvidersService  services.CloudProvidersService
-	AddonProvisioner       *services.AddonProvisioner
 	GitOpsConfigProvider   gitops.ConfigProvider
 }
 
@@ -314,16 +304,6 @@ func (c *ClusterManager) processReadyClusters() []error {
 	readyClusterCount = int32(len(readyClusters))
 	logger.InfoChangedInt32(&readyClusterCount, "ready clusters count = %d", readyClusterCount)
 
-	gitopsConfig, err := c.GitOpsConfigProvider.Get()
-	if err != nil {
-		errs = append(errs, fmt.Errorf("get gitops config: %w", err))
-		return errs
-	}
-	clusterConfigByID := make(map[string]gitops.DataPlaneClusterConfig)
-	for _, cluster := range gitopsConfig.DataPlaneClusters {
-		clusterConfigByID[cluster.ClusterID] = cluster
-	}
-
 	for _, readyCluster := range readyClusters {
 		emptyClusterReconciled := false
 		var recErr error
@@ -332,9 +312,6 @@ func (c *ClusterManager) processReadyClusters() []error {
 		}
 		if !emptyClusterReconciled && recErr == nil {
 			recErr = c.reconcileReadyCluster(readyCluster)
-		}
-		if recErr == nil {
-			recErr = c.reconcileClusterAddons(readyCluster, clusterConfigByID)
 		}
 		if recErr != nil {
 			errs = append(errs, errors.Wrapf(recErr, "failed to reconcile ready cluster %s", readyCluster.ClusterID))
@@ -749,17 +726,5 @@ func (c *ClusterManager) setCentralPerClusterCountMetrics() error {
 		metrics.UpdateCentralPerClusterCountMetric(counter.Clusterid, clusterExternalID, counter.Count)
 	}
 
-	return nil
-}
-
-func (c *ClusterManager) reconcileClusterAddons(cluster api.Cluster, clusterConfigByID map[string]gitops.DataPlaneClusterConfig) error {
-	clusterConfig, exists := clusterConfigByID[cluster.ClusterID]
-	if !exists {
-		// There's no such cluster in gitops config, skipping
-		return nil
-	}
-	if err := c.AddonProvisioner.Provision(cluster, clusterConfig); err != nil {
-		return fmt.Errorf("provision addons: %w", err)
-	}
 	return nil
 }

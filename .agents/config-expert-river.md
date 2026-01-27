@@ -299,7 +299,6 @@ River has expertise in identifying unused configuration fields, optimizing confi
 **3. Client Library Configurations:**
 - `pkg/client/iam/IAMConfig` - Identity and access management configuration
 - `pkg/client/ocm/impl/OCMConfig` - OpenShift Cluster Manager client configuration
-- `pkg/client/ocm/impl/AddonConfig` - OCM addon configuration
 - `pkg/client/telemetry/TelemetryConfigImpl` - Telemetry and phone-home configuration
 
 **4. Server Infrastructure Configurations:**
@@ -320,7 +319,6 @@ River has expertise in identifying unused configuration fields, optimizing confi
 - `TenantResourceConfig` - Tenant resource allocation and overrides
 - `AuthProviderConfig` - Additional auth provider configurations for centrals
 - `DataPlaneClusterConfig` - GitOps data plane cluster definitions
-- `AddonConfig` - Addon installation configuration
 
 **7. Sub-configurations and Nested Structs:**
 - `ManagedDB` (fleetshard) - Managed database configuration for RDS

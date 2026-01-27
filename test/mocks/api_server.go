@@ -55,8 +55,6 @@ const (
 	EndpointPathCloudProviderRegion = "/api/clusters_mgmt/v1/cloud_providers/{providerID}/regions/{regionID}"
 	// EndpointPathClusterStatus ocm cluster management cluster status endpoint
 	EndpointPathClusterStatus = "/api/clusters_mgmt/v1/clusters/{id}/status"
-	// EndpointPathClusterAddons ocm cluster management cluster addons endpoint
-	EndpointPathClusterAddons = "/api/clusters_mgmt/v1/clusters/{id}/addons"
 	// EndpointPathMachinePools ocm cluster management machine pools endpoint
 	EndpointPathMachinePools = "/api/clusters_mgmt/v1/clusters/{id}/machine_pools"
 	// EndpointPathMachinePool ocm cluster management machine pool endpoint
@@ -94,12 +92,6 @@ const (
 	MockIngressHref = "/api/clusters_mgmt/v1/clusters/000/ingresses/i8y1"
 	// MockIngressListening default mock ingress listening used in the mock ocm server
 	MockIngressListening = clustersmgmtv1.ListeningMethodExternal
-	// MockClusterAddonID default mock cluster addon ID
-	MockClusterAddonID = "acs-fleetshard-dev"
-	// MockClusterAddonState default mock cluster addon state
-	MockClusterAddonState = clustersmgmtv1.AddOnInstallationStateReady
-	// MockClusterAddonDescription default mock cluster addon description
-	MockClusterAddonDescription = "InstallWaiting"
 	// MockMachinePoolID default machine pool ID
 	MockMachinePoolID = "managed"
 	// MockMachinePoolReplicas default number of machine pool replicas
@@ -133,8 +125,6 @@ var (
 	EndpointCloudProviderRegionsGet  = Endpoint{EndpointPathCloudProviderRegions, http.MethodGet}
 	EndpointCloudProviderRegionGet   = Endpoint{EndpointPathCloudProviderRegion, http.MethodGet}
 	EndpointClusterStatusGet         = Endpoint{EndpointPathClusterStatus, http.MethodGet}
-	EndpointClusterAddonsGet         = Endpoint{EndpointPathClusterAddons, http.MethodGet}
-	EndpointClusterAddonPost         = Endpoint{EndpointPathClusterAddons, http.MethodPost}
 	EndpointMachinePoolsGet          = Endpoint{EndpointPathMachinePools, http.MethodGet}
 	EndpointMachinePoolPost          = Endpoint{EndpointPathMachinePools, http.MethodPost}
 	EndpointMachinePoolPatch         = Endpoint{EndpointPathMachinePool, http.MethodPatch}
@@ -153,23 +143,21 @@ var (
 // to override these values, do not set them directly e.g. mocks.MockSyncset = ...
 // instead use the Set*Response functions provided by MockConfigurableServerBuilder e.g. SetClusterGetResponse(...)
 var (
-	MockIdentityProvider             *clustersmgmtv1.IdentityProvider
-	MockSyncset                      *clustersmgmtv1.Syncset
-	MockIngressList                  *clustersmgmtv1.IngressList
-	MockCloudProvider                *clustersmgmtv1.CloudProvider
-	MockCloudProviderList            *clustersmgmtv1.CloudProviderList
-	MockCloudProviderRegion          *clustersmgmtv1.CloudRegion
-	MockCloudProviderRegionList      *clustersmgmtv1.CloudRegionList
-	MockClusterStatus                *clustersmgmtv1.ClusterStatus
-	MockClusterAddonInstallation     *clustersmgmtv1.AddOnInstallation
-	MockClusterAddonInstallationList *clustersmgmtv1.AddOnInstallationList
-	MockMachinePoolList              *clustersmgmtv1.MachinePoolList
-	MockMachinePool                  *clustersmgmtv1.MachinePool
-	MockCluster                      *clustersmgmtv1.Cluster
-	MockClusterAuthorization         *amsv1.ClusterAuthorizationResponse
-	MockSubscription                 *amsv1.Subscription
-	MockSubscriptionSearch           []*amsv1.Subscription
-	MockTermsReview                  *authorizationsv1.TermsReviewResponse
+	MockIdentityProvider        *clustersmgmtv1.IdentityProvider
+	MockSyncset                 *clustersmgmtv1.Syncset
+	MockIngressList             *clustersmgmtv1.IngressList
+	MockCloudProvider           *clustersmgmtv1.CloudProvider
+	MockCloudProviderList       *clustersmgmtv1.CloudProviderList
+	MockCloudProviderRegion     *clustersmgmtv1.CloudRegion
+	MockCloudProviderRegionList *clustersmgmtv1.CloudRegionList
+	MockClusterStatus           *clustersmgmtv1.ClusterStatus
+	MockMachinePoolList         *clustersmgmtv1.MachinePoolList
+	MockMachinePool             *clustersmgmtv1.MachinePool
+	MockCluster                 *clustersmgmtv1.Cluster
+	MockClusterAuthorization    *amsv1.ClusterAuthorizationResponse
+	MockSubscription            *amsv1.Subscription
+	MockSubscriptionSearch      []*amsv1.Subscription
+	MockTermsReview             *authorizationsv1.TermsReviewResponse
 )
 
 // routerSwapper is an http.Handler that allows you to swap mux routers.
@@ -288,8 +276,6 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointCloudProviderRegionsGet:  buildMockRequestHandler(MockCloudProviderRegionList, nil),
 		EndpointCloudProviderRegionGet:   buildMockRequestHandler(MockCloudProviderRegion, nil),
 		EndpointClusterStatusGet:         buildMockRequestHandler(MockClusterStatus, nil),
-		EndpointClusterAddonsGet:         buildMockRequestHandler(MockClusterAddonInstallationList, nil),
-		EndpointClusterAddonPost:         buildMockRequestHandler(MockClusterAddonInstallation, nil),
 		EndpointMachinePoolsGet:          buildMockRequestHandler(MockMachinePoolList, nil),
 		EndpointMachinePoolGet:           buildMockRequestHandler(MockMachinePool, nil),
 		EndpointMachinePoolPatch:         buildMockRequestHandler(MockMachinePool, nil),
@@ -425,29 +411,6 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 		err = json.NewEncoder(w).Encode(ocmList)
 		if err != nil {
 			return fmt.Errorf("encoding CloudRegionList: %w", err)
-		}
-		return nil
-	// handle cluster addon installations
-	case *clustersmgmtv1.AddOnInstallation:
-		err := clustersmgmtv1.MarshalAddOnInstallation(v, w)
-		if err != nil {
-			return fmt.Errorf("marshalling AddOnInstallation: %w", err)
-		}
-		return nil
-	case []*clustersmgmtv1.AddOnInstallation:
-		err := clustersmgmtv1.MarshalAddOnInstallationList(v, w)
-		if err != nil {
-			return fmt.Errorf("marshalling AddOnInstallationList: %w", err)
-		}
-		return nil
-	case *clustersmgmtv1.AddOnInstallationList:
-		ocmList, err := NewOCMList().WithItems(v.Slice())
-		if err != nil {
-			return err
-		}
-		err = json.NewEncoder(w).Encode(ocmList)
-		if err != nil {
-			return fmt.Errorf("encoding AddOnInstallationList: %w", err)
 		}
 		return nil
 	case *clustersmgmtv1.MachinePool:
@@ -629,14 +592,6 @@ func init() {
 
 	// mock cluster status
 	MockClusterStatus, err = GetMockClusterStatus(nil)
-	if err != nil {
-		panic(err)
-	}
-	MockClusterAddonInstallation, err = GetMockClusterAddonInstallation(nil, "")
-	if err != nil {
-		panic(err)
-	}
-	MockClusterAddonInstallationList, err = GetMockClusterAddonInstallationList(nil)
 	if err != nil {
 		panic(err)
 	}
@@ -838,65 +793,6 @@ func GetMockClusterStatusBuilder(modifyFn func(*clustersmgmtv1.ClusterStatusBuil
 		modifyFn(builder)
 	}
 	return builder
-}
-
-// GetMockClusterAddonBuilder for emulated OCM server
-func GetMockClusterAddonBuilder(modifyFn func(*clustersmgmtv1.AddOnBuilder), addonID string) *clustersmgmtv1.AddOnBuilder {
-	if addonID == "" {
-		addonID = MockClusterAddonID
-	}
-
-	builder := clustersmgmtv1.NewAddOn().
-		ID(addonID).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/addons/%s", addonID))
-	if modifyFn != nil {
-		modifyFn(builder)
-	}
-	return builder
-}
-
-// GetMockClusterAddonInstallationBuilder for emulated OCM server
-func GetMockClusterAddonInstallationBuilder(modifyFn func(*clustersmgmtv1.AddOnInstallationBuilder), addonID string) *clustersmgmtv1.AddOnInstallationBuilder {
-	if addonID == "" {
-		addonID = MockClusterAddonID
-	}
-	addonInstallation := clustersmgmtv1.NewAddOnInstallation().
-		ID(addonID).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/addons/%s", MockClusterID, addonID)).
-		Addon(GetMockClusterAddonBuilder(nil, addonID)).
-		State(MockClusterAddonState).
-		StateDescription(MockClusterAddonDescription)
-
-	if modifyFn != nil {
-		modifyFn(addonInstallation)
-	}
-	return addonInstallation
-}
-
-// GetMockClusterAddonInstallation for emulated OCM server
-func GetMockClusterAddonInstallation(modifyFn func(*clustersmgmtv1.AddOnInstallation, error), addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
-	addonInstall, err := GetMockClusterAddonInstallationBuilder(nil, addonID).Build()
-	if modifyFn != nil {
-		modifyFn(addonInstall, err)
-	}
-	if err != nil {
-		return addonInstall, fmt.Errorf("building AddOnInstallation: %w", err)
-	}
-	return addonInstall, nil
-}
-
-// GetMockClusterAddonInstallationList for emulated OCM server
-func GetMockClusterAddonInstallationList(modifyFn func(*clustersmgmtv1.AddOnInstallationList, error)) (*clustersmgmtv1.AddOnInstallationList, error) {
-	list, err := clustersmgmtv1.NewAddOnInstallationList().Items(
-		GetMockClusterAddonInstallationBuilder(nil, MockClusterAddonID)).
-		Build()
-	if modifyFn != nil {
-		modifyFn(list, err)
-	}
-	if err != nil {
-		return list, fmt.Errorf("building AddOnInstallationList: %w", err)
-	}
-	return list, nil
 }
 
 // GetMockClusterNodesBuilder for emulated OCM server

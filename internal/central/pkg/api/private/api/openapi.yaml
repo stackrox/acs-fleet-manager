@@ -16,49 +16,6 @@ servers:
 tags:
 - name: Agent Clusters
 paths:
-  /api/rhacs/v1/agent-clusters/{id}/status:
-    put:
-      operationId: updateAgentClusterStatus
-      parameters:
-      - description: The ID of record
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest'
-        description: Cluster status update data
-        required: true
-      responses:
-        "200":
-          description: Cluster status is updated
-        "400":
-          content:
-            application/json:
-              examples:
-                "400InvalidIdExample":
-                  $ref: '#/components/examples/400InvalidIdExample'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: id value is not valid
-        "404":
-          content:
-            application/json:
-              examples:
-                "404Example":
-                  $ref: '#/components/examples/404Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Auth token is not valid.
-      security:
-      - Bearer: []
-      summary: Update the status of an agent cluster
-      tags:
-      - Agent Clusters
   /api/rhacs/v1/agent-clusters/{id}/centrals/status:
     put:
       operationId: updateCentralClusterStatus
@@ -183,46 +140,6 @@ paths:
       summary: Get the ManagedaCentral for the specified agent cluster and centralId
       tags:
       - Agent Clusters
-  /api/rhacs/v1/agent-clusters/{id}:
-    get:
-      operationId: getDataPlaneClusterAgentConfig
-      parameters:
-      - description: The ID of record
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataplaneClusterAgentConfig'
-          description: The Data Plane Cluster Agent configuration
-        "400":
-          content:
-            application/json:
-              examples:
-                "400InvalidIdExample":
-                  $ref: '#/components/examples/400InvalidIdExample'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: id value is not valid
-        "404":
-          content:
-            application/json:
-              examples:
-                "404Example":
-                  $ref: '#/components/examples/404Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Auth token is not valid.
-      security:
-      - Bearer: []
-      summary: Get the data plane cluster agent configuration
-      tags:
-      - Agent Clusters
 components:
   examples:
     ManagedCentralExample:
@@ -332,26 +249,6 @@ components:
       - $ref: '#/components/schemas/ListReference'
       - $ref: '#/components/schemas/ManagedCentralList_allOf'
       description: A list of ManagedCentral
-    DataPlaneClusterUpdateStatusRequest:
-      description: Schema for the request to update a data plane cluster's status
-      example:
-        addons:
-        - packageImage: packageImage
-          parametersSHA256Sum: parametersSHA256Sum
-          id: id
-          sourceImage: sourceImage
-          version: version
-        - packageImage: packageImage
-          parametersSHA256Sum: parametersSHA256Sum
-          id: id
-          sourceImage: sourceImage
-          version: version
-      properties:
-        addons:
-          items:
-            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_addons'
-          type: array
-      type: object
     DataPlaneCentralStatus:
       description: Schema of the status object for a Central
       example:
@@ -384,8 +281,6 @@ components:
       type: object
     DataplaneClusterAgentConfig:
       description: Configuration for the data plane cluster agent
-      example:
-        spec: '{}'
       properties:
         spec:
           description: Data plane cluster agent spec
@@ -546,24 +441,6 @@ components:
           items:
             type: object
           type: array
-    DataPlaneClusterUpdateStatusRequest_addons:
-      example:
-        packageImage: packageImage
-        parametersSHA256Sum: parametersSHA256Sum
-        id: id
-        sourceImage: sourceImage
-        version: version
-      properties:
-        id:
-          type: string
-        version:
-          type: string
-        sourceImage:
-          type: string
-        packageImage:
-          type: string
-        parametersSHA256Sum:
-          type: string
     DataPlaneCentralStatus_conditions:
       properties:
         type:

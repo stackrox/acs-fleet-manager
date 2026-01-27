@@ -130,10 +130,6 @@ spec:
           value: {{ .Values.gitops.enabled | quote }}
         - name: RHACS_TARGETED_OPERATOR_UPGRADES
           value: {{ .Values.targetedOperatorUpgrades.enabled | quote }}
-        - name: RHACS_ADDON_AUTO_UPGRADE
-          value: {{ .Values.addonAutoUpgradeEnabled | quote }}
-        - name: FLEETSHARD_ADDON_NAME
-          value: {{ .Values.addonName | quote }}
         {{- if eq "SERVICE_ACCOUNT_TOKEN" .Values.authType }}
         - name: FLEET_MANAGER_TOKEN_FILE
           value: "/var/run/secrets/tokens/fleet-manager-token"

@@ -139,14 +139,7 @@ func TestCentral_Delete(t *testing.T) {
 
 	sampleCentralID := api.NewID()
 
-	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
-	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
-	if err != nil {
-		t.Fatalf("%s", err.Error())
-	}
-	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
-
-	ocmServer := ocmServerBuilder.Build()
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
 	h, _, tearDown := test.NewCentralHelper(t, ocmServer)

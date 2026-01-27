@@ -598,9 +598,6 @@ secrets/touch:
           secrets/ocm-service.clientId \
           secrets/ocm-service.clientSecret \
           secrets/ocm-service.token \
-          secrets/ocm-addon-service.clientId \
-          secrets/ocm-addon-service.clientSecret \
-          secrets/ocm-addon-service.token \
           secrets/rhsso-logs.clientId \
           secrets/rhsso-logs.clientSecret \
           secrets/rhsso-metrics.clientId \
@@ -632,11 +629,8 @@ centralidp/setup:
 ocm/setup: OCM_OFFLINE_TOKEN ?= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c" # pragma: allowlist secret
 ocm/setup:
 	@echo -n "$(OCM_OFFLINE_TOKEN)" > secrets/ocm-service.token
-	@echo -n "$(OCM_OFFLINE_TOKEN)" > secrets/ocm-addon-service.token
 	@echo -n "" > secrets/ocm-service.clientId
 	@echo -n "" > secrets/ocm-service.clientSecret
-	@echo -n "" > secrets/ocm-addon-service.clientId
-	@echo -n "" > secrets/ocm-addon-service.clientSecret
 .PHONY: ocm/setup
 
 # create project where the service will be deployed in an OpenShift cluster
@@ -657,9 +651,6 @@ deploy/secrets:
 		-p OCM_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-service.clientId' ] && [ -z '${OCM_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-service.clientId || echo '${OCM_SERVICE_CLIENT_ID}')" \
 		-p OCM_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-service.clientSecret' ] && [ -z '${OCM_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-service.clientSecret || echo '${OCM_SERVICE_CLIENT_SECRET}')" \
 		-p OCM_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-service.token' ] && [ -z '${OCM_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-service.token || echo '${OCM_SERVICE_TOKEN}')" \
-		-p OCM_ADDON_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-addon-service.clientId' ] && [ -z '${OCM_ADDON_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-addon-service.clientId || echo '${OCM_ADDON_SERVICE_CLIENT_ID}')" \
-		-p OCM_ADDON_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-addon-service.clientSecret' ] && [ -z '${OCM_ADDON_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-addon-service.clientSecret || echo '${OCM_ADDON_SERVICE_CLIENT_SECRET}')" \
-		-p OCM_ADDON_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-addon-service.token' ] && [ -z '${OCM_ADDON_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-addon-service.token || echo '${OCM_ADDON_SERVICE_TOKEN}')" \
 		-p AWS_ACCESS_KEY="$(shell ([ -s './secrets/aws.accesskey' ] && [ -z '${AWS_ACCESS_KEY}' ]) && cat ./secrets/aws.accesskey || echo '${AWS_ACCESS_KEY}')" \
 		-p AWS_ACCOUNT_ID="$(shell ([ -s './secrets/aws.accountid' ] && [ -z '${AWS_ACCOUNT_ID}' ]) && cat ./secrets/aws.accountid || echo '${AWS_ACCOUNT_ID}')" \
 		-p AWS_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.secretaccesskey' ] && [ -z '${AWS_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.secretaccesskey || echo '${AWS_SECRET_ACCESS_KEY}')" \
@@ -702,7 +693,6 @@ deploy/service: ENABLE_CENTRAL_EXTERNAL_DOMAIN ?= "false"
 deploy/service: ENABLE_CENTRAL_LIFE_SPAN ?= "false"
 deploy/service: CENTRAL_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
-deploy/service: OCM_ADDON_SERVICE_URL ?= "https://api.stage.openshift.com"
 deploy/service: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
 deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
 deploy/service: ENABLE_DENY_LIST ?= "false"
@@ -738,7 +728,6 @@ endif
 		-p ENABLE_OCM_MOCK=$(ENABLE_OCM_MOCK) \
 		-p OCM_MOCK_MODE=$(OCM_MOCK_MODE) \
 		-p OCM_URL="$(OCM_URL)" \
-		-p OCM_ADDON_SERVICE_URL="$(OCM_ADDON_SERVICE_URL)" \
 		-p AMS_URL="${AMS_URL}" \
 		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
 		-p ENABLE_TERMS_ACCEPTANCE="${ENABLE_TERMS_ACCEPTANCE}" \
