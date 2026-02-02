@@ -10,6 +10,7 @@ metadata:
     pipelinesascode.tekton.dev/on-cel-expression: |
       target_branch == "main"
       && (event == "push" || event == "pull_request")
+    pipelinesascode.tekton.dev/on-comment: "/tekton-retest"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: acscs-main
