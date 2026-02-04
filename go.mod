@@ -57,7 +57,7 @@ require (
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.6.0
-	gorm.io/gorm v1.26.1
+	gorm.io/gorm v1.31.1
 	k8s.io/api v0.32.4
 	k8s.io/apimachinery v0.32.4
 	k8s.io/autoscaler/vertical-pod-autoscaler v1.2.0
