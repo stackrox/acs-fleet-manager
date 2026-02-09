@@ -7,6 +7,7 @@ metadata:
     build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-comment: "/konflux-retest acs-probe-on-push"
     pipelinesascode.tekton.dev/on-cel-expression: |
       target_branch == "main"
       && (event == "push" || event == "pull_request")
