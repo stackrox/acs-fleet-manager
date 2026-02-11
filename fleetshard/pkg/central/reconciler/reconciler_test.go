@@ -137,6 +137,8 @@ func getClientTrackerAndReconciler(
 		cipher.AES256KeyGenerator{},
 		reconcilerOptions,
 	)
+	// Override with mock for testing - always return reachable
+	reconciler.uiReachabilityChecker = NewMockCentralUIReachabilityChecker(true, nil)
 	return fakeClient, tracker, reconciler
 }
 
