@@ -20,7 +20,8 @@ source "$ROOT_DIR/dev/env/scripts/lib.sh"
 
 function pull_to_kind() {
   local img=$1
-  local retry="${2:-5}"
+  local imgname=$2
+  local retry="${3:-5}"
   local backoff=30
 
   for _ in $(seq "$retry"); do
@@ -31,11 +32,15 @@ function pull_to_kind() {
     sleep "$backoff"
   done
 
-  kind load docker-image "${img}"
+  docker save --platform amd64 $img -o "$imgname.tar"
+  kind load image-archive "$imgname.tar"
 }
 
 make --no-print-directory -C "$ROOT_DIR" image/build/emailsender
-kind load docker-image "$(make --no-print-directory -C "$ROOT_DIR" image-tag/emailsender)"
+
+EMAILSENDER_IMAGE="$(make --silent --no-print-directory -C "$ROOT_DIR" image-tag/emailsender)"
+docker save --platform amd64 "$EMAILSENDER_IMAGE" -o emailsender.tar
+kind load image-archive emailsender.tar
 
 kubectl create ns $EMAILSENDER_NS -o yaml --dry-run=client | kubectl apply -f -
 kubectl create ns $CENTRAL_NS -o yaml --dry-run=client | kubectl apply -f -
@@ -51,7 +56,7 @@ GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-stackrox/acs-fleet-manager}
 log "Running for repository: $GITHUB_REPOSITORY"
 if [ "$GITHUB_REPOSITORY" = "stackrox/stackrox" ]; then
   STACKROX_DIR="$(cd "$ROOT_DIR/../stackrox" && pwd)"
-  ACS_VERSION="$(make --no-print-directory -C "$STACKROX_DIR" tag)"
+  ACS_VERSION="$(make --silent --no-print-directory -C "$STACKROX_DIR" tag)"
 else
   ACS_VERSION="$(git ls-remote --tags https://github.com/stackrox/stackrox | grep -E '.*-nightly-[0-9]{8}$' | awk '{print $2}' | sed 's|refs/tags/||' | sort -V | tail -n 1)"
 fi
@@ -59,21 +64,18 @@ fi
 log "ACS version: $ACS_VERSION"
 
 IMG_REPO="quay.io/rhacs-eng"
-MAIN_IMG_NAME="$IMG_REPO/main"
-CENTRAL_DB_IMG_NAME="$IMG_REPO/central-db"
-
-IMAGES_TO_PULL=(
-  "$MAIN_IMG_NAME:$ACS_VERSION"
-  "$CENTRAL_DB_IMG_NAME:$ACS_VERSION"
+IMG_NAMES=(
+  "main"
+  "central-db"
 )
-
+MAIN_IMG="$IMG_REPO:main:$ACS_VERSION"
 IMG_WAIT_TIMEOUT_SECONDS="${IMG_WAIT_TIMEOUT_SECONDS:-1200}"
-for img in "${IMAGES_TO_PULL[@]}"; do
-  wait_for_img "$img" "$IMG_WAIT_TIMEOUT_SECONDS"
-  pull_to_kind "$img"
+for imgname in "${IMAGES_NAMES[@]}"; do
+  wait_for_img "$IMG_REPO/$imgname:$ACS_VERSION" "$IMG_WAIT_TIMEOUT_SECONDS"
+  pull_to_kind "$IMG_REPO/$imgname:$ACS_VERSION" "$imgname"
 done
 
-ROXCTL="docker run --rm --user $(id -u):$(id -g) -v $(pwd):/tmp/stackrox-charts/ $MAIN_IMG_NAME:$ACS_VERSION"
+ROXCTL="docker run --rm --user $(id -u):$(id -g) -v $(pwd):/tmp/stackrox-charts/ $MAIN_IMG"
 # --remove to make this script rerunnable on a local machine
 $ROXCTL helm output central-services --image-defaults opensource --remove --output-dir /tmp/stackrox-charts/central-chart
 
