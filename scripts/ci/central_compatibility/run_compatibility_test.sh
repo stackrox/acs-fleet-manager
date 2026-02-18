@@ -33,14 +33,16 @@ function pull_to_kind() {
   done
 
   docker save --platform amd64 "$img" -o "$imgname.tar"
-  kind load image-archive "$imgname.tar"
+  kind load image-archive "$IMG_TAR_DIR/$imgname.tar"
 }
 
 make --no-print-directory -C "$ROOT_DIR" image/build/emailsender
 
+IMG_TAR_DIR="$(mktemp -d)"
+
 EMAILSENDER_IMAGE="$(make --silent --no-print-directory -C "$ROOT_DIR" image-tag/emailsender)"
-docker save --platform amd64 "$EMAILSENDER_IMAGE" -o emailsender.tar
-kind load image-archive emailsender.tar
+docker save --platform amd64 "$EMAILSENDER_IMAGE" -o "$IMG_TAR_DIR/emailsender.tar"
+kind load image-archive "$IMG_TAR_DIR/emailsender.tar"
 
 kubectl create ns $EMAILSENDER_NS -o yaml --dry-run=client | kubectl apply -f -
 kubectl create ns $CENTRAL_NS -o yaml --dry-run=client | kubectl apply -f -
