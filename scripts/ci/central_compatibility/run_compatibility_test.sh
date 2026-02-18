@@ -32,7 +32,7 @@ function pull_to_kind() {
     sleep "$backoff"
   done
 
-  docker save --platform amd64 "$img" -o "$IMG_TAR_DIR/imgname.tar"
+  docker save --platform amd64 "$img" -o "$IMG_TAR_DIR/$imgname.tar"
   kind load image-archive "$IMG_TAR_DIR/$imgname.tar"
 }
 
