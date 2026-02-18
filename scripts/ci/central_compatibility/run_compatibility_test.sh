@@ -68,7 +68,7 @@ IMG_NAMES=(
   "main"
   "central-db"
 )
-MAIN_IMG="$IMG_REPO:main:$ACS_VERSION"
+MAIN_IMG="$IMG_REPO/main:$ACS_VERSION"
 IMG_WAIT_TIMEOUT_SECONDS="${IMG_WAIT_TIMEOUT_SECONDS:-1200}"
 for imgname in "${IMAGES_NAMES[@]}"; do
   wait_for_img "$IMG_REPO/$imgname:$ACS_VERSION" "$IMG_WAIT_TIMEOUT_SECONDS"
