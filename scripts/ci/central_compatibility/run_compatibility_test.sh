@@ -32,7 +32,7 @@ function pull_to_kind() {
     sleep "$backoff"
   done
 
-  docker save --platform amd64 $img -o "$imgname.tar"
+  docker save --platform amd64 "$img" -o "$imgname.tar"
   kind load image-archive "$imgname.tar"
 }
 
@@ -70,7 +70,7 @@ IMG_NAMES=(
 )
 MAIN_IMG="$IMG_REPO/main:$ACS_VERSION"
 IMG_WAIT_TIMEOUT_SECONDS="${IMG_WAIT_TIMEOUT_SECONDS:-1200}"
-for imgname in "${IMAGES_NAMES[@]}"; do
+for imgname in "${IMG_NAMES[@]}"; do
   wait_for_img "$IMG_REPO/$imgname:$ACS_VERSION" "$IMG_WAIT_TIMEOUT_SECONDS"
   pull_to_kind "$IMG_REPO/$imgname:$ACS_VERSION" "$imgname"
 done
