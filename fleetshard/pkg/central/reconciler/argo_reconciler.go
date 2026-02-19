@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	argocd "github.com/argoproj/argo-cd/v3/pkg/apis/application/v1alpha1"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/argox"

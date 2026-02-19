@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	argoCd "github.com/argoproj/argo-cd/v3/pkg/apis/application/v1alpha1"
 	"github.com/hashicorp/go-multierror"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
