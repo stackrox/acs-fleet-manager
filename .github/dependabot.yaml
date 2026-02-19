@@ -6,19 +6,16 @@
 version: 2
 updates:
   - package-ecosystem: 'gomod'
-    directory: '/'
-    schedule:
-      interval: 'weekly'
-  - package-ecosystem: 'gomod'
-    directory: '/tools'
+    directories:
+      - "/"
+      - "/tools"
     schedule:
       interval: 'weekly'
   - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "docker"
-    directory: "/probe"
+    directories:
+      - "/"
+      - "/probe"
+      - "/emailsender"
     schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"
