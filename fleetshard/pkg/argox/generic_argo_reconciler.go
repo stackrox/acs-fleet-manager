@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	argocd "github.com/argoproj/argo-cd/v3/pkg/apis/application/v1alpha1"
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/json"

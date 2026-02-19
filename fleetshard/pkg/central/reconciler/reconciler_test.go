@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	argocd "github.com/argoproj/argo-cd/v3/pkg/apis/application/v1alpha1"
 
 	"github.com/aws/smithy-go"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
