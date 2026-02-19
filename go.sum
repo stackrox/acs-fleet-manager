@@ -822,8 +822,9 @@ github.com/spf13/cobra v1.7.0/go.mod h1:uLxZILRyS/50WlhOIKD7W6V5bgeIt+4sICxh6uRM
 github.com/spf13/cobra v1.10.2 h1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=
 github.com/spf13/cobra v1.10.2/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
-github.com/spf13/pflag v1.0.9 h1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=
 github.com/spf13/pflag v1.0.9/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
+github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
+github.com/spf13/pflag v1.0.10/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/stackrox/scanner v0.0.0-20240830165150-d133ba942d59 h1:XrOPpgBpAnwTXGbyAYSOongfFeVJJBWPTdWEgYw+Uck=
 github.com/stackrox/scanner v0.0.0-20240830165150-d133ba942d59/go.mod h1:xVs4A0Vur2djLSTZYtIj/5hgUORT1t405Fg0RX4/1kA=
 github.com/stackrox/stackrox v0.0.0-20241218141528-2037522bc808 h1:jm+j4XyfjwQ2+YXhfnHXBGjN3oIjAVz+BXWxnTpdGLc=
