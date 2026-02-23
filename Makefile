@@ -579,6 +579,7 @@ image/push/probe: image/build/probe
 # push the image to the OpenShift internal registry
 image/push/internal: IMAGE_TAG ?= $(image_tag)
 image/push/internal: docker/login/internal
+	@oc get imagestream $(IMAGE_NAME) -n $(NAMESPACE) >/dev/null 2>&1 || oc create imagestream $(IMAGE_NAME) -n $(NAMESPACE) --lookup-local
 	$(DOCKER) buildx build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)" --platform linux/amd64 --push .
 .PHONY: image/push/internal
 
