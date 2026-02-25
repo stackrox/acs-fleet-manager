@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/argox"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
+	argocd "github.com/stackrox/acs-fleet-manager/pkg/argocd/apis/application/v1alpha1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

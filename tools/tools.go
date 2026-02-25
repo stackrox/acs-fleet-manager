@@ -12,4 +12,5 @@ import (
 	_ "github.com/matryer/moq"
 	_ "github.com/segmentio/chamber/v2"
 	_ "gotest.tools/gotestsum"
+	_ "k8s.io/code-generator/cmd/deepcopy-gen"
 )

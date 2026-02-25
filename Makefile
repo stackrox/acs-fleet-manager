@@ -95,6 +95,10 @@ CHAMBER_BIN := $(LOCAL_BIN_PATH)/chamber
 $(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/segmentio/chamber/v2
 
+DEEPCOPY_GEN_BIN := $(LOCAL_BIN_PATH)/deepcopy-gen
+$(DEEPCOPY_GEN_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
+	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install k8s.io/code-generator/cmd/deepcopy-gen
+
 GINKGO_BIN := $(LOCAL_BIN_PATH)/ginkgo
 $(GINKGO_BIN): go.mod go.sum
 	@GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
@@ -399,7 +403,7 @@ test/e2e/cleanup:
 .PHONY: test/e2e/cleanup
 
 # generate files
-generate: $(MOQ_BIN) openapi/generate
+generate: $(MOQ_BIN) openapi/generate deepcopy-gen/generate
 	$(GO) generate ./...
 .PHONY: generate
 
@@ -449,6 +453,13 @@ openapi/generate/emailsender: openapi-generator
 	$(OPENAPI_GENERATOR) generate -i openapi/emailsender.yaml -g go -o emailsender/pkg/client/openapi --package-name openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w emailsender/pkg/client/openapi
 .PHONY: openapi/generate/emailsender
+
+.PHONY: deepcopy-gen/generate
+deepcopy-gen/generate: $(DEEPCOPY_GEN_BIN)
+	@$(DEEPCOPY_GEN_BIN) \
+		--output-file zz_generated.deepcopy.go \
+		--go-header-file /dev/null \
+		github.com/stackrox/acs-fleet-manager/pkg/argocd/apis/application/v1alpha1
 
 # fail if formatting is required
 code/check:

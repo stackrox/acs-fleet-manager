@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	argocd "github.com/stackrox/acs-fleet-manager/pkg/argocd/apis/application/v1alpha1"
 	"github.com/stackrox/rox/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
