@@ -18,6 +18,9 @@ updates:
       - "/emailsender"
     schedule:
       interval: "weekly"
+    groups:
+      Dockerfiles:
+        group-by: dependency-name
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
