@@ -16,7 +16,7 @@ require (
 	github.com/aws/smithy-go v1.24.0
 	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/coreos/go-oidc/v3 v3.16.0
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-gormigrate/gormigrate/v2 v2.1.5
