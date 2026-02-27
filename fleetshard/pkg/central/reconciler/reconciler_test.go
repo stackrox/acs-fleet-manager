@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
-
 	"github.com/aws/smithy-go"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
@@ -25,6 +23,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/central/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
+	argocd "github.com/stackrox/acs-fleet-manager/pkg/argocd/apis/application/v1alpha1"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/mocks"
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
