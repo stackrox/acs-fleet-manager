@@ -2,7 +2,9 @@ package argox
 
 import (
 	"context"
-	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	"testing"
+
+	argocd "github.com/stackrox/acs-fleet-manager/pkg/argocd/apis/application/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
-	"testing"
 )
 
 func Test_reconcileArgoCDApplications_deletesUnwantedApplications(t *testing.T) {

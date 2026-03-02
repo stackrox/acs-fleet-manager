@@ -2,10 +2,10 @@
 package k8s
 
 import (
-	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/golang/glog"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
+	argoCd "github.com/stackrox/acs-fleet-manager/pkg/argocd/apis/application/v1alpha1"
 	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"

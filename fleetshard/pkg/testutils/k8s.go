@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"testing"
 
-	argoCd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/hashicorp/go-multierror"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
+	argoCd "github.com/stackrox/acs-fleet-manager/pkg/argocd/apis/application/v1alpha1"
 	platform "github.com/stackrox/rox/operator/api/v1alpha1"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
