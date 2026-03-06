@@ -32,7 +32,7 @@ require (
 	github.com/lib/pq v1.11.2
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/olekukonko/tablewriter v1.1.0
-	github.com/onsi/ginkgo/v2 v2.28.0
+	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.1
 	github.com/openshift-online/ocm-sdk-go v0.1.497
 	github.com/openshift/api v0.0.0-20250320115527-3aa9dd5b9002
