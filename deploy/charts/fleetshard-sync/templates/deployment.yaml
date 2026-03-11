@@ -56,6 +56,8 @@ spec:
           value: {{ .Values.clusterName }}
         - name: ENVIRONMENT
           value: {{ .Values.environment }}
+        - name: GLOG_V
+          value: {{ .Values.glogVerbosity | quote }}
         - name: CREATE_AUTH_PROVIDER
           value: "{{ .Values.createAuthProvider }}"
         - name: AUTH_TYPE

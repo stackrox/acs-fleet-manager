@@ -18,6 +18,11 @@ createAuthProvider: true
 # Static token can be issued by the kubernetes issuer with the following command:
 # $ kubectl create token -n rhacs fleetshard-sync --audience acs-fleet-manager-private-api
 staticToken: ""
+# glog verbosity level (see CONTRIBUTING.md for guidelines)
+# 1: Production level logging - no unnecessary spam, no sensitive information
+# 5: Stage/test level logging - useful debugging information, not spammy
+# 10: Local/debug level logging - useful for tracing transactions during development
+glogVerbosity: "1"
 auditLogs:
   enabled: true
   skipTLSVerify: true

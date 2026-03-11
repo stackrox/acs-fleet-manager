@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/informers"
 
 	"github.com/golang/glog"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	cfg "github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
@@ -35,9 +35,12 @@ func main() {
 		glog.Info("Unable to set logtostderr to true")
 	}
 
-	config, err := config.GetConfig()
+	config, err := cfg.GetConfig()
 	if err != nil {
 		glog.Fatalf("Failed to load configuration: %v", err)
+	}
+	if err := flag.Set("v", config.LogVerbosity); err != nil {
+		glog.Errorf("Unable to set glog verbosity: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.StartupTimeout)
@@ -47,6 +50,7 @@ func main() {
 	glog.Infof("ClusterID: %s", config.ClusterID)
 	glog.Infof("RuntimePollPeriod: %s", config.RuntimePollPeriod.String())
 	glog.Infof("AuthType: %s", config.AuthType)
+	glog.Infof("LogVerbosity: %s", config.LogVerbosity)
 	glog.Infof("ManagedDB.Enabled: %t", config.ManagedDB.Enabled)
 	glog.Infof("ManagedDB.SecurityGroup: %s", config.ManagedDB.SecurityGroup)
 	glog.Infof("ManagedDB.SubnetGroup: %s", config.ManagedDB.SubnetGroup)
