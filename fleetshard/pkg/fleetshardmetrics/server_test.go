@@ -7,6 +7,7 @@ import (
 
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,7 +52,7 @@ func serveMetrics(t *testing.T, customMetrics *Metrics) metricResponse {
 	server.Handler.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code, "status code should be OK")
 
-	promParser := expfmt.TextParser{}
+	promParser := expfmt.NewTextParser(model.UTF8Validation)
 	metrics, err := promParser.TextToMetricFamilies(rec.Body)
 	require.NoError(t, err, "failed parsing metrics file")
 	return metrics
