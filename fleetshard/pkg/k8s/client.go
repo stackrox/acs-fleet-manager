@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	verticalpodautoscalingv1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
-	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -76,20 +75,4 @@ func IsRoutesResourceEnabled(client ctrlClient.Client) (bool, error) {
 		return false, nil
 	}
 	return true, nil
-}
-
-// CreateInterfaceOrDie create new kubernetes interface or dies
-func CreateInterfaceOrDie() kubernetes.Interface {
-
-	config, err := ctrl.GetConfig()
-	if err != nil {
-		glog.Fatal("failed to get k8s client config", err)
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		glog.Fatal("error creating clientset: %s", err.Error())
-	}
-
-	return clientset
 }
