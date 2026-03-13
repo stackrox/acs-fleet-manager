@@ -15,9 +15,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
-	verticalpodautoscalingv1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -413,8 +414,13 @@ func getDeployment(ctx context.Context, namespace string, name string) (*appsv1.
 	return deployment, err
 }
 
-func getVPA(ctx context.Context, namespace string, name string) (*verticalpodautoscalingv1.VerticalPodAutoscaler, error) {
-	autoscaler := &verticalpodautoscalingv1.VerticalPodAutoscaler{}
+func getVPA(ctx context.Context, namespace string, name string) (*unstructured.Unstructured, error) {
+	autoscaler := &unstructured.Unstructured{}
+	autoscaler.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "autoscaling.k8s.io",
+		Version: "v1",
+		Kind:    "VerticalPodAutoscaler",
+	})
 	err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: name}, autoscaler)
 	return autoscaler, err
 }
