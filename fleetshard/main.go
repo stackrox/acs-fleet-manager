@@ -6,12 +6,8 @@ import (
 	"flag"
 	"os"
 	"os/signal"
-	"time"
 
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/internal/certmonitor"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/informers"
 
 	"github.com/golang/glog"
 	cfg "github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -59,7 +55,11 @@ func main() {
 		glog.Infof("Image pull secret configured, will be injected into tenant namespaces.")
 	}
 	glog.Info("Creating k8s client...")
-	k8sClient := k8s.CreateClientOrDie()
+	restConfig, err := ctrl.GetConfig()
+	if err != nil {
+		glog.Fatalf("Failed to get k8s config: %v", err)
+	}
+	k8sClient := k8s.CreateClientWithConfigOrDie(restConfig)
 	ctrl.SetLogger(logger.NewKubeAPILogger())
 	glog.Info("Creating runtime...")
 	runtime, err := runtime.NewRuntime(ctx, config, k8sClient)
@@ -76,75 +76,7 @@ func main() {
 
 	glog.Info("Creating certMonitor")
 
-	tenantNamespaceSelector := certmonitor.SelectorConfig{
-		LabelSelector: &metav1.LabelSelector{
-			MatchExpressions: []metav1.LabelSelectorRequirement{
-				{
-					Key:      reconciler.TenantIDLabelKey,
-					Operator: metav1.LabelSelectorOpExists,
-				},
-				{
-					Key:      reconciler.ProbeLabelKey,
-					Operator: metav1.LabelSelectorOpDoesNotExist,
-				},
-			},
-		},
-	}
-	certmonitorConfig := &certmonitor.Config{
-		Monitors: []certmonitor.MonitorConfig{
-			{
-				Namespace: tenantNamespaceSelector,
-				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
-					Name: "scanner-tls",
-				},
-			},
-			{
-				Namespace: tenantNamespaceSelector,
-				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
-					Name: "central-tls",
-				},
-			},
-
-			{
-				Namespace: tenantNamespaceSelector,
-				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
-					Name: "scanner-db-tls",
-				},
-			},
-
-			{
-				Namespace: tenantNamespaceSelector,
-				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
-					Name: "scanner-v4-db-tls",
-				},
-			},
-
-			{
-				Namespace: tenantNamespaceSelector,
-				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
-					Name: "scanner-v4-indexer-tls",
-				},
-			},
-			{
-				Namespace: tenantNamespaceSelector,
-				Secret: certmonitor.SelectorConfig{ // pragma: allowlist secret
-					Name: "scanner-v4-matcher-tls",
-				},
-			},
-		},
-	}
-
-	if errs := certmonitor.ValidateConfig(*certmonitorConfig); len(errs) > 0 {
-		glog.Fatalf("certmonitor validation error: %v", errs)
-	}
-
-	k8sInterface := k8s.CreateInterfaceOrDie()
-	informerFactory := informers.NewSharedInformerFactory(k8sInterface, time.Minute)
-	secretInformer := informerFactory.Core().V1().Secrets().Informer()
-	namespaceInformer := informerFactory.Core().V1().Namespaces().Informer()
-	namespaceLister := informerFactory.Core().V1().Namespaces().Lister()
-
-	monitor := certmonitor.NewCertMonitor(certmonitorConfig, informerFactory, secretInformer, namespaceInformer, namespaceLister)
+	monitor := certmonitor.NewCertMonitor(restConfig)
 	if err := monitor.Start(); err != nil {
 		glog.Fatalf("Error starting certmonitor: %v", err)
 	}
