@@ -82,18 +82,7 @@ func (c *CertMonitor) Stop() error {
 // NewCertMonitor creates new instance of CertMonitor
 // The cache must be configured to only watch tenant tls secrets
 func NewCertMonitor(restConfig *rest.Config) *CertMonitor {
-	syncPeriod := syncPeriod
-	cache, err := ctrlcache.New(restConfig, ctrlcache.Options{
-		ByObject: map[client.Object]ctrlcache.ByObject{
-			&corev1.Secret{}: {
-				Label: labels.SelectorFromSet(labels.Set{
-					tlsSecretLabel: "true",
-				}),
-			},
-		},
-		DefaultLabelSelector: labels.Nothing(), // Don't cache any other resources
-		SyncPeriod:           &syncPeriod,      // Reduce sync frequency to 30 minutes
-	})
+	cache, err := ctrlcache.New(restConfig, cacheOptions())
 	if err != nil {
 		glog.Fatalf("Failed to create certmonitor cache: %v", err)
 	}
@@ -162,4 +151,19 @@ func (c *CertMonitor) handleSecretDeletion(obj interface{}) {
 		return
 	}
 	c.metrics.DeleteCertMetric(secret.Namespace, secret.Name)
+}
+
+func cacheOptions() ctrlcache.Options {
+	syncPeriod := syncPeriod
+	return ctrlcache.Options{
+		ByObject: map[client.Object]ctrlcache.ByObject{
+			&corev1.Secret{}: {
+				Label: labels.SelectorFromSet(labels.Set{
+					tlsSecretLabel: "true",
+				}),
+			},
+		},
+		DefaultLabelSelector: labels.Nothing(),
+		SyncPeriod:           &syncPeriod,
+	}
 }
