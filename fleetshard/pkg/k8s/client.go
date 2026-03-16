@@ -9,7 +9,6 @@ import (
 	"github.com/stackrox/rox/operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	verticalpodautoscalingv1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -55,7 +54,6 @@ func buildClientOrDie(config *rest.Config) ctrlClient.Client {
 	must(v1alpha1.AddToScheme(scheme))
 	must(openshiftRouteV1.Install(scheme))
 	must(openshiftOperatorV1.Install(scheme))
-	must(verticalpodautoscalingv1.AddToScheme(scheme))
 	must(argoCd.AddToScheme(scheme))
 
 	k8sClient, err := ctrlClient.New(config, ctrlClient.Options{
