@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/telemetry"
 	"github.com/stackrox/rox/pkg/telemetry/phonehome/telemeter"
@@ -18,8 +20,12 @@ func TestTelemetryTrackRequests(t *testing.T) {
 		requestErr error
 		trackFunc  func(t *Telemetry, tt testCase)
 	}
-
-	ctx := context.Background()
+	defaultToken := &jwt.Token{
+		Claims: jwt.MapClaims{
+			"user_id": "user",
+		},
+	}
+	ctx := authentication.ContextWithToken(context.Background(), defaultToken)
 	tenantID := "tenant-id"
 	createFunc := func(t *Telemetry, tt testCase) {
 		t.trackCreationRequested(ctx, tenantID, tt.isAdmin, tt.requestErr)
@@ -80,24 +86,12 @@ func TestTelemetryTrackRequests(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			auth := &TelemetryAuthMock{
-				getUserFromContextFunc: func(ctx context.Context) (string, error) {
-					return "user", nil
-				},
-			}
-			tel := &telemetry.TelemeterMock{
+			tel := &TelemeterMock{
 				TrackFunc: func(event string, props map[string]any, opts ...telemeter.Option) {},
 			}
-			config := &telemetry.TelemetryConfigMock{
-				EnabledFunc: func() bool {
-					return true
-				},
-				TelemeterFunc: func() telemeter.Telemeter {
-					return tel
-				},
+			telemetry := &Telemetry{
+				telemeter: tel,
 			}
-
-			telemetry := NewTelemetry(auth, config)
 			tt.trackFunc(telemetry, tt)
 
 			calls := tel.TrackCalls()
@@ -110,4 +104,16 @@ func TestTelemetryTrackRequests(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNilTelemeter(t *testing.T) {
+	tel := NewTelemetry(&telemetry.TelemetryConfig{})
+	assert.Nil(t, tel.telemeter, "telemeter should be nil")
+	ctx := context.Background()
+	centralRequest := buildCentralRequest(nil)
+	// no nil pointer errors
+	tel.RegisterTenant(ctx, centralRequest, false, nil)
+	tel.UpdateTenantProperties(centralRequest)
+	tel.TrackDeletionRequested(ctx, "tenant-id", false, nil)
+	tel.Stop()
 }

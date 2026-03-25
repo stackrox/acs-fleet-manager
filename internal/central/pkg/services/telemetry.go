@@ -9,6 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/telemetry"
+	"github.com/stackrox/rox/pkg/telemetry/phonehome/segment"
 	"github.com/stackrox/rox/pkg/telemetry/phonehome/telemeter"
 )
 
@@ -19,22 +20,7 @@ const TenantGroupName = "Tenant"
 // its 3 background attempts to set the group properties.
 const segmentChancesRaiser = 6 * time.Second
 
-// TelemetryAuth is a wrapper around the user claim extraction.
-//
-//go:generate moq -out telemetry_moq.go . TelemetryAuth
-type TelemetryAuth interface {
-	getUserFromContext(ctx context.Context) (string, error)
-}
-
-// TelemetryAuthImpl is the default telemetry auth implementation.
-type TelemetryAuthImpl struct{}
-
-// NewTelemetryAuth creates a new telemetry auth.
-func NewTelemetryAuth() TelemetryAuth {
-	return &TelemetryAuthImpl{}
-}
-
-func (t *TelemetryAuthImpl) getUserFromContext(ctx context.Context) (string, error) {
+func getUserFromContext(ctx context.Context) (string, error) {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "cannot obtain claims from context")
@@ -48,17 +34,18 @@ func (t *TelemetryAuthImpl) getUserFromContext(ctx context.Context) (string, err
 
 // Telemetry is the telemetry boot service.
 type Telemetry struct {
-	auth   TelemetryAuth
-	config telemetry.TelemetryConfig
+	telemeter telemeter.Telemeter
 }
 
 // NewTelemetry creates a new telemetry service instance.
-func NewTelemetry(auth TelemetryAuth, config telemetry.TelemetryConfig) *Telemetry {
-	return &Telemetry{auth: auth, config: config}
+func NewTelemetry(config *telemetry.TelemetryConfig) *Telemetry {
+	return &Telemetry{
+		telemeter: newTelemeter(*config),
+	}
 }
 
 func (t *Telemetry) enabled() bool {
-	return t != nil && t.config != nil && t.config.Enabled()
+	return t != nil && t.telemeter != nil
 }
 
 // getTenantProperties returns the tenant group properties map.
@@ -94,7 +81,7 @@ func (t *Telemetry) trackCreationRequested(ctx context.Context, tenantID string,
 		errMsg = requestErr.Error()
 	}
 
-	user, err := t.auth.getUserFromContext(ctx)
+	user, err := getUserFromContext(ctx)
 	if err != nil {
 		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
 		return
@@ -106,11 +93,11 @@ func (t *Telemetry) trackCreationRequested(ctx context.Context, tenantID string,
 		"Success":          requestErr == nil,
 		"Is Admin Request": isAdmin,
 	}
-	t.config.Telemeter().Track(
+	t.telemeter.Track(
 		"Central Creation Requested",
 		props,
 		telemeter.WithUserID(user),
-		telemeter.WithGroups(TenantGroupName, tenantID),
+		telemeter.WithGroup(TenantGroupName, tenantID),
 	)
 }
 
@@ -120,7 +107,7 @@ func (t *Telemetry) RegisterTenant(ctx context.Context, convCentral *dbapi.Centr
 	if !t.enabled() {
 		return
 	}
-	user, err := t.auth.getUserFromContext(ctx)
+	user, err := getUserFromContext(ctx)
 	if err != nil {
 		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
 		return
@@ -130,9 +117,10 @@ func (t *Telemetry) RegisterTenant(ctx context.Context, convCentral *dbapi.Centr
 	// Adds the token user to the tenant group.
 	// Group call will issue a supporting Track event to force group properties
 	// update.
-	t.config.Telemeter().Group(props,
+	t.telemeter.Group(
+		telemeter.WithTraits(props),
 		telemeter.WithUserID(user),
-		telemeter.WithGroups(TenantGroupName, convCentral.ID),
+		telemeter.WithGroup(TenantGroupName, convCentral.ID),
 	)
 
 	go func() {
@@ -143,15 +131,16 @@ func (t *Telemetry) RegisterTenant(ctx context.Context, convCentral *dbapi.Centr
 	}()
 }
 
-// UpdateTenant updates tenant group properties.
+// UpdateTenantProperties updates tenant group properties.
 func (t *Telemetry) UpdateTenantProperties(convCentral *dbapi.CentralRequest) {
 	if !t.enabled() {
 		return
 	}
 	props := t.getTenantProperties(convCentral)
 	// Update tenant group properties from the name of fleet-manager backend.
-	t.config.Telemeter().Group(props,
-		telemeter.WithGroups(TenantGroupName, convCentral.ID),
+	t.telemeter.Group(
+		telemeter.WithTraits(props),
+		telemeter.WithGroup(TenantGroupName, convCentral.ID),
 	)
 }
 
@@ -166,7 +155,7 @@ func (t *Telemetry) TrackDeletionRequested(ctx context.Context, tenantID string,
 		errMsg = requestErr.Error()
 	}
 
-	user, err := t.auth.getUserFromContext(ctx)
+	user, err := getUserFromContext(ctx)
 	if err != nil {
 		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
 		return
@@ -178,11 +167,11 @@ func (t *Telemetry) TrackDeletionRequested(ctx context.Context, tenantID string,
 		"Success":          requestErr == nil,
 		"Is Admin Request": isAdmin,
 	}
-	t.config.Telemeter().Track(
+	t.telemeter.Track(
 		"Central Deletion Requested",
 		props,
 		telemeter.WithUserID(user),
-		telemeter.WithGroups(TenantGroupName, tenantID),
+		telemeter.WithGroup(TenantGroupName, tenantID),
 	)
 }
 
@@ -192,6 +181,29 @@ func (t *Telemetry) Start() {}
 // Stop the telemetry service.
 func (t *Telemetry) Stop() {
 	if t.enabled() {
-		t.config.Telemeter().Stop()
+		t.telemeter.Stop()
 	}
+}
+
+// Telemeter is a wrapper interface for the telemeter interface to enable mock testing.
+//
+//go:generate moq -out telemetry_moq.go . Telemeter
+type Telemeter interface {
+	telemeter.Telemeter
+}
+
+func newTelemeter(config telemetry.TelemetryConfig) telemeter.Telemeter {
+	if config.StorageKey == "" {
+		return nil
+	}
+	return segment.NewTelemeter(
+		config.StorageKey,
+		config.Endpoint,
+		config.ClientID,
+		config.ClientName,
+		config.ClientVersion,
+		config.PushInterval,
+		config.BatchSize,
+		nil,
+	)
 }

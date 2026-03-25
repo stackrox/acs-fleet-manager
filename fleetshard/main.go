@@ -66,9 +66,9 @@ func main() {
 	if err != nil {
 		glog.Fatal(err)
 	}
-
+	runtimeCtx, stopRuntime := context.WithCancel(context.Background())
 	go func() {
-		err := runtime.Start()
+		err := runtime.Start(runtimeCtx)
 		if err != nil {
 			glog.Fatal(err)
 		}
@@ -99,7 +99,7 @@ func main() {
 
 	glog.Infof("Application started. Will shut down gracefully on %s.", notifySignals)
 	sig := <-sigs
-	runtime.Stop()
+	stopRuntime()
 	if err := metricServer.Close(); err != nil {
 		glog.Errorf("closing metric server: %v", err)
 	}

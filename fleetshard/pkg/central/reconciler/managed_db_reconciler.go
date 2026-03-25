@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"fmt"
+
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
@@ -143,10 +144,7 @@ func (r *managedDbReconciler) ensureManagedCentralDBInitialized(ctx context.Cont
 	}
 
 	if !centralDBSecretExists {
-		dbMasterPassword, err := generateDBPassword()
-		if err != nil {
-			return fmt.Errorf("generating Central DB master password: %w", err)
-		}
+		dbMasterPassword := generateDBPassword()
 		if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace, dbUserTypeMaster, dbMasterPassword); err != nil {
 			return fmt.Errorf("ensuring that DB secret exists: %w", err)
 		}
@@ -172,10 +170,7 @@ func (r *managedDbReconciler) ensureManagedCentralDBInitialized(ctx context.Cont
 		return fmt.Errorf("getting RDS DB connection data: %w", err)
 	}
 
-	dbCentralPassword, err := generateDBPassword()
-	if err != nil {
-		return fmt.Errorf("generating Central DB password: %w", err)
-	}
+	dbCentralPassword := generateDBPassword()
 	err = r.managedDBInitFunc(ctx, dbConnection.WithPassword(dbMasterPassword).WithSSLRootCert(postgres.DatabaseCACertificatePathFleetshard),
 		dbCentralUserName, dbCentralPassword)
 	if err != nil {

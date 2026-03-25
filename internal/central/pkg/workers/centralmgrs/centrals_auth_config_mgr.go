@@ -16,7 +16,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
-	"github.com/stackrox/rox/pkg/ternary"
 )
 
 const centralAuthConfigManagerWorkerType = "central_auth_config"
@@ -109,10 +108,6 @@ func (k *CentralAuthConfigManager) reconcileCentralRequest(cr *dbapi.CentralRequ
 	if err != nil {
 		return errors.Wrap(err, "failed to augment central request with auth config")
 	}
-
-	cr.AuthConfig.ClientOrigin = ternary.String(k.centralConfig.HasStaticAuth(),
-		dbapi.AuthConfigStaticClientOrigin, dbapi.AuthConfigDynamicClientOrigin)
-
 	if err := k.centralService.UpdateIgnoreNils(cr); err != nil {
 		return errors.Wrapf(err, "failed to update central request %s", cr.ID)
 	}
@@ -126,6 +121,7 @@ func augmentWithStaticAuthConfig(r *dbapi.CentralRequest, centralConfig *config.
 	r.AuthConfig.ClientID = centralConfig.CentralIDPClientID
 	r.AuthConfig.ClientSecret = centralConfig.CentralIDPClientSecret //pragma: allowlist secret
 	r.AuthConfig.Issuer = centralConfig.CentralIDPIssuer
+	r.ClientOrigin = dbapi.AuthConfigStaticClientOrigin
 
 	return nil
 }

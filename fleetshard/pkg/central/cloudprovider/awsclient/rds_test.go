@@ -119,8 +119,7 @@ func TestRDSProvisioning(t *testing.T) {
 	defer cancel()
 
 	dbID := "test-" + uuid.New().String()
-	dbMasterPassword, err := random.GenerateString(25, random.AlphanumericCharacters)
-	require.NoError(t, err)
+	dbMasterPassword := random.GenerateString(25, random.AlphanumericCharacters)
 
 	clusterID := getClusterID(dbID)
 	instanceID := getInstanceID(dbID)
