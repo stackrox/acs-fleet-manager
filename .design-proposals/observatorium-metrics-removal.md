@@ -35,13 +35,13 @@ The following Go model files are generated from the OpenAPI schemas but not used
 **File**: `dev/env/manifests/addons/crds/00-addon-crd.yaml`
 - **Lines 385-387**: Contains Observatorium endpoint URLs for staging and production environments
   ```yaml
-  - Staging: https://observatorium-mst.stage.api.openshift.com/api/metrics/v1/<tenant id>/api/v1/receive 
+  - Staging: https://observatorium-mst.stage.api.openshift.com/api/metrics/v1/<tenant id>/api/v1/receive
   - Production: https://observatorium-mst.api.openshift.com/api/metrics/v1/<tenant id>/api/v1/receive
   ```
 
 ### Authentication Configuration
 
-**Files**: 
+**Files**:
 - `secrets/rhsso-metrics.clientId` - Empty secret file for Observatorium authentication
 - `secrets/rhsso-metrics.clientSecret` - Empty secret file for Observatorium authentication
 - `Makefile:630-631` - References to the above secret files in the `secrets/touch` target
