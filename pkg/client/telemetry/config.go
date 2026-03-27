@@ -10,6 +10,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// DisabledKey is a key value which disables the telemetry collection.
+// If the current key is DisabledKey, it won't be reconfigured.
+const DisabledKey = "DISABLED"
+
 // TelemetryConfig holds the telemetry configuration.
 type TelemetryConfig struct {
 	Endpoint       string

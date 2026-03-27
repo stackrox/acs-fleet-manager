@@ -193,7 +193,7 @@ type Telemeter interface {
 }
 
 func newTelemeter(config telemetry.TelemetryConfig) telemeter.Telemeter {
-	if config.StorageKey == "" {
+	if config.StorageKey == "" || config.StorageKey == telemetry.DisabledKey {
 		return nil
 	}
 	return segment.NewTelemeter(

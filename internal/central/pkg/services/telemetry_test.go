@@ -107,13 +107,32 @@ func TestTelemetryTrackRequests(t *testing.T) {
 }
 
 func TestNilTelemeter(t *testing.T) {
-	tel := NewTelemetry(&telemetry.TelemetryConfig{})
-	assert.Nil(t, tel.telemeter, "telemeter should be nil")
-	ctx := context.Background()
-	centralRequest := buildCentralRequest(nil)
-	// no nil pointer errors
-	tel.RegisterTenant(ctx, centralRequest, false, nil)
-	tel.UpdateTenantProperties(centralRequest)
-	tel.TrackDeletionRequested(ctx, "tenant-id", false, nil)
-	tel.Stop()
+	type testCase struct {
+		name string
+		key  string
+	}
+	tests := []testCase{
+		{
+			name: "empty telemeter key",
+			key:  "",
+		},
+		{
+			name: "disabled telemeter key",
+			key:  telemetry.DisabledKey,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tel := NewTelemetry(&telemetry.TelemetryConfig{})
+			assert.Nil(t, tel.telemeter, "telemeter should be nil")
+			ctx := context.Background()
+			centralRequest := buildCentralRequest(nil)
+			// no nil pointer errors
+			tel.RegisterTenant(ctx, centralRequest, false, nil)
+			tel.UpdateTenantProperties(centralRequest)
+			tel.TrackDeletionRequested(ctx, "tenant-id", false, nil)
+			tel.Stop()
+		})
+	}
 }
