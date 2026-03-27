@@ -13,7 +13,7 @@ applications:
           include: '{platform.stackrox.io_centrals.yaml,platform.stackrox.io_securedclusters.yaml}'
         path: operator/bundle/manifests
         repoURL: https://github.com/stackrox/stackrox
-        targetRevision: 4.6.2
+        targetRevision: 4.10.0
       syncPolicy:
         automated:
           prune: true
@@ -45,8 +45,8 @@ applications:
           valuesObject:
             operator:
               images:
-                - deploymentName: "rhacs-operator-4.9.1"
-                  image: "registry.redhat.io/advanced-cluster-security/rhacs-rhel8-operator@sha256:68d9c77d33b50fde89121bc62ffb8a2fe8b43f50ebf0ec964938d33ffef17874"
+                - deploymentName: "rhacs-operator-4.10.0"
+                  image: "registry.redhat.io/advanced-cluster-security/rhacs-rhel8-operator@sha256:2205a04f297fa92b157e36ff3e6994dc88c041b291193bd7d03b3f033910b2fe"
                   centralLabelSelector: "rhacs.redhat.com/version-selector=dev"
                   securedClusterLabelSelector: "rhacs.redhat.com/selector=dev"
 

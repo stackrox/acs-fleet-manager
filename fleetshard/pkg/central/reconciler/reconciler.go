@@ -857,13 +857,8 @@ func generateNewKeyChainFile(b64Key string) ([]byte, error) {
 	return yamlBytes, nil
 }
 
-func generateDBPassword() (string, error) {
-	password, err := random.GenerateString(25, random.AlphanumericCharacters)
-	if err != nil {
-		return "", fmt.Errorf("generating DB password: %w", err)
-	}
-
-	return password, nil
+func generateDBPassword() string {
+	return random.GenerateString(25, random.AlphanumericCharacters)
 }
 
 func (r *CentralReconciler) ensureInstancePodsTerminated(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {

@@ -4,72 +4,209 @@
 package services
 
 import (
-	"context"
+	"github.com/stackrox/rox/pkg/telemetry/phonehome/telemeter"
 	"sync"
 )
 
-// Ensure, that TelemetryAuthMock does implement TelemetryAuth.
+// Ensure, that TelemeterMock does implement Telemeter.
 // If this is not the case, regenerate this file with moq.
-var _ TelemetryAuth = &TelemetryAuthMock{}
+var _ Telemeter = &TelemeterMock{}
 
-// TelemetryAuthMock is a mock implementation of TelemetryAuth.
+// TelemeterMock is a mock implementation of Telemeter.
 //
-//	func TestSomethingThatUsesTelemetryAuth(t *testing.T) {
+//	func TestSomethingThatUsesTelemeter(t *testing.T) {
 //
-//		// make and configure a mocked TelemetryAuth
-//		mockedTelemetryAuth := &TelemetryAuthMock{
-//			getUserFromContextFunc: func(ctx context.Context) (string, error) {
-//				panic("mock out the getUserFromContext method")
+//		// make and configure a mocked Telemeter
+//		mockedTelemeter := &TelemeterMock{
+//			GroupFunc: func(opts ...telemeter.Option)  {
+//				panic("mock out the Group method")
+//			},
+//			IdentifyFunc: func(opts ...telemeter.Option)  {
+//				panic("mock out the Identify method")
+//			},
+//			StopFunc: func()  {
+//				panic("mock out the Stop method")
+//			},
+//			TrackFunc: func(event string, props map[string]any, opts ...telemeter.Option)  {
+//				panic("mock out the Track method")
 //			},
 //		}
 //
-//		// use mockedTelemetryAuth in code that requires TelemetryAuth
+//		// use mockedTelemeter in code that requires Telemeter
 //		// and then make assertions.
 //
 //	}
-type TelemetryAuthMock struct {
-	// getUserFromContextFunc mocks the getUserFromContext method.
-	getUserFromContextFunc func(ctx context.Context) (string, error)
+type TelemeterMock struct {
+	// GroupFunc mocks the Group method.
+	GroupFunc func(opts ...telemeter.Option)
+
+	// IdentifyFunc mocks the Identify method.
+	IdentifyFunc func(opts ...telemeter.Option)
+
+	// StopFunc mocks the Stop method.
+	StopFunc func()
+
+	// TrackFunc mocks the Track method.
+	TrackFunc func(event string, props map[string]any, opts ...telemeter.Option)
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// getUserFromContext holds details about calls to the getUserFromContext method.
-		getUserFromContext []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
+		// Group holds details about calls to the Group method.
+		Group []struct {
+			// Opts is the opts argument value.
+			Opts []telemeter.Option
+		}
+		// Identify holds details about calls to the Identify method.
+		Identify []struct {
+			// Opts is the opts argument value.
+			Opts []telemeter.Option
+		}
+		// Stop holds details about calls to the Stop method.
+		Stop []struct {
+		}
+		// Track holds details about calls to the Track method.
+		Track []struct {
+			// Event is the event argument value.
+			Event string
+			// Props is the props argument value.
+			Props map[string]any
+			// Opts is the opts argument value.
+			Opts []telemeter.Option
 		}
 	}
-	lockgetUserFromContext sync.RWMutex
+	lockGroup    sync.RWMutex
+	lockIdentify sync.RWMutex
+	lockStop     sync.RWMutex
+	lockTrack    sync.RWMutex
 }
 
-// getUserFromContext calls getUserFromContextFunc.
-func (mock *TelemetryAuthMock) getUserFromContext(ctx context.Context) (string, error) {
-	if mock.getUserFromContextFunc == nil {
-		panic("TelemetryAuthMock.getUserFromContextFunc: method is nil but TelemetryAuth.getUserFromContext was just called")
+// Group calls GroupFunc.
+func (mock *TelemeterMock) Group(opts ...telemeter.Option) {
+	if mock.GroupFunc == nil {
+		panic("TelemeterMock.GroupFunc: method is nil but Telemeter.Group was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
+		Opts []telemeter.Option
 	}{
-		Ctx: ctx,
+		Opts: opts,
 	}
-	mock.lockgetUserFromContext.Lock()
-	mock.calls.getUserFromContext = append(mock.calls.getUserFromContext, callInfo)
-	mock.lockgetUserFromContext.Unlock()
-	return mock.getUserFromContextFunc(ctx)
+	mock.lockGroup.Lock()
+	mock.calls.Group = append(mock.calls.Group, callInfo)
+	mock.lockGroup.Unlock()
+	mock.GroupFunc(opts...)
 }
 
-// getUserFromContextCalls gets all the calls that were made to getUserFromContext.
+// GroupCalls gets all the calls that were made to Group.
 // Check the length with:
 //
-//	len(mockedTelemetryAuth.getUserFromContextCalls())
-func (mock *TelemetryAuthMock) getUserFromContextCalls() []struct {
-	Ctx context.Context
+//	len(mockedTelemeter.GroupCalls())
+func (mock *TelemeterMock) GroupCalls() []struct {
+	Opts []telemeter.Option
 } {
 	var calls []struct {
-		Ctx context.Context
+		Opts []telemeter.Option
 	}
-	mock.lockgetUserFromContext.RLock()
-	calls = mock.calls.getUserFromContext
-	mock.lockgetUserFromContext.RUnlock()
+	mock.lockGroup.RLock()
+	calls = mock.calls.Group
+	mock.lockGroup.RUnlock()
+	return calls
+}
+
+// Identify calls IdentifyFunc.
+func (mock *TelemeterMock) Identify(opts ...telemeter.Option) {
+	if mock.IdentifyFunc == nil {
+		panic("TelemeterMock.IdentifyFunc: method is nil but Telemeter.Identify was just called")
+	}
+	callInfo := struct {
+		Opts []telemeter.Option
+	}{
+		Opts: opts,
+	}
+	mock.lockIdentify.Lock()
+	mock.calls.Identify = append(mock.calls.Identify, callInfo)
+	mock.lockIdentify.Unlock()
+	mock.IdentifyFunc(opts...)
+}
+
+// IdentifyCalls gets all the calls that were made to Identify.
+// Check the length with:
+//
+//	len(mockedTelemeter.IdentifyCalls())
+func (mock *TelemeterMock) IdentifyCalls() []struct {
+	Opts []telemeter.Option
+} {
+	var calls []struct {
+		Opts []telemeter.Option
+	}
+	mock.lockIdentify.RLock()
+	calls = mock.calls.Identify
+	mock.lockIdentify.RUnlock()
+	return calls
+}
+
+// Stop calls StopFunc.
+func (mock *TelemeterMock) Stop() {
+	if mock.StopFunc == nil {
+		panic("TelemeterMock.StopFunc: method is nil but Telemeter.Stop was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockStop.Lock()
+	mock.calls.Stop = append(mock.calls.Stop, callInfo)
+	mock.lockStop.Unlock()
+	mock.StopFunc()
+}
+
+// StopCalls gets all the calls that were made to Stop.
+// Check the length with:
+//
+//	len(mockedTelemeter.StopCalls())
+func (mock *TelemeterMock) StopCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockStop.RLock()
+	calls = mock.calls.Stop
+	mock.lockStop.RUnlock()
+	return calls
+}
+
+// Track calls TrackFunc.
+func (mock *TelemeterMock) Track(event string, props map[string]any, opts ...telemeter.Option) {
+	if mock.TrackFunc == nil {
+		panic("TelemeterMock.TrackFunc: method is nil but Telemeter.Track was just called")
+	}
+	callInfo := struct {
+		Event string
+		Props map[string]any
+		Opts  []telemeter.Option
+	}{
+		Event: event,
+		Props: props,
+		Opts:  opts,
+	}
+	mock.lockTrack.Lock()
+	mock.calls.Track = append(mock.calls.Track, callInfo)
+	mock.lockTrack.Unlock()
+	mock.TrackFunc(event, props, opts...)
+}
+
+// TrackCalls gets all the calls that were made to Track.
+// Check the length with:
+//
+//	len(mockedTelemeter.TrackCalls())
+func (mock *TelemeterMock) TrackCalls() []struct {
+	Event string
+	Props map[string]any
+	Opts  []telemeter.Option
+} {
+	var calls []struct {
+		Event string
+		Props map[string]any
+		Opts  []telemeter.Option
+	}
+	mock.lockTrack.RLock()
+	calls = mock.calls.Track
+	mock.lockTrack.RUnlock()
 	return calls
 }

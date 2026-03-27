@@ -110,12 +110,8 @@ func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient
 	}, nil
 }
 
-// Stop stops the runtime
-func (r *Runtime) Stop() {
-}
-
 // Start starts the fleetshard runtime and schedules
-func (r *Runtime) Start() error {
+func (r *Runtime) Start(ctx context.Context) error {
 	glog.Info("fleetshard runtime started")
 	glog.Infof("Auth provider initialisation enabled: %v", r.config.CreateAuthProvider)
 
@@ -226,7 +222,7 @@ func (r *Runtime) Start() error {
 		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
 
-	err := ticker.Start()
+	err := ticker.Start(ctx)
 	if err != nil {
 		return fmt.Errorf("starting ticker: %w", err)
 	}
