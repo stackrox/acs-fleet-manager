@@ -43,6 +43,8 @@ spec:
         {{- end }}
         {{- end }}
         imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
         command:
         - /usr/local/bin/fleetshard-sync
         env:
