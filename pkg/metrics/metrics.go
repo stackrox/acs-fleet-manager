@@ -622,7 +622,7 @@ func init() {
 	GitopsConfigProviderErrorCounter.WithLabelValues().Add(0)
 }
 
-// UpdateDatabaseQueryDurationMetric Update the observatorium request duration metric with the following labels:
+// UpdateDatabaseQueryDurationMetric Update the database query duration metric with the following labels:
 //   - status: (i.e. "success" or "failure")
 //   - queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
 func UpdateDatabaseQueryDurationMetric(status string, queryType string, elapsed time.Duration) {
