@@ -22,6 +22,8 @@ spec:
         - name: emailsender
           image: "{{ .Values.image.repo }}:{{ .Values.image.tag }}"
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
           command:
             - /acscs/emailsender
           env:
