@@ -39,5 +39,6 @@ func AugmentWithDynamicAuthConfig(ctx context.Context, r *dbapi.CentralRequest, 
 	r.AuthConfig.ClientID = dynamicClientData.ClientId
 	r.AuthConfig.ClientSecret = dynamicClientData.Secret // pragma: allowlist secret
 	r.AuthConfig.Issuer = realmConfig.ValidIssuerURI
+	r.ClientOrigin = dbapi.AuthConfigDynamicClientOrigin
 	return nil
 }
