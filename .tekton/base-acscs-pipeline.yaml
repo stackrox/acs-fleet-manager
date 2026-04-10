@@ -176,7 +176,7 @@ spec:
       - name: name
         value: prefetch-dependencies
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-prefetch-dependencies:0.3@sha256:45d2d88ddcc02db4605a4059e034121163458a63b7bb4e179e4402c156f84487
+        value: quay.io/konflux-ci/tekton-catalog/task-prefetch-dependencies:0.3@sha256:d5b388dbab4605f2bb1fe6a561dcdad51a73cf74fc0a646cc0541934acae40a8
       - name: kind
         value: task
       resolver: bundles
@@ -227,7 +227,7 @@ spec:
       - name: name
         value: buildah
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-buildah:0.9@sha256:4a026f5420455ea08c1a7143cfe0451c5460b1ffebf7f85025d833b1919bb54d
+        value: quay.io/konflux-ci/tekton-catalog/task-buildah:0.9@sha256:3b5da48a5dcfdce958ba69b11860b1527b3745fa1529a5ba8fb774d3523014f9
       - name: kind
         value: task
       resolver: bundles
@@ -314,7 +314,7 @@ spec:
       - name: name
         value: rpms-signature-scan
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-rpms-signature-scan:0.2@sha256:0eb4cfb41181a158b6761c990cc7a9f7f77c70f7ff19bf276009c6ef59c9da5e
+        value: quay.io/konflux-ci/tekton-catalog/task-rpms-signature-scan:0.2@sha256:7f2e8ed5c2d8b2433cc9a7779ce7c617de7eb0dc8f16d07d2a792cee816ed503
       - name: kind
         value: task
       resolver: bundles
@@ -336,7 +336,7 @@ spec:
       - name: name
         value: clair-scan
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-clair-scan:0.3@sha256:3fa03be0280f33d7070ea53f26d53e727199737a7a2b9a59a95071ae40a999ac
+        value: quay.io/konflux-ci/tekton-catalog/task-clair-scan:0.3@sha256:89924756c91ded746cf9ccc9f07907595e5b2454ddda0219132913a4875a5f59
       - name: kind
         value: task
       resolver: bundles
@@ -455,7 +455,7 @@ spec:
       - name: name
         value: coverity-availability-check
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-coverity-availability-check:0.2@sha256:de35caf2f090e3275cfd1019ea50d9662422e904fb4aebd6ea29fb53a1ad57f5
+        value: quay.io/konflux-ci/tekton-catalog/task-coverity-availability-check:0.2@sha256:8b501440a960aec446db2ebc6625a49d0317a9fc7bf0f7bd9b18cb63052db7de
       - name: kind
         value: task
       resolver: bundles
