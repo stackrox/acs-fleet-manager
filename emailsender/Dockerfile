@@ -10,7 +10,7 @@ COPY . ./
 
 RUN make emailsender
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7@sha256:83006d535923fcf1345067873524a3980316f51794f01d8655be55d6e9387183 AS standard
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7@sha256:d91be7cea9f03a757d69ad7fcdfcd7849dba820110e7980d5e2a1f46ed06ea3b AS standard
 
 RUN microdnf install shadow-utils
 
