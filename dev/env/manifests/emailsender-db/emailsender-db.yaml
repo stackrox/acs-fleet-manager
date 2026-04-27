@@ -16,7 +16,7 @@ spec:
         app: emailsender-db
     spec:
       containers:
-        - image: postgres:13
+        - image: postgres:15
           name: postgres
           ports:
             - containerPort: 5432
