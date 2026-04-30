@@ -49,8 +49,7 @@ parameters:
     description: Version of PostgreSQL image to be used (10 or latest).
     displayName: Version of PostgreSQL Image
     required: true
-    value: "18"
-
+    value: "17"
 objects:
 
   - apiVersion: v1

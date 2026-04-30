@@ -59,7 +59,7 @@ jobs:
       TEST_TIMEOUT: 30m
     services:
       postgres:
-        image: postgres:18
+        image: postgres:17
         env:
           POSTGRES_PASSWORD: foobar-bizz-buzz # pragma: allowlist secret - dummy value
           POSTGRES_USER: fleet_manager
