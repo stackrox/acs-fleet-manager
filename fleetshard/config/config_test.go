@@ -42,6 +42,25 @@ func TestSingleton_Failure_WhenManagedDBEnabledAndManagedDbSecurityGroupNotSet(t
 	assert.Nil(t, cfg)
 }
 
+func TestSingleton_Success_WhenPyroscopeEnabled(t *testing.T) {
+	t.Setenv("CLUSTER_ID", "some-value")
+	t.Setenv("PYROSCOPE_ENABLED", "true")
+	t.Setenv("PYROSCOPE_SERVER_ADDRESS", "http://pyroscope:4040")
+	cfg, err := GetConfig()
+	require.NoError(t, err)
+	assert.True(t, cfg.Pyroscope.Enabled)
+	assert.Equal(t, "http://pyroscope:4040", cfg.Pyroscope.ServerAddress)
+	assert.Equal(t, "fleetshard-sync", cfg.Pyroscope.ApplicationName)
+}
+
+func TestSingleton_Failure_WhenPyroscopeEnabledAndServerAddressNotSet(t *testing.T) {
+	t.Setenv("CLUSTER_ID", "some-value")
+	t.Setenv("PYROSCOPE_ENABLED", "true")
+	cfg, err := GetConfig()
+	assert.Error(t, err)
+	assert.Nil(t, cfg)
+}
+
 func TestSingleton_ManagedDBTags(t *testing.T) {
 	t.Setenv("CLUSTER_ID", "some-value")
 	t.Setenv("MANAGED_DB_TAGS_0_KEY", "DataplaneClusterName")

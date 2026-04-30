@@ -45,6 +45,7 @@ type Config struct {
 	Telemetry                                  Telemetry
 	AuditLogging                               AuditLogging
 	SecretEncryption                           SecretEncryption
+	Pyroscope                                  Pyroscope
 }
 
 // ManagedDB for configuring managed DB specific parameters
@@ -89,6 +90,14 @@ type SecretEncryption struct {
 	KeyID string `env:"SECRET_ENCRYPTION_KEY_ID"`
 }
 
+// Pyroscope defines parameters for continuous profiling via Pyroscope.
+type Pyroscope struct {
+	Enabled        bool   `env:"PYROSCOPE_ENABLED" envDefault:"false"`
+	ServerAddress  string `env:"PYROSCOPE_SERVER_ADDRESS"`
+	AuthToken      string `env:"PYROSCOPE_AUTH_TOKEN"`
+	ApplicationName string `env:"PYROSCOPE_APPLICATION_NAME" envDefault:"fleetshard-sync"`
+}
+
 // GetConfig retrieves the current runtime configuration from the environment and returns it.
 func GetConfig() (*Config, error) {
 	c := Config{}
@@ -109,6 +118,7 @@ func GetConfig() (*Config, error) {
 	validateManagedDBConfig(c, &configErrors)
 	validateSecretEncryptionConfig(c, &configErrors)
 	validateTenantImagePullSecrets(c, &configErrors)
+	validatePyroscopeConfig(c, &configErrors)
 
 	cfgErr := configErrors.ToError()
 	if cfgErr != nil {
@@ -161,6 +171,15 @@ func validateTenantImagePullSecrets(c Config, configErrors *errorhelpers.ErrorLi
 
 	if cfg.Auths == nil || len(cfg.Auths) == 0 {
 		configErrors.AddError(errors.New("invalid tenant image pull secret"))
+	}
+}
+
+func validatePyroscopeConfig(c Config, configErrors *errorhelpers.ErrorList) {
+	if !c.Pyroscope.Enabled {
+		return
+	}
+	if c.Pyroscope.ServerAddress == "" {
+		configErrors.AddError(errors.New("PYROSCOPE_ENABLED == true and PYROSCOPE_SERVER_ADDRESS unset in the environment"))
 	}
 }
 
