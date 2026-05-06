@@ -441,6 +441,9 @@ func (r *CentralReconciler) configureAuthProvider(secret *corev1.Secret, remoteC
 
 func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Context,
 	remoteCentral private.ManagedCentral) error {
+	if isArgoDeclarativeConfigReconciliationEnabled(remoteCentral) {
+		return nil
+	}
 	namespace := remoteCentral.Metadata.Namespace
 	return ensureSecretExists(
 		ctx,
@@ -961,7 +964,7 @@ func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.M
 		return true
 	}
 
-	if force, ok := remoteCentral.Spec.TenantResourcesValues["forceReconcile"].(bool); ok && force {
+	if isForceReconcile(remoteCentral) {
 		return true
 	}
 

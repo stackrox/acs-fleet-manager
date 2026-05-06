@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -76,7 +77,6 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 	values["isInternal"] = remoteCentral.Metadata.Internal
 	values["telemetryStorageEndpoint"] = r.argoOpts.Telemetry.StorageEndpoint
 	values["centralAdminPasswordEnabled"] = !r.argoOpts.WantsAuthProvider
-	values["centralEnabled"] = true // TODO: Remove once ROX-27129 fully released
 	values["centralUIHost"] = remoteCentral.Spec.UiHost
 	values["centralDataHost"] = remoteCentral.Spec.DataHost
 
@@ -150,37 +150,58 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 }
 
 func (r *argoReconciler) getSourceTargetRevision(m private.ManagedCentral) string {
-	return r.getArgoCdTargetParam(m, "sourceTargetRevision", r.argoOpts.TenantDefaultArgoCdAppSourceTargetRevision)
+	return getTenantResourcesValue(m, "argoCd.sourceTargetRevision", r.argoOpts.TenantDefaultArgoCdAppSourceTargetRevision)
 }
 
 func (r *argoReconciler) getSourcePath(m private.ManagedCentral) string {
-	return r.getArgoCdTargetParam(m, "sourcePath", r.argoOpts.TenantDefaultArgoCdAppSourcePath)
+	return getTenantResourcesValue(m, "argoCd.sourcePath", r.argoOpts.TenantDefaultArgoCdAppSourcePath)
 }
 
 func (r *argoReconciler) getSourceRepoURL(m private.ManagedCentral) string {
-	return r.getArgoCdTargetParam(m, "sourceRepoUrl", r.argoOpts.TenantDefaultArgoCdAppSourceRepoURL)
+	return getTenantResourcesValue(m, "argoCd.sourceRepoUrl", r.argoOpts.TenantDefaultArgoCdAppSourceRepoURL)
 }
 
-func (r *argoReconciler) getArgoCdTargetParam(m private.ManagedCentral, key, defaultValue string) string {
-	if m.Spec.TenantResourcesValues == nil {
+func isArgoDeclarativeConfigReconciliationEnabled(m private.ManagedCentral) bool {
+	return getTenantResourcesValue(m, "declarativeConfig.enabled", false)
+}
+
+func isForceReconcile(m private.ManagedCentral) bool {
+	return getTenantResourcesValue(m, "forceReconcile", false)
+}
+
+type valueType interface {
+	string | bool | int | float64
+}
+
+func getTenantResourcesValue[T valueType](remoteCentral private.ManagedCentral, path string, defaultValue T) T {
+	return getHelmValueByPath(remoteCentral.Spec.TenantResourcesValues, path, defaultValue)
+}
+
+func getHelmValueByPath[T valueType](values map[string]interface{}, path string, defaultValue T) T {
+	if values == nil {
 		return defaultValue
 	}
 
-	argoCd, ok := m.Spec.TenantResourcesValues["argoCd"].(map[string]interface{})
+	parts := strings.Split(path, ".")
+	if len(parts) == 0 {
+		return defaultValue
+	}
+
+	current := values
+	for _, part := range parts[:len(parts)-1] {
+		next, ok := current[part].(map[string]interface{})
+		if !ok {
+			return defaultValue
+		}
+		current = next
+	}
+
+	val, ok := current[parts[len(parts)-1]].(T)
 	if !ok {
 		return defaultValue
 	}
 
-	revision, ok := argoCd[key].(string)
-	if !ok {
-		return defaultValue
-	}
-
-	if len(revision) == 0 {
-		return defaultValue
-	}
-
-	return revision
+	return val
 }
 
 func (r *argoReconciler) ensureApplicationDeleted(ctx context.Context, tenantNamespace string) (bool, error) {

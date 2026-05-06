@@ -1232,6 +1232,31 @@ func TestReconcileDeclarativeConfigurationData(t *testing.T) {
 	}
 }
 
+func TestReconcileDeclarativeConfigSkippedWhenArgoManaged(t *testing.T) {
+	centralWithDeclarativeConfig := simpleManagedCentral
+	centralWithDeclarativeConfig.Spec.TenantResourcesValues = map[string]interface{}{
+		"declarativeConfig": map[string]interface{}{
+			"enabled": true,
+		},
+	}
+
+	reconcilerOptions := CentralReconcilerOptions{
+		WantsAuthProvider: true,
+		AuditLogging:      defaultAuditLogConfig,
+	}
+	fakeClient, _, r := getClientTrackerAndReconciler(t, nil, reconcilerOptions)
+
+	err := r.reconcileDeclarativeConfigurationData(context.Background(), centralWithDeclarativeConfig)
+	require.NoError(t, err)
+
+	secret := &v1.Secret{}
+	getErr := fakeClient.Get(context.Background(), client.ObjectKey{
+		Namespace: centralNamespace,
+		Name:      sensibleDeclarativeConfigSecretName,
+	}, secret)
+	assert.True(t, k8sErrors.IsNotFound(getErr), "secret should not be created when declarativeConfig.enabled is true")
+}
+
 func TestRestoreCentralSecrets(t *testing.T) {
 	testCases := []struct {
 		name                     string
