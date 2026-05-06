@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/golang/glog"
-	"github.com/hashicorp/go-multierror"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -28,7 +27,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
-	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/random"
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
@@ -66,10 +64,6 @@ const (
 
 	centralExpiredAtKey = "rhacs.redhat.com/expired-at"
 
-	auditLogNotifierKey  = "com.redhat.rhacs.auditLogNotifier"
-	auditLogNotifierName = "Platform Audit Logs"
-	auditLogTenantIDKey  = "tenant_id"
-
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
 	dbUserTypeMaster     = "master"
 	dbUserTypeCentral    = "central"
@@ -79,18 +73,11 @@ const (
 	centralDbOverrideConfigMap = "central-db-override"
 	centralDeletePollInterval  = 5 * time.Second
 
-	centralEncryptionKeySecretName = "central-encryption-key-chain" // pragma: allowlist secret
-
-	sensibleDeclarativeConfigSecretName     = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
-	authProviderClientCredentialsSecretName = "default-auth-provider-client-credentials"   // pragma: allowlist secret
-
-	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
-	additionalAuthProviderConfigKey  = "additional-auth-provider"
-
-	tenantImagePullSecretName = "stackrox" // pragma: allowlist secret
+	centralEncryptionKeySecretName          = "central-encryption-key-chain"             // pragma: allowlist secret
+	authProviderClientCredentialsSecretName = "default-auth-provider-client-credentials" // pragma: allowlist secret
+	tenantImagePullSecretName               = "stackrox"                                 // pragma: allowlist secret
 )
 
-type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error)
 type needsReconcileFunc func(changed bool, central private.ManagedCentral, storedSecrets []string) bool
 type restoreCentralSecretsFunc func(ctx context.Context, remoteCentral private.ManagedCentral) error
 type areSecretsStoredFunc func(secretsStored []string) bool
@@ -103,7 +90,6 @@ type encryptedSecrets struct {
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
 	UseRoutes             bool
-	WantsAuthProvider     bool
 	ManagedDBEnabled      bool
 	ClusterName           string
 	Environment           string
@@ -136,7 +122,6 @@ type CentralReconciler struct {
 	managedDbReconciler *managedDbReconciler
 	managedDBEnabled    bool
 
-	wantsAuthProvider     bool
 	tenantImagePullSecret []byte
 	clock                 clock
 
@@ -318,166 +303,23 @@ func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remot
 	return nil, ErrDeletionInProgress
 }
 
-func getAuditLogNotifierConfig(
-	auditLoggingConfig config.AuditLogging,
-	namespace string,
-) *declarativeconfig.Notifier {
-	return &declarativeconfig.Notifier{
-		Name: auditLogNotifierName,
-		GenericConfig: &declarativeconfig.GenericConfig{
-			Endpoint:            auditLoggingConfig.Endpoint(true),
-			SkipTLSVerify:       auditLoggingConfig.SkipTLSVerify,
-			AuditLoggingEnabled: true,
-			ExtraFields: []declarativeconfig.KeyValuePair{
-				{
-					Key:   auditLogTenantIDKey,
-					Value: namespace,
-				},
-			},
-		},
-	}
-}
-
-func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, namespace string) error {
-	if !r.auditLogging.Enabled {
-		return nil
-	}
-	if secret.Data == nil {
-		secret.Data = make(map[string][]byte)
-	}
-	auditLogNotifierConfig := getAuditLogNotifierConfig(
-		r.auditLogging,
-		namespace,
-	)
-	encodedNotifierConfig, marshalErr := yaml.Marshal(auditLogNotifierConfig)
-	if marshalErr != nil {
-		return fmt.Errorf("marshaling audit log notifier configuration: %w", marshalErr)
-	}
-	secret.Data[auditLogNotifierKey] = encodedNotifierConfig
-	return nil
-}
-
-func getAuthProviderConfig(remoteCentral private.ManagedCentral) *declarativeconfig.AuthProvider {
-	groups := []declarativeconfig.Group{
-		{
-			AttributeKey:   "userid",
-			AttributeValue: remoteCentral.Spec.Auth.OwnerUserId,
-			RoleName:       "Admin",
-		},
-		{
-			AttributeKey:   "groups",
-			AttributeValue: "admin:org:all",
-			RoleName:       "Admin",
-		},
-		{
-			AttributeKey:   "rh_is_org_admin",
-			AttributeValue: "true",
-			RoleName:       "Admin",
-		},
-	}
-	if remoteCentral.Spec.Auth.OwnerAlternateUserId != "" {
-		groups = append(groups, declarativeconfig.Group{
-			AttributeKey:   "userid",
-			AttributeValue: remoteCentral.Spec.Auth.OwnerAlternateUserId,
-			RoleName:       "Admin",
-		})
-	}
-	return &declarativeconfig.AuthProvider{
-		Name:             authProviderName(remoteCentral),
-		UIEndpoint:       remoteCentral.Spec.UiHost,
-		ExtraUIEndpoints: []string{"localhost:8443"},
-		Groups:           groups,
-		RequiredAttributes: []declarativeconfig.RequiredAttribute{
-			{
-				AttributeKey:   "rh_org_id",
-				AttributeValue: remoteCentral.Spec.Auth.OwnerOrgId,
-			},
-		},
-		ClaimMappings: []declarativeconfig.ClaimMapping{
-			{
-				Path: "realm_access.roles",
-				Name: "groups",
-			},
-			{
-				Path: "org_id",
-				Name: "rh_org_id",
-			},
-			{
-				Path: "is_org_admin",
-				Name: "rh_is_org_admin",
-			},
-			{
-				Path: "deprecated_sub",
-				Name: "userid",
-			},
-		},
-		OIDCConfig: &declarativeconfig.OIDCConfig{
-			Issuer:                    remoteCentral.Spec.Auth.Issuer,
-			CallbackMode:              "post",
-			ClientID:                  remoteCentral.Spec.Auth.ClientId,
-			ClientSecret:              remoteCentral.Spec.Auth.ClientSecret, // pragma: allowlist secret
-			DisableOfflineAccessScope: true,
-		},
-	}
-}
-
-func (r *CentralReconciler) configureAuthProvider(secret *corev1.Secret, remoteCentral private.ManagedCentral) error {
-	if !r.wantsAuthProvider {
-		return nil
-	}
-
-	if secret.Data == nil {
-		secret.Data = make(map[string][]byte)
-	}
-
-	authProviderConfig := getAuthProviderConfig(remoteCentral)
-
-	rawAuthProviderBytes, err := yaml.Marshal(authProviderConfig)
-	if err != nil {
-		return fmt.Errorf("marshaling auth provider configuration: %w", err)
-	}
-	secret.Data[authProviderDeclarativeConfigKey] = rawAuthProviderBytes
-	return nil
-}
-
 func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Context,
 	remoteCentral private.ManagedCentral) error {
-	if isArgoDeclarativeConfigReconciliationEnabled(remoteCentral) {
-		return ensureSecretExists(
-			ctx,
-			r.client,
-			remoteCentral.Metadata.Namespace,
-			authProviderClientCredentialsSecretName,
-			func(secret *corev1.Secret) error {
-				if secret.Data == nil {
-					secret.Data = make(map[string][]byte)
-				}
-				secret.Data["clientID"] = []byte(remoteCentral.Spec.Auth.ClientId)
-				secret.Data["clientSecret"] = []byte(remoteCentral.Spec.Auth.ClientSecret) // pragma: allowlist secret
-				return nil
-			},
-		)
+	if !r.argoReconciler.isArgoDeclarativeConfigReconciliationEnabled(remoteCentral) {
+		return nil
 	}
-	namespace := remoteCentral.Metadata.Namespace
 	return ensureSecretExists(
 		ctx,
 		r.client,
-		namespace,
-		sensibleDeclarativeConfigSecretName,
+		remoteCentral.Metadata.Namespace,
+		authProviderClientCredentialsSecretName,
 		func(secret *corev1.Secret) error {
-			var configErrs *multierror.Error
-			if err := r.configureAuditLogNotifier(secret, namespace); err != nil {
-				configErrs = multierror.Append(configErrs, err)
+			if secret.Data == nil {
+				secret.Data = make(map[string][]byte)
 			}
-			if err := r.configureAuthProvider(secret, remoteCentral); err != nil {
-				configErrs = multierror.Append(configErrs, err)
-			}
-			if err := r.configureAdditionalAuthProvider(secret, remoteCentral); err != nil {
-				configErrs = multierror.Append(configErrs, err)
-			}
-			return errors.Wrapf(configErrs.ErrorOrNil(),
-				"configuring declarative configurations within secret %s/%s",
-				secret.GetNamespace(), secret.GetName())
+			secret.Data["clientID"] = []byte(remoteCentral.Spec.Auth.ClientId)
+			secret.Data["clientSecret"] = []byte(remoteCentral.Spec.Auth.ClientSecret) // pragma: allowlist secret
+			return nil
 		},
 	)
 }
@@ -985,71 +827,6 @@ func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.M
 	return false
 }
 
-func (r *CentralReconciler) configureAdditionalAuthProvider(secret *corev1.Secret, central private.ManagedCentral) error {
-	authProviderConfig := findAdditionalAuthProvider(central)
-	if authProviderConfig == nil {
-		return nil
-	}
-	if secret.Data == nil {
-		secret.Data = make(map[string][]byte)
-	}
-
-	rawAuthProviderBytes, err := yaml.Marshal(authProviderConfig)
-	if err != nil {
-		return fmt.Errorf("marshaling additional auth provider configuration: %w", err)
-	}
-	secret.Data[additionalAuthProviderConfigKey] = rawAuthProviderBytes
-	return nil
-}
-
-func findAdditionalAuthProvider(central private.ManagedCentral) *declarativeconfig.AuthProvider {
-	authProvider := central.Spec.AdditionalAuthProvider
-	// Assume that if name is not specified, no additional auth provider is configured.
-	if authProvider.Name == "" {
-		return nil
-	}
-	groups := make([]declarativeconfig.Group, 0, len(authProvider.Groups))
-	for _, group := range authProvider.Groups {
-		groups = append(groups, declarativeconfig.Group{
-			AttributeKey:   group.Key,
-			AttributeValue: group.Value,
-			RoleName:       group.Role,
-		})
-	}
-
-	requiredAttributes := make([]declarativeconfig.RequiredAttribute, 0, len(authProvider.RequiredAttributes))
-	for _, requiredAttribute := range authProvider.RequiredAttributes {
-		requiredAttributes = append(requiredAttributes, declarativeconfig.RequiredAttribute{
-			AttributeKey:   requiredAttribute.Key,
-			AttributeValue: requiredAttribute.Value,
-		})
-	}
-
-	claimMappings := make([]declarativeconfig.ClaimMapping, 0, len(authProvider.ClaimMappings))
-	for _, claimMapping := range authProvider.ClaimMappings {
-		claimMappings = append(claimMappings, declarativeconfig.ClaimMapping{
-			Path: claimMapping.Key,
-			Name: claimMapping.Value,
-		})
-	}
-
-	return &declarativeconfig.AuthProvider{
-		Name:               authProvider.Name,
-		UIEndpoint:         central.Spec.UiHost,
-		ExtraUIEndpoints:   []string{"localhost:8443"},
-		Groups:             groups,
-		RequiredAttributes: requiredAttributes,
-		ClaimMappings:      claimMappings,
-		OIDCConfig: &declarativeconfig.OIDCConfig{
-			Issuer:                    authProvider.Oidc.Issuer,
-			CallbackMode:              authProvider.Oidc.CallbackMode,
-			ClientID:                  authProvider.Oidc.ClientID,
-			ClientSecret:              authProvider.Oidc.ClientSecret, // pragma: allowlist secret
-			DisableOfflineAccessScope: authProvider.Oidc.DisableOfflineAccessScope,
-		},
-	}
-}
-
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleetmanager.Client,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
@@ -1065,7 +842,6 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		fleetmanagerClient:     fleetmanagerClient,
 		status:                 pointer.Int32(FreeStatus),
 		useRoutes:              opts.UseRoutes,
-		wantsAuthProvider:      opts.WantsAuthProvider,
 		namespaceReconciler:    nsReconciler,
 		argoReconciler:         argoReconciler,
 		tenantCleanup:          NewTenantCleanup(k8sClient, tenantCleanupOptions),

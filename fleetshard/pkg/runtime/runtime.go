@@ -131,7 +131,6 @@ func (r *Runtime) Start(ctx context.Context) error {
 
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
 		UseRoutes:             routesAvailable,
-		WantsAuthProvider:     r.config.CreateAuthProvider,
 		ManagedDBEnabled:      r.config.ManagedDB.Enabled,
 		ClusterName:           r.config.ClusterName,
 		Environment:           r.config.Environment,
