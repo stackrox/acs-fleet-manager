@@ -81,7 +81,8 @@ const (
 
 	centralEncryptionKeySecretName = "central-encryption-key-chain" // pragma: allowlist secret
 
-	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
+	sensibleDeclarativeConfigSecretName     = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
+	authProviderClientCredentialsSecretName = "default-auth-provider-client-credentials"   // pragma: allowlist secret
 
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
 	additionalAuthProviderConfigKey  = "additional-auth-provider"
@@ -442,7 +443,20 @@ func (r *CentralReconciler) configureAuthProvider(secret *corev1.Secret, remoteC
 func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Context,
 	remoteCentral private.ManagedCentral) error {
 	if isArgoDeclarativeConfigReconciliationEnabled(remoteCentral) {
-		return nil
+		return ensureSecretExists(
+			ctx,
+			r.client,
+			remoteCentral.Metadata.Namespace,
+			authProviderClientCredentialsSecretName,
+			func(secret *corev1.Secret) error {
+				if secret.Data == nil {
+					secret.Data = make(map[string][]byte)
+				}
+				secret.Data["clientID"] = []byte(remoteCentral.Spec.Auth.ClientId)
+				secret.Data["clientSecret"] = []byte(remoteCentral.Spec.Auth.ClientSecret) // pragma: allowlist secret
+				return nil
+			},
+		)
 	}
 	namespace := remoteCentral.Metadata.Namespace
 	return ensureSecretExists(

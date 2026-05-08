@@ -85,4 +85,4 @@ tenantResources:
     centralRdsCidrBlock: "10.1.0.0/16"
 
     declarativeConfig:
-      enabled: false
+      enabled: true

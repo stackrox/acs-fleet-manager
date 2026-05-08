@@ -113,6 +113,22 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 		delete(values, "additionalCAs")
 	}
 
+	if isArgoDeclarativeConfigReconciliationEnabled(remoteCentral) {
+		dc, _ := values["declarativeConfig"].(map[string]interface{})
+		if dc == nil {
+			dc = map[string]interface{}{}
+			values["declarativeConfig"] = dc
+		}
+		dc["defaultAuthProvider"] = map[string]interface{}{
+			"oidc": map[string]interface{}{
+				"issuer":                  remoteCentral.Spec.Auth.Issuer,
+				"clientCredentialsSecret": authProviderClientCredentialsSecretName,
+			},
+			"ownerUserId":          remoteCentral.Spec.Auth.OwnerUserId,
+			"ownerAlternateUserId": remoteCentral.Spec.Auth.OwnerAlternateUserId,
+		}
+	}
+
 	valuesBytes, err := json.Marshal(values)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling values: %w", err)
