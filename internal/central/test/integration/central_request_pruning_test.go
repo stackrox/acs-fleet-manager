@@ -26,50 +26,41 @@ func TestCentralRequestPruning(t *testing.T) {
 	mgr := centralmgrs.NewCentralRequestPruningManager(test.TestServices.DBFactory)
 
 	now := time.Now()
-	threeYearsAgo := now.Add(-3 * 365 * 24 * time.Hour)
-	oneYearAgo := now.Add(-365 * 24 * time.Hour)
-	thirtyDaysAgo := now.Add(-30 * 24 * time.Hour)
-	sevenDaysAgo := now.Add(-7 * 24 * time.Hour)
 
-	centralStandardOld := newDeletedCentral("standard-old", false)
-	centralStandardRecent := newDeletedCentral("standard-recent", false)
-	centralInternalOld := newDeletedCentral("internal-old", true)
-	centralInternalRecent := newDeletedCentral("internal-recent", true)
-	centralActive := &dbapi.CentralRequest{
-		Meta:          api.Meta{ID: api.NewID()},
-		Name:          "active",
-		Region:        "us-east-1",
-		CloudProvider: "aws",
-		Owner:         "test-user",
-		Status:        constants.CentralRequestStatusReady.String(),
+	cases := []struct {
+		name       string
+		central    *dbapi.CentralRequest
+		wantPruned bool
+	}{
+		{"standard central deleted 3y ago should be pruned", newDeletedCentral("standard-old", false, now.Add(-3*365*24*time.Hour)), true},
+		{"standard central deleted 1y ago should be kept", newDeletedCentral("standard-recent", false, now.Add(-365*24*time.Hour)), false},
+		{"internal central deleted 30d ago should be pruned", newDeletedCentral("internal-old", true, now.Add(-30*24*time.Hour)), true},
+		{"internal central deleted 7d ago should be kept", newDeletedCentral("internal-recent", true, now.Add(-7*24*time.Hour)), false},
+		{"active central should never be pruned", newActiveCentral(), false},
 	}
 
-	for _, c := range []*dbapi.CentralRequest{centralStandardOld, centralStandardRecent, centralInternalOld, centralInternalRecent, centralActive} {
-		require.NoError(t, db.Create(c).Error)
+	for _, tc := range cases {
+		require.NoError(t, db.Unscoped().Create(tc.central).Error)
 	}
-
-	setSoftDeleted(t, db, centralStandardOld.ID, threeYearsAgo)
-	setSoftDeleted(t, db, centralStandardRecent.ID, oneYearAgo)
-	setSoftDeleted(t, db, centralInternalOld.ID, thirtyDaysAgo)
-	setSoftDeleted(t, db, centralInternalRecent.ID, sevenDaysAgo)
 
 	errs := mgr.Reconcile()
 	require.Empty(t, errs)
 
-	assert.True(t, isHardDeleted(t, db, centralStandardOld.ID), "standard central deleted 3y ago should be pruned")
-	assert.False(t, isHardDeleted(t, db, centralStandardRecent.ID), "standard central deleted 1y ago should be kept")
-	assert.True(t, isHardDeleted(t, db, centralInternalOld.ID), "internal central deleted 30d ago should be pruned")
-	assert.False(t, isHardDeleted(t, db, centralInternalRecent.ID), "internal central deleted 7d ago should be kept")
-	assert.False(t, isHardDeleted(t, db, centralActive.ID), "active central should never be pruned")
+	for _, tc := range cases {
+		assert.Equal(t, tc.wantPruned, isHardDeleted(t, db, tc.central.ID), tc.name)
+	}
 
 	// Verify idempotency: running again should produce no errors.
 	errs = mgr.Reconcile()
 	require.Empty(t, errs)
 }
 
-func newDeletedCentral(name string, internal bool) *dbapi.CentralRequest {
+func newDeletedCentral(name string, internal bool, deletedAt time.Time) *dbapi.CentralRequest {
 	return &dbapi.CentralRequest{
-		Meta:          api.Meta{ID: api.NewID()},
+		Meta: api.Meta{
+			ID:        api.NewID(),
+			DeletedAt: gorm.DeletedAt{Time: deletedAt, Valid: true},
+		},
 		Name:          name,
 		Region:        "us-east-1",
 		CloudProvider: "aws",
@@ -79,13 +70,15 @@ func newDeletedCentral(name string, internal bool) *dbapi.CentralRequest {
 	}
 }
 
-func setSoftDeleted(t *testing.T, db *gorm.DB, id string, deletedAt time.Time) {
-	t.Helper()
-	err := db.Unscoped().
-		Model(&dbapi.CentralRequest{}).
-		Where("id = ?", id).
-		Update("deleted_at", deletedAt).Error
-	require.NoError(t, err)
+func newActiveCentral() *dbapi.CentralRequest {
+	return &dbapi.CentralRequest{
+		Meta:          api.Meta{ID: api.NewID()},
+		Name:          "active",
+		Region:        "us-east-1",
+		CloudProvider: "aws",
+		Owner:         "test-user",
+		Status:        constants.CentralRequestStatusReady.String(),
+	}
 }
 
 func isHardDeleted(t *testing.T, db *gorm.DB, id string) bool {
