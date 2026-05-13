@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.16
 	github.com/aws/aws-sdk-go-v2/service/kms v1.50.4
 	github.com/aws/aws-sdk-go-v2/service/rds v1.117.1
-	github.com/aws/aws-sdk-go-v2/service/route53 v1.62.5
+	github.com/aws/aws-sdk-go-v2/service/route53 v1.62.7
 	github.com/aws/aws-sdk-go-v2/service/ses v1.34.17
 	github.com/aws/smithy-go v1.25.1
 	github.com/bxcodec/faker/v3 v3.8.1
