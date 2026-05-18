@@ -3,25 +3,20 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/stackrox/rox/pkg/urlfmt"
 	appsv1 "k8s.io/api/apps/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	core "k8s.io/api/core/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	centralDeploymentName = "central"
-	centralServiceName    = "central"
-	oidcType              = "oidc"
 )
 
 func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, namespace string) (bool, error) {
@@ -36,48 +31,6 @@ func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, nam
 		return false, errors.Wrap(err, "retrieving central deployment resource from Kubernetes")
 	}
 	return deployment.Status.AvailableReplicas > 0 && deployment.Status.UnavailableReplicas == 0, nil
-}
-
-// TODO: ROX-11644: doesn't work when fleetshard-sync deployed outside of Central's cluster
-func getServiceAddress(ctx context.Context, namespace string, client ctrlClient.Client) (string, error) {
-	service := &core.Service{}
-	err := client.Get(ctx,
-		ctrlClient.ObjectKey{Name: centralServiceName, Namespace: namespace},
-		service)
-	if err != nil {
-		return "", errors.Wrapf(err, "getting k8s service for central")
-	}
-	port, err := getHTTPSServicePort(service)
-	if err != nil {
-		return "", err
-	}
-	address := fmt.Sprintf("https://%s.%s.svc.cluster.local:%d", centralServiceName, namespace, port)
-	return address, nil
-}
-
-func getHTTPSServicePort(service *core.Service) (int32, error) {
-	for _, servicePort := range service.Spec.Ports {
-		if servicePort.Name == "https" {
-			return servicePort.Port, nil
-		}
-	}
-	return 0, errors.Errorf("no `https` port is present in %s/%s service", service.Namespace, service.Name)
-}
-
-// authProviderName deduces auth provider name from issuer URL.
-func authProviderName(central private.ManagedCentral) (name string) {
-	switch {
-	case strings.Contains(central.Spec.Auth.Issuer, "sso.stage.redhat"):
-		name = "Red Hat SSO (stage)"
-	case strings.Contains(central.Spec.Auth.Issuer, "sso.redhat"):
-		name = "Red Hat SSO"
-	default:
-		name = urlfmt.GetServerFromURL(central.Spec.Auth.Issuer)
-	}
-	if name == "" {
-		name = "SSO"
-	}
-	return
 }
 
 func checkSecretExists(

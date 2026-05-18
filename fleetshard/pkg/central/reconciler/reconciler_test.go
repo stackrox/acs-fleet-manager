@@ -1023,6 +1023,53 @@ func TestEnsureSecretExists(t *testing.T) {
 	})
 }
 
+func TestReconcileDeclarativeConfigurationData(t *testing.T) {
+	t.Run("creates auth provider client credentials secret when declarative config enabled", func(t *testing.T) {
+		opts := defaultReconcilerOptions
+		opts.ArgoReconcilerOptions.WantsAuthProvider = true
+		fakeClient, _, r := getClientTrackerAndReconciler(t, nil, opts)
+
+		managedCentral := simpleManagedCentral
+		managedCentral.Spec.Auth.ClientId = "my-client-id"
+		managedCentral.Spec.Auth.ClientSecret = "my-client-secret" // pragma: allowlist secret
+
+		ctx := context.TODO()
+		require.NoError(t, r.reconcileDeclarativeConfigurationData(ctx, managedCentral))
+
+		secret := &v1.Secret{}
+		err := fakeClient.Get(ctx, client.ObjectKey{
+			Namespace: centralNamespace,
+			Name:      authProviderClientCredentialsSecretName,
+		}, secret)
+		require.NoError(t, err)
+		assert.Equal(t, []byte("my-client-id"), secret.Data["clientID"])
+		assert.Equal(t, []byte("my-client-secret"), secret.Data["clientSecret"])
+	})
+
+	t.Run("skips secret creation when declarative config disabled", func(t *testing.T) {
+		opts := defaultReconcilerOptions
+		opts.ArgoReconcilerOptions.WantsAuthProvider = false
+		fakeClient, _, r := getClientTrackerAndReconciler(t, nil, opts)
+
+		managedCentral := simpleManagedCentral
+		managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
+			"declarativeConfig": map[string]interface{}{
+				"enabled": false,
+			},
+		}
+
+		ctx := context.TODO()
+		require.NoError(t, r.reconcileDeclarativeConfigurationData(ctx, managedCentral))
+
+		secret := &v1.Secret{}
+		err := fakeClient.Get(ctx, client.ObjectKey{
+			Namespace: centralNamespace,
+			Name:      authProviderClientCredentialsSecretName,
+		}, secret)
+		assert.True(t, k8sErrors.IsNotFound(err))
+	})
+}
+
 func TestRestoreCentralSecrets(t *testing.T) {
 	testCases := []struct {
 		name                     string
