@@ -113,7 +113,7 @@ func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.Mana
 		delete(values, "additionalCAs")
 	}
 
-	if isArgoDeclarativeConfigReconciliationEnabled(remoteCentral) {
+	if r.isArgoDeclarativeConfigReconciliationEnabled(remoteCentral) {
 		dc, _ := values["declarativeConfig"].(map[string]interface{})
 		if dc == nil {
 			dc = map[string]interface{}{}
@@ -177,8 +177,8 @@ func (r *argoReconciler) getSourceRepoURL(m private.ManagedCentral) string {
 	return getTenantResourcesValue(m, "argoCd.sourceRepoUrl", r.argoOpts.TenantDefaultArgoCdAppSourceRepoURL)
 }
 
-func isArgoDeclarativeConfigReconciliationEnabled(m private.ManagedCentral) bool {
-	return getTenantResourcesValue(m, "declarativeConfig.enabled", false)
+func (r *argoReconciler) isArgoDeclarativeConfigReconciliationEnabled(m private.ManagedCentral) bool {
+	return getTenantResourcesValue(m, "declarativeConfig.enabled", r.argoOpts.WantsAuthProvider)
 }
 
 func isForceReconcile(m private.ManagedCentral) bool {

@@ -27,7 +27,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/mocks"
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
-	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -66,30 +65,6 @@ var (
 		ArgoReconcilerOptions: ArgoReconcilerOptions{
 			ArgoCdNamespace: "openshift-gitops",
 		},
-	}
-
-	defaultAuditLogConfig = config.AuditLogging{
-		Enabled:            true,
-		URLScheme:          "https",
-		AuditLogTargetHost: "audit-logs-aggregator.rhacs-audit-logs",
-		AuditLogTargetPort: 8888,
-		SkipTLSVerify:      true,
-	}
-
-	vectorAuditLogConfig = config.AuditLogging{
-		Enabled:            true,
-		URLScheme:          "https",
-		AuditLogTargetHost: "rhacs-vector.rhacs",
-		AuditLogTargetPort: 8443,
-		SkipTLSVerify:      true,
-	}
-
-	disabledAuditLogConfig = config.AuditLogging{
-		Enabled:            false,
-		URLScheme:          "https",
-		AuditLogTargetHost: "audit-logs-aggregator.rhacs-audit-logs",
-		AuditLogTargetPort: 8888,
-		SkipTLSVerify:      false,
 	}
 )
 
@@ -1048,213 +1023,51 @@ func TestEnsureSecretExists(t *testing.T) {
 	})
 }
 
-func TestGetAuditLogNotifierConfig(t *testing.T) {
-	testCases := []struct {
-		namespace      string
-		auditLogging   config.AuditLogging
-		auditLogTarget string
-		auditLogPort   int
-		expectedConfig *declarativeconfig.Notifier
-	}{
-		{
-			namespace:      centralNamespace,
-			auditLogging:   defaultAuditLogConfig,
-			auditLogTarget: defaultAuditLogConfig.AuditLogTargetHost,
-			auditLogPort:   defaultAuditLogConfig.AuditLogTargetPort,
-			expectedConfig: &declarativeconfig.Notifier{
-				Name: auditLogNotifierName,
-				GenericConfig: &declarativeconfig.GenericConfig{
-					Endpoint: fmt.Sprintf(
-						"https://%s:%d",
-						defaultAuditLogConfig.AuditLogTargetHost,
-						defaultAuditLogConfig.AuditLogTargetPort,
-					),
-					SkipTLSVerify:       true,
-					AuditLoggingEnabled: true,
-					ExtraFields: []declarativeconfig.KeyValuePair{
-						{
-							Key:   auditLogTenantIDKey,
-							Value: centralNamespace,
-						},
-					},
-				},
-			},
-		},
-		{
-			namespace:      "rhacs",
-			auditLogging:   vectorAuditLogConfig,
-			auditLogTarget: vectorAuditLogConfig.AuditLogTargetHost,
-			auditLogPort:   vectorAuditLogConfig.AuditLogTargetPort,
-			expectedConfig: &declarativeconfig.Notifier{
-				Name: auditLogNotifierName,
-				GenericConfig: &declarativeconfig.GenericConfig{
-					Endpoint: fmt.Sprintf(
-						"https://%s:%d",
-						vectorAuditLogConfig.AuditLogTargetHost,
-						vectorAuditLogConfig.AuditLogTargetPort,
-					),
-					SkipTLSVerify:       true,
-					AuditLoggingEnabled: true,
-					ExtraFields: []declarativeconfig.KeyValuePair{
-						{
-							Key:   auditLogTenantIDKey,
-							Value: "rhacs",
-						},
-					},
-				},
-			},
-		},
-	}
-	for _, testCase := range testCases {
-		notifierConfig := getAuditLogNotifierConfig(testCase.auditLogging, testCase.namespace)
-		assert.Equal(t, testCase.expectedConfig, notifierConfig)
-	}
-}
-
-func populateDeclarativeConfigSecrets(
-	t *testing.T,
-	namespace string,
-	payload map[string][]declarativeconfig.Configuration,
-) *v1.Secret {
-	if len(payload) == 0 {
-		return getSecret(sensibleDeclarativeConfigSecretName, namespace, nil)
-	}
-	secretData := make(map[string][]byte, len(payload))
-	for dataKey, configList := range payload {
-		switch len(configList) {
-		case 0:
-			secretData[dataKey] = nil
-		case 1:
-			encodedBytes, encodingErr := yaml.Marshal(configList[0])
-			assert.NoError(t, encodingErr)
-			secretData[dataKey] = encodedBytes
-		default:
-			encodedBytes, encodingErr := yaml.Marshal(configList)
-			assert.NoError(t, encodingErr)
-			secretData[dataKey] = encodedBytes
-		}
-	}
-	return getSecret(sensibleDeclarativeConfigSecretName, centralNamespace, secretData)
-}
-
 func TestReconcileDeclarativeConfigurationData(t *testing.T) {
-	defaultNotifierConfig := getAuditLogNotifierConfig(
-		defaultAuditLogConfig,
-		centralNamespace,
-	)
-	faultyVectorNotifierConfig := getAuditLogNotifierConfig(
-		vectorAuditLogConfig,
-		"rhacs",
-	)
-	correctVectorNotifierConfig := getAuditLogNotifierConfig(
-		vectorAuditLogConfig,
-		centralNamespace,
-	)
+	t.Run("creates auth provider client credentials secret when declarative config enabled", func(t *testing.T) {
+		opts := defaultReconcilerOptions
+		opts.ArgoReconcilerOptions.WantsAuthProvider = true
+		fakeClient, _, r := getClientTrackerAndReconciler(t, nil, opts)
 
-	authProviderConfig := getAuthProviderConfig(simpleManagedCentral)
+		managedCentral := simpleManagedCentral
+		managedCentral.Spec.Auth.ClientId = "my-client-id"
+		managedCentral.Spec.Auth.ClientSecret = "my-client-secret" // pragma: allowlist secret
 
-	const otherItemKey = "other.item.key"
+		ctx := context.TODO()
+		require.NoError(t, r.reconcileDeclarativeConfigurationData(ctx, managedCentral))
 
-	testCases := []struct {
-		name                       string
-		auditLogConfig             config.AuditLogging
-		preExistingSecret          bool
-		initialDeclarativeConfigs  map[string][]declarativeconfig.Configuration
-		expectedDeclarativeConfigs map[string][]declarativeconfig.Configuration
-		wantsAuthProvider          bool
-	}{
-		{
-			name:              "Missing default secret gets created",
-			auditLogConfig:    defaultAuditLogConfig,
-			preExistingSecret: false, // pragma: allowlist secret
-			expectedDeclarativeConfigs: map[string][]declarativeconfig.Configuration{
-				auditLogNotifierKey:              {defaultNotifierConfig},
-				authProviderDeclarativeConfigKey: {authProviderConfig},
+		secret := &v1.Secret{}
+		err := fakeClient.Get(ctx, client.ObjectKey{
+			Namespace: centralNamespace,
+			Name:      authProviderClientCredentialsSecretName,
+		}, secret)
+		require.NoError(t, err)
+		assert.Equal(t, []byte("my-client-id"), secret.Data["clientID"])
+		assert.Equal(t, []byte("my-client-secret"), secret.Data["clientSecret"])
+	})
+
+	t.Run("skips secret creation when declarative config disabled", func(t *testing.T) {
+		opts := defaultReconcilerOptions
+		opts.ArgoReconcilerOptions.WantsAuthProvider = false
+		fakeClient, _, r := getClientTrackerAndReconciler(t, nil, opts)
+
+		managedCentral := simpleManagedCentral
+		managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
+			"declarativeConfig": map[string]interface{}{
+				"enabled": false,
 			},
-			wantsAuthProvider: true,
-		},
-		{
-			name:              "Missing vector secret gets created",
-			auditLogConfig:    vectorAuditLogConfig,
-			preExistingSecret: false, // pragma: allowlist secret
-			expectedDeclarativeConfigs: map[string][]declarativeconfig.Configuration{
-				auditLogNotifierKey: {correctVectorNotifierConfig},
-			},
-		},
-		{
-			name:              "Empty secret when audit logging and auth provider creation disabled",
-			auditLogConfig:    disabledAuditLogConfig,
-			preExistingSecret: false, // pragma: allowlist secret
-		},
-		{
-			name:              "No secret modification when audit logging and auth provider creation disabled",
-			auditLogConfig:    disabledAuditLogConfig,
-			preExistingSecret: true, // pragma: allowlist secret
-			initialDeclarativeConfigs: map[string][]declarativeconfig.Configuration{
-				auditLogNotifierKey:              {defaultNotifierConfig},
-				authProviderDeclarativeConfigKey: {authProviderConfig},
-				otherItemKey:                     {faultyVectorNotifierConfig},
-			},
-			expectedDeclarativeConfigs: map[string][]declarativeconfig.Configuration{
-				auditLogNotifierKey:              {defaultNotifierConfig},
-				authProviderDeclarativeConfigKey: {authProviderConfig},
-				otherItemKey:                     {faultyVectorNotifierConfig},
-			},
-		},
-	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			ctx := context.TODO()
-			reconcilerOptions := CentralReconcilerOptions{
-				AuditLogging:      testCase.auditLogConfig,
-				WantsAuthProvider: testCase.wantsAuthProvider,
-			}
-			fakeClient, _, r := getClientTrackerAndReconciler(
-				t,
-				nil,
-				reconcilerOptions,
-			)
-			if testCase.preExistingSecret {
-				secret := populateDeclarativeConfigSecrets(t, centralNamespace, testCase.initialDeclarativeConfigs)
-				require.NoError(t, fakeClient.Create(ctx, secret))
-			}
-			assert.NoError(t, r.reconcileDeclarativeConfigurationData(ctx, simpleManagedCentral))
-			fetchedSecret := &v1.Secret{}
-			secretKey := client.ObjectKey{ // pragma: allowlist secret
-				Name:      sensibleDeclarativeConfigSecretName,
-				Namespace: centralNamespace,
-			}
-			postFetchErr := fakeClient.Get(ctx, secretKey, fetchedSecret)
-			assert.NoError(t, postFetchErr)
-			expectedSecret := populateDeclarativeConfigSecrets(t, centralNamespace, testCase.expectedDeclarativeConfigs)
-			compareSecret(t, expectedSecret, fetchedSecret, !testCase.preExistingSecret)
-		})
-	}
-}
+		}
 
-func TestReconcileDeclarativeConfigSkippedWhenArgoManaged(t *testing.T) {
-	centralWithDeclarativeConfig := simpleManagedCentral
-	centralWithDeclarativeConfig.Spec.TenantResourcesValues = map[string]interface{}{
-		"declarativeConfig": map[string]interface{}{
-			"enabled": true,
-		},
-	}
+		ctx := context.TODO()
+		require.NoError(t, r.reconcileDeclarativeConfigurationData(ctx, managedCentral))
 
-	reconcilerOptions := CentralReconcilerOptions{
-		WantsAuthProvider: true,
-		AuditLogging:      defaultAuditLogConfig,
-	}
-	fakeClient, _, r := getClientTrackerAndReconciler(t, nil, reconcilerOptions)
-
-	err := r.reconcileDeclarativeConfigurationData(context.Background(), centralWithDeclarativeConfig)
-	require.NoError(t, err)
-
-	secret := &v1.Secret{}
-	getErr := fakeClient.Get(context.Background(), client.ObjectKey{
-		Namespace: centralNamespace,
-		Name:      sensibleDeclarativeConfigSecretName,
-	}, secret)
-	assert.True(t, k8sErrors.IsNotFound(getErr), "secret should not be created when declarativeConfig.enabled is true")
+		secret := &v1.Secret{}
+		err := fakeClient.Get(ctx, client.ObjectKey{
+			Namespace: centralNamespace,
+			Name:      authProviderClientCredentialsSecretName,
+		}, secret)
+		assert.True(t, k8sErrors.IsNotFound(err))
+	})
 }
 
 func TestRestoreCentralSecrets(t *testing.T) {

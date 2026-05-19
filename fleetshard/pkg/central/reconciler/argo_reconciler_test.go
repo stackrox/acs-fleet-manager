@@ -53,30 +53,38 @@ func TestGetSourceTargetRevision(t *testing.T) {
 }
 
 func TestDeclarativeConfigEnabled(t *testing.T) {
-	t.Run("returns false for empty ManagedCentral", func(t *testing.T) {
-		assert.False(t, isArgoDeclarativeConfigReconciliationEnabled(private.ManagedCentral{}))
+	rWithAuthProvider := argoReconciler{argoOpts: ArgoReconcilerOptions{WantsAuthProvider: true}}
+	rWithoutAuthProvider := argoReconciler{argoOpts: ArgoReconcilerOptions{WantsAuthProvider: false}}
+
+	t.Run("defaults to WantsAuthProvider for empty ManagedCentral", func(t *testing.T) {
+		assert.True(t, rWithAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(private.ManagedCentral{}))
+		assert.False(t, rWithoutAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(private.ManagedCentral{}))
 	})
 
-	t.Run("returns false for nil TenantResourcesValues", func(t *testing.T) {
-		assert.False(t, isArgoDeclarativeConfigReconciliationEnabled(private.ManagedCentral{
+	t.Run("defaults to WantsAuthProvider for nil TenantResourcesValues", func(t *testing.T) {
+		mc := private.ManagedCentral{
 			Spec: private.ManagedCentralAllOfSpec{
 				TenantResourcesValues: nil,
 			},
-		}))
+		}
+		assert.True(t, rWithAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(mc))
+		assert.False(t, rWithoutAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(mc))
 	})
 
-	t.Run("returns false when declarativeConfig is missing", func(t *testing.T) {
-		assert.False(t, isArgoDeclarativeConfigReconciliationEnabled(private.ManagedCentral{
+	t.Run("defaults to WantsAuthProvider when declarativeConfig is missing", func(t *testing.T) {
+		mc := private.ManagedCentral{
 			Spec: private.ManagedCentralAllOfSpec{
 				TenantResourcesValues: map[string]interface{}{
 					"other": "value",
 				},
 			},
-		}))
+		}
+		assert.True(t, rWithAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(mc))
+		assert.False(t, rWithoutAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(mc))
 	})
 
 	t.Run("returns false when explicitly disabled", func(t *testing.T) {
-		assert.False(t, isArgoDeclarativeConfigReconciliationEnabled(private.ManagedCentral{
+		mc := private.ManagedCentral{
 			Spec: private.ManagedCentralAllOfSpec{
 				TenantResourcesValues: map[string]interface{}{
 					"declarativeConfig": map[string]interface{}{
@@ -84,11 +92,13 @@ func TestDeclarativeConfigEnabled(t *testing.T) {
 					},
 				},
 			},
-		}))
+		}
+		assert.False(t, rWithAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(mc))
+		assert.False(t, rWithoutAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(mc))
 	})
 
-	t.Run("returns false when enabled is wrong type", func(t *testing.T) {
-		assert.False(t, isArgoDeclarativeConfigReconciliationEnabled(private.ManagedCentral{
+	t.Run("defaults to WantsAuthProvider when enabled is wrong type", func(t *testing.T) {
+		mc := private.ManagedCentral{
 			Spec: private.ManagedCentralAllOfSpec{
 				TenantResourcesValues: map[string]interface{}{
 					"declarativeConfig": map[string]interface{}{
@@ -96,11 +106,13 @@ func TestDeclarativeConfigEnabled(t *testing.T) {
 					},
 				},
 			},
-		}))
+		}
+		assert.True(t, rWithAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(mc))
+		assert.False(t, rWithoutAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(mc))
 	})
 
 	t.Run("returns true when enabled", func(t *testing.T) {
-		assert.True(t, isArgoDeclarativeConfigReconciliationEnabled(private.ManagedCentral{
+		mc := private.ManagedCentral{
 			Spec: private.ManagedCentralAllOfSpec{
 				TenantResourcesValues: map[string]interface{}{
 					"declarativeConfig": map[string]interface{}{
@@ -108,7 +120,9 @@ func TestDeclarativeConfigEnabled(t *testing.T) {
 					},
 				},
 			},
-		}))
+		}
+		assert.True(t, rWithAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(mc))
+		assert.True(t, rWithoutAuthProvider.isArgoDeclarativeConfigReconciliationEnabled(mc))
 	})
 }
 
