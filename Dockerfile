@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi9/go-toolset:1.25.9@sha256:35f08031de19eb51d6b35ed62c6357d3529bc69a8db65cf623ea5f0b44051999 AS build
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi9/go-toolset:1.25.9@sha256:e06a6f4c85c3ca75f64127542449c9770fb885adfb592f987c576d268ac108de AS build
 
 USER root
 RUN mkdir /src /rds_ca
