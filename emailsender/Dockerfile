@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/go-toolset:1.25.9@sha256:e06a6f4c85c3ca75f64127542449c9770fb885adfb592f987c576d268ac108de AS build
+FROM registry.access.redhat.com/ubi9/go-toolset:1.26.2@sha256:a82d974dae02330d0669fb0a5ced2ae498bd1bd708359d61493b9fb0dc0748eb AS build
 USER root
 ENV GOFLAGS="-mod=mod"
 
