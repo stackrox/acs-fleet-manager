@@ -286,7 +286,7 @@ func (k *centralService) RegisterCentralJob(ctx context.Context, centralRequest 
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create central request")
 	} else if !hasCapacity {
 		errorMsg := fmt.Sprintf("Cluster capacity(%d) exhausted in %s region", int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(centralRequest.Region)), centralRequest.Region)
-		logger.Logger.Warningf(errorMsg)
+		logger.Logger.Warningf("%s", errorMsg)
 		return errors.TooManyCentralInstancesReached("%s", errorMsg)
 	}
 
@@ -297,7 +297,7 @@ func (k *centralService) RegisterCentralJob(ctx context.Context, centralRequest 
 	cluster, e := k.clusterPlacementStrategy.FindCluster(centralRequest)
 	if e != nil || cluster == nil {
 		msg := fmt.Sprintf("No available cluster found for '%s' central instance in region: '%s'", centralRequest.InstanceType, centralRequest.Region)
-		logger.Logger.Errorf(msg)
+		logger.Logger.Errorf("%s", msg)
 		return errors.TooManyCentralInstancesReached("Region %s cannot accept instance type: %s at this moment", centralRequest.Region, centralRequest.InstanceType)
 	}
 	centralRequest.ClusterID = cluster.ClusterID

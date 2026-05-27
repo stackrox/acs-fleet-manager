@@ -190,7 +190,7 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 				ulog := logger.NewUHCLogger(ctx)
 				// If this is a 400 error, its the user's issue, log as info rather than error
 				if err.HTTPCode >= 400 && err.HTTPCode <= 499 {
-					ulog.Infof(err.Error())
+					ulog.Infof("%s", err.Error())
 				} else {
 					ulog.Error(err)
 				}
