@@ -13,7 +13,7 @@ func HandleError(r *http.Request, w http.ResponseWriter, err *errors.ServiceErro
 	ulog := logger.NewUHCLogger(ctx)
 	operationID := logger.GetOperationID(ctx)
 	if err.HTTPCode >= 400 && err.HTTPCode <= 499 {
-		ulog.Infof(err.Error())
+		ulog.Infof("%s", err.Error())
 	} else {
 		ulog.Error(err)
 	}
