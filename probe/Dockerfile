@@ -14,8 +14,6 @@ RUN make probe GOOS=linux GOARCH=${TARGETARCH}
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7@sha256:12db9874bd753eb98b1ab3d840e75de5d6842ac0604fbd68c012adefe97140be as standard
 
-RUN microdnf install shadow-utils
-
 RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
 USER unprivilegeduser

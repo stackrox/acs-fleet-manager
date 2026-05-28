@@ -28,8 +28,6 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7@sha256:12db9874bd753eb98b1ab3d840e75de5d6842ac0604fbd68c012adefe97140be AS standard
 
-RUN microdnf install shadow-utils
-
 RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
 USER unprivilegeduser
