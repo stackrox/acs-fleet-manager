@@ -34,7 +34,7 @@ require (
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.40.0
-	github.com/openshift-online/ocm-sdk-go v0.1.500
+	github.com/openshift-online/ocm-sdk-go v0.1.501
 	github.com/openshift/api v0.0.0-20251122153900-88cca31a44c9
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
@@ -188,8 +188,8 @@ require (
 	github.com/olekukonko/errors v1.2.0 // indirect
 	github.com/olekukonko/ll v0.1.6 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/openshift-online/ocm-api-model/clientapi v0.0.454 // indirect
-	github.com/openshift-online/ocm-api-model/model v0.0.454 // indirect
+	github.com/openshift-online/ocm-api-model/clientapi v0.0.456 // indirect
+	github.com/openshift-online/ocm-api-model/model v0.0.456 // indirect
 	github.com/openshift/client-go v0.0.0-20251123231646-4685125c2287 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240409071808-615f978279ca // indirect
