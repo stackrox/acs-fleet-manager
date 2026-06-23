@@ -10,6 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/certmonitor"
 
 	"github.com/golang/glog"
+	"github.com/grafana/pyroscope-go"
 	cfg "github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -92,6 +93,39 @@ func main() {
 	pprofServer := profiler.SingletonPprofServer()
 	pprofServer.Start()
 	defer pprofServer.Stop()
+
+	if config.Pyroscope.Enabled {
+		glog.Infof("Pyroscope continuous profiling enabled, server=%s, app=%s", config.Pyroscope.ServerAddress, config.Pyroscope.ApplicationName)
+		profiler, err := pyroscope.Start(pyroscope.Config{
+			ApplicationName: config.Pyroscope.ApplicationName,
+			ServerAddress:   config.Pyroscope.ServerAddress,
+			AuthToken:       config.Pyroscope.AuthToken,
+			ProfileTypes: []pyroscope.ProfileType{
+				pyroscope.ProfileCPU,
+				pyroscope.ProfileAllocObjects,
+				pyroscope.ProfileAllocSpace,
+				pyroscope.ProfileInuseObjects,
+				pyroscope.ProfileInuseSpace,
+				pyroscope.ProfileGoroutines,
+				pyroscope.ProfileMutexCount,
+				pyroscope.ProfileMutexDuration,
+				pyroscope.ProfileBlockCount,
+				pyroscope.ProfileBlockDuration,
+			},
+			Tags: map[string]string{
+				"cluster_id": config.ClusterID,
+			},
+		})
+		if err != nil {
+			glog.Errorf("Failed to start Pyroscope profiler: %v", err)
+		} else {
+			defer func() {
+				if err := profiler.Stop(); err != nil {
+					glog.Errorf("Failed to stop Pyroscope profiler: %v", err)
+				}
+			}()
+		}
+	}
 
 	sigs := make(chan os.Signal, 1)
 	notifySignals := []os.Signal{os.Interrupt, unix.SIGTERM}
