@@ -118,6 +118,7 @@ type CentralReconciler struct {
 	environment            string
 	auditLogging           config.AuditLogging
 	encryptionKeyGenerator cipher.KeyGenerator
+	uiReachabilityChecker  CentralUIReachabilityChecker
 
 	managedDbReconciler *managedDbReconciler
 	managedDBEnabled    bool
@@ -229,6 +230,20 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, ErrCentralNotChanged
 		}
 		return installingStatus(), nil
+	}
+
+	if r.useRoutes && !isRemoteCentralReady(&remoteCentral) {
+		// Check whether central UI host is reachable over HTTP.
+		centralUIReachable, err := r.uiReachabilityChecker.IsCentralUIHostReachable(ctx, remoteCentral.Spec.UiHost)
+		if err != nil {
+			return nil, err
+		}
+		if !centralUIReachable {
+			if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central UI becomes reachable
+				return nil, ErrCentralNotChanged
+			}
+			return installingStatus(), nil
+		}
 	}
 
 	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
@@ -852,6 +867,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		environment:            opts.Environment,
 		auditLogging:           opts.AuditLogging,
 		encryptionKeyGenerator: encryptionKeyGenerator,
+		uiReachabilityChecker:  NewHTTPCentralUIReachabilityChecker(),
 
 		managedDbReconciler: dbReconciler,
 		managedDBEnabled:    opts.ManagedDBEnabled,
