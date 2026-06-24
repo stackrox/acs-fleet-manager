@@ -50,7 +50,7 @@ jobs:
           username: ${{ secrets.QUAY_RHACS_ENG_RO_USERNAME }}
           password: ${{ secrets.QUAY_RHACS_ENG_RO_PASSWORD }}
       - name: Checkout this repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: acs-fleet-manager
           fetch-depth: 0
