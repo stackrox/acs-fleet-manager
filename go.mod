@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.42.1
 	github.com/aws/aws-sdk-go-v2/config v1.32.17
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.24
-	github.com/aws/aws-sdk-go-v2/service/kms v1.53.4
+	github.com/aws/aws-sdk-go-v2/service/kms v1.54.0
 	github.com/aws/aws-sdk-go-v2/service/rds v1.119.5
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.62.8
 	github.com/aws/aws-sdk-go-v2/service/ses v1.35.2
