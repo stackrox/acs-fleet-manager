@@ -32,7 +32,7 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/olekukonko/tablewriter v1.1.4
-	github.com/onsi/ginkgo/v2 v2.28.1
+	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.41.0
 	github.com/openshift-online/ocm-sdk-go v0.1.501
 	github.com/openshift/api v0.0.0-20251122153900-88cca31a44c9
@@ -148,7 +148,7 @@ require (
 	github.com/gonvenience/ytbx v1.4.4 // indirect
 	github.com/google/certificate-transparency-go v1.3.3 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
-	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
+	github.com/google/pprof v0.0.0-20260402051712-545e8a4df936 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/graph-gophers/graphql-go v1.5.0 // indirect
