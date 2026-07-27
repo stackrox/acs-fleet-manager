@@ -72,7 +72,7 @@ type ManagedDBTag struct {
 type AuditLogging struct {
 	Enabled            bool   `env:"AUDIT_LOG_ENABLED" envDefault:"false"`
 	URLScheme          string `env:"AUDIT_LOG_URL_SCHEME" envDefault:"https"`
-	AuditLogTargetHost string `env:"AUDIT_LOG_HOST" envDefault:"audit-logs-aggregator.rhacs-audit-logs"`
+	AuditLogTargetHost string `env:"AUDIT_LOG_HOST" envDefault:"audit-logs-aggregator.rhacs-audit-logs.svc"`
 	AuditLogTargetPort int    `env:"AUDIT_LOG_PORT" envDefault:"8888"`
 	SkipTLSVerify      bool   `env:"AUDIT_LOG_SKIP_TLS_VERIFY" envDefault:"false"`
 }
