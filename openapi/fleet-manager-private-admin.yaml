@@ -722,6 +722,8 @@ components:
               type: string
             organisation_id:
               type: string
+            organisation_name:
+              type: string
             subscription_id:
               type: string
             owner_account_id:
