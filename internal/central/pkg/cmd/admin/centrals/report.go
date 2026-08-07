@@ -64,6 +64,10 @@ func fetchAllCentrals(ctx context.Context, api reportAPI, search string) ([]admi
 			return nil, fmt.Errorf("fetching centrals (page %d): %w", page, err)
 		}
 
+		if len(list.Items) == 0 {
+			break
+		}
+
 		all = append(all, list.Items...)
 
 		if int32(len(all)) >= list.Total {
