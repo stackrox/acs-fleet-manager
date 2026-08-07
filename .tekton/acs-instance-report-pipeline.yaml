@@ -1,0 +1,146 @@
+# ACS Instance Report Pipeline
+#
+# Generates a weekly ACS instance report and posts it to Slack.
+# Uses the pre-built fleet-manager image (binary at /usr/local/bin/fleet-manager).
+#
+# Triggered automatically by a CronJob in konflux-release-data.
+# To trigger manually:
+#
+#   oc login --web --server=https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443
+#   kubectl create -n acscs-rhacs-tenant -f - <<EOF
+#   apiVersion: tekton.dev/v1
+#   kind: PipelineRun
+#   metadata:
+#     generateName: acs-instance-report-
+#     labels:
+#       appstudio.openshift.io/application: acscs-main
+#   spec:
+#     pipelineRef:
+#       resolver: git
+#       params:
+#       - name: url
+#         value: https://github.com/stackrox/acs-fleet-manager
+#       - name: revision
+#         value: main
+#       - name: pathInRepo
+#         value: .tekton/acs-instance-report-pipeline.yaml
+#     taskRunTemplate:
+#       serviceAccountName: build-pipeline-acs-fleet-manager
+#   EOF
+#
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: acs-instance-report
+spec:
+  params:
+  - name: fleet-manager-image
+    type: string
+    description: Pre-built fleet-manager container image reference
+    default: "quay.io/redhat-services-prod/acscs-rhacs-tenant/acscs-main/acs-fleet-manager:latest"
+  - name: konflux-base-url
+    type: string
+    default: "https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com"
+  - name: konflux-application-name
+    type: string
+    default: acscs-main
+  tasks:
+  - name: generate-report
+    params:
+    - name: fleet-manager-image
+      value: $(params.fleet-manager-image)
+    - name: pipeline-run-url
+      value: "$(params.konflux-base-url)/ns/$(context.pipelineRun.namespace)/applications/$(params.konflux-application-name)/pipelineruns/$(context.pipelineRun.name)"
+    - name: pipeline-run-name
+      value: $(context.pipelineRun.name)
+    taskSpec:
+      params:
+      - name: fleet-manager-image
+        type: string
+      - name: pipeline-run-url
+        type: string
+      - name: pipeline-run-name
+        type: string
+      results:
+      - name: message
+        description: Formatted report message for Slack (truncated to fit task result limit)
+      steps:
+      - name: generate-report
+        image: $(params.fleet-manager-image)
+        env:
+        - name: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: acs-instance-report
+              key: client-id
+        - name: RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: acs-instance-report
+              key: client-secret
+        - name: RHSSO_ENDPOINT
+          value: "https://auth.redhat.com"
+        - name: RHSSO_REALM
+          value: "EmployeeIDP"
+        - name: FLEET_MANAGER_API_URL
+          value: "https://api.openshift.com"
+        - name: PIPELINE_RUN_NAME
+          value: $(params.pipeline-run-name)
+        - name: PIPELINE_RUN_URL
+          value: $(params.pipeline-run-url)
+        script: |
+          #!/bin/bash
+          set -u
+
+          MAX_BYTES=3500
+          byte_len() { printf '%s' "$1" | wc -c | tr -d ' '; }
+
+          REPORT=$(fleet-manager admin central report \
+            --api-url="${FLEET_MANAGER_API_URL}" \
+            --auth-type=RHSSO 2>&1)
+          EXIT_CODE=$?
+
+          if [ "${EXIT_CODE}" -ne 0 ]; then
+            printf -v MESSAGE 'Instance report command returned error (exit code %s)\n\nOutput:\n%s' "${EXIT_CODE}" "${REPORT}"
+          else
+            MESSAGE="${REPORT}"
+          fi
+
+          PIPELINE_LINK="<${PIPELINE_RUN_URL}|${PIPELINE_RUN_NAME}>"
+          SUFFIX=$(printf '\n\n:konflux: Pipeline run: %s' "${PIPELINE_LINK}")
+          AVAILABLE=$((MAX_BYTES - $(byte_len "${SUFFIX}")))
+
+          if [ "$(byte_len "${MESSAGE}")" -gt "${AVAILABLE}" ]; then
+            TRUNCATION_NOTE=$'\n\n... (truncated, full report in pipeline logs)'
+            CUT=$((AVAILABLE - $(byte_len "${TRUNCATION_NOTE}")))
+            MESSAGE="$(printf '%s' "${MESSAGE}" | head -c "${CUT}")${TRUNCATION_NOTE}"
+          fi
+
+          printf '%s%s' "${MESSAGE}" "${SUFFIX}" > $(results.message.path)
+          exit "${EXIT_CODE}"
+        computeResources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+  finally:
+  - name: send-notification
+    params:
+    - name: message
+      value: $(tasks.generate-report.results.message)
+    - name: secret-name
+      value: acs-instance-report
+    - name: key-name
+      value: slack-webhook-url
+    taskRef:
+      resolver: bundles
+      params:
+      - name: name
+        value: slack-webhook-notification
+      - name: bundle
+        value: quay.io/konflux-ci/tekton-catalog/task-slack-webhook-notification:0.1@sha256:d34a3789505f829493636a265eb04790695dba84bbb2bb716a7551a6911f2816
+      - name: kind
+        value: task
