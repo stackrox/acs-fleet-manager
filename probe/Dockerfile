@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi9/go-toolset:1.26.3@sha256:430cd439ea3bb4af3727a843c0302594bb1973211ecbfc98e4450a40798075df AS build
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi9/go-toolset:1.26.5@sha256:981cd8d53cc230b928db75a697586f915da5d3ed6731eddb246ce8865e0b1400 AS build
 USER root
 ENV GOFLAGS="-mod=mod"
 
@@ -12,7 +12,7 @@ ARG TARGETARCH
 
 RUN make probe GOOS=linux GOARCH=${TARGETARCH}
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8@sha256:ae09ecc3d754bc1726cbda3e2599cc7839e09fe1cc547ce173cf669b645be3cc as standard
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8@sha256:463cae32c6f6f5594b11a5c22de275016bd8545ce58a6373388e8b24f13fc15c as standard
 
 RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
