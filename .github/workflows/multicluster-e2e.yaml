@@ -81,7 +81,7 @@ jobs:
       - name: Install infractl
         uses: stackrox/actions/infra/install-infractl@v1
       - name: Install oc
-        uses: redhat-actions/openshift-tools-installer@v2
+        uses: redhat-actions/openshift-tools-installer@v3
         with:
           oc: "latest"
       - name: Check out code
