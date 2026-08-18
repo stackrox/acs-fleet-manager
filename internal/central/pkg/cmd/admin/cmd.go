@@ -3,7 +3,6 @@ package admin
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/cmd/admin/centrals"
@@ -29,19 +28,18 @@ Auth credentials are resolved from environment variables based on --auth-type:
   %s:          STATIC_TOKEN
   %s: FLEET_MANAGER_TOKEN_FILE`,
 			impl.RHSSOAuthName, impl.StaticTokenAuthName, impl.ServiceAccountTokenAuthName),
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			auth, err := impl.NewAuth(ctx, authType, impl.OptionFromEnv())
 			if err != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "creating auth: %v\n", err)
-				os.Exit(1)
+				return fmt.Errorf("creating auth: %w", err)
 			}
 			client, err := impl.NewClient(apiURL, auth)
 			if err != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "creating fleet-manager client: %v\n", err)
-				os.Exit(1)
+				return fmt.Errorf("creating fleet-manager client: %w", err)
 			}
 			cmd.SetContext(fleetmanagerclient.NewContext(ctx, client))
+			return nil
 		},
 	}
 
