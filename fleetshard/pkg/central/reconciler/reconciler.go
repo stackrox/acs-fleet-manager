@@ -76,6 +76,11 @@ const (
 	centralEncryptionKeySecretName          = "central-encryption-key-chain"             // pragma: allowlist secret
 	authProviderClientCredentialsSecretName = "default-auth-provider-client-credentials" // pragma: allowlist secret
 	tenantImagePullSecretName               = "stackrox"                                 // pragma: allowlist secret
+
+	// rolloutGroupValuesKey is the tenant-resources helm value that controls which
+	// rhacs-operator version reconciles a tenant's Central CR (rendered into the
+	// rhacs.redhat.com/version-selector label by the tenant-resources chart).
+	rolloutGroupValuesKey = "rolloutGroup"
 )
 
 type needsReconcileFunc func(changed bool, central private.ManagedCentral, storedSecrets []string) bool
@@ -293,6 +298,43 @@ func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remot
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
+	// Refresh the tenant's rolloutGroup/version-selector before tearing anything down, but only if
+	// the ArgoCD Application still exists: deletion is async and reconcileInstanceDeletion is
+	// called repeatedly until it completes, so once a previous pass has already deleted the
+	// Application there's nothing left to sync -- and calling ensureApplicationExists again would
+	// wrongly recreate it.
+	//
+	// This step matters because, unlike a normal (non-deletion) reconcile, nothing else in this
+	// deletion path ever pushes an updated rolloutGroup to the ArgoCD Application. If a tenant is
+	// deleted while its Central CR is still pinned (via a stale rhacs.redhat.com/version-selector
+	// label) to an operator version that has since been undeployed as part of a canary upgrade, no
+	// operator will ever reconcile the CR again, and its uninstall finalizer (added by the
+	// underlying helm-operator framework) will never be removed -- leaving the Central/namespace
+	// stuck in Terminating indefinitely (ROX-36296).
+	appExists, err := r.argoReconciler.applicationExists(ctx, remoteCentralNamespace)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checking ArgoCD application for central %s/%s", remoteCentralNamespace, remoteCentralName)
+	}
+	if appExists {
+		// The DB connection string is intentionally left empty here: the instance is being
+		// deleted, so there's no live traffic to break, and computing it for real could otherwise
+		// trigger (re-)provisioning a managed DB for an instance that never got that far before
+		// being deleted.
+		if err := r.argoReconciler.ensureApplicationExists(ctx, remoteCentral, ""); err != nil {
+			return nil, errors.Wrapf(err, "syncing rollout group for central %s/%s before deletion", remoteCentralNamespace, remoteCentralName)
+		}
+
+		versionSelectorSynced, err := r.versionSelectorMatchesRolloutGroup(ctx, remoteCentral)
+		if err != nil {
+			return nil, errors.Wrapf(err, "checking version selector for central %s/%s", remoteCentralNamespace, remoteCentralName)
+		}
+		if !versionSelectorSynced {
+			// The Central CR's version-selector label hasn't caught up with the ArgoCD sync yet.
+			// Retry on the next reconcile instead of proceeding with deletion.
+			return nil, ErrDeletionInProgress
+		}
+	}
+
 	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral)
 	if err != nil {
 		return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
@@ -301,6 +343,26 @@ func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remot
 		return deletedStatus(), nil
 	}
 	return nil, ErrDeletionInProgress
+}
+
+// versionSelectorMatchesRolloutGroup reports whether the live Central CR's
+// rhacs.redhat.com/version-selector label matches the currently configured rolloutGroup value. If
+// the Central CR no longer exists there is nothing left to sync, so this reports true.
+func (r *CentralReconciler) versionSelectorMatchesRolloutGroup(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
+	centralCRList := &unstructured.UnstructuredList{}
+	centralCRList.SetGroupVersionKind(k8s.CentralGVK)
+
+	if err := r.client.List(ctx, centralCRList, &ctrlClient.ListOptions{Namespace: remoteCentral.Metadata.Namespace}); err != nil {
+		return false, fmt.Errorf("getting current central CR from k8s: %w", err)
+	}
+
+	if len(centralCRList.Items) == 0 {
+		return true, nil
+	}
+
+	expected := getTenantResourcesValue(remoteCentral, rolloutGroupValuesKey, "")
+	actual := centralCRList.Items[0].GetLabels()[k8s.VersionSelectorLabelKey]
+	return actual == expected, nil
 }
 
 func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Context,

@@ -27,6 +27,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/mocks"
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
+	platform "github.com/stackrox/rox/operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -381,6 +382,81 @@ func TestReconcileDelete(t *testing.T) {
 
 	namespace := &v1.Namespace{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
+	assert.True(t, k8sErrors.IsNotFound(err))
+}
+
+// TestReconcileDeleteWaitsForStaleVersionSelector reproduces ROX-36296: a Central CR whose
+// rhacs.redhat.com/version-selector label is stale (still pointing at an operator version that
+// may already be undeployed as part of a canary upgrade) must not be torn down until the label
+// has been refreshed to match the currently configured rolloutGroup. Otherwise no operator would
+// ever pick up the CR again to remove its uninstall finalizer, orphaning it.
+//
+// The fake test harness (testutils.ReconcileTracker) simulates ArgoCD by synchronously re-syncing
+// the Central CR's labels the moment the ArgoCD Application is created/updated, whereas in a real
+// cluster that sync happens asynchronously. To exercise the "still waiting for the label to catch
+// up" branch of reconcileInstanceDeletion, this test sets the Application's rolloutGroup to its
+// final value up front (so ensureApplicationExists has nothing left to update) and then manually
+// drives the live Central CR's label out of sync, mimicking the real-world window where ArgoCD
+// hasn't reconciled the new label yet.
+func TestReconcileDeleteWaitsForStaleVersionSelector(t *testing.T) {
+	managedCentral := simpleManagedCentral
+	managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
+		rolloutGroupValuesKey: "v2",
+	}
+
+	fakeClient, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions)
+
+	_, err := r.Reconcile(context.TODO(), managedCentral)
+	require.NoError(t, err)
+
+	// Simulate the real-world window where the tenant's ArgoCD Application already targets the
+	// new rollout group, but the live Central CR hasn't been synced to the new
+	// version-selector label yet (e.g. operator v1 was undeployed before ArgoCD got around to
+	// re-syncing this particular tenant).
+	centralCR := &platform.Central{}
+	require.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, centralCR))
+	centralCR.Labels[k8s.VersionSelectorLabelKey] = "v1"
+	require.NoError(t, fakeClient.Update(context.TODO(), centralCR))
+
+	deletedCentral := managedCentral
+	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
+
+	status, err := r.Reconcile(context.TODO(), deletedCentral)
+	require.ErrorIs(t, err, ErrDeletionInProgress)
+	require.Nil(t, status)
+
+	// Nothing should have been torn down while the label is still stale.
+	namespace := &v1.Namespace{}
+	assert.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace))
+	assert.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralArgoCDAppName, Namespace: openshiftGitopsNamespace}, &argocd.Application{}))
+
+	// Reconciling again without anything changing must keep waiting.
+	status, err = r.Reconcile(context.TODO(), deletedCentral)
+	require.ErrorIs(t, err, ErrDeletionInProgress)
+	require.Nil(t, status)
+
+	// ArgoCD finally syncs the new label onto the live Central CR.
+	require.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, centralCR))
+	centralCR.Labels[k8s.VersionSelectorLabelKey] = "v2"
+	require.NoError(t, fakeClient.Update(context.TODO(), centralCR))
+
+	// Deletion can now proceed (mirroring the two-call async deletion pattern used elsewhere).
+	status, err = r.Reconcile(context.TODO(), deletedCentral)
+	require.ErrorIs(t, err, ErrDeletionInProgress)
+	require.Nil(t, status)
+
+	status, err = r.Reconcile(context.TODO(), deletedCentral)
+	require.NoError(t, err)
+	require.NotNil(t, status)
+
+	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
+	require.True(t, ok, "Ready condition not found in conditions", status.Conditions)
+	assert.Equal(t, "False", readyCondition.Status)
+	assert.Equal(t, "Deleted", readyCondition.Reason)
+
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralArgoCDAppName, Namespace: openshiftGitopsNamespace}, &argocd.Application{})
+	assert.True(t, k8sErrors.IsNotFound(err))
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, &v1.Namespace{})
 	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
