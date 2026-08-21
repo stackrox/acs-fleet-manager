@@ -5,7 +5,8 @@ export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 
-bootstrap.sh
+# Add retries to fix the transient DNS errors immediately after cluster provisioning.
+retry 10 60 bootstrap.sh
 
 log "Setting up e2e test environment"
 
