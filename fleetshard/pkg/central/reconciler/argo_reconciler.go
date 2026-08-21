@@ -59,20 +59,6 @@ func (r *argoReconciler) ensureApplicationExists(ctx context.Context, remoteCent
 	return nil
 }
 
-// applicationExists reports whether the tenant's ArgoCD Application currently exists. Used to
-// avoid recreating it (via ensureApplicationExists) after it has already been deleted by an
-// earlier pass of the (multi-step, async) deletion flow.
-func (r *argoReconciler) applicationExists(ctx context.Context, tenantNamespace string) (bool, error) {
-	err := r.client.Get(ctx, r.getArgoCdAppObjectKey(tenantNamespace), &argocd.Application{})
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return false, nil
-		}
-		return false, fmt.Errorf("getting ArgoCD application: %w", err)
-	}
-	return true, nil
-}
-
 func (r *argoReconciler) makeDesiredArgoCDApplication(remoteCentral private.ManagedCentral, centralDBConnectionString string) (*argocd.Application, error) {
 
 	values := remoteCentral.Spec.TenantResourcesValues
