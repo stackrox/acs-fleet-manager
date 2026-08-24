@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -eo pipefail
 
 ## This script can apply Kubernetes manifests provided as parameters -- either individual files or directories with manifests.
 
@@ -19,9 +20,9 @@ apply_res() {
 for path in "$@"; do
 
     if [[ -d "$path" ]]; then
-        find "$path" -name "*.yaml" -type f | sort -n | while read -r f; do
+        while read -r f; do
             apply_res "$f"
-        done
+        done < <(find "$path" -name "*.yaml" -type f | sort -n)
     else
         apply_res "$path"
     fi
