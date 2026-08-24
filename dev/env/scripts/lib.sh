@@ -11,6 +11,26 @@ if ! command -v bootstrap.sh >/dev/null 2>&1; then
     export PATH="$GITROOT/dev/env/scripts:${PATH}"
 fi
 
+retry() {
+    local max_attempts="$1"
+    local delay="$2"
+    shift 2
+
+    local attempt=1
+    while true; do
+        if "$@"; then
+            return 0
+        fi
+        if [[ $attempt -ge $max_attempts ]]; then
+            log "Command failed after $max_attempts attempts: $*"
+            return 1
+        fi
+        log "Command failed (attempt $attempt/$max_attempts), retrying in ${delay}s..."
+        sleep "$delay"
+        attempt=$((attempt + 1))
+    done
+}
+
 try_kubectl() {
     local kubectl
     if command -v kubectl >/dev/null 2>&1; then
