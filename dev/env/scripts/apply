@@ -20,9 +20,11 @@ apply_res() {
 for path in "$@"; do
 
     if [[ -d "$path" ]]; then
-        while read -r f; do
+        mapfile -t files < <(find "$path" -name "*.yaml" -type f | sort -n)
+        wait "$!" || { log "Failed to discover manifests in '${path}'"; exit 1; }
+        for f in "${files[@]}"; do
             apply_res "$f"
-        done < <(find "$path" -name "*.yaml" -type f | sort -n)
+        done
     else
         apply_res "$path"
     fi
