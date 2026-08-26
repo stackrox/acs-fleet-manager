@@ -3,7 +3,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"os"
 
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/cmd/admin"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/migrate"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/serve"
 
@@ -19,8 +22,6 @@ func main() {
 	// parsed.
 	_ = flag.CommandLine.Parse([]string{})
 
-	// pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-
 	// Always log to stderr by default
 	if err := flag.Set("logtostderr", "true"); err != nil {
 		glog.Infof("Unable to set logtostderr to true")
@@ -30,32 +31,31 @@ func main() {
 		central.ConfigProviders(),
 	)
 	if err != nil {
-		glog.Fatalf("error initializing: %v", err)
+		_, _ = fmt.Fprintf(os.Stderr, "error initializing: %v\n", err)
+		os.Exit(1)
 	}
-	defer env.Cleanup()
+	rootCmd := rootCommand(env)
 
+	if err := env.AddFlags(rootCmd.PersistentFlags()); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "unable to add global flags: %v\n", err)
+		os.Exit(1)
+	}
+	err = rootCmd.Execute()
+	env.Cleanup()
+	if err != nil {
+		os.Exit(1)
+	}
+}
+
+func rootCommand(env *environments.Env) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:  "fleet-manager",
 		Long: "fleet-manager is a service that exposes a Rest API to manage ACS Central instances.",
 	}
 
-	err = env.AddFlags(rootCmd.PersistentFlags())
-	if err != nil {
-		glog.Fatalf("Unable to add global flags: %s", err.Error())
-	}
-
+	rootCmd.AddCommand(admin.NewAdminCommand())
 	rootCmd.AddCommand(migrate.NewMigrateCommand(env))
 	rootCmd.AddCommand(serve.NewServeCommand(env))
-	// Unsupported CLI commands. Eventually some of them can be removed.
-	// rootCmd.AddCommand(cluster.NewClusterCommand(env))
-	// rootCmd.AddCommand(cloudprovider.NewCloudProviderCommand(env))
-	// rootCmd.AddCommand(errors.NewErrorsCommand(env))
 
-	if err := rootCmd.Execute(); err != nil {
-		glog.Fatalf("error running command: %v", err)
-	}
-
-	if err != nil {
-		glog.Fatalf("Unable to initialize environment: %s", err.Error())
-	}
+	return rootCmd
 }
