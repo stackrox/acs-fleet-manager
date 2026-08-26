@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.38
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.37
 	github.com/aws/aws-sdk-go-v2/service/kms v1.55.7
-	github.com/aws/aws-sdk-go-v2/service/rds v1.119.5
+	github.com/aws/aws-sdk-go-v2/service/rds v1.124.4
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.62.8
 	github.com/aws/aws-sdk-go-v2/service/ses v1.37.7
 	github.com/aws/smithy-go v1.27.8
