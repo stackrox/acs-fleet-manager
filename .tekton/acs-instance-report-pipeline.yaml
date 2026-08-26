@@ -38,7 +38,7 @@ spec:
   - name: fleet-manager-image
     type: string
     description: Pre-built fleet-manager container image reference
-    default: "quay.io/redhat-services-prod/acscs-rhacs-tenant/acscs-main/acs-fleet-manager@sha256:e78df9403cfad10276b864e482a35d25c64c7a6159ee9f1c508a67abda2d0247" # daa748f
+    default: "quay.io/redhat-services-prod/acscs-rhacs-tenant/acscs-main/acs-fleet-manager:daa748f@sha256:e78df9403cfad10276b864e482a35d25c64c7a6159ee9f1c508a67abda2d0247"
   - name: konflux-base-url
     type: string
     default: "https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com"
@@ -91,20 +91,19 @@ spec:
           value: $(params.pipeline-run-url)
         script: |
           #!/bin/bash
-          set -u
+          set -euo pipefail
 
           MAX_BYTES=3500
           byte_len() { printf '%s' "$1" | wc -c | tr -d ' '; }
 
-          REPORT=$(fleet-manager admin central report \
+          EXIT_CODE=0
+          if REPORT=$(fleet-manager admin central report \
             --api-url="${FLEET_MANAGER_API_URL}" \
-            --auth-type=RHSSO 2>&1)
-          EXIT_CODE=$?
-
-          if [ "${EXIT_CODE}" -ne 0 ]; then
-            printf -v MESSAGE 'Instance report command returned error (exit code %s)\n\nOutput:\n%s' "${EXIT_CODE}" "${REPORT}"
-          else
+            --auth-type=RHSSO 2>&1); then
             MESSAGE="${REPORT}"
+          else
+            EXIT_CODE=$?
+            printf -v MESSAGE 'Instance report command returned error (exit code %s)\n\nOutput:\n%s' "${EXIT_CODE}" "${REPORT}"
           fi
 
           PIPELINE_LINK="<${PIPELINE_RUN_URL}|${PIPELINE_RUN_NAME}>"
