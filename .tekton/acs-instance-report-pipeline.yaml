@@ -38,7 +38,7 @@ spec:
   - name: fleet-manager-image
     type: string
     description: Pre-built fleet-manager container image reference
-    default: "quay.io/redhat-services-prod/acscs-rhacs-tenant/acscs-main/acs-fleet-manager:latest"
+    default: "quay.io/redhat-services-prod/acscs-rhacs-tenant/acscs-main/acs-fleet-manager@sha256:e78df9403cfad10276b864e482a35d25c64c7a6159ee9f1c508a67abda2d0247" # daa748f
   - name: konflux-base-url
     type: string
     default: "https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com"
