@@ -27,6 +27,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmMocks "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/mocks"
 	centralNotifierUtils "github.com/stackrox/rox/central/notifiers/utils"
+	platform "github.com/stackrox/rox/operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -382,6 +383,238 @@ func TestReconcileDelete(t *testing.T) {
 	namespace := &v1.Namespace{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
 	assert.True(t, k8sErrors.IsNotFound(err))
+}
+
+// TestReconcileDeleteWaitsForStaleVersionSelector reproduces ROX-36296: a Central CR whose
+// rhacs.redhat.com/version-selector label is stale (still pointing at an operator version that
+// may already be undeployed as part of a canary upgrade) must not be torn down until the label
+// has been refreshed to match the currently configured rolloutGroup. Otherwise no operator would
+// ever pick up the CR again to remove its uninstall finalizer, orphaning it.
+//
+// The fake test harness (testutils.ReconcileTracker) simulates ArgoCD by synchronously re-syncing
+// the Central CR's labels the moment the ArgoCD Application is created/updated, whereas in a real
+// cluster that sync happens asynchronously. To exercise the "still waiting for the label to catch
+// up" branch of reconcileInstanceDeletion, this test sets the Application's rolloutGroup to its
+// final value up front (so ensureApplicationExists has nothing left to update) and then manually
+// drives the live Central CR's label out of sync, mimicking the real-world window where ArgoCD
+// hasn't reconciled the new label yet.
+func TestReconcileDeleteWaitsForStaleVersionSelector(t *testing.T) {
+	managedCentral := simpleManagedCentral
+	managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
+		rolloutGroupValuesKey: "v2",
+	}
+
+	fakeClient, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions)
+
+	_, err := r.Reconcile(context.TODO(), managedCentral)
+	require.NoError(t, err)
+
+	// Simulate the real-world window where the tenant's ArgoCD Application already targets the
+	// new rollout group, but the live Central CR hasn't been synced to the new
+	// version-selector label yet (e.g. operator v1 was undeployed before ArgoCD got around to
+	// re-syncing this particular tenant).
+	centralCR := &platform.Central{}
+	require.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, centralCR))
+	centralCR.Labels[k8s.VersionSelectorLabelKey] = "v1"
+	require.NoError(t, fakeClient.Update(context.TODO(), centralCR))
+
+	deletedCentral := managedCentral
+	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
+
+	// shouldDelete reports false while the label is stale, so Reconcile falls through to a normal
+	// reconcile pass instead of tearing anything down (fleet-manager ignores status updates for
+	// centrals it has already marked as deprovisioning, so this is safe).
+	_, err = r.Reconcile(context.TODO(), deletedCentral)
+	require.NoError(t, err)
+
+	// Nothing should have been torn down while the label is still stale.
+	namespace := &v1.Namespace{}
+	assert.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace))
+	assert.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralArgoCDAppName, Namespace: openshiftGitopsNamespace}, &argocd.Application{}))
+
+	// Reconciling again without anything changing must keep waiting.
+	_, err = r.Reconcile(context.TODO(), deletedCentral)
+	require.NoError(t, err)
+
+	// ArgoCD finally syncs the new label onto the live Central CR.
+	require.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, centralCR))
+	centralCR.Labels[k8s.VersionSelectorLabelKey] = "v2"
+	require.NoError(t, fakeClient.Update(context.TODO(), centralCR))
+
+	// Deletion can now proceed (mirroring the two-call async deletion pattern used elsewhere).
+	status, err := r.Reconcile(context.TODO(), deletedCentral)
+	require.ErrorIs(t, err, ErrDeletionInProgress)
+	require.Nil(t, status)
+
+	status, err = r.Reconcile(context.TODO(), deletedCentral)
+	require.NoError(t, err)
+	require.NotNil(t, status)
+
+	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
+	require.True(t, ok, "Ready condition not found in conditions", status.Conditions)
+	assert.Equal(t, "False", readyCondition.Status)
+	assert.Equal(t, "Deleted", readyCondition.Reason)
+
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralArgoCDAppName, Namespace: openshiftGitopsNamespace}, &argocd.Application{})
+	assert.True(t, k8sErrors.IsNotFound(err))
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, &v1.Namespace{})
+	assert.True(t, k8sErrors.IsNotFound(err))
+}
+
+// TestVersionSelectorMatchesRolloutGroup covers the Get-based lookup used by
+// versionSelectorMatchesRolloutGroup, including the case where the Central CR doesn't exist.
+func TestVersionSelectorMatchesRolloutGroup(t *testing.T) {
+	managedCentral := simpleManagedCentral
+	managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
+		rolloutGroupValuesKey: "v2",
+	}
+
+	t.Run("Central CR not found", func(t *testing.T) {
+		_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions)
+
+		synced, err := r.versionSelectorMatchesRolloutGroup(context.TODO(), managedCentral)
+		require.NoError(t, err)
+		assert.True(t, synced)
+	})
+
+	t.Run("label matches rollout group", func(t *testing.T) {
+		centralCR := &platform.Central{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      centralName,
+				Namespace: centralNamespace,
+				Labels:    map[string]string{k8s.VersionSelectorLabelKey: "v2"},
+			},
+		}
+		_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, centralCR)
+
+		synced, err := r.versionSelectorMatchesRolloutGroup(context.TODO(), managedCentral)
+		require.NoError(t, err)
+		assert.True(t, synced)
+	})
+
+	t.Run("label is stale", func(t *testing.T) {
+		centralCR := &platform.Central{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      centralName,
+				Namespace: centralNamespace,
+				Labels:    map[string]string{k8s.VersionSelectorLabelKey: "v1"},
+			},
+		}
+		_, _, r := getClientTrackerAndReconciler(t, nil, defaultReconcilerOptions, centralCR)
+
+		synced, err := r.versionSelectorMatchesRolloutGroup(context.TODO(), managedCentral)
+		require.NoError(t, err)
+		assert.False(t, synced)
+	})
+}
+
+// TestReconcileDeleteWithProvisionedDBPreservesConnectionStringWhileWaiting reproduces ROX-36296
+// for tenants with an already-provisioned managed DB: while shouldDelete is false (stale label),
+// Reconcile falls through to the normal path, which must keep passing the real connection string
+// instead of blanking it out.
+//
+// This primes the process-wide DB CA cert cache up front to work around an unrelated pre-existing
+// quirk: postgres.GetDatabaseCACertificates caches its result via sync.Once but ignores the cached
+// error on subsequent calls, so two Reconcile calls in the same test can otherwise render two
+// different Application payloads for reasons unrelated to what's being tested here.
+func TestReconcileDeleteWithProvisionedDBPreservesConnectionStringWhileWaiting(t *testing.T) {
+	_, _ = postgres.GetDatabaseCACertificates()
+
+	managedCentral := simpleManagedCentral
+	managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
+		rolloutGroupValuesKey: "v2",
+	}
+
+	connection, err := postgres.NewDBConnection("localhost", 5432, "rhacs", "postgres")
+	require.NoError(t, err)
+	expectedConnectionString := connection.GetConnectionForUserAndDB(dbCentralUserName, postgres.CentralDBName).
+		WithSSLRootCert(postgres.DatabaseCACertificatePathCentral).AsConnectionString()
+
+	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _, _, _ string, _ bool) error {
+		return nil
+	}
+	managedDBProvisioningClient.GetDBConnectionFunc = func(_ string) (postgres.DBConnection, error) {
+		return connection, nil
+	}
+
+	reconcilerOptions := defaultReconcilerOptions
+	reconcilerOptions.ManagedDBEnabled = true
+	reconcilerOptions.ArgoReconcilerOptions.ManagedDBEnabled = true
+	fakeClient, _, r := getClientTrackerAndReconciler(t, managedDBProvisioningClient, reconcilerOptions)
+
+	// Provision the DB via a normal reconcile first.
+	_, err = r.Reconcile(context.TODO(), managedCentral)
+	require.NoError(t, err)
+	require.Len(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), 1)
+
+	// Stale the live Central CR's version-selector label, as in TestReconcileDeleteWaitsForStaleVersionSelector.
+	centralCR := &platform.Central{}
+	require.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, centralCR))
+	centralCR.Labels[k8s.VersionSelectorLabelKey] = "v1"
+	require.NoError(t, fakeClient.Update(context.TODO(), centralCR))
+
+	deletedCentral := managedCentral
+	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
+
+	_, err = r.Reconcile(context.TODO(), deletedCentral)
+	require.NoError(t, err)
+
+	// The wait for the label must not trigger any new DB provisioning.
+	assert.Len(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), 1)
+
+	// The resynced Application must still carry the real connection string.
+	app := &argocd.Application{}
+	require.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralArgoCDAppName, Namespace: openshiftGitopsNamespace}, app))
+	values := map[string]interface{}{}
+	require.NoError(t, json.Unmarshal(app.Spec.Source.Helm.ValuesObject.Raw, &values))
+	assert.Equal(t, expectedConnectionString, values["centralDbConnectionString"])
+}
+
+// TestReconcileDeleteWithoutProvisionedDBSkipsProvisioningWhileWaiting ensures that falling
+// through to the normal reconcile path while shouldDelete is false never provisions a managed DB
+// for a tenant that never had one, mirroring the original "" workaround.
+func TestReconcileDeleteWithoutProvisionedDBSkipsProvisioningWhileWaiting(t *testing.T) {
+	_, _ = postgres.GetDatabaseCACertificates()
+
+	managedCentral := simpleManagedCentral
+	managedCentral.Spec.TenantResourcesValues = map[string]interface{}{
+		rolloutGroupValuesKey: "v2",
+	}
+
+	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _, _, _ string, _ bool) error {
+		return nil
+	}
+
+	reconcilerOptions := defaultReconcilerOptions
+	reconcilerOptions.ManagedDBEnabled = true
+	reconcilerOptions.ArgoReconcilerOptions.ManagedDBEnabled = true
+	fakeClient, _, r := getClientTrackerAndReconciler(t, managedDBProvisioningClient, reconcilerOptions)
+
+	// Bootstrap the namespace/Application/Central CR directly, without ever provisioning a
+	// managed DB (a normal Reconcile call with ManagedDBEnabled would provision one).
+	require.NoError(t, r.namespaceReconciler.reconcile(context.TODO(), r.getDesiredNamespace(managedCentral)))
+	require.NoError(t, r.argoReconciler.ensureApplicationExists(context.TODO(), managedCentral, ""))
+
+	centralCR := &platform.Central{}
+	require.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, centralCR))
+	centralCR.Labels[k8s.VersionSelectorLabelKey] = "v1"
+	require.NoError(t, fakeClient.Update(context.TODO(), centralCR))
+
+	deletedCentral := managedCentral
+	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
+
+	_, err := r.Reconcile(context.TODO(), deletedCentral)
+	require.NoError(t, err)
+
+	assert.Empty(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), "must never provision a DB while waiting for the version-selector label")
+
+	app := &argocd.Application{}
+	require.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralArgoCDAppName, Namespace: openshiftGitopsNamespace}, app))
+	values := map[string]interface{}{}
+	require.NoError(t, json.Unmarshal(app.Spec.Source.Helm.ValuesObject.Raw, &values))
+	assert.Empty(t, values["centralDbConnectionString"])
 }
 
 func TestReconcileDeleteWithManagedDB(t *testing.T) {

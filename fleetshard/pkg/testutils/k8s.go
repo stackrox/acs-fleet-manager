@@ -65,6 +65,12 @@ var centralLabels = map[string]string{
 	"app.kubernetes.io/component": "central",
 }
 
+// versionSelectorLabelKey mirrors the rhacs.redhat.com/version-selector label the real
+// tenant-resources Helm chart stamps onto the Central CR from the rolloutGroup helm value
+// (see fleetshard/pkg/k8s.VersionSelectorLabelKey; duplicated here as a literal to avoid an
+// import cycle between fleetshard/pkg/k8s tests and this package).
+const versionSelectorLabelKey = "rhacs.redhat.com/version-selector"
+
 var (
 	_ k8sTesting.ObjectTracker = (*ReconcileTracker)(nil)
 )
@@ -236,6 +242,9 @@ func centralCrFromArgoCdApp(app *argoCDApplication) *platform.Central {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      app.instanceName(),
 			Namespace: app.destinationNamespace,
+			Labels: map[string]string{
+				versionSelectorLabelKey: app.rolloutGroup(),
+			},
 		},
 	}
 }
@@ -371,6 +380,14 @@ func (a *argoCDApplication) centralDataHost() string {
 
 func (a *argoCDApplication) instanceName() string {
 	return a.helmValues["instanceName"].(string)
+}
+
+func (a *argoCDApplication) rolloutGroup() string {
+	value, ok := a.helmValues["rolloutGroup"]
+	if !ok {
+		return ""
+	}
+	return value.(string)
 }
 
 func newArgoCDApplicationFromCustomResource(app *argoCd.Application) (*argoCDApplication, error) {

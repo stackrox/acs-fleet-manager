@@ -73,7 +73,11 @@ func (r *managedDbReconciler) getDatabaseID(ctx context.Context, remoteCentralNa
 	return centralID, nil
 }
 
-func (r *managedDbReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral private.ManagedCentral) (string, error) {
+// getCentralDBConnectionString returns the tenant's DB connection string. If allowProvisioning is
+// true and no managed DB has been provisioned for the tenant yet (or its record went missing), it
+// provisions/restores one. If allowProvisioning is false, it never provisions anything and simply
+// returns "" when there's nothing to connect to yet.
+func (r *managedDbReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral private.ManagedCentral, allowProvisioning bool) (string, error) {
 	centralDBUserExists, err := r.centralDBUserExists(ctx, remoteCentral.Metadata.Namespace)
 	if err != nil {
 		return "", err
@@ -83,6 +87,9 @@ func (r *managedDbReconciler) getCentralDBConnectionString(ctx context.Context, 
 	// provisioned and successfully created (access to a running Postgres instance is a
 	// precondition to create this user)
 	if !centralDBUserExists {
+		if !allowProvisioning {
+			return "", nil
+		}
 		if err := r.ensureManagedCentralDBInitialized(ctx, remoteCentral); err != nil {
 			return "", fmt.Errorf("initializing managed DB: %w", err)
 		}
@@ -97,6 +104,9 @@ func (r *managedDbReconciler) getCentralDBConnectionString(ctx context.Context, 
 	if err != nil {
 		if !errors.Is(err, cloudprovider.ErrDBNotFound) {
 			return "", fmt.Errorf("getting RDS DB connection data: %w", err)
+		}
+		if !allowProvisioning {
+			return "", nil
 		}
 
 		glog.Infof("expected DB for %s not found, trying to restore...", remoteCentral.Id)
