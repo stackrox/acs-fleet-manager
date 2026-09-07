@@ -49,6 +49,10 @@ jobs:
           registry: quay.io
           username: ${{ secrets.QUAY_RHACS_ENG_RO_USERNAME }}
           password: ${{ secrets.QUAY_RHACS_ENG_RO_PASSWORD }}
+      - name: Install roxie
+        uses: stackrox/actions/roxie/install-cli@43bb707aa4f32ead5bfb8d5ab11fb409f971ffc8 # ratchet:stackrox/actions@v1
+        with:
+          version: "v0.4.11-test1" # TODO: drop once released, to get latest
       - name: Checkout this repository
         uses: actions/checkout@v7
         with:
