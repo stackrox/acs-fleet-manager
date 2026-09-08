@@ -1,6 +1,7 @@
 central:
-  metadataAnnotations:
-    platform.stackrox.io/managed-services: true
+  metadata:
+    annotations:
+      platform.stackrox.io/managed-services: true
   spec:
     customize:
       envVars:
