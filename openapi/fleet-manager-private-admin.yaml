@@ -785,6 +785,16 @@ components:
 
     CentralBillingChangeRequest:
       type: object
+      description: >-
+        Billing parameters to apply to the Central. Every field is written to
+        the record as sent, so this request must carry the full desired state:
+        a field omitted from the body is treated the same as an empty value and
+        clears the stored value (it is not merged with the existing value).
+      required:
+        - model
+        - cloud_account_id
+        - cloud_provider
+        - product
       properties:
         model:
           type: string
@@ -806,6 +816,16 @@ components:
 
     CentralSubscriptionChangeRequest:
       type: object
+      description: >-
+        Subscription parameters to apply to the Central. Every field is written
+        to the record as sent, so this request must carry the full desired
+        state: a field omitted from the body is treated the same as an empty
+        value and clears the stored value (it is not merged with the existing
+        value).
+      required:
+        - cloud_account_id
+        - cloud_provider
+        - subscription_id
       properties:
         cloud_account_id:
           type: string
