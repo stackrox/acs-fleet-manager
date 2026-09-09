@@ -1115,6 +1115,10 @@ func makeBillingParameters(central *dbapi.CentralRequest) *billingParameters {
 	}
 }
 
+// ChangeBillingParameters writes the given billing parameters to the Central
+// record as-is: every field is persisted, including empty values. Callers must
+// pass the full desired state, since an empty field clears the stored value
+// rather than preserving it.
 func (k *centralService) ChangeBillingParameters(ctx context.Context, centralID string, billingModel string, cloudAccountID string, cloudProvider string, product string) *errors.ServiceError {
 	centralRequest, svcErr := k.GetByID(centralID)
 	if svcErr != nil {
@@ -1142,7 +1146,13 @@ func (k *centralService) ChangeBillingParameters(ctx context.Context, centralID 
 	centralRequest.SubscriptionID = newSubscriptionID
 
 	if !reflect.DeepEqual(original, updated) {
-		if svcErr = k.UpdateIgnoreNils(centralRequest); svcErr != nil {
+		fields := map[string]interface{}{
+			"cloud_provider":   centralRequest.CloudProvider,
+			"cloud_account_id": centralRequest.CloudAccountID,
+			"subscription_id":  centralRequest.SubscriptionID,
+			"instance_type":    centralRequest.InstanceType,
+		}
+		if svcErr = k.Updates(centralRequest, fields); svcErr != nil {
 			glog.Errorf("Failed to update central %q record with updated billing parameters (%v): %v", centralID, updated, svcErr)
 			return svcErr
 		}
@@ -1153,7 +1163,10 @@ func (k *centralService) ChangeBillingParameters(ctx context.Context, centralID 
 	return nil
 }
 
-// ChangeSubscription implements CentralService.
+// ChangeSubscription implements CentralService. It writes the given parameters
+// to the Central record as-is: every field is persisted, including empty
+// values. Callers must pass the full desired state, since an empty field clears
+// the stored value rather than preserving it.
 func (k *centralService) ChangeSubscription(ctx context.Context, centralID string, cloudAccountID string, cloudProvider string, subscriptionID string) *errors.ServiceError {
 	centralRequest, svcErr := k.GetByID(centralID)
 	if svcErr != nil {
@@ -1164,7 +1177,12 @@ func (k *centralService) ChangeSubscription(ctx context.Context, centralID strin
 	centralRequest.CloudAccountID = cloudAccountID
 	centralRequest.SubscriptionID = subscriptionID
 
-	if svcErr = k.UpdateIgnoreNils(centralRequest); svcErr != nil {
+	fields := map[string]interface{}{
+		"cloud_provider":   cloudProvider,
+		"cloud_account_id": cloudAccountID,
+		"subscription_id":  subscriptionID,
+	}
+	if svcErr = k.Updates(centralRequest, fields); svcErr != nil {
 		glog.Errorf("Failed to update central %q record with subscription_id %q and updated cloud account %q: %v", centralID, subscriptionID, cloudAccountID, svcErr)
 		return svcErr
 	}

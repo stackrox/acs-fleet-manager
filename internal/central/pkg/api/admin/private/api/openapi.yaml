@@ -927,6 +927,10 @@ components:
       - reason
       type: object
     CentralBillingChangeRequest:
+      description: 'Billing parameters to apply to the Central. Every field is written
+        to the record as sent, so this request must carry the full desired state:
+        a field omitted from the body is treated the same as an empty value and clears
+        the stored value (it is not merged with the existing value).'
       example:
         cloud_account_id: cloud_account_id
         product: RHACS
@@ -952,6 +956,10 @@ components:
           type: string
       type: object
     CentralSubscriptionChangeRequest:
+      description: 'Subscription parameters to apply to the Central. Every field is
+        written to the record as sent, so this request must carry the full desired
+        state: a field omitted from the body is treated the same as an empty value
+        and clears the stored value (it is not merged with the existing value).'
       example:
         cloud_account_id: cloud_account_id
         subscription_id: subscription_id
