@@ -12,7 +12,7 @@ package private
 
 // CentralSubscriptionChangeRequest Subscription parameters to apply to the Central. Every field is written to the record as sent, so this request must carry the full desired state: a field omitted from the body is treated the same as an empty value and clears the stored value (it is not merged with the existing value).
 type CentralSubscriptionChangeRequest struct {
-	CloudAccountId string `json:"cloud_account_id,omitempty"`
-	CloudProvider  string `json:"cloud_provider,omitempty"`
-	SubscriptionId string `json:"subscription_id,omitempty"`
+	CloudAccountId string `json:"cloud_account_id"`
+	CloudProvider  string `json:"cloud_provider"`
+	SubscriptionId string `json:"subscription_id"`
 }

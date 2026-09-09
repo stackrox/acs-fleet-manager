@@ -12,8 +12,8 @@ package private
 
 // CentralBillingChangeRequest Billing parameters to apply to the Central. Every field is written to the record as sent, so this request must carry the full desired state: a field omitted from the body is treated the same as an empty value and clears the stored value (it is not merged with the existing value).
 type CentralBillingChangeRequest struct {
-	Model          string `json:"model,omitempty"`
-	CloudAccountId string `json:"cloud_account_id,omitempty"`
-	CloudProvider  string `json:"cloud_provider,omitempty"`
-	Product        string `json:"product,omitempty"`
+	Model          string `json:"model"`
+	CloudAccountId string `json:"cloud_account_id"`
+	CloudProvider  string `json:"cloud_provider"`
+	Product        string `json:"product"`
 }

@@ -954,6 +954,11 @@ components:
           enum:
           - RHACS
           type: string
+      required:
+      - cloud_account_id
+      - cloud_provider
+      - model
+      - product
       type: object
     CentralSubscriptionChangeRequest:
       description: 'Subscription parameters to apply to the Central. Every field is
@@ -971,6 +976,10 @@ components:
           type: string
         subscription_id:
           type: string
+      required:
+      - cloud_account_id
+      - cloud_provider
+      - subscription_id
       type: object
     CentralAssignClusterRequest:
       example:

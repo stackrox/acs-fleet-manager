@@ -281,9 +281,8 @@ func Test_centralService_ChangeBillingParameters(t *testing.T) {
 		OneTime().WithArgs(testID, int64(1)).
 		WithReply(converters.ConvertCentralRequest(central))
 	m1 := catcher.NewMock().WithQuery(`UPDATE "central_requests" ` +
-		`SET "updated_at"=$1,"deleted_at"=$2,"region"=$3,"cluster_id"=$4,` +
-		`"cloud_provider"=$5,"cloud_account_id"=$6,"name"=$7,"subscription_id"=$8,"owner"=$9 ` +
-		`WHERE status not IN ($10,$11) AND "central_requests"."deleted_at" IS NULL AND "id" = $12`).
+		`SET "cloud_account_id"=$1,"cloud_provider"=$2,"instance_type"=$3,"subscription_id"=$4,"updated_at"=$5 ` +
+		`WHERE status not IN ($6,$7) AND "central_requests"."deleted_at" IS NULL AND "id" = $8`).
 		OneTime()
 
 	svcErr := k.ChangeBillingParameters(context.Background(), central.ID, "marketplace", "aws_account_id", "aws", "")
@@ -320,9 +319,8 @@ func Test_centralService_ChangeSubscription(t *testing.T) {
 		OneTime().WithArgs(testID, int64(1)).
 		WithReply(converters.ConvertCentralRequest(central))
 	q1 := catcher.NewMock().WithQuery(`UPDATE "central_requests" ` +
-		`SET "updated_at"=$1,"deleted_at"=$2,"region"=$3,"cluster_id"=$4,` +
-		`"cloud_provider"=$5,"cloud_account_id"=$6,"name"=$7,"subscription_id"=$8,"owner"=$9 ` +
-		`WHERE status not IN ($10,$11) AND "central_requests"."deleted_at" IS NULL AND "id" = $12`).
+		`SET "cloud_account_id"=$1,"cloud_provider"=$2,"subscription_id"=$3,"updated_at"=$4 ` +
+		`WHERE status not IN ($5,$6) AND "central_requests"."deleted_at" IS NULL AND "id" = $7`).
 		OneTime()
 
 	svcErr := service.ChangeSubscription(context.Background(), central.ID, "aws_account_id", "aws", "new_subscription_id")
