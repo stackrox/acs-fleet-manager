@@ -36,22 +36,6 @@ else
     log "Skipping installation of OpenShift Router"
 fi
 
-if [[ "$INSTALL_VERTICAL_POD_AUTOSCALER" == "true" ]]; then
-    log "Installing Vertical Pod Autoscaler"
-    apply "${MANIFESTS_DIR}/vertical-pod-autoscaler"
-    log "Generating certs for the Vertical Pod Autoscaler Admission Controller"
-    "${MANIFESTS_DIR}"/vertical-pod-autoscaler/gencerts.sh
-else
-    log "Skipping installation of Vertical Pod Autoscaler"
-fi
-
-if [[ "$INSTALL_VERTICAL_POD_AUTOSCALER_OLM" == "true" ]]; then
-    log "Installing Vertical Pod Autoscaler using OLM"
-    apply "${MANIFESTS_DIR}/vertical-pod-autoscaler-olm"
-else
-    log "Skipping installation of Vertical Pod Autoscaler using OLM"
-fi
-
 if [[ "$INSTALL_ARGOCD" == "true" ]]; then
     log "Installing ArgoCD"
     chamber exec gitops -- apply "${MANIFESTS_DIR}/argocd"

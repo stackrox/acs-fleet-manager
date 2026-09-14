@@ -15,9 +15,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -215,45 +213,6 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				Should(Succeed())
 		})
 
-		It("deploys an autoscaler", func() {
-			_, err := getVPA(ctx, centralNamespace, "central-vpa")
-			Expect(err).To(HaveOccurred())
-			Expect(k8sErrors.IsNotFound(err)).To(BeTrue(), "central-vpa VerticalPodAutoscaler should not exist: %v", err)
-			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
-				config = defaultGitopsConfig()
-				config.TenantResources.Overrides = append(config.TenantResources.Overrides, overrideCentralWithPatch(createdCentral.Id, tenantResourcesWithCentralVpaEnabled()))
-				return config
-			})).To(Succeed())
-			debugGitopsConfig(ctx)
-			Eventually(func() error {
-				_, err := getVPA(ctx, centralNamespace, "central-vpa")
-				return err
-			}).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(Succeed())
-		})
-
-		It("removes the autoscaler", func() {
-			_, err := getVPA(ctx, centralNamespace, "central-vpa")
-			Expect(err).ToNot(HaveOccurred(), "central-vpa VerticalPodAutoscaler should exist: %v", err)
-			Expect(updateGitopsConfig(ctx, func(config gitops.Config) gitops.Config {
-				config = defaultGitopsConfig()
-				return config
-			})).To(Succeed())
-			debugGitopsConfig(ctx)
-			Eventually(func() error {
-				_, err := getVPA(ctx, centralNamespace, "central-vpa")
-				if !k8sErrors.IsNotFound(err) {
-					return fmt.Errorf("vpa not removed")
-				}
-				return nil
-			}).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(Succeed())
-		})
-
 		It("delete central", func() {
 			Expect(deleteCentralByID(ctx, client, createdCentral.Id)).
 				To(Succeed())
@@ -412,17 +371,6 @@ func getDeployment(ctx context.Context, namespace string, name string) (*appsv1.
 	deployment := &appsv1.Deployment{}
 	err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: name}, deployment)
 	return deployment, err
-}
-
-func getVPA(ctx context.Context, namespace string, name string) (*unstructured.Unstructured, error) {
-	autoscaler := &unstructured.Unstructured{}
-	autoscaler.SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   "autoscaling.k8s.io",
-		Version: "v1",
-		Kind:    "VerticalPodAutoscaler",
-	})
-	err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: name}, autoscaler)
-	return autoscaler, err
 }
 
 func getContainer(name string, containers []v1.Container) (*v1.Container, error) {
@@ -586,7 +534,6 @@ spec:
 
 func defaultTenantResourceValues() string {
 	return `
-centralVpaEnabled: false
 rolloutGroup: dev
 centralResources:
   limits:
@@ -617,10 +564,6 @@ scannerDbResources:
     cpu: 100m
     memory: 100Mi
 `
-}
-
-func tenantResourcesWithCentralVpaEnabled() string {
-	return `centralVpaEnabled: true`
 }
 
 func mustJson(obj interface{}) []byte {
