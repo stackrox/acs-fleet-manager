@@ -1,0 +1,14 @@
+central:
+  metadata:
+    annotations:
+      platform.stackrox.io/managed-services: true
+  spec:
+    customize:
+      envVars:
+        - name: ROX_ACSCS_EMAIL_URL
+          value: "http://emailsender.rhacs.svc:443"
+    # Disabling scanner to reduce resource usage, it is not important for this test
+    scanner:
+      scannerComponent: Disabled
+    scannerV4:
+      scannerComponent: Disabled
