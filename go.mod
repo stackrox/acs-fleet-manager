@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/kms v1.55.7
 	github.com/aws/aws-sdk-go-v2/service/rds v1.128.0
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.67.1
-	github.com/aws/aws-sdk-go-v2/service/ses v1.37.7
+	github.com/aws/aws-sdk-go-v2/service/ses v1.42.0
 	github.com/aws/smithy-go v1.28.1
 	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/caarlos0/env/v11 v11.4.1
@@ -74,8 +74,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.9 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.19.1 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.1.17 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.2 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/acm v1.38.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.66.1 // indirect
