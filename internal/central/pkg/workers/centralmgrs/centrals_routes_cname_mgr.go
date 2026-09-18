@@ -1,6 +1,8 @@
 package centralmgrs
 
 import (
+	"context"
+
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -20,6 +22,7 @@ type CentralRoutesCNAMEManager struct {
 	centralService          services.CentralService
 	centralConfig           *config.CentralConfig
 	managedCentralPresenter *presenters.ManagedCentralPresenter
+	uiReachabilityChecker   UIReachabilityChecker
 }
 
 var _ workers.Worker = &CentralRoutesCNAMEManager{}
@@ -36,6 +39,7 @@ func NewCentralCNAMEManager(centralService services.CentralService, centralConfi
 		centralService:          centralService,
 		centralConfig:           centralConfig,
 		managedCentralPresenter: managedCentralPresenter,
+		uiReachabilityChecker:   NewHTTPUIReachabilityChecker(),
 	}
 }
 
@@ -67,35 +71,52 @@ func (k *CentralRoutesCNAMEManager) Reconcile() []error {
 			errs = append(errs, errors.Wrapf(err, "failed to present managed central for central %s", central.ID))
 			continue
 		}
-		if k.centralConfig.EnableCentralExternalDomain && !externaldns.IsEnabled(managedCentral) {
-			if central.RoutesCreationID == "" {
-				glog.Infof("creating CNAME records for central %s", central.ID)
+		if k.centralConfig.EnableCentralExternalDomain {
+			if !externaldns.IsEnabled(managedCentral) {
+				if central.RoutesCreationID == "" {
+					glog.Infof("creating CNAME records for central %s", central.ID)
 
-				changeOutput, err := k.centralService.ChangeCentralCNAMErecords(central, services.CentralRoutesActionUpsert)
+					changeOutput, err := k.centralService.ChangeCentralCNAMErecords(central, services.CentralRoutesActionUpsert)
 
-				if err != nil {
-					errs = append(errs, err)
-					continue
+					if err != nil {
+						errs = append(errs, err)
+						continue
+					}
+
+					switch {
+					case changeOutput == nil:
+						glog.Infof("creating CNAME records failed with nil result")
+						continue
+					case changeOutput.ChangeInfo == nil || changeOutput.ChangeInfo.Id == nil || changeOutput.ChangeInfo.Status == "":
+						glog.Infof("creating CNAME records failed with nil info")
+						continue
+					}
+
+					central.RoutesCreationID = *changeOutput.ChangeInfo.Id
+					central.RoutesCreated = changeOutput.ChangeInfo.Status == "INSYNC"
+				} else {
+					recordStatus, err := k.centralService.GetCNAMERecordStatus(central)
+					if err != nil {
+						errs = append(errs, err)
+						continue
+					}
+					central.RoutesCreated = *recordStatus.Status == "INSYNC"
 				}
-
-				switch {
-				case changeOutput == nil:
-					glog.Infof("creating CNAME records failed with nil result")
-					continue
-				case changeOutput.ChangeInfo == nil || changeOutput.ChangeInfo.Id == nil || changeOutput.ChangeInfo.Status == "":
-					glog.Infof("creating CNAME records failed with nil info")
-					continue
-				}
-
-				central.RoutesCreationID = *changeOutput.ChangeInfo.Id
-				central.RoutesCreated = changeOutput.ChangeInfo.Status == "INSYNC"
 			} else {
-				recordStatus, err := k.centralService.GetCNAMERecordStatus(central)
-				if err != nil {
-					errs = append(errs, err)
-					continue
+				// External DNS is enabled for this central (managed by external-dns operator)
+				ctx := context.Background()
+				uiReachable, checkErr := k.uiReachabilityChecker.IsReachable(ctx, managedCentral.Spec.UiHost)
+				if checkErr != nil {
+					glog.Warningf("Failed to check UI reachability for central %s at %s: %v",
+						central.ID, managedCentral.Spec.UiHost, checkErr)
+				} else if !uiReachable {
+					glog.Infof("Central %s UI at %s is not yet reachable from internet",
+						central.ID, managedCentral.Spec.UiHost)
+				} else {
+					glog.Infof("Central %s UI at %s is reachable from internet",
+						central.ID, managedCentral.Spec.UiHost)
+					central.RoutesCreated = true
 				}
-				central.RoutesCreated = *recordStatus.Status == "INSYNC"
 			}
 		} else {
 			glog.Infof("external certificate is disabled, skip CNAME creation for Central %s", central.ID)
