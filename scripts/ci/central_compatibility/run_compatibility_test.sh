@@ -10,7 +10,6 @@ SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 EMAILSENDER_NS="rhacs"
 CENTRAL_NS="rhacs-tenant"
-export ADMIN_PW="letmein"
 
 cd "$ROOT_DIR"
 
@@ -70,25 +69,22 @@ IMG_NAMES=(
   "main"
   "central-db"
 )
-MAIN_IMG="$IMG_REPO/main:$ACS_VERSION"
 IMG_WAIT_TIMEOUT_SECONDS="${IMG_WAIT_TIMEOUT_SECONDS:-1200}"
 for imgname in "${IMG_NAMES[@]}"; do
   wait_for_img "$IMG_REPO/$imgname:$ACS_VERSION" "$IMG_WAIT_TIMEOUT_SECONDS"
   pull_to_kind "$IMG_REPO/$imgname:$ACS_VERSION" "$imgname"
 done
 
-ROXCTL="docker run --rm --user $(id -u):$(id -g) -v $(pwd):/tmp/stackrox-charts/ $MAIN_IMG"
-# --remove to make this script rerunnable on a local machine
-$ROXCTL helm output central-services --image-defaults opensource --remove --output-dir /tmp/stackrox-charts/central-chart
+roxie_envrc="$(mktemp)"
 
-# Using ACS_VERSION explicitly here since it would otherwise not use the nightly build tag
-helm upgrade --install -n $CENTRAL_NS stackrox-central-services ./central-chart \
-  -f "${SOURCE_DIR}/central-values.yaml" \
-  --set "central.adminPassword.values=$ADMIN_PW" \
-  --set "central.image.tag=$ACS_VERSION" \
-  --set "central.db.image.tag=$ACS_VERSION" \
-  --set "scannerV4.disable=true" \
-  --set "scanner.disable=true" # Disabling scanner to reduce resource usage, it is not important for this test
+roxie deploy central --verbose --resources auto --tag "${ACS_VERSION}" \
+  --envrc "${roxie_envrc}" \
+  --set central.namespace="${CENTRAL_NS}" \
+  --config "${SOURCE_DIR}/roxie-config.yaml"
+
+# shellcheck source=/dev/null
+source "${roxie_envrc}"
+export ADMIN_PW="${ROX_ADMIN_PASSWORD}"
 
 KUBECTL="$(which kubectl)"
 wait_for_container_to_become_ready "$CENTRAL_NS" "app=central" "central"
