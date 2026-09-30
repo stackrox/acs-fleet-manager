@@ -50,7 +50,7 @@ jobs:
           username: ${{ secrets.QUAY_RHACS_ENG_RO_USERNAME }}
           password: ${{ secrets.QUAY_RHACS_ENG_RO_PASSWORD }}
       - name: Install roxie
-        uses: stackrox/actions/roxie/install-cli@43bb707aa4f32ead5bfb8d5ab11fb409f971ffc8 # ratchet:stackrox/actions@v1
+        uses: stackrox/actions/roxie/install-cli@d624eeae7073b3acb838aab7705730b2de58a4a0 # ratchet:stackrox/actions@v1
       - name: Checkout this repository
         uses: actions/checkout@v7
         with:
