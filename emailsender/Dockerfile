@@ -10,7 +10,7 @@ COPY . ./
 
 RUN make emailsender
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8@sha256:c4c285d42941ebb2bd4da878479008e1e4536bb599aad1dbe568f89de9053661 AS standard
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8@sha256:6f3a78179e0b30b930a186e7f68a4af52e51bb82406c9653be10bddd624e40f5 AS standard
 
 RUN useradd -u 1001 unprivilegeduser
 ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /rds_ca/aws-rds-ca-global-bundle.pem
