@@ -12,7 +12,7 @@ ARG TARGETARCH
 
 RUN make probe GOOS=linux GOARCH=${TARGETARCH}
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8@sha256:6f3a78179e0b30b930a186e7f68a4af52e51bb82406c9653be10bddd624e40f5 as standard
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8@sha256:dfa0eb04abc59221544e74862432496add1f491f915c9b531880f91affc0e12c as standard
 
 RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
