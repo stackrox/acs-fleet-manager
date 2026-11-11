@@ -26,7 +26,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/go/.cache/ \
     make fleet-manager fleetshard-sync GOOS=linux GOARCH=${TARGETARCH}
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8@sha256:dfa0eb04abc59221544e74862432496add1f491f915c9b531880f91affc0e12c AS standard
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.9@sha256:ecb40c7bdfa5b0bb71e978c98c7cf56ce38edf1f8fb3561078acbc4b13698c07 AS standard
 
 RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
