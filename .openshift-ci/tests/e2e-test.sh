@@ -17,7 +17,11 @@ else
     log "Skipping cleanup of left-over resources because CLUSTER_TYPE is openshift-ci"
 fi
 
-up.sh
+if ! up.sh; then
+    log "** FAILED TO BRING UP THE ACSCS ENVIRONMENT **"
+    log "** Exiting with status code 1 **"
+    exit 1
+fi
 
 log "Environment up and running"
 

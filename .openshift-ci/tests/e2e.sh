@@ -150,6 +150,18 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
     log "** END OPERATOR STATE **"
     log
 
+    if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
+        log "** BEGIN EXTERNAL SECRETS STATE **"
+        ESO_NS="rhacs-external-secrets"
+        $KUBECTL get clustersecretstores -o yaml || true
+        $KUBECTL -n "$ACSCS_NAMESPACE" get externalsecrets || true
+        $KUBECTL -n "$ACSCS_NAMESPACE" get externalsecrets -o yaml || true
+        $KUBECTL -n "$ESO_NS" get pods || true
+        $KUBECTL -n "$ESO_NS" logs -l app.kubernetes.io/instance=external-secrets --all-containers --prefix --tail=200 || true
+        log "** END EXTERNAL SECRETS STATE **"
+        log
+    fi
+
     log "** BEGIN GITOPS STATE **"
     GITOPS_NS="openshift-gitops"
     $KUBECTL -n $GITOPS_NS get pods || true
