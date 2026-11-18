@@ -74,6 +74,56 @@ func findEnvVar(name string, envVars []corev1.EnvVar) *corev1.EnvVar {
 	return nil
 }
 
+func TestHelmTemplate_FleetshardSyncDeployment_TenantAppSource(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		values   map[string]string
+		repoURL  string
+		revision string
+		path     string
+	}{
+		{
+			name:     "defaults",
+			repoURL:  "https://github.com/stackrox/acscs-tenant-resources",
+			revision: "HEAD",
+			path:     ".",
+		},
+		{
+			name: "explicit overrides",
+			values: map[string]string{
+				"gitops.tenantDefaultAppSourceRepoUrl":        "https://github.com/example/custom-tenant-resources",
+				"gitops.tenantDefaultAppSourceTargetRevision": "release-1",
+				"gitops.tenantDefaultAppSourcePath":           "charts/tenant",
+			},
+			repoURL:  "https://github.com/example/custom-tenant-resources",
+			revision: "release-1",
+			path:     "charts/tenant",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			values := map[string]string{"managedDB.enabled": "false"}
+			for key, value := range tt.values {
+				values[key] = value
+			}
+			deployment := unmarshalFleetshardSyncDeployment(t, values)
+			envVars := deployment.Spec.Template.Spec.Containers[0].Env
+			for name, value := range map[string]string{
+				"TENANT_DEFAULT_ARGOCD_APP_SOURCE_REPO_URL":        tt.repoURL,
+				"TENANT_DEFAULT_ARGOCD_APP_SOURCE_TARGET_REVISION": tt.revision,
+				"TENANT_DEFAULT_ARGOCD_APP_SOURCE_PATH":            tt.path,
+			} {
+				envVar := findEnvVar(name, envVars)
+				require.NotNil(t, envVar, "env var %s should be present", name)
+				require.Equal(t, value, envVar.Value, "env var %s", name)
+			}
+		})
+	}
+}
+
 func TestHelmTemplate_FleetshardSyncDeployment_Tenant(t *testing.T) {
 	t.Parallel()
 
