@@ -162,6 +162,20 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
         log
     fi
 
+    log "** BEGIN TENANT NAMESPACES STATE **"
+    for ns in $($KUBECTL get namespaces -l rhacs.redhat.com/tenant -o jsonpath='{.items[*].metadata.name}'); do
+        log "--- tenant namespace ${ns} ---"
+        $KUBECTL -n "$ns" get centrals.platform.stackrox.io -o yaml || true
+        $KUBECTL -n "$ns" get deployments || true
+        $KUBECTL -n "$ns" describe deployments || true
+        $KUBECTL -n "$ns" get pods || true
+        $KUBECTL -n "$ns" describe pods || true
+        $KUBECTL -n "$ns" get events --sort-by=.lastTimestamp || true
+        $KUBECTL -n openshift-gitops get app "$ns" -o yaml || true
+    done
+    log "** END TENANT NAMESPACES STATE **"
+    log
+
     log "** BEGIN GITOPS STATE **"
     GITOPS_NS="openshift-gitops"
     $KUBECTL -n $GITOPS_NS get pods || true
