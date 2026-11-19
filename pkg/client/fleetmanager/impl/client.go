@@ -3,6 +3,7 @@ package impl
 import (
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/pkg/errors"
 	admin "github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/admin/private"
@@ -88,6 +89,7 @@ func NewClient(endpoint string, auth Auth, opts ...ClientOption) (*fleetmanager.
 
 	httpClient := &http.Client{
 		Transport: newAuthTransport(auth),
+		Timeout:   30 * time.Second,
 	}
 
 	publicAPI := &publicAPIDelegate{
