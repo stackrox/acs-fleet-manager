@@ -113,6 +113,9 @@ log
 
 if [[ "$DUMP_LOGS" == "true" ]]; then
     log "Dumping logs"
+    # Bound every diagnostic call so an unresponsive API server cannot block
+    # the script from reaching its final exit status.
+    KUBECTL="$KUBECTL --request-timeout=30s"
     if [[ "$SPAWN_LOGGER" == "true" ]]; then
         log
         log "** BEGIN LOGS **"
@@ -171,10 +174,12 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
         $KUBECTL -n "$ns" get pods || true
         $KUBECTL -n "$ns" describe pods || true
         $KUBECTL -n "$ns" get events --sort-by=.lastTimestamp || true
-        $KUBECTL -n "$ns" logs --all-containers --prefix --tail=200 || true
-        # previous (crashed) container logs for any pod with restarts
-        for pod in $($KUBECTL -n "$ns" get pods -o jsonpath='{range .items[?(@.status.containerStatuses[0].restartCount>0)]}{.metadata.name}{"\n"}{end}'); do
-            $KUBECTL -n "$ns" logs "$pod" --all-containers --prefix --previous --tail=100 || true
+        for pod in $($KUBECTL -n "$ns" get pods -o jsonpath='{.items[*].metadata.name}'); do
+            $KUBECTL -n "$ns" logs "$pod" --all-containers --prefix --tail=200 || true
+            # previous (crashed) container logs for any restarted container
+            for container in $($KUBECTL -n "$ns" get pod "$pod" -o jsonpath='{.status.containerStatuses[?(@.restartCount>0)].name}'); do
+                $KUBECTL -n "$ns" logs "$pod" -c "$container" --prefix --previous --tail=100 || true
+            done
         done
         $KUBECTL -n openshift-gitops get app "$ns" -o yaml || true
     done
