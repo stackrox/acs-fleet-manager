@@ -113,6 +113,9 @@ log
 
 if [[ "$DUMP_LOGS" == "true" ]]; then
     log "Dumping logs"
+    # Bound every diagnostic call so an unresponsive API server cannot block
+    # the script from reaching its final exit status.
+    KUBECTL="$KUBECTL --request-timeout=30s"
     if [[ "$SPAWN_LOGGER" == "true" ]]; then
         log
         log "** BEGIN LOGS **"
@@ -148,6 +151,39 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
     $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get installplans || true
     $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" describe installplans || true
     log "** END OPERATOR STATE **"
+    log
+
+    if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
+        log "** BEGIN EXTERNAL SECRETS STATE **"
+        ESO_NS="rhacs-external-secrets"
+        $KUBECTL get clustersecretstores -o yaml || true
+        $KUBECTL -n "$ACSCS_NAMESPACE" get externalsecrets || true
+        $KUBECTL -n "$ACSCS_NAMESPACE" get externalsecrets -o yaml || true
+        $KUBECTL -n "$ESO_NS" get pods || true
+        $KUBECTL -n "$ESO_NS" logs -l app.kubernetes.io/instance=external-secrets --all-containers --prefix --tail=200 || true
+        log "** END EXTERNAL SECRETS STATE **"
+        log
+    fi
+
+    log "** BEGIN TENANT NAMESPACES STATE **"
+    for ns in $($KUBECTL get namespaces -l rhacs.redhat.com/tenant -o jsonpath='{.items[*].metadata.name}'); do
+        log "--- tenant namespace ${ns} ---"
+        $KUBECTL -n "$ns" get centrals.platform.stackrox.io -o yaml || true
+        $KUBECTL -n "$ns" get deployments || true
+        $KUBECTL -n "$ns" describe deployments || true
+        $KUBECTL -n "$ns" get pods || true
+        $KUBECTL -n "$ns" describe pods || true
+        $KUBECTL -n "$ns" get events --sort-by=.lastTimestamp || true
+        for pod in $($KUBECTL -n "$ns" get pods -o jsonpath='{.items[*].metadata.name}'); do
+            $KUBECTL -n "$ns" logs "$pod" --all-containers --prefix --tail=200 || true
+            # previous (crashed) container logs for any restarted container
+            for container in $($KUBECTL -n "$ns" get pod "$pod" -o jsonpath='{.status.containerStatuses[?(@.restartCount>0)].name}'); do
+                $KUBECTL -n "$ns" logs "$pod" -c "$container" --prefix --previous --tail=100 || true
+            done
+        done
+        $KUBECTL -n openshift-gitops get app "$ns" -o yaml || true
+    done
+    log "** END TENANT NAMESPACES STATE **"
     log
 
     log "** BEGIN GITOPS STATE **"
