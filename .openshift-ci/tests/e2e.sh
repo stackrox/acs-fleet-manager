@@ -171,6 +171,11 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
         $KUBECTL -n "$ns" get pods || true
         $KUBECTL -n "$ns" describe pods || true
         $KUBECTL -n "$ns" get events --sort-by=.lastTimestamp || true
+        $KUBECTL -n "$ns" logs --all-containers --prefix --tail=200 || true
+        # previous (crashed) container logs for any pod with restarts
+        for pod in $($KUBECTL -n "$ns" get pods -o jsonpath='{range .items[?(@.status.containerStatuses[0].restartCount>0)]}{.metadata.name}{"\n"}{end}'); do
+            $KUBECTL -n "$ns" logs "$pod" --all-containers --prefix --previous --tail=100 || true
+        done
         $KUBECTL -n openshift-gitops get app "$ns" -o yaml || true
     done
     log "** END TENANT NAMESPACES STATE **"
