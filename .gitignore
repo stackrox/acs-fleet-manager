@@ -88,6 +88,7 @@ vendor
 reports/
 .envrc
 e2e-report.json
+junit_e2e.xml
 cover.profile
 
 # AI local configuration
