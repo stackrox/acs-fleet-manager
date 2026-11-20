@@ -368,7 +368,7 @@ test/e2e: $(GINKGO_BIN)
 		--race --trace \
 		--json-report=e2e-report.json \
 		--junit-report=junit_e2e.xml \
-		--output-dir=$(or $(ARTIFACT_DIR),.) \
+		--output-dir="$(or $(ARTIFACT_DIR),.)" \
 		--timeout=$(TEST_TIMEOUT) \
 		--poll-progress-after=5m \
 		 ./e2e/...
