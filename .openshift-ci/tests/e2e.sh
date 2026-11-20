@@ -139,7 +139,7 @@ dump_pod_logs() {
     local pod container
     for pod in $($KUBECTL -n "$ns" get pods -o jsonpath='{.items[*].metadata.name}'); do
         dump "${dir}/${pod}.txt" -n "$ns" logs "$pod" --all-containers --prefix
-        for container in $($KUBECTL -n "$ns" get pod "$pod" -o jsonpath='{.status.containerStatuses[?(@.restartCount>0)].name}'); do
+        for container in $($KUBECTL -n "$ns" get pod "$pod" -o jsonpath='{.status.initContainerStatuses[?(@.restartCount>0)].name} {.status.containerStatuses[?(@.restartCount>0)].name}'); do
             dump "${dir}/${pod}-${container}-previous.txt" -n "$ns" logs "$pod" -c "$container" --previous
         done
     done
