@@ -51,9 +51,9 @@ resources:
     memory: "512Mi"
 gitops:
   enabled: false
-  tenantDefaultAppSourceRepoUrl: ""
-  tenantDefaultAppSourceTargetRevision: ""
-  tenantDefaultAppSourcePath: ""
+  tenantDefaultAppSourceRepoUrl: "https://github.com/stackrox/acscs-tenant-resources"
+  tenantDefaultAppSourceTargetRevision: "HEAD"
+  tenantDefaultAppSourcePath: "."
 targetedOperatorUpgrades:
   enabled: false
 affinity: {}

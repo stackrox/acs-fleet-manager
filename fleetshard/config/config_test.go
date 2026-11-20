@@ -24,6 +24,48 @@ func TestSingleton_Failure(t *testing.T) {
 	assert.Nil(t, cfg)
 }
 
+func TestGetConfig_TenantAppSource(t *testing.T) {
+	tests := []struct {
+		name     string
+		repoURL  string
+		revision string
+		path     string
+	}{
+		{
+			name:     "defaults",
+			repoURL:  "https://github.com/stackrox/acscs-tenant-resources.git",
+			revision: "HEAD",
+			path:     ".",
+		},
+		{
+			name:     "explicit overrides",
+			repoURL:  "https://github.com/example/custom-tenant-resources.git",
+			revision: "release-1",
+			path:     "charts/tenant",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("CLUSTER_ID", "some-value")
+			t.Setenv("TENANT_DEFAULT_ARGOCD_APP_SOURCE_REPO_URL", "")
+			t.Setenv("TENANT_DEFAULT_ARGOCD_APP_SOURCE_TARGET_REVISION", "")
+			t.Setenv("TENANT_DEFAULT_ARGOCD_APP_SOURCE_PATH", "")
+			if tt.name == "explicit overrides" {
+				t.Setenv("TENANT_DEFAULT_ARGOCD_APP_SOURCE_REPO_URL", tt.repoURL)
+				t.Setenv("TENANT_DEFAULT_ARGOCD_APP_SOURCE_TARGET_REVISION", tt.revision)
+				t.Setenv("TENANT_DEFAULT_ARGOCD_APP_SOURCE_PATH", tt.path)
+			}
+
+			cfg, err := GetConfig()
+			require.NoError(t, err)
+			assert.Equal(t, tt.repoURL, cfg.TenantDefaultArgoCdAppSourceRepoURL)
+			assert.Equal(t, tt.revision, cfg.TenantDefaultArgoCdAppSourceTargetRevision)
+			assert.Equal(t, tt.path, cfg.TenantDefaultArgoCdAppSourcePath)
+		})
+	}
+}
+
 func TestSingleton_Success_WhenManagedDBEnabled(t *testing.T) {
 	t.Setenv("CLUSTER_ID", "some-value")
 	t.Setenv("MANAGED_DB_ENABLED", "true")
