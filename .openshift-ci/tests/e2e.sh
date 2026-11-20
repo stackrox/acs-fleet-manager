@@ -45,11 +45,16 @@ fi
 
 init
 
-LOG_DIR=${LOG_DIR:-}
-if [[ "$SPAWN_LOGGER" == "true" && "$LOG_DIR" == "" ]]; then
-    LOG_DIR=$(mktemp -d)
+# OpenShift CI provides a per-step ARTIFACT_DIR whose content is uploaded to GCS.
+# Locally, use a fresh temp dir per run so reruns never collide or litter the repo.
+ARTIFACT_DIR=${ARTIFACT_DIR:-}
+if [[ "$SPAWN_LOGGER" == "true" || "$DUMP_LOGS" == "true" ]]; then
+    if [[ -z "$ARTIFACT_DIR" ]]; then
+        ARTIFACT_DIR=$(mktemp -d "${TMPDIR:-/tmp}/acscs-e2e.XXXXXX")
+    fi
+    mkdir -p "$ARTIFACT_DIR"
 fi
-export LOG_DIR
+export ARTIFACT_DIR
 export RUN_AUTH_E2E=${RUN_AUTH_E2E:-$RUN_AUTH_E2E_DEFAULT}
 export RUN_CENTRAL_E2E=${RUN_CENTRAL_E2E:-$RUN_CENTRAL_E2E_DEFAULT}
 
@@ -60,7 +65,7 @@ log
 log "Cluster type: ${CLUSTER_TYPE}"
 log "Cluster name: ${CLUSTER_NAME}"
 log "Fleet Manager Image: ${FLEET_MANAGER_IMAGE}"
-log "Log directory: ${LOG_DIR:-(none)}"
+log "Artifact directory: ${ARTIFACT_DIR:-(none)}"
 log "Executing Auth E2E tests: ${RUN_AUTH_E2E}"
 
 if [[ -z "$STATIC_TOKEN" ]]; then
@@ -89,9 +94,13 @@ if [[ "$SPAWN_LOGGER" == "true" ]]; then
     # If it fails, the loggers just won't capture the earliest bootstrap output.
     apply "${MANIFESTS_DIR}/shared/00-namespace.yaml" || true
     sleep 2
-    log "Spawning logger, log directory is ${LOG_DIR}"
-    stern -n "$ACSCS_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${LOG_DIR}/namespace-${ACSCS_NAMESPACE}.txt" 2>&1 &
-    stern -n "$STACKROX_OPERATOR_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${LOG_DIR}/namespace-${STACKROX_OPERATOR_NAMESPACE}.txt" 2>&1 &
+    mkdir -p "${ARTIFACT_DIR}/pod-logs"
+    log "Spawning logger, log directory is ${ARTIFACT_DIR}/pod-logs"
+    stern -n "$ACSCS_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${ARTIFACT_DIR}/pod-logs/namespace-${ACSCS_NAMESPACE}.txt" 2>&1 &
+    # Both namespaces default to the same one; a second stern would write to the same file.
+    if [[ "$STACKROX_OPERATOR_NAMESPACE" != "$ACSCS_NAMESPACE" ]]; then
+        stern -n "$STACKROX_OPERATOR_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${ARTIFACT_DIR}/pod-logs/namespace-${STACKROX_OPERATOR_NAMESPACE}.txt" 2>&1 &
+    fi
 fi
 
 FAIL=0
@@ -111,97 +120,131 @@ log
 log "=========="
 log
 
+# dump <path relative to ARTIFACT_DIR> <kubectl args...>
+# Writes the output of a kubectl call into the artifact directory.
+dump() {
+    local out="${ARTIFACT_DIR}/$1"
+    shift
+    mkdir -p "$(dirname "$out")"
+    if ! $KUBECTL "$@" >"$out" 2>&1; then
+        log "WARN: 'kubectl $*' failed, partial output in ${out}"
+    fi
+}
+
+# dump_pod_logs <namespace> <path relative to ARTIFACT_DIR>
+# Full logs of every pod, plus previous logs of restarted containers.
+dump_pod_logs() {
+    local ns="$1"
+    local dir="$2"
+    local pod container
+    for pod in $($KUBECTL -n "$ns" get pods -o jsonpath='{.items[*].metadata.name}'); do
+        dump "${dir}/${pod}.txt" -n "$ns" logs "$pod" --all-containers --prefix
+        for container in $($KUBECTL -n "$ns" get pod "$pod" -o jsonpath='{.status.containerStatuses[?(@.restartCount>0)].name}'); do
+            dump "${dir}/${pod}-${container}-previous.txt" -n "$ns" logs "$pod" -c "$container" --previous
+        done
+    done
+}
+
+dump_acscs() {
+    dump acscs/describe-pods.txt -n "$ACSCS_NAMESPACE" describe pods
+    dump_pod_logs "$ACSCS_NAMESPACE" acscs/logs
+}
+
+dump_operator() {
+    dump operator/pods.yaml -n "$STACKROX_OPERATOR_NAMESPACE" get pods -o yaml
+    dump operator/describe-pods.txt -n "$STACKROX_OPERATOR_NAMESPACE" describe pods
+    dump operator/subscriptions.txt -n "$STACKROX_OPERATOR_NAMESPACE" describe subscriptions
+    dump operator/installplans.txt -n "$STACKROX_OPERATOR_NAMESPACE" describe installplans
+}
+
+dump_external_secrets() {
+    local eso_ns="rhacs-external-secrets"
+    dump external-secrets/clustersecretstores.yaml get clustersecretstores -o yaml
+    dump external-secrets/externalsecrets.yaml -n "$ACSCS_NAMESPACE" get externalsecrets -o yaml
+    dump external-secrets/pods.txt -n "$eso_ns" get pods -o wide
+    dump_pod_logs "$eso_ns" external-secrets/logs
+}
+
+dump_tenant() {
+    local ns="$1"
+    local dir="tenants/${ns}"
+    dump "${dir}/central.yaml" -n "$ns" get centrals.platform.stackrox.io -o yaml
+    dump "${dir}/deployments.txt" -n "$ns" describe deployments
+    dump "${dir}/describe-pods.txt" -n "$ns" describe pods
+    dump "${dir}/events.txt" -n "$ns" get events --sort-by=.lastTimestamp
+    dump "${dir}/argocd-app.yaml" -n "$GITOPS_NS" get app "$ns" -o yaml
+    dump_pod_logs "$ns" "${dir}/logs"
+}
+
+dump_gitops() {
+    dump gitops/apps.yaml -n "$GITOPS_NS" get apps -o yaml
+}
+
 if [[ "$DUMP_LOGS" == "true" ]]; then
-    log "Dumping logs"
     # Bound every diagnostic call so an unresponsive API server cannot block
     # the script from reaching its final exit status.
     KUBECTL="$KUBECTL --request-timeout=30s"
-    if [[ "$SPAWN_LOGGER" == "true" ]]; then
-        log
-        log "** BEGIN LOGS **"
-        log
+    GITOPS_NS="openshift-gitops"
+    TENANT_NAMESPACES=$($KUBECTL get namespaces -l rhacs.redhat.com/tenant -o jsonpath='{.items[*].metadata.name}' || true)
 
+    # Each job writes to its own files, so they can run concurrently.
+    # Concurrency is bounded by the number of sections plus tenant namespaces.
+    log "Collecting artifacts in the background into ${ARTIFACT_DIR}"
+    dump_acscs &
+    dump_operator &
+    if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
+        dump_external_secrets &
+    fi
+    dump_gitops &
+    for ns in $TENANT_NAMESPACES; do
+        dump_tenant "$ns" &
+    done
+
+    log "** BEGIN CLUSTER SUMMARY **"
+    log "--- ${ACSCS_NAMESPACE} pods ---"
+    $KUBECTL -n "$ACSCS_NAMESPACE" get pods -o wide || true
+    log "--- ${STACKROX_OPERATOR_NAMESPACE} pods ---"
+    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get pods -o wide || true
+    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get subscriptions,installplans || true
+    for ns in $TENANT_NAMESPACES; do
+        log "--- tenant ${ns} pods ---"
+        $KUBECTL -n "$ns" get pods -o wide || true
+    done
+    log "--- ${GITOPS_NS} ---"
+    $KUBECTL -n "$GITOPS_NS" get pods || true
+    $KUBECTL -n "$GITOPS_NS" get apps || true
+    log "--- warning events ---"
+    for ns in "$ACSCS_NAMESPACE" $TENANT_NAMESPACES; do
+        $KUBECTL -n "$ns" get events --field-selector type=Warning --sort-by=.lastTimestamp || true
+    done
+    log "** END CLUSTER SUMMARY **"
+    log
+
+    if [[ "$SPAWN_LOGGER" == "true" ]]; then
         shopt -s nullglob
-        for logfile in "${LOG_DIR}"/*; do
+        for logfile in "${ARTIFACT_DIR}/pod-logs"/*; do
             logfile_basename=$(basename "$logfile")
-            log
             log "== BEGIN LOG ${logfile_basename} =="
-            cat "${logfile}"
+            cat "$logfile"
             log "== END LOG ${logfile_basename} =="
             log
         done
-
-        log
-        log "** END LOGS **"
-        log
     fi
 
-    log "** BEGIN ACSCS PODS **"
-    $KUBECTL -n "$ACSCS_NAMESPACE" get pods || true
-    $KUBECTL -n "$ACSCS_NAMESPACE" describe pods || true
-    log "** END ACSCS PODS **"
+    log "Waiting for artifact collection to finish"
+    wait
+
+    log "** ARTIFACTS **"
+    (cd "$ARTIFACT_DIR" && find . -type f -exec ls -lh {} + | awk '{print $5, $9}') || true
+    if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
+        log "Artifacts are uploaded to the artifacts directory of this job step."
+    else
+        log "Artifacts are in ${ARTIFACT_DIR}"
+    fi
     log
-
-    log "** BEGIN OPERATOR STATE **"
-    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get pods || true
-    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get pods -o yaml || true
-    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" describe pods || true
-    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get subscriptions || true
-    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" describe subscriptions || true
-    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get installplans || true
-    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" describe installplans || true
-    log "** END OPERATOR STATE **"
+elif [[ "$SPAWN_LOGGER" == "true" ]]; then
+    log "Not dumping logs, logs are in ${ARTIFACT_DIR}/pod-logs"
     log
-
-    if [[ "$INSTALL_EXTERNAL_SECRETS" == "true" ]]; then # pragma: allowlist secret
-        log "** BEGIN EXTERNAL SECRETS STATE **"
-        ESO_NS="rhacs-external-secrets"
-        $KUBECTL get clustersecretstores -o yaml || true
-        $KUBECTL -n "$ACSCS_NAMESPACE" get externalsecrets || true
-        $KUBECTL -n "$ACSCS_NAMESPACE" get externalsecrets -o yaml || true
-        $KUBECTL -n "$ESO_NS" get pods || true
-        $KUBECTL -n "$ESO_NS" logs -l app.kubernetes.io/instance=external-secrets --all-containers --prefix --tail=200 || true
-        log "** END EXTERNAL SECRETS STATE **"
-        log
-    fi
-
-    log "** BEGIN TENANT NAMESPACES STATE **"
-    for ns in $($KUBECTL get namespaces -l rhacs.redhat.com/tenant -o jsonpath='{.items[*].metadata.name}'); do
-        log "--- tenant namespace ${ns} ---"
-        $KUBECTL -n "$ns" get centrals.platform.stackrox.io -o yaml || true
-        $KUBECTL -n "$ns" get deployments || true
-        $KUBECTL -n "$ns" describe deployments || true
-        $KUBECTL -n "$ns" get pods || true
-        $KUBECTL -n "$ns" describe pods || true
-        $KUBECTL -n "$ns" get events --sort-by=.lastTimestamp || true
-        for pod in $($KUBECTL -n "$ns" get pods -o jsonpath='{.items[*].metadata.name}'); do
-            $KUBECTL -n "$ns" logs "$pod" --all-containers --prefix --tail=200 || true
-            # previous (crashed) container logs for any restarted container
-            for container in $($KUBECTL -n "$ns" get pod "$pod" -o jsonpath='{.status.containerStatuses[?(@.restartCount>0)].name}'); do
-                $KUBECTL -n "$ns" logs "$pod" -c "$container" --prefix --previous --tail=100 || true
-            done
-        done
-        $KUBECTL -n openshift-gitops get app "$ns" -o yaml || true
-    done
-    log "** END TENANT NAMESPACES STATE **"
-    log
-
-    log "** BEGIN GITOPS STATE **"
-    GITOPS_NS="openshift-gitops"
-    $KUBECTL -n $GITOPS_NS get pods || true
-    $KUBECTL -n $GITOPS_NS get apps || true
-    $KUBECTL -n $GITOPS_NS get apps -o yaml || true
-    log "** END GITOPS STATE **"
-
-    if [[ "$SPAWN_LOGGER" == "true" ]]; then
-        log "Logs are in ${LOG_DIR}"
-        log
-    fi
-else
-    if [[ "$SPAWN_LOGGER" == "true" ]]; then
-        log "Not dumping logs, logs are in ${LOG_DIR}"
-        log
-    fi
 fi
 
 log
