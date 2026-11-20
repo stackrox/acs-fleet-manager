@@ -60,27 +60,17 @@ if [[ -z "${DATAPLANE_ONLY}" ]]; then
     log "Deploying fleet-manager"
     make -C "$GITROOT" deploy/service
     wait_for_container_to_appear "$ACSCS_NAMESPACE" "app=fleet-manager" "service"
-
-    if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
-    $KUBECTL -n "$ACSCS_NAMESPACE" logs -l app=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
-    fi
 fi
 
 log "Deploying fleetshard-sync"
 make -C "$GITROOT" deploy/fleetshard-sync
 
 wait_for_container_to_appear "$ACSCS_NAMESPACE" "app=fleetshard-sync" "fleetshard-sync"
-if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
-    $KUBECTL -n "$ACSCS_NAMESPACE" logs -l app=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
-fi
 
 if [[ "$ENABLE_EMAIL_SENDER" == "true" ]]; then
     log "Deploying emailsender"
     make -C "$GITROOT" deploy/emailsender
     wait_for_container_to_appear "$ACSCS_NAMESPACE" "application=emailsender" "emailsender"
-    if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
-        $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=emailsender --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_emailsender_emailsender.txt" 2>&1 &
-    fi
 fi
 
 # Sanity check.
