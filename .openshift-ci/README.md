@@ -15,9 +15,21 @@ Config Definition: https://github.com/openshift/release/tree/master/ci-operator/
 
 ### Check Fleet-Manager logs and build logs
 
-Path in articafts:
+The build log contains the test output, a cluster summary (pods, GitOps apps, warning events)
+and the full stern log of the ACSCS namespace (fleet-manager, fleetshard-sync, emailsender,
+RHACS operator), e.g. `== BEGIN LOG namespace-rhacs.txt ==`.
+
+Everything else is written to `$ARTIFACT_DIR` and uploaded with the job artifacts under
+`artifacts/e2e/test/artifacts/`:
 ```
-build-logs (available also on success): /artifacts/e2e/claim/build-log.txt
-fleet-manager: == BEGIN LOG pod-logs_fleet-manager.txt ==
-fleetshard: == BEGIN LOG pod-logs_fleetshard-sync_fleetshard-sync.txt ==
+junit_e2e.xml, e2e-report.json  test reports (failed tests are shown on the Prow job page)
+pod-logs/                       stern logs per namespace (continuous, across pod restarts)
+acscs/                          describe pods, full logs per pod (fleet-manager, fleetshard-sync, ...)
+operator/                       pods, subscriptions, installplans
+external-secrets/               cluster secret stores, external secrets, ESO logs
+tenants/<namespace>/            Central CR, deployments, pods, events, Argo CD app, full logs per pod
+gitops/                         Argo CD applications
 ```
+
+Locally, `.openshift-ci/tests/e2e.sh` writes to a fresh `mktemp -d` directory per run unless
+`ARTIFACT_DIR` is set. The directory is printed at the start and end of the run.
