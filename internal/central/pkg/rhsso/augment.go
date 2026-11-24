@@ -22,7 +22,10 @@ func AugmentWithDynamicAuthConfig(ctx context.Context, r *dbapi.CentralRequest, 
 	// we truncate name here.
 	name := stringutils.Truncate(fmt.Sprintf("acscs-%s", r.Name), dynamicClientsNameMaxLength)
 	orgID := r.OrganisationID
-	redirectURIs := []string{fmt.Sprintf("https://%s%s", r.GetUIHost(), oidcProviderCallbackPath)}
+	redirectURIs := []string{
+		fmt.Sprintf("https://%s%s", r.GetUIHost(), oidcProviderCallbackPath),
+		fmt.Sprintf("https://%s:443%s", r.GetUIHost(), oidcProviderCallbackPath),
+	}
 
 	dynamicClientData, _, err := apiClient.CreateAcsClient(ctx, api.AcsClientRequestData{
 		Name:         name,
