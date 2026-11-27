@@ -26,7 +26,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	fmAPI "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fleetmanager "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
@@ -211,13 +210,9 @@ func (r *Runtime) Start(ctx context.Context) error {
 		}
 
 		r.deleteStaleReconcilers(&list)
-
-		if features.ClusterMigration.Enabled() {
-			if err := tenantCleanup.DeleteStaleTenantK8sResources(ctx, &list); err != nil {
-				glog.Errorf("Failed to delete stale tenant k8s resources: %s", err.Error())
-			}
+		if err := tenantCleanup.DeleteStaleTenantK8sResources(ctx, &list); err != nil {
+			glog.Errorf("Failed to delete stale tenant k8s resources: %s", err.Error())
 		}
-
 		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
 

@@ -27,7 +27,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	fmImpl "github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager/impl"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 )
 
 const (
@@ -60,7 +59,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		testutil.SkipIf(!features.TargetedOperatorUpgrades.Enabled() || !runCanaryUpgradeTests, "Skipping canary upgrade test")
+		testutil.SkipIf(!runCanaryUpgradeTests, "Skipping canary upgrade test")
 		option := fmImpl.OptionFromEnv()
 		auth, err := fmImpl.NewStaticAuth(ctx, fmImpl.StaticOption{StaticToken: option.Static.StaticToken})
 		Expect(err).ToNot(HaveOccurred())

@@ -302,16 +302,6 @@ parameters:
   description: List of user agents from internal clients
   value: "fleet-manager-probe-service"
 
-- name: RHACS_GITOPS_ENABLED
-  displayName: RHACS Gitops enabled
-  description: Whether to enable configuration of Centrals through gitops be enabled
-  value: "true"
-
-- name: RHACS_TARGETED_OPERATOR_UPGRADES
-  displayName: RHACS Targeted Operator Upgrades
-  description: Whether to enable targeted operator upgrades
-  value: "true"
-
 - name: ENABLE_LEADER_ELECTION
   description: Enable leader election
   value: "true"
@@ -844,10 +834,6 @@ objects:
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
-              - name: RHACS_GITOPS_ENABLED
-                value: "${RHACS_GITOPS_ENABLED}"
-              - name: RHACS_TARGETED_OPERATOR_UPGRADES
-                value: "${RHACS_TARGETED_OPERATOR_UPGRADES}"
               - name: POD_NAME
                 valueFrom:
                   fieldRef:
