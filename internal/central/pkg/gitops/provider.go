@@ -8,7 +8,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
@@ -29,20 +28,12 @@ type provider struct {
 
 // NewProvider returns a new ConfigProvider.
 func NewProvider() ConfigProvider {
-
-	var reader Reader
-	if features.GitOpsCentrals.Enabled() {
-		path, exists := os.LookupEnv("GITOPS_CONFIG_PATH")
-		if !exists {
-			path = configPath
-		}
-		reader = NewFileReader(path)
-	} else {
-		reader = NewEmptyReader()
+	path, exists := os.LookupEnv("GITOPS_CONFIG_PATH")
+	if !exists {
+		path = configPath
 	}
-
 	return &provider{
-		reader:            reader,
+		reader:            NewFileReader(path),
 		lastWorkingConfig: atomic.Pointer[Config]{},
 		validationFn: func(config Config) error {
 			return ValidateConfig(config).ToAggregate()
